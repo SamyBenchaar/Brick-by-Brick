@@ -16,7 +16,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
     @SubscribeMessage(ChatEvents.Validate)
     validate(socket: Socket, word: string) {
         socket.emit(ChatEvents.WordValidated, word?.length > WORD_MIN_LENGTH);
-        console.log("Chat Validated");
     }
 
     @SubscribeMessage(ChatEvents.ValidateACK)
