@@ -1,12 +1,15 @@
 <div class="container">
   <h1 class="header-title">ADMINISTRER LES JEUX</h1>
-  
+  <div class="game-logo">game logo</div> <!--ajouter image logo -->
+
+  <button class="add-button" >Ajouter un jeu</button> <!--ajouter linker -->
+
   <div class="games-list">
     @for (game of games; track game.id) {
     <div class="game-item">
       <div class="game-content">
         <div class="game-image">
-          <img [src]="game.imageUrl" [alt]="game.name">
+          <img [src]="game.imageUrl" [alt]="game.nameImage">
         </div>
         <div class="game-info">
           <p class="game-name">{{ game.name }}</p>
@@ -24,6 +27,10 @@
           <button class="btn-icon btn-delete" 
                   title="Supprimer">
             <span class="material-icons">delete</span>
+          </button>
+          <button class="btn-icon btn-visibility" 
+                  title="Visibilite">
+            <span class="material-icons">visibility</span>
           </button>
         </div>
       </div>

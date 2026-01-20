@@ -7,9 +7,40 @@
   padding: 2rem;
 }
 
+.game-logo {
+  position: fixed;
+  text-align: left;
+  top:10%;
+  left: 5%;
+  font-size: 1.5rem;
+  color: #ffffff;
+  margin-bottom: 2rem;
+}
+
 .container {
   max-width: 1200px;
   margin: 0 auto;
+}
+
+.add-button {
+  position: fixed;
+  right: 20%;
+  top: 10%;
+  transform: translateY(-50%);
+  margin-bottom: 5rem;
+  padding: 0.75rem 1.5rem;
+  background: #2e8b57;
+  color: #ffffff;
+  font-weight: bold;
+  border-radius: 8px;
+  font-size: 18px;
+  border:none;
+  cursor: pointer;
+  transition: background 0.3s ease;
+
+  &:hover {
+    background: #3cb371;
+  }
 }
 
 .header-title {
@@ -37,20 +68,15 @@
   transition: all 0.3s ease;
   position: relative;
 
-  &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 24px rgba(100, 150, 255, 0.3);
-    border-color: rgba(100, 150, 255, 0.5);
-
-    .game-description {
-      max-height: 100px;
-      opacity: 1;
-      margin-top: 0.5rem;
-      padding-top: 1rem;
-      border-top-color: rgba(100, 100, 150, 0.3);
-    }
-  }
 }
+.game-item:has(.game-image:hover) .game-description {
+  max-height: 100px;
+  opacity: 1;
+  margin-top: 0.5rem;
+  padding-top: 1rem;
+  border-top-color: rgba(100, 100, 150, 0.3);
+}
+
 
 .game-content {
   display: flex;
@@ -59,17 +85,14 @@
   gap: 1.5rem;
 }
 
-.game-image {
-  flex-shrink: 0;
-
-  img {
-    width: 64px;
-    height: 64px;
-    border-radius: 8px;
-    object-fit: cover;
-    border: 2px solid rgba(100, 150, 255, 0.3);
-  }
+img {
+  width: 64px;
+  height: 64px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 2px solid rgba(100, 150, 255, 0.3);
 }
+
 
 .game-info {
   flex: 1;
@@ -140,6 +163,12 @@
   background: rgba(200, 100, 100, 0.3);
   color: #e88888;
   box-shadow: 0 4px 12px rgba(200, 100, 100, 0.3);
+}
+
+.btn-visibility:hover {
+  background: rgba(208, 170, 35, 0.47);
+  color: #d4e115;
+  box-shadow: 0 4px 12px rgba(217, 228, 60, 0.3);
 }
 
 .game-description {
