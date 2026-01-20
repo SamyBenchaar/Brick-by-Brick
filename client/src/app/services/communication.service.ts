@@ -1,6 +1,6 @@
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Message } from '@common/message';
+import { Game } from '@app/interfaces/game';
 import { Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
@@ -13,12 +13,24 @@ export class CommunicationService {
 
     constructor(private readonly http: HttpClient) {}
 
-    basicGet(): Observable<Message> {
-        return this.http.get<Message>(`${this.baseUrl}/example`).pipe(catchError(this.handleError<Message>('basicGet')));
+    getAllGames(): Observable<Game[]> {
+        return this.http.get<Game[]>(`${this.baseUrl}/games`).pipe(catchError(this.handleError<Game[]>('getAllGames')));
     }
 
-    basicPost(message: Message): Observable<HttpResponse<string>> {
-        return this.http.post(`${this.baseUrl}/example/send`, message, { observe: 'response', responseType: 'text' });
+    getGameById(id: string): Observable<Game> {
+        return this.http.get<Game>(`${this.baseUrl}/games/${id}`).pipe(catchError(this.handleError<Game>('getGameById')));
+    }
+
+    createGame(gameData: Partial<Game>): Observable<Game> {
+        return this.http.post<Game>(`${this.baseUrl}/games`, gameData).pipe(catchError(this.handleError<Game>('createGame')));
+    }
+
+    updateGame(id: string, gameData: Partial<Game>): Observable<Game> {
+        return this.http.patch<Game>(`${this.baseUrl}/games/${id}`, gameData).pipe(catchError(this.handleError<Game>('updateGame')));
+    }
+
+    deleteGame(id: string): Observable<void> {
+        return this.http.delete<void>(`${this.baseUrl}/games/${id}`).pipe(catchError(this.handleError<void>('deleteGame')));
     }
 
     private handleError<T>(request: string, result?: T): (error: Error) => Observable<T> {
