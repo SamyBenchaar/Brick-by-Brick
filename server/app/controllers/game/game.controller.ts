@@ -1,6 +1,8 @@
 import { Game } from '@app/model/database/game';
+import { CreateGameDto } from '@app/model/dto/game/create-game.dto';
+import { UpdateGameDto } from '@app/model/dto/game/update-game.dto';
 import { GameService } from '@app/services/game/game.service';
-import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, ValidationPipe } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('games')
@@ -25,18 +27,18 @@ export class GameController {
 
     @Post()
     @ApiOperation({ summary: 'Créer un nouveau jeu' })
-    @ApiResponse({ status: 201, description: 'Jeu créé avec succès' })
+    @ApiResponse({ status: 201, description: 'Jeu créé avec succès', type: Game })
     @ApiResponse({ status: 400, description: 'Données invalides' })
-    async create(@Body() gameData: Partial<Game>): Promise<Game> {
-        return this.gameService.create(gameData);
+    async create(@Body(new ValidationPipe({ transform: true })) createGameDto: CreateGameDto): Promise<Game> {
+        return this.gameService.create(createGameDto);
     }
 
     @Patch(':id')
     @ApiOperation({ summary: 'Mettre à jour un jeu' })
-    @ApiResponse({ status: 200, description: 'Jeu mis à jour avec succès' })
+    @ApiResponse({ status: 200, description: 'Jeu mis à jour avec succès', type: Game })
     @ApiResponse({ status: 404, description: 'Jeu non trouvé' })
-    async update(@Param('id') id: string, @Body() gameData: Partial<Game>): Promise<Game> {
-        return this.gameService.update(id, gameData);
+    async update(@Param('id') id: string, @Body(new ValidationPipe({ transform: true })) updateGameDto: UpdateGameDto): Promise<Game> {
+        return this.gameService.update(id, updateGameDto);
     }
 
     @Delete(':id')
