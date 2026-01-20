@@ -41,7 +41,7 @@ export class Tile {
 
     @ApiProperty()
     @Prop({ required: false, enum: ['open', 'closed'] })
-    state: string;
+    state?: string;
 }
 
 // Sous-schéma pour une position (x, y)
