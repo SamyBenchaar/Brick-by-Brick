@@ -1,8 +1,8 @@
 <div class="container">
-  <h1 class="header-title">ADMINISTRER LES JEUX</h1>
-  <div class="game-logo">game logo</div> <!--ajouter image logo -->
-
-  <button class="add-button" >Ajouter un jeu</button> <!--ajouter linker -->
+  <div class="header-row">
+    <h1 class="header-title">ADMINISTRER LES JEUX</h1>
+    <button class="add-button">Ajouter un jeu</button>
+  </div>
 
   <div class="games-list">
     @for (game of games; track game._id) {
@@ -16,20 +16,23 @@
           <div class="game-details">
             <span class="game-size">{{ game.mapConfig.gridSize.height }}x{{ game.mapConfig.gridSize.width }}</span>
             <!-- <span class="game-mode">{{ game.mode }}</span> -->
-            <span class="game-date">{{ game.lastModified }}</span>
+            <span class="game-date">{{ game.lastModified | date:'medium' }}</span>
           </div>
         </div>
         <div class="game-actions">
             <button class="btn-icon btn-edit" 
                     title="Modifier">
+                    <!-- TODO: aller vers vue d'edition -->
                 <span class="material-icons">edit</span>
             </button>
             <button class="btn-icon btn-visibility" 
-                    title="Visibilite">
-                <span class="material-icons">visibility</span>
+                    [title]="game.isVisible ? 'Masquer' : 'Afficher'"
+                    (click)="editGame(game)">
+                <span class="material-icons">{{ game.isVisible ? 'visibility' : 'visibility_off' }}</span>
             </button>
             <button class="btn-icon btn-delete" 
-                    title="Supprimer">
+                    title="Supprimer"
+                    (click)="deleteGame(game)">
                 <span class="material-icons">delete</span>
             </button>
         </div>
