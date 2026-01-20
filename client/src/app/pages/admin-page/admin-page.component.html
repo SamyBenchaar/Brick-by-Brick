@@ -1,41 +1,36 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Administrer les Jeux</title>
-    <link rel="stylesheet" href="admin-page.component.scss">
-</head>
-<body>
-    <div class="container">
-        <h1 class="header-title">ADMINISTRER LES JEUX</h1>
-        
-        <div class="games-list">
-            <div class="game-item">
-                <div class="game-content">
-                    <div class="game-image">
-                        <img src="https://via.placeholder.com/64" alt="Game Image"> 
-                        <!-- TODO changer les infos -->
-                    </div>
-                    <div class="game-info">
-                        <p class="game-name">Nom du Jeu 1</p>
-                        <div class="game-details">
-                            <span class="game-size">2x2</span>
-                            <span class="game-mode">Multijoueur</span>
-                            <span class="game-date">20/01/2026</span>
-                        </div>
-                    </div>
-                    <div class="game-actions">
-                        <button class="btn-edit">Éditer</button>
-                        <button class="btn-visibility">Visibilité</button>
-                        <button class="btn-delete">Supprimer</button>
-                    </div>
-                </div>
-                <div class="game-description">
-                    Description du jeu qui apparaît au survol. Ce jeu est une aventure épique...
-                </div>
-            </div>
+<div class="container">
+  <h1 class="header-title">ADMINISTRER LES JEUX</h1>
+  
+  <div class="games-list">
+    @for (game of games; track game.id) {
+    <div class="game-item">
+      <div class="game-content">
+        <div class="game-image">
+          <img [src]="game.imageUrl" [alt]="game.name">
         </div>
+        <div class="game-info">
+          <p class="game-name">{{ game.name }}</p>
+          <div class="game-details">
+            <span class="game-size">{{ game.size }}</span>
+            <span class="game-mode">{{ game.mode }}</span>
+            <span class="game-date">{{ game.date }}</span>
+          </div>
+        </div>
+        <div class="game-actions">
+          <button class="btn-icon btn-edit" 
+                  title="Modifier">
+            <span class="material-icons">edit</span>
+          </button>
+          <button class="btn-icon btn-delete" 
+                  title="Supprimer">
+            <span class="material-icons">delete</span>
+          </button>
+        </div>
+      </div>
+      <div class="game-description">
+        {{ game.description }}
+      </div>
     </div>
-</body>
-</html>
+    }
+  </div>
+</div>
