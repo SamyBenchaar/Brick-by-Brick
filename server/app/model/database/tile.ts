@@ -1,4 +1,4 @@
-import { Prop, Schema } from '@nestjs/mongoose';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { ApiProperty } from '@nestjs/swagger';
 
 @Schema({ _id: false })
@@ -11,3 +11,5 @@ export class Tile {
     @Prop({ required: false, enum: ['open', 'closed'] })
     state?: string;
 }
+
+export const TileSchema = SchemaFactory.createForClass(Tile);
