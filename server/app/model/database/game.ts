@@ -41,8 +41,10 @@ export class Tile {
 
     @ApiProperty()
     @Prop({ required: false, enum: ['open', 'closed'] })
-    state?: string;
+    state?: string | null;
 }
+// Sous-schéma pour une tuile, Permet de l'utiliser dans une matrice
+export const TileSchema = SchemaFactory.createForClass(Tile);
 
 // Sous-schéma pour une position (x, y)
 @Schema({ _id: false })
@@ -96,7 +98,7 @@ export class Game {
     mapConfig: MapConfig;
 
     @ApiProperty()
-    @Prop({ required: true, type: [[Tile]] })
+    @Prop({ required: true, type: [[TileSchema]] })
     tiles: Tile[][];
 
     @ApiProperty()
