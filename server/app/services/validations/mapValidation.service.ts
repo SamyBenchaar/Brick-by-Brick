@@ -2,6 +2,7 @@ import { Game, GameDocument } from '@app/model/database/game';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { MIN_TERRAIN_COVERAGE, PERCENTAGE_MULTIPLIER, PLAYABLE_TYPES } from './mapValidation.constants';
 
 @Injectable()
 export class MapValidationService {
@@ -27,10 +28,10 @@ export class MapValidationService {
 
         const coverage = playableTileCount / totalSurface;
 
-        if (coverage <= 0.5) {
+        if (coverage <= MIN_TERRAIN_COVERAGE) {
             throw new BadRequestException(
-                `La surface de terrain jouable est insuffisante: ${(coverage * 100).toFixed(1)}%. ` +
-                `Au moins 50% de la surface doit être du terrain jouable.`
+                `La surface de terrain jouable est insuffisante: ${(coverage * PERCENTAGE_MULTIPLIER).toFixed(1)}%. ` +
+                `Au moins 50% de la surface doit être du terrain jouable.`,
             );
         }
     }
@@ -40,14 +41,13 @@ export class MapValidationService {
 
         if (numberOfStartingPoints !== gameData.numberOfPlayers) {
             throw new BadRequestException(
-                `Le nombre de points de départ (${numberOfStartingPoints}) doit être égal au nombre de joueurs (${gameData.numberOfPlayers})`
+                `Le nombre de points de départ (${numberOfStartingPoints}) doit être égal au nombre de joueurs (${gameData.numberOfPlayers})`,
             );
         }
     }
 
     private validateTerrainAccessibility(gameData: Partial<Game>): void {
         const { gridSize } = gameData.mapConfig;
-        const playableTypes = ['base', 'ice', 'door'];
         const totalPlayableTiles = this.countPlayableTiles(gameData);
 
         // Trouver une tuile de départ (utiliser le premier starting point)
@@ -58,9 +58,9 @@ export class MapValidationService {
 
         // BFS pour compter les tuiles accessibles
         const visited = Array(gridSize.height).fill(null).map(
-            () => Array(gridSize.width).fill(false)
+            () => Array(gridSize.width).fill(false),
         );
-        const queue: Array<{ x: number; y: number }> = [];
+        const queue: { x: number; y: number }[] = [];
 
         queue.push(startPoint);
         visited[startPoint.y][startPoint.x] = true;
@@ -74,7 +74,10 @@ export class MapValidationService {
         ];
 
         while (queue.length > 0) {
-            const current = queue.shift()!;
+            const current = queue.shift();
+            if (!current) {
+                continue;
+            }
 
             for (const dir of directions) {
                 const newX = current.x + dir.dx;
@@ -92,7 +95,7 @@ export class MapValidationService {
 
                 // Vérifier si la tuile est jouable
                 const tile = gameData.tiles[newY][newX];
-                if (!playableTypes.includes(tile.type)) {
+                if (!PLAYABLE_TYPES.includes(tile.type)) {
                     continue;
                 }
 
@@ -107,19 +110,18 @@ export class MapValidationService {
         if (accessibleTiles !== totalPlayableTiles) {
             throw new BadRequestException(
                 `Certaines tuiles de terrain sont inaccessibles. ` +
-                `Tuiles accessibles: ${accessibleTiles}/${totalPlayableTiles}`
+                `Tuiles accessibles: ${accessibleTiles}/${totalPlayableTiles}`,
             );
         }
     }
 
     private countPlayableTiles(gameData: Partial<Game>): number {
         const { gridSize } = gameData.mapConfig;
-        const playableTypes = ['base', 'ice', 'door'];
         let count = 0;
 
         for (let y = 0; y < gridSize.height; y++) {
             for (let x = 0; x < gridSize.width; x++) {
-                if (playableTypes.includes(gameData.tiles[y][x].type)) {
+                if (PLAYABLE_TYPES.includes(gameData.tiles[y][x].type)) {
                     count++;
                 }
             }
