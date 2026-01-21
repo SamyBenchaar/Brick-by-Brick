@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { ApiProperty } from '@nestjs/swagger';
-import { GridSize, GridSizeSchema } from './grid-size';
+import { GridSize, gridSizeSchema } from './grid-size';
 
 @Schema({ _id: false })
 export class MapConfig {
@@ -9,7 +9,7 @@ export class MapConfig {
     size: string;
 
     @ApiProperty()
-    @Prop({ required: true, type: GridSizeSchema })
+    @Prop({ required: true, type: gridSizeSchema })
     gridSize: GridSize;
 
     @ApiProperty()
@@ -17,4 +17,4 @@ export class MapConfig {
     gameMode: string;
 }
 
-export const MapConfigSchema = SchemaFactory.createForClass(MapConfig);
+export const mapConfigSchema = SchemaFactory.createForClass(MapConfig);

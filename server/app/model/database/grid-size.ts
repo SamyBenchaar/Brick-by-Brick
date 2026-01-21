@@ -12,4 +12,4 @@ export class GridSize {
     height: number;
 }
 
-export const GridSizeSchema = SchemaFactory.createForClass(GridSize);
+export const gridSizeSchema = SchemaFactory.createForClass(GridSize);

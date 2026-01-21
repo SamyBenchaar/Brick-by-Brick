@@ -12,4 +12,4 @@ export class Tile {
     state?: string;
 }
 
-export const TileSchema = SchemaFactory.createForClass(Tile);
+export const tileSchema = SchemaFactory.createForClass(Tile);

@@ -12,4 +12,4 @@ export class Position {
     y: number;
 }
 
-export const PositionSchema = SchemaFactory.createForClass(Position);
+export const positionSchema = SchemaFactory.createForClass(Position);

@@ -1,9 +1,9 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { ApiProperty } from '@nestjs/swagger';
 import { Document } from 'mongoose';
-import { MapConfig, MapConfigSchema } from './map-config';
-import { MapObjects, MapObjectsSchema } from './map-objects';
-import { Tile, TileSchema } from './tile';
+import { MapConfig, mapConfigSchema } from './map-config';
+import { MapObjects, mapObjectsSchema } from './map-objects';
+import { Tile, tileSchema } from './tile';
 
 export type GameDocument = Game & Document;
 
@@ -22,15 +22,15 @@ export class Game {
     isVisible: boolean;
 
     @ApiProperty()
-    @Prop({ required: true, type: MapConfigSchema })
+    @Prop({ required: true, type: mapConfigSchema })
     mapConfig: MapConfig;
 
     @ApiProperty()
-    @Prop({ required: true, type: [[TileSchema]] })
+    @Prop({ required: true, type: [[tileSchema]] })
     tiles: Tile[][];
 
     @ApiProperty()
-    @Prop({ required: true, type: MapObjectsSchema })
+    @Prop({ required: true, type: mapObjectsSchema })
     objects: MapObjects;
 
     @ApiProperty()
