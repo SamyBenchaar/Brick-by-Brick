@@ -23,6 +23,10 @@ export class Game {
     isVisible: boolean;
 
     @ApiProperty()
+    @Prop({ required: true, min: 2 })
+    numberOfPlayers: number;
+
+    @ApiProperty()
     @Prop({ required: true, type: MapConfig })
     mapConfig: MapConfig;
 

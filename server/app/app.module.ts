@@ -9,6 +9,8 @@ import { CourseService } from '@app/services/course/course.service';
 import { DateService } from '@app/services/date/date.service';
 import { ExampleService } from '@app/services/example/example.service';
 import { GameService } from '@app/services/game/game.service';
+import { MapValidationService } from '@app/services/validations/mapValidation.service';
+import { GameMetadataValidationService } from '@app/services/validations/gameMetadataValidation.service';
 import { Logger, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -29,6 +31,6 @@ import { MongooseModule } from '@nestjs/mongoose';
         ]),
     ],
     controllers: [CourseController, DateController, ExampleController, GameController],
-    providers: [ChatGateway, CourseService, GameService, DateService, ExampleService, Logger],
+    providers: [ChatGateway, CourseService, GameService, DateService, ExampleService, Logger, MapValidationService, GameMetadataValidationService],
 })
 export class AppModule {}
