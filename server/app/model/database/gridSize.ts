@@ -1,0 +1,13 @@
+import { Prop, Schema } from '@nestjs/mongoose';
+import { ApiProperty } from '@nestjs/swagger';
+
+@Schema({ _id: false })
+export class GridSize {
+    @ApiProperty()
+    @Prop({ required: true })
+    width: number;
+
+    @ApiProperty()
+    @Prop({ required: true })
+    height: number;
+}
