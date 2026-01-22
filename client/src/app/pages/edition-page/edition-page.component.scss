@@ -1,0 +1,18 @@
+.edition-container {
+    display: flex;
+    flex-direction: row;        
+    align-items: stretch;       
+    min-height: 100vh;          
+    padding: 0;                 
+    gap: 0;
+  }
+  
+ 
+  .edition-layout {
+    display: flex;
+    flex-direction: column;    
+    flex: 1;                    
+    padding: 20px;             
+    align-items: center;  
+    gap: 20px;
+  }

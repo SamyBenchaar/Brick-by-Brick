@@ -1,0 +1,17 @@
+<div class="grid-container"
+    [style.width.px]="gridSize"
+    [style.height.px]="gridSize">
+    @for (row of getGrid(); track $index; let y = $index) {
+      <div class="grid-row">
+        @for (tile of row; track $index; let x = $index) {
+          <div class="tile" 
+               [class]="'tile-' + tile.type"
+               [style.width.px]="getTileSize()"
+               [style.height.px]="getTileSize()"
+               (mousedown)="onTileMouseDown(x, y)"
+               (mouseenter)="onTileMouseEnter(x, y)">
+          </div>
+        }
+      </div>
+    }
+  </div>

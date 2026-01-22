@@ -1,0 +1,15 @@
+<div class="sidebar-container">
+    <h3 class="sidebar-title">Outil applicateur de tuiles</h3>
+
+    <div class="tile-list">
+        @for (type of editableTypes; track type){
+            <div class="tile-type-item"
+                [class.selected]="isSelected(type)"
+                [class]="tile.getCssClass(type)"  
+                (click)="selectTileType(type)">
+                <span class="tile-label">{{type}}</span>
+            </div>
+
+        }
+    </div>
+</div>

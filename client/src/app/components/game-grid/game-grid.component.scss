@@ -1,0 +1,35 @@
+.grid-container {
+    display: inline-block;
+    border: 2px solid #333;
+    background-color: #fff;
+  }
+  
+  .grid-row {
+    display: flex;
+  }
+  
+  .tile {
+   
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+    transition: background-color 0.2s;
+    
+
+  }
+  
+  .tile-base {
+    background-color: #15960c;
+  }
+
+  .tile-water {
+    background-color: #4a90e2;
+  }
+
+  .tile-ice {
+    background-color: #b8e6ff;
+  }
+
+  .tile-wall {
+    background-color: #666;
+  }
+  
