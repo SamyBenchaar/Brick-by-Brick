@@ -5,6 +5,12 @@ export enum TileType {
     Wall = 'wall',
 }
 
+export enum ObjectType {
+    FLAG = 'flag',
+    COMBATSANCTUARY = 'combatsanctuary',
+    HEALINGSANCTUARY = 'healingsanctuary',
+    STARTPOINT = 'startpoint'
+}
 
 
 export enum MapSize {

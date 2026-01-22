@@ -33,9 +33,13 @@ export class GameGridComponent {
   }
 
   onTileMouseDown(x: number, y: number): void {
-    this.isDrawing = true;
-    this.changeTileType(x,y);
-}
+    if(this.mapEditorService.getSelectedTileType() == null) {
+      this.addObject(x, y);
+    } else {
+      this.isDrawing = true;
+      this.changeTileType(x,y);
+    }
+  }
 
   onTileMouseEnter(x: number, y: number): void {
     if (this.isDrawing) {
@@ -51,8 +55,16 @@ export class GameGridComponent {
   private changeTileType(x: number, y: number): void {
     const selectedType = this.mapEditorService.getSelectedTileType();
     const tile = this.gameMap.getTile(x, y);
-    if (tile) {
+    if (tile && selectedType) {
       tile.type = selectedType;
+    }
+  }
+
+  private addObject(x: number, y: number): void {
+    const selectedObject = this.mapEditorService.getSelectedObject();
+    const tile = this.gameMap.getTile(x, y);
+    if (tile && selectedObject) {
+      tile.object = selectedObject;
     }
   }
 }
