@@ -33,14 +33,13 @@ export class GameGridComponent {
   }
 
   onTileMouseDown(x: number, y: number): void {
-    if(this.mapEditorService.getSelectedTileType() == null){
-      this.addObject(x, y)
-    }
-    else {
+    if(this.mapEditorService.getSelectedTileType() == null) {
+      this.addObject(x, y);
+    } else {
       this.isDrawing = true;
       this.changeTileType(x,y);
     }
-}
+  }
 
   onTileMouseEnter(x: number, y: number): void {
     if (this.isDrawing) {
