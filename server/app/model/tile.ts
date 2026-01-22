@@ -9,7 +9,7 @@ export class Tile {
 
     @ApiProperty()
     @Prop({ required: false, enum: ['open', 'closed'] })
-    state?: string | null;
+    state?: string;
 }
 
 export const tileSchema = SchemaFactory.createForClass(Tile);

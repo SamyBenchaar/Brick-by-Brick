@@ -1,7 +1,7 @@
-import { Game } from '@app/model/database/game';
-import { CreateGameDto } from '@app/model/dto/game/create-game.dto';
-import { UpdateGameDto } from '@app/model/dto/game/update-game.dto';
+import { Game } from '@app/model/game';
 import { GameService } from '@app/services/game/game.service';
+import { CreateGameDto } from '@common/dto/create-game.dto';
+import { UpdateGameDto } from '@common/dto/update-game.dto';
 import { Body, Controller, Delete, Get, Param, Patch, Post, ValidationPipe } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 

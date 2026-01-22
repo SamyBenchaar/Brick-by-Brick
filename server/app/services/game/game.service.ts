@@ -1,6 +1,6 @@
-import { Game, GameDocument } from '@app/model/database/game';
-import { MapValidationService } from '@app/services/validations/mapValidation.service';
+import { Game, GameDocument } from '@app/model/game';
 import { GameMetadataValidationService } from '@app/services/validations/gameMetadataValidation.service';
+import { MapValidationService } from '@app/services/validations/mapValidation.service';
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';

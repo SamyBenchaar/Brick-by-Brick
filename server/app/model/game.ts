@@ -1,13 +1,12 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { ApiProperty } from '@nestjs/swagger';
 import { Document } from 'mongoose';
-import { MapConfig } from './mapConfig';
-import { MapObjects } from './mapObjects';
+import { MapConfig, mapConfigSchema } from './map-config';
+import { MapObjects, mapObjectsSchema } from './map-objects';
 import { Tile, tileSchema } from './tile';
 
 export type GameDocument = Game & Document;
 
-// Schéma principal du jeu
 @Schema({ timestamps: { createdAt: 'createdAt', updatedAt: 'lastModified' } })
 export class Game {
     @ApiProperty()
@@ -27,7 +26,7 @@ export class Game {
     numberOfPlayers: number;
 
     @ApiProperty()
-    @Prop({ required: true, type: MapConfig })
+    @Prop({ required: true, type: mapConfigSchema })
     mapConfig: MapConfig;
 
     @ApiProperty()
@@ -35,7 +34,7 @@ export class Game {
     tiles: Tile[][];
 
     @ApiProperty()
-    @Prop({ required: true, type: MapObjects })
+    @Prop({ required: true, type: mapObjectsSchema })
     objects: MapObjects;
 
     @ApiProperty()
