@@ -1,4 +1,4 @@
-import { Game } from '@app/model/database/game';
+import { Game } from '@app/model/game';
 import { GameService } from '@app/services/game/game.service';
 import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
