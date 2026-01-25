@@ -1,0 +1,99 @@
+.sidebar-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding: 20px;
+    background-color: #f5f5f5;
+    border-right: 3px solid #333;
+    min-width: 180px;          
+    height: 100vh;            
+    position: sticky;          
+    top: 0;                     
+    left: 0; 
+  }
+  
+  .sidebar-title {
+    margin: 0;
+    font-size: 30px;
+    font-weight: bold;
+    text-align: center;
+    color: #333;
+  }
+  
+  .object-list {
+    display: flex;
+    flex-direction: column;  
+    gap: 150px;
+  }
+  
+  .object-item {
+    width: 150px;
+    height: 150px;
+    border: 3px solid #333;
+    border-radius: 8px;
+    cursor: pointer;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    
+    &:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    
+    &:hover .object-description {
+      visibility: visible;
+      opacity: 1;
+    }
+    &.selected {
+      border-color: #00ff08;
+      border-width: 5px;
+    }
+  }
+  
+  .object-label {
+    font-size: 20px;
+    font-weight: bold;
+    color: rgb(0, 0, 0);
+    pointer-events: none; 
+  }
+  
+  .object-description {
+    
+    visibility: hidden;
+    opacity: 0;
+    position: absolute;
+    left: 160px;  
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: #2c3e50;
+    color: rgb(255, 253, 253);
+    padding: 10px 15px;
+    border-radius: 8px;
+    font-size: 13px;
+    white-space: nowrap;
+    z-index: 1000;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+    pointer-events: none;  
+    
+
+  }
+  .tile-flag {
+    background-color: #000000;
+  }
+  
+  .tile-healingsanctuary {
+    background-color: #b8ffd3;
+  }
+  
+  .tile-combatsanctuary {
+    background-color: #f89b9b;
+  }
+
+    .tile-startpoint {
+    background-color: #355b42;
+  }
+  

@@ -1,0 +1,15 @@
+<div class="sidebar-container">
+    <h3 class="sidebar-title">Outil applicateur d'objets</h3>
+    <div class="object-list">
+        @for (type of editableObjects; track type){
+            <div class="object-item"
+                [class.selected]="isSelected(type)"
+                [class]="tile.getCssClass(type)"  
+                (click)="selectObject(type)">
+                <span class="tile-label">{{type}}</span>
+                <span class="object-description">{{getObjectDescription(type)}}</span>
+            </div>
+
+        }
+    </div>
+</div>
