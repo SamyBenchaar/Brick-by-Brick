@@ -2,6 +2,21 @@
         <app-tile-type-sidebar></app-tile-type-sidebar>
         <app-object-sidebar></app-object-sidebar>
     <div class="edition-layout">
+        <div class="game-info-container">
+            <app-text-input
+            label="Nom de la partie"
+            placeholder="Entrez le nom de la partie"
+            [value]="gameName"
+            (valueChange)="gameName = $event">
+            </app-text-input>
+
+            <app-text-input
+            label="Description"
+            placeholder="Entrez une description de la partie"
+            [value]="gameDescription"
+            (valueChange)="gameDescription = $event">
+            </app-text-input>
+        </div>
         <app-game-grid></app-game-grid>
     </div>
 </div>
