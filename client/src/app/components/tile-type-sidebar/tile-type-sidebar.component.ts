@@ -3,6 +3,7 @@ import { Tile } from '@app/classes/tile';
 import { TileType } from '@common/map';
 import { CommonModule } from '@angular/common';
 import { MapEditorServiceService } from '@app/services/map-editor-service.service';
+import { TILE_TYPE_DESCRIPTIONS } from '@app/constants/tile-type-description';
 
 @Component({
   selector: 'app-tile-type-sidebar',
@@ -23,6 +24,10 @@ export class TileTypeSidebarComponent {
 
   isSelected(type: TileType): boolean {
     return this.mapEditorService.getSelectedTileType() === type;
+  }
+
+  getTileTypeDescription(type: TileType): string {
+    return TILE_TYPE_DESCRIPTIONS[type];
   }
 
 }

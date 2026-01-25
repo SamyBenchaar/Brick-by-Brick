@@ -8,8 +8,12 @@
                [class]="'tile-' + tile.type"
                [style.width.px]="getTileSize()"
                [style.height.px]="getTileSize()"
-               (mousedown)="onTileMouseDown(x, y)"
+               (mousedown)="onTileMouseDown(x, y, $event)"
                (mouseenter)="onTileMouseEnter(x, y)">
+               @if(tile.object) {
+                <img [src] = "getObjectPath(tile.object)"
+                     class="tile-object-image">
+               }
           </div>
         }
       </div>

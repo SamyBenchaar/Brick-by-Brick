@@ -2,7 +2,8 @@ import { CommonModule } from '@angular/common';
 import { Component, HostListener, inject } from '@angular/core';
 import { GameMap } from '@app/classes/game-map';
 import { Tile } from '@app/classes/tile';
-import { MapSize, GRID_SIZE } from '@common/map';
+import { MapSize, GRID_SIZE, ObjectType } from '@common/map';
+import { ClickEvent } from '@app/constants/click-event-constants';
 import { MapEditorServiceService } from '@app/services/map-editor-service.service';
 
 @Component({
@@ -21,7 +22,7 @@ export class GameGridComponent {
 
   
   constructor() {
-    this.gameMap = new GameMap(MapSize.Medium);
+    this.gameMap = new GameMap(MapSize.Small);
   }
 
   getGrid(): Tile[][] {
@@ -32,7 +33,10 @@ export class GameGridComponent {
     return this.gridSize / this.gameMap.getSize();
   }
 
-  onTileMouseDown(x: number, y: number): void {
+  onTileMouseDown(x: number, y: number, event: MouseEvent): void {
+    if (event.button !== ClickEvent.Left) {
+      return;
+    }
     if(this.mapEditorService.getSelectedTileType() == null) {
       this.addObject(x, y);
     } else {
@@ -67,4 +71,9 @@ export class GameGridComponent {
       tile.object = selectedObject;
     }
   }
+
+  getObjectPath(object: ObjectType): string{
+    return `assets/images/${object}.png`;
+  }
+
 }

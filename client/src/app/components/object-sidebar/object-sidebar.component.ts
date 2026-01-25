@@ -3,6 +3,7 @@ import { Tile } from '@app/classes/tile';
 import { ObjectType } from '@common/map';
 import { CommonModule } from '@angular/common';
 import { MapEditorServiceService } from '@app/services/map-editor-service.service';
+import { OBJECT_DESCRIPTIONS } from '@app/constants/object-descriptions';
 
 @Component({
   selector: 'app-object-sidebar',
@@ -25,4 +26,8 @@ export class ObjectSidebarComponent {
     return this.mapEditorService.getSelectedObject() === type;
   }
 
+
+  getObjectDescription(type: ObjectType): string {
+    return OBJECT_DESCRIPTIONS[type];
+  }
 }

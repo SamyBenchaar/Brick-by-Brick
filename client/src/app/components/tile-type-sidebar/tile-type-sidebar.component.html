@@ -8,6 +8,7 @@
                 [class]="tile.getCssClass(type)"  
                 (click)="selectTileType(type)">
                 <span class="tile-label">{{type}}</span>
+                <span class="tile-description">{{getTileTypeDescription(type)}}</span>
             </div>
 
         }

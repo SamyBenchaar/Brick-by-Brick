@@ -13,7 +13,10 @@
     border: 1px solid #ccc;
     box-sizing: border-box;
     transition: background-color 0.2s;
-    
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
   }
   
@@ -33,18 +36,11 @@
     background-color: #666;
   }
   
-  .tile-flag {
-    background-color: #000000;
-  }
   
-  .tile-healingsanctuary {
-    background-color: #b8ffd3;
-  }
-  
-  .tile-combatsanctuary {
-    background-color: #f89b9b;
-  }
-
-  .tile-startpoint {
-    background-color: #355b42;
-  }
+.tile-object-image {
+  width: 60%;         
+  height: 60%;
+  object-fit: contain; 
+  pointer-events: none; 
+  z-index: 1;          
+}
