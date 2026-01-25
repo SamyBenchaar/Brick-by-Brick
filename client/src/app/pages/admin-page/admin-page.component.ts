@@ -2,12 +2,13 @@ import { DatePipe } from '@angular/common';
 import { Component } from '@angular/core';
 import { Game } from '@app/interfaces/game';
 import { CommunicationService } from '@app/services/communication/communication.service';
+import { RouterLink } from '@angular/router';   
 
 @Component({
     selector: 'app-admin-page',
     templateUrl: './admin-page.component.html',
     styleUrls: ['./admin-page.component.scss'],
-    imports: [DatePipe],
+    imports: [DatePipe, RouterLink],
 })
 export class AdminPageComponent {
 
