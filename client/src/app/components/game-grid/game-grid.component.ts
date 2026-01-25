@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, HostListener, inject } from '@angular/core';
 import { GameMap } from '@app/classes/game-map';
 import { Tile } from '@app/classes/tile';
-import { MapSize, GRID_SIZE, ObjectType } from '@common/map';
+import { MapSize, GRID_SIZE, ObjectType, TileType } from '@common/map';
 import { ClickEvent } from '@app/constants/click-event-constants';
 import { MapEditorServiceService } from '@app/services/map-editor-service.service';
 
@@ -74,6 +74,10 @@ export class GameGridComponent {
 
   getObjectPath(object: ObjectType): string{
     return `assets/images/${object}.png`;
+  }
+
+  getTilePath(tile: TileType): string{
+    return `assets/images/${tile}.jpg`;
   }
 
 }

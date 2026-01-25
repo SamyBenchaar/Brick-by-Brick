@@ -8,6 +8,7 @@
                [class]="'tile-' + tile.type"
                [style.width.px]="getTileSize()"
                [style.height.px]="getTileSize()"
+               [style.backgroundImage]="'url(' + getTilePath(tile.type)+ ')'"
                (mousedown)="onTileMouseDown(x, y, $event)"
                (mouseenter)="onTileMouseEnter(x, y)">
                @if(tile.object) {
