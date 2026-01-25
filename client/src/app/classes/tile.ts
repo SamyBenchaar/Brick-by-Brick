@@ -21,7 +21,7 @@ export class Tile {
 
     private readonly _x: number;
     private readonly _y: number;
-    constructor(type: TileType, x: number, y: number) {
+    constructor(type: TileType = TileType.Base, x: number, y: number) {
         this._x = x;
         this._y = y;
         this._type = type;

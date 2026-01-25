@@ -5,7 +5,7 @@ export class GameMap {
 
     private _size: MapSize;
     private _grid: Tile[][];
-    constructor(size: MapSize) {
+    constructor(size: MapSize = MapSize.Small) {
         this._size = size;
         this._grid = this.initGrid();
     }
