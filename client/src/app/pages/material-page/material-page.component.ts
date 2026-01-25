@@ -1,4 +1,4 @@
-import { NgClass } from '@angular/common';
+// import { NgClass } from '@angular/common';
 import { Component, inject, TemplateRef, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
@@ -31,7 +31,7 @@ export const MATERIAL_DEFAULT_PREBUILT_THEME = MATERIAL_PREBUILT_THEMES[0];
     selector: 'app-material-page',
     templateUrl: './material-page.component.html',
     styleUrls: ['./material-page.component.scss'],
-    imports: [AppMaterialModule, FormsModule, NgClass],
+    imports: [AppMaterialModule, FormsModule /*NgClass*/],
 })
 export class MaterialPageComponent {
     @ViewChild('merciDialogContent')
