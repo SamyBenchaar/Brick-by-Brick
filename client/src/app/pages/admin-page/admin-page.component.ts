@@ -1,18 +1,51 @@
-import { DatePipe } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { Component } from '@angular/core';
 import { Game } from '@app/interfaces/game';
 import { CommunicationService } from '@app/services/communication/communication.service';
-import { RouterLink } from '@angular/router';   
+import { Router } from '@angular/router';   
 
 @Component({
     selector: 'app-admin-page',
     templateUrl: './admin-page.component.html',
     styleUrls: ['./admin-page.component.scss'],
-    imports: [DatePipe, RouterLink],
+    imports: [CommonModule, DatePipe],
 })
 export class AdminPageComponent {
+    showGameCreationModal = false;
+    selectedSize: 'small' | 'medium' | 'large' | null = null;
 
-    constructor(private communicationService: CommunicationService) {}
+    gameSizes = [
+        { 
+            id: 'small' as const, 
+            label: 'Petite', 
+            gridSize: '10x10', 
+            players: '2 joueurs',
+            width: 10,
+            height: 10
+        },
+        { 
+            id: 'medium' as const, 
+            label: 'Moyenne', 
+            gridSize: '15x15', 
+            players: '2 à 4 joueurs',
+            width: 15,
+            height: 15
+        },
+        { 
+            id: 'large' as const, 
+            label: 'Grande', 
+            gridSize: '20x20', 
+            players: '2 à 6 joueurs',
+            width: 20,
+            height: 20
+        }
+    ];
+
+    constructor(
+        private communicationService: CommunicationService,
+        private router: Router
+    ) {}
+    
     games: Game[] = this.getAllGames();
 
     getAllGames(): Game[] {
@@ -32,5 +65,28 @@ export class AdminPageComponent {
         this.communicationService.deleteGame(game._id).subscribe(() => {
             this.games = this.games.filter(g => g._id !== game._id);
         });
+    }
+
+    openGameCreationModal(): void {
+        this.showGameCreationModal = true;
+        this.selectedSize = null;
+    }
+
+    closeGameCreationModal(): void {
+        this.showGameCreationModal = false;
+        this.selectedSize = null;
+    }
+
+    selectSize(size: 'small' | 'medium' | 'large'): void {
+        this.selectedSize = size;
+    }
+
+    confirmAndRedirect(): void {
+        if (this.selectedSize) {
+            // TODO: Passer les paramètres à la vue d'édition
+            this.router.navigate(['/edition'], { 
+                queryParams: { size: this.selectedSize } 
+            });
+        }
     }
 }

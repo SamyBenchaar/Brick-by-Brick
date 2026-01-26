@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, HostListener, inject } from '@angular/core';
+import { Component, HostListener, inject, Input, OnInit } from '@angular/core';
 import { GameMap } from '@app/classes/game-map';
 import { Tile } from '@app/classes/tile';
 import { MapSize, GRID_SIZE, ObjectType } from '@common/map';
@@ -13,16 +13,18 @@ import { MapEditorServiceService } from '@app/services/map-editor-service.servic
   templateUrl: './game-grid.component.html',
   styleUrl: './game-grid.component.scss',
 })
-export class GameGridComponent {
+export class GameGridComponent implements OnInit {
+  @Input() mapSize: MapSize = MapSize.Small; // Taille par défaut
 
   readonly gridSize = GRID_SIZE;
-  gameMap: GameMap;
+  gameMap!: GameMap;
   private mapEditorService = inject(MapEditorServiceService);
   private isDrawing = false;
 
   
-  constructor() {
-    this.gameMap = new GameMap(MapSize.Small);
+  ngOnInit(): void {
+    // Initialiser la grille avec la taille reçue en input
+    this.gameMap = new GameMap(this.mapSize);
   }
 
   getGrid(): Tile[][] {
