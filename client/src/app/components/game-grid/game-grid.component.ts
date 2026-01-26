@@ -2,9 +2,9 @@ import { CommonModule } from '@angular/common';
 import { Component, HostListener, inject } from '@angular/core';
 import { GameMap } from '@app/classes/game-map';
 import { Tile } from '@app/classes/tile';
-import { MapSize, GRID_SIZE, ObjectType } from '@common/map';
 import { ClickEvent } from '@app/constants/click-event-constants';
 import { MapEditorServiceService } from '@app/services/map-editor-service.service';
+import { GRID_SIZE, MapSize, ObjectType, TileType } from '@common/map';
 
 @Component({
   selector: 'app-game-grid',
@@ -19,8 +19,9 @@ export class GameGridComponent {
   gameMap: GameMap;
   private mapEditorService = inject(MapEditorServiceService);
   private isDrawing = false;
+  private isDeleting = false;
 
-  
+
   constructor() {
     this.gameMap = new GameMap(MapSize.Small);
   }
@@ -34,26 +35,45 @@ export class GameGridComponent {
   }
 
   onTileMouseDown(x: number, y: number, event: MouseEvent): void {
-    if (event.button !== ClickEvent.Left) {
-      return;
+    if (event.button === ClickEvent.Left) {
+      if (this.mapEditorService.getSelectedTileType() == null) {
+        this.addObject(x, y);
+      } else {
+        this.isDrawing = true;
+        this.changeTileType(x, y);
+      }
     }
-    if(this.mapEditorService.getSelectedTileType() == null) {
-      this.addObject(x, y);
-    } else {
-      this.isDrawing = true;
-      this.changeTileType(x,y);
+    if (event.button === ClickEvent.Right) {
+      event.preventDefault();//Pour ne pas ouvrir le menu contextuel
+      this.isDeleting = true;
+      const tile = this.gameMap.getTile(x, y);
+      if (tile) {
+        tile.type = TileType.Base;
+      }
     }
   }
 
   onTileMouseEnter(x: number, y: number): void {
-    if (this.isDrawing) {
-      this.changeTileType(x,y);
+    if (this.isDeleting) {
+      // Mode suppression: toujours remplacer par tuile de base, peu importe l'outil sélectionné
+      const tile = this.gameMap.getTile(x, y);
+      if (tile) {
+        tile.type = TileType.Base;
+      }
+    } else if (this.isDrawing) {
+      // Mode peinture: utiliser l'outil sélectionné
+      this.changeTileType(x, y);
     }
   }
 
   @HostListener('mouseup')
   onTileMouseUp(): void {
     this.isDrawing = false;
+    this.isDeleting = false;
+  }
+
+  onContextMenu(event: MouseEvent): void {
+    event.preventDefault(); // Empêche le menu contextuel d'apparaître
   }
 
   private changeTileType(x: number, y: number): void {
@@ -72,7 +92,7 @@ export class GameGridComponent {
     }
   }
 
-  getObjectPath(object: ObjectType): string{
+  getObjectPath(object: ObjectType): string {
     return `assets/images/${object}.png`;
   }
 
