@@ -5,6 +5,7 @@ import { Tile } from '@app/classes/tile';
 import { MapSize, GRID_SIZE, ObjectType, TileType } from '@common/map';
 import { ClickEvent } from '@app/constants/click-event-constants';
 import { MapEditorServiceService } from '@app/services/map-editor-service.service';
+import { ObjectCounterService } from '@app/services/object-counter/object-counter.service';
 
 @Component({
   selector: 'app-game-grid',
@@ -18,6 +19,7 @@ export class GameGridComponent {
   readonly gridSize = GRID_SIZE;
   gameMap: GameMap;
   private mapEditorService = inject(MapEditorServiceService);
+  private objectCounterService = inject(ObjectCounterService);
   private isDrawing = false;
 
   
@@ -67,8 +69,9 @@ export class GameGridComponent {
   private addObject(x: number, y: number): void {
     const selectedObject = this.mapEditorService.getSelectedObject();
     const tile = this.gameMap.getTile(x, y);
-    if (tile && selectedObject) {
+    if (tile && selectedObject && this.objectCounterService.canPlace(selectedObject)) {
       tile.object = selectedObject;
+      this.objectCounterService.place(selectedObject);
     }
   }
 

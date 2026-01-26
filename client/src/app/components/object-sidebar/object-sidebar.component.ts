@@ -3,6 +3,7 @@ import { Tile } from '@app/classes/tile';
 import { ObjectType } from '@common/map';
 import { CommonModule } from '@angular/common';
 import { MapEditorServiceService } from '@app/services/map-editor-service.service';
+import { ObjectCounterService } from '@app/services/object-counter/object-counter.service';
 import { OBJECT_DESCRIPTIONS } from '@app/constants/object-descriptions';
 
 @Component({
@@ -14,7 +15,7 @@ import { OBJECT_DESCRIPTIONS } from '@app/constants/object-descriptions';
 export class ObjectSidebarComponent {
   editableObjects = Tile.editableObjects;
 
-  
+  private objectCounterService = inject(ObjectCounterService);
   private mapEditorService = inject(MapEditorServiceService);
   readonly tile = Tile;
 
@@ -26,8 +27,15 @@ export class ObjectSidebarComponent {
     return this.mapEditorService.getSelectedObject() === type;
   }
 
+  isDisabled(type: ObjectType): boolean {
+    return !this.objectCounterService.canPlace(type);
+  }
 
   getObjectDescription(type: ObjectType): string {
     return OBJECT_DESCRIPTIONS[type];
+  }
+
+  getRemainingCount(object: ObjectType): number {
+    return this.objectCounterService.getRemainingCount(object);
   }
 }
