@@ -1,3 +1,10 @@
+@font-face {
+  font-family: 'MyFont';
+  src: url('/assets/fonts/ByteBounce.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
 .container {
     min-height: 100vh;
     background-image: url("/assets/menu_background_image.png");
@@ -8,15 +15,17 @@
 
 .justified {
     display: flex;
+    font-family: 'MyFont', sans-serif;
     flex-direction: column;
     justify-content: space-between;
     align-items: center;
-    color: white;
+    color: rgb(225, 207, 43);
     
 }
 // source pour le button: https://gradientbuttons.colorion.co/
 .button {
-    margin-top: 20px;
+    margin-top: 10px;
+    width: 300px;
     text-align: center;
     padding: 15px 45px;
     font-size: 16px;
@@ -26,7 +35,7 @@
     display: block; 
     border-radius: 10px; 
     background-size: 200% auto;
-    background-image: linear-gradient(to right, #16222A 0%, #3A6073  51%, #16222A  100%)
+    background-image: linear-gradient(to right, #603813 0%, #b29f94  51%, #603813  100%)
 }
 
 .button:hover {
@@ -40,14 +49,16 @@
     font-size: 30px;
     margin-top: 0.25em;
     margin-bottom: 0.25em;
-    color: green;
+    color: rgb(225, 207, 43);
 }
 
 .header-item {
     justify-content: center;
+    -webkit-text-stroke-width: 1px;
+    -webkit-text-stroke-color: black;
+    font-size: 200px;
     text-align: center;
-    margin-top: 70px;
-    font-size: 48px;
+    margin-top: 30px;
 }
 
 .footer-item {
