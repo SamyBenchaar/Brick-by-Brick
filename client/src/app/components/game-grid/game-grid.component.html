@@ -1,6 +1,7 @@
 <div class="grid-container"
     [style.width.px]="gridSize"
-    [style.height.px]="gridSize">
+    [style.height.px]="gridSize"
+    (contextmenu)="onContextMenu($event)">
     @for (row of getGrid(); track $index; let y = $index) {
       <div class="grid-row">
         @for (tile of row; track $index; let x = $index) {
