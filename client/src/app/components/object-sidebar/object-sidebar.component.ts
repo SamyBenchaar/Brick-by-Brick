@@ -38,4 +38,8 @@ export class ObjectSidebarComponent {
   getRemainingCount(object: ObjectType): number {
     return this.objectCounterService.getRemainingCount(object);
   }
+  
+  getObjectPath(object: ObjectType): string{
+    return `assets/images/${object}.png`;
+  }
 }

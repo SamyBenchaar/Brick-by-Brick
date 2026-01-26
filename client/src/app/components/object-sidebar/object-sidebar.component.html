@@ -7,7 +7,7 @@
                 [class.disabled]="isDisabled(type)"
                 [class]="tile.getCssClass(type)"  
                 (click)="selectObject(type)">
-                <span class="tile-label">{{type}}</span>
+                <img [src] = "getObjectPath(type)" class="object-icon">
                 <span class="object-counter">{{getRemainingCount(type)}}</span>
                 <span class="object-description">{{getObjectDescription(type)}}</span>
             </div>

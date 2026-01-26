@@ -54,8 +54,7 @@
     }
 
     &.disabled {
-      background: #7c7c7c;
-      opacity: 0.5;
+      filter: grayscale(80%);
     }
   }
   
@@ -95,6 +94,13 @@
     color: #fff;
     padding: 4px 7px;
     border-radius: 12px;
+  }
+
+  .object-icon {
+    position: absolute;
+    top: 40px;
+    width: 80px;
+    height: 80px;
   }
 
   .tile-flag {
