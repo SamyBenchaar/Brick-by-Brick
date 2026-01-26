@@ -35,16 +35,15 @@ export class GameGridComponent {
   }
 
   onTileMouseDown(x: number, y: number, event: MouseEvent): void {
-    if (event.button == ClickEvent.Left) {
+    if (event.button === ClickEvent.Left) {
       if (this.mapEditorService.getSelectedTileType() == null) {
         this.addObject(x, y);
-      }
-      else {
+      } else {
         this.isDrawing = true;
         this.changeTileType(x, y);
       }
     }
-    if (event.button == ClickEvent.Right || event.ctrlKey) {
+    if (event.button === ClickEvent.Right) {
       event.preventDefault();//Pour ne pas ouvrir le menu contextuel
       this.isDeleting = true;
       const tile = this.gameMap.getTile(x, y);
