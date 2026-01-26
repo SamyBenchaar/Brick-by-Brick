@@ -2,9 +2,9 @@ import { CommonModule } from '@angular/common';
 import { Component, HostListener, inject, Input, OnInit } from '@angular/core';
 import { GameMap } from '@app/classes/game-map';
 import { Tile } from '@app/classes/tile';
-import { MapSize, GRID_SIZE, ObjectType } from '@common/map';
 import { ClickEvent } from '@app/constants/click-event-constants';
 import { MapEditorServiceService } from '@app/services/map-editor-service.service';
+import { GRID_SIZE, MapSize, ObjectType } from '@common/map';
 
 @Component({
   selector: 'app-game-grid',
@@ -21,7 +21,7 @@ export class GameGridComponent implements OnInit {
   private mapEditorService = inject(MapEditorServiceService);
   private isDrawing = false;
 
-  
+
   ngOnInit(): void {
     // Initialiser la grille avec la taille reçue en input
     this.gameMap = new GameMap(this.mapSize);
@@ -39,17 +39,17 @@ export class GameGridComponent implements OnInit {
     if (event.button !== ClickEvent.Left) {
       return;
     }
-    if(this.mapEditorService.getSelectedTileType() == null) {
+    if (this.mapEditorService.getSelectedTileType() == null) {
       this.addObject(x, y);
     } else {
       this.isDrawing = true;
-      this.changeTileType(x,y);
+      this.changeTileType(x, y);
     }
   }
 
   onTileMouseEnter(x: number, y: number): void {
     if (this.isDrawing) {
-      this.changeTileType(x,y);
+      this.changeTileType(x, y);
     }
   }
 
@@ -74,7 +74,7 @@ export class GameGridComponent implements OnInit {
     }
   }
 
-  getObjectPath(object: ObjectType): string{
+  getObjectPath(object: ObjectType): string {
     return `assets/images/${object}.png`;
   }
 

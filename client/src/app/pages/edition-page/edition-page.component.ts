@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { GameGridComponent } from '@app/components/game-grid/game-grid.component';
-import { TileTypeSidebarComponent } from '@app/components/tile-type-sidebar/tile-type-sidebar.component';
 import { ObjectSidebarComponent } from '@app/components/object-sidebar/object-sidebar.component';
+import { TileTypeSidebarComponent } from '@app/components/tile-type-sidebar/tile-type-sidebar.component';
 import { MapSize } from '@common/map';
 
 @Component({

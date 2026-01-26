@@ -1,8 +1,8 @@
 import { CommonModule, DatePipe } from '@angular/common';
 import { Component } from '@angular/core';
+import { Router } from '@angular/router';
 import { Game } from '@app/interfaces/game';
 import { CommunicationService } from '@app/services/communication/communication.service';
-import { Router } from '@angular/router';   
 
 @Component({
     selector: 'app-admin-page',
@@ -15,26 +15,26 @@ export class AdminPageComponent {
     selectedSize: 'small' | 'medium' | 'large' | null = null;
 
     gameSizes = [
-        { 
-            id: 'small' as const, 
-            label: 'Petite', 
-            gridSize: '10x10', 
+        {
+            id: 'small' as const,
+            label: 'Petite',
+            gridSize: '10x10',
             players: '2 joueurs',
             width: 10,
             height: 10
         },
-        { 
-            id: 'medium' as const, 
-            label: 'Moyenne', 
-            gridSize: '15x15', 
+        {
+            id: 'medium' as const,
+            label: 'Moyenne',
+            gridSize: '15x15',
             players: '2 à 4 joueurs',
             width: 15,
             height: 15
         },
-        { 
-            id: 'large' as const, 
-            label: 'Grande', 
-            gridSize: '20x20', 
+        {
+            id: 'large' as const,
+            label: 'Grande',
+            gridSize: '20x20',
             players: '2 à 6 joueurs',
             width: 20,
             height: 20
@@ -45,7 +45,7 @@ export class AdminPageComponent {
         private communicationService: CommunicationService,
         private router: Router
     ) {}
-    
+
     games: Game[] = this.getAllGames();
 
     getAllGames(): Game[] {
@@ -84,8 +84,8 @@ export class AdminPageComponent {
     confirmAndRedirect(): void {
         if (this.selectedSize) {
             // TODO: Passer les paramètres à la vue d'édition
-            this.router.navigate(['/edition'], { 
-                queryParams: { size: this.selectedSize } 
+            this.router.navigate(['/edition'], {
+                queryParams: { size: this.selectedSize }
             });
         }
     }
