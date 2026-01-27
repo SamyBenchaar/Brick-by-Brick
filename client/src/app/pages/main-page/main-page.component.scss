@@ -20,28 +20,36 @@
     justify-content: space-between;
     align-items: center;
     color: rgb(225, 207, 43);
-    
 }
-// source pour le button: https://gradientbuttons.colorion.co/
+
 .button {
-    margin-top: 10px;
-    width: 300px;
-    text-align: center;
-    padding: 15px 45px;
-    font-size: 16px;
+    background-image: url('/assets/images/brick.png');
+    background-position: center;
+    background-repeat: no-repeat;
+    background-color: transparent;
+    background-size: contain;
+
+    width: 250px;
+    height: 90px;
+
+    cursor: pointer;
+
+    color: #000000;
+    font-family: 'MyFont', sans-serif;
+    font-size: 25px;
     text-transform: uppercase;
-    transition: 0.5s;
-    color: #fff;   
-    display: block; 
-    border-radius: 10px; 
-    background-size: 200% auto;
-    background-image: linear-gradient(to right, #603813 0%, #b29f94  51%, #603813  100%)
+    border: none;
 }
 
 .button:hover {
-    background-position: right center; 
-    color: #fff;
-    text-decoration: none;
+    filter: brightness(1.2);
+}
+
+.button-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
 }
          
 
@@ -59,6 +67,7 @@
     font-size: 200px;
     text-align: center;
     margin-top: 30px;
+    margin-bottom: 10px;
 }
 
 .footer-item {
@@ -75,4 +84,3 @@
   height: 100vh;
   overflow: hidden;   
 }
-
