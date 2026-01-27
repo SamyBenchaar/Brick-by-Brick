@@ -18,15 +18,19 @@
   }
 
   .game-info-container {
-    width: 100%;
-    max-width: 800px;           
+    // width: 100%;
+    // max-width: 600px;           
     display: flex;
-    flex-direction: column;
-    gap: 20px;                  
-    padding: 20px;
-    background-color: #f9f9f9;  
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    flex-direction: row;
+    gap: 150px;                  
+
+  }
+
+  .name-input {
+    width: 200px
+  }
 
 
+  .description-input {
+    width: 400px
   }
