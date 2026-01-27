@@ -1,4 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ActivatedRoute } from '@angular/router';
+import { of } from 'rxjs';
 
 import { EditionPageComponent } from './edition-page.component';
 
@@ -9,6 +11,14 @@ describe('EditionPageComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [EditionPageComponent],
+      providers: [
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            queryParams: of({ size: 'small' }),
+          },
+        },
+      ],
     })
     .compileComponents();
 

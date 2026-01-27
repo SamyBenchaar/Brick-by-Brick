@@ -25,7 +25,6 @@ export class GameGridComponent implements OnInit {
   private isDeleting = false;
 
 
-
   ngOnInit(): void {
     // Initialiser la grille avec la taille reçue en input
     this.gameMap = new GameMap(this.mapSize);

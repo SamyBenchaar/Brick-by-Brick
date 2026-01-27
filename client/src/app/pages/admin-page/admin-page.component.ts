@@ -21,7 +21,7 @@ export class AdminPageComponent {
             gridSize: '10x10',
             players: '2 joueurs',
             width: 10,
-            height: 10
+            height: 10,
         },
         {
             id: 'medium' as const,
@@ -29,7 +29,7 @@ export class AdminPageComponent {
             gridSize: '15x15',
             players: '2 à 4 joueurs',
             width: 15,
-            height: 15
+            height: 15,
         },
         {
             id: 'large' as const,
@@ -37,13 +37,13 @@ export class AdminPageComponent {
             gridSize: '20x20',
             players: '2 à 6 joueurs',
             width: 20,
-            height: 20
-        }
+            height: 20,
+        },
     ];
 
     constructor(
         private communicationService: CommunicationService,
-        private router: Router
+        private router: Router,
     ) {}
 
     games: Game[] = this.getAllGames();
@@ -85,7 +85,7 @@ export class AdminPageComponent {
         if (this.selectedSize) {
             // TODO: Passer les paramètres à la vue d'édition
             this.router.navigate(['/edition'], {
-                queryParams: { size: this.selectedSize }
+                queryParams: { size: this.selectedSize },
             });
         }
     }

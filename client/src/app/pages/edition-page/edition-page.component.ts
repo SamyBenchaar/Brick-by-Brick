@@ -20,7 +20,7 @@ export class EditionPageComponent implements OnInit {
   ngOnInit(): void {
     // Récupérer le paramètre 'size' depuis l'URL
     this.route.queryParams.subscribe(params => {
-      this.selectedSize = params['size'] || null;
+      this.selectedSize = params.size || null;
       this.updateGridDimensions();
     });
   }
@@ -39,8 +39,6 @@ export class EditionPageComponent implements OnInit {
       default:
         this.gridDimensions = { width: 10, height: 10 }; // Par défaut
     }
-    console.log('Taille sélectionnée:', this.selectedSize);
-    console.log('Dimensions de la grille:', this.gridDimensions);
   }
 
   getMapSize(): MapSize {
