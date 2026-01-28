@@ -2,10 +2,10 @@ import { CommonModule } from '@angular/common';
 import { Component, HostListener, inject } from '@angular/core';
 import { GameMap } from '@app/classes/game-map';
 import { Tile } from '@app/classes/tile';
-import { MapSize, GRID_SIZE, ObjectType, TileType } from '@common/map';
 import { ClickEvent } from '@app/constants/click-event-constants';
 import { MapEditorServiceService } from '@app/services/map-editor-service.service';
 import { ObjectCounterService } from '@app/services/object-counter/object-counter.service';
+import { GRID_SIZE, MapSize, ObjectType, TileType } from '@common/map';
 
 @Component({
   selector: 'app-game-grid',
@@ -51,6 +51,7 @@ export class GameGridComponent {
       const tile = this.gameMap.getTile(x, y);
       if (tile) {
         tile.type = TileType.Base;
+        tile.object = undefined;
       }
     }
   }
@@ -61,6 +62,7 @@ export class GameGridComponent {
       const tile = this.gameMap.getTile(x, y);
       if (tile) {
         tile.type = TileType.Base;
+        tile.object = undefined;
       }
     } else if (this.isDrawing) {
       // Mode peinture: utiliser l'outil sélectionné
@@ -99,7 +101,7 @@ export class GameGridComponent {
     return `assets/images/${object}.png`;
   }
 
-  getTilePath(tile: TileType): string{
+  getTilePath(tile: TileType): string {
     return `assets/images/${tile}.jpg`;
   }
 

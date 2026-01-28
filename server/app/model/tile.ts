@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { ApiProperty } from '@nestjs/swagger';
-import { MapObjects, mapObjectsSchema } from './map-objects';
+import { MapObject, mapObjectSchema } from './map-objects';
 
 @Schema({ _id: false })
 export class Tile {
@@ -13,8 +13,8 @@ export class Tile {
     state?: string;
 
     @ApiProperty()
-    @Prop({ required: false, type: mapObjectsSchema })
-    objects?: MapObjects;
+    @Prop({ required: false, type: mapObjectSchema })
+    object?: MapObject;
 }
 
 export const tileSchema = SchemaFactory.createForClass(Tile);

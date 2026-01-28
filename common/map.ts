@@ -3,6 +3,7 @@ export enum TileType {
     Water = 'water',
     Ice = 'ice',
     Wall = 'wall',
+    Door = 'door',
 }
 
 export enum ObjectType {
@@ -13,14 +14,20 @@ export enum ObjectType {
 }
 
 export enum MapSize {
-    Small = 10,
-    Medium = 15,
-    Large = 20,
+    Small = 'Small',
+    Medium = 'Medium',
+    Large = 'Large',
 }
 
 export const GRID_SIZE = 750;
 
 // Mapping des tailles de carte
+export const MAP_SIZE_DIMENSIONS = {
+    'Small': 10,
+    'Medium': 15,
+    'Large': 20,
+} as const;
+
 export const MAP_SIZES = {
     Small: 10,
     Medium: 15,
