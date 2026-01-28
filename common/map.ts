@@ -3,13 +3,14 @@ export enum TileType {
     Water = 'water',
     Ice = 'ice',
     Wall = 'wall',
+    Door = 'door',
 }
 
 export enum ObjectType {
     FLAG = 'flag',
     COMBATSANCTUARY = 'combatsanctuary',
     HEALINGSANCTUARY = 'healingsanctuary',
-    STARTPOINT = 'startpoint'
+    STARTPOINT = 'startingPoint'
 }
 
 export enum MapSize {
@@ -19,13 +20,6 @@ export enum MapSize {
 }
 
 export const GRID_SIZE = 750;
-
-// Mapping des tailles de carte
-export const MAP_SIZES = {
-    Small: 10,
-    Medium: 15,
-    Large: 20,
-} as const;
 
 // Constantes pour la validation
 export const MIN_TERRAIN_COVERAGE = 0.5;

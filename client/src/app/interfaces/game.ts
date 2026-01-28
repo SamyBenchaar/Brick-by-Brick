@@ -1,40 +1,28 @@
 export interface MapConfig {
     size: string;
-    gridSize: GridSize;
-    gameMode: string;
-}
-
-export interface GridSize {
-    width: number;
-    height: number;
+    tiles: Tile[][];
 }
 
 export interface Tile {
     type: string;
     state?: string;
+    object?: MapObject;
 }
 
-export interface Position {
-    x: number;
-    y: number;
-}
-
-export interface MapObjects {
-    startingPoints: Position[];
-    flag?: Position;
-    healSanctuaries: Position[];
-    combatSanctuaries: Position[];
+export interface MapObject {
+    flag?: boolean;
+    type: string;
 }
 
 export interface Game {
+    _id: string;
     name: string;
     description: string;
     isVisible: boolean;
+    numberOfPlayers: number;
+    gameMode: string;
     mapConfig: MapConfig;
-    tiles: Tile[][];
-    objects: MapObjects;
     previewImage?: string;
     createdAt?: Date;
     lastModified?: Date;
-    _id: string;
 }

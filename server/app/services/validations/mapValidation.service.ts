@@ -1,6 +1,6 @@
 import { Game, GameDocument } from '@app/model/game';
 import { Tile } from '@app/model/tile';
-import { MAP_SIZES, MIN_TERRAIN_COVERAGE, PERCENTAGE_MULTIPLIER, PLAYABLE_TYPES } from '@common/map';
+import { MapSize, MIN_TERRAIN_COVERAGE, PERCENTAGE_MULTIPLIER, PLAYABLE_TYPES } from '@common/map';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -23,7 +23,7 @@ export class MapValidationService {
     }
 
     private validateTerrainCoverage(gameData: Partial<Game>): void {
-        const gridSize = MAP_SIZES[gameData.mapConfig.size];
+        const gridSize = MapSize[gameData.mapConfig.size as keyof typeof MapSize];
         const totalSurface = gridSize * gridSize;
         const playableTileCount = this.countPlayableTiles(gameData);
 
@@ -41,7 +41,7 @@ export class MapValidationService {
         let numberOfStartingPoints = 0;
         for (const row of gameData.mapConfig.tiles) {
             for (const tile of row) {
-                if (tile.objects?.type === 'startingPoints') {
+                if (tile.object?.type === 'startingPoint') {
                     numberOfStartingPoints++;
                 }
             }
@@ -56,7 +56,7 @@ export class MapValidationService {
 
     private validateTerrainAccessibility(gameData: Partial<Game>): void {
         const tiles = gameData.mapConfig.tiles;
-        const gridSize = MAP_SIZES[gameData.mapConfig.size];
+        const gridSize = MapSize[gameData.mapConfig.size as keyof typeof MapSize];
         const totalPlayableTiles = this.countPlayableTiles(gameData);
 
         // Trouver une tuile de départ
@@ -142,7 +142,7 @@ export class MapValidationService {
     private findStartingPoint(tiles: Tile[][]): { x: number; y: number } | null {
         for (let y = 0; y < tiles.length; y++) {
             for (let x = 0; x < tiles[y].length; x++) {
-                if (tiles[y][x].objects?.type === 'startingPoints') {
+                if (tiles[y][x].object?.type === 'startingPoint') {
                     return { x, y };
                 }
             }

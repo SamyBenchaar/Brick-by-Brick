@@ -1,23 +1,22 @@
-import { TileType, ObjectType } from '@common/map';
-
+import { ObjectType, TileType } from '@common/map';
 
 export class Tile {
 
-    static readonly editableTypes: TileType[] = 
-    [
-        TileType.Water,
-        TileType.Ice,
-        TileType.Wall,
-    ];
-    static readonly editableObjects: ObjectType[] = 
-    [
-        ObjectType.FLAG,
-        ObjectType.HEALINGSANCTUARY,
-        ObjectType.COMBATSANCTUARY,
-        ObjectType.STARTPOINT,
-    ];
+    static readonly editableTypes: TileType[] =
+        [
+            TileType.Water,
+            TileType.Ice,
+            TileType.Wall,
+        ];
+    static readonly editableObjects: ObjectType[] =
+        [
+            ObjectType.FLAG,
+            ObjectType.HEALINGSANCTUARY,
+            ObjectType.COMBATSANCTUARY,
+            ObjectType.STARTPOINT,
+        ];
     private _type: TileType;
-    private _object: ObjectType;
+    private _object: ObjectType | undefined;
 
     private readonly _x: number;
     private readonly _y: number;
@@ -41,13 +40,13 @@ export class Tile {
         this._type = type;
     }
 
-    get object() {
+    get object(): ObjectType | undefined {
         return this._object;
     }
-    set object(type: ObjectType) {
+    set object(type: ObjectType | undefined) {
         this._object = type;
     }
-    
+
     static getCssClass(type: TileType | ObjectType): string {
         return `tile-${type}`;
     }
