@@ -14,5 +14,22 @@
     flex: 1;                    
     padding: 20px;             
     align-items: center;  
-    gap: 20px;
+    gap: 30px;
+  }
+
+  .game-info-container {    
+    display: flex;
+    flex-direction: row;
+    gap: 150px;                  
+
+  }
+
+  .name-input {
+    width: 200px
+  }
+
+
+  .description-input {
+    width: 400px
+
   }
