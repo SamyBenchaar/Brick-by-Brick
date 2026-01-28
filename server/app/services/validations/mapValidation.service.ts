@@ -1,8 +1,9 @@
 import { Game, GameDocument } from '@app/model/game';
+import { Tile } from '@app/model/tile';
+import { MAP_SIZES, MIN_TERRAIN_COVERAGE, PERCENTAGE_MULTIPLIER, PLAYABLE_TYPES } from '@common/map';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { MIN_TERRAIN_COVERAGE, PERCENTAGE_MULTIPLIER, PLAYABLE_TYPES } from './mapValidation.constants';
 
 @Injectable()
 export class MapValidationService {
@@ -22,8 +23,8 @@ export class MapValidationService {
     }
 
     private validateTerrainCoverage(gameData: Partial<Game>): void {
-        const { gridSize } = gameData.mapConfig;
-        const totalSurface = gridSize.width * gridSize.height;
+        const gridSize = MAP_SIZES[gameData.mapConfig.size];
+        const totalSurface = gridSize * gridSize;
         const playableTileCount = this.countPlayableTiles(gameData);
 
         const coverage = playableTileCount / totalSurface;
@@ -37,7 +38,14 @@ export class MapValidationService {
     }
 
     private validateStartingPoints(gameData: Partial<Game>): void {
-        const numberOfStartingPoints = gameData.objects.startingPoints.length;
+        let numberOfStartingPoints = 0;
+        for (const row of gameData.mapConfig.tiles) {
+            for (const tile of row) {
+                if (tile.objects?.type === 'startingPoints') {
+                    numberOfStartingPoints++;
+                }
+            }
+        }
 
         if (numberOfStartingPoints !== gameData.numberOfPlayers) {
             throw new BadRequestException(
@@ -47,18 +55,19 @@ export class MapValidationService {
     }
 
     private validateTerrainAccessibility(gameData: Partial<Game>): void {
-        const { gridSize } = gameData.mapConfig;
+        const tiles = gameData.mapConfig.tiles;
+        const gridSize = MAP_SIZES[gameData.mapConfig.size];
         const totalPlayableTiles = this.countPlayableTiles(gameData);
 
-        // Trouver une tuile de départ (utiliser le premier starting point)
-        const startPoint = gameData.objects.startingPoints[0];
+        // Trouver une tuile de départ
+        const startPoint = this.findStartingPoint(tiles);
         if (!startPoint) {
             throw new BadRequestException('Aucun point de départ trouvé pour vérifier l\'accessibilité');
         }
 
         // BFS pour compter les tuiles accessibles
-        const visited = Array(gridSize.height).fill(null).map(
-            () => Array(gridSize.width).fill(false),
+        const visited = Array(gridSize).fill(null).map(
+            () => Array(gridSize).fill(false),
         );
         const queue: { x: number; y: number }[] = [];
 
@@ -67,10 +76,10 @@ export class MapValidationService {
         let accessibleTiles = 1;
 
         const directions = [
-            { dx: 0, dy: -1 }, // haut
-            { dx: 0, dy: 1 },  // bas
-            { dx: -1, dy: 0 }, // gauche
-            { dx: 1, dy: 0 },  // droite
+            { dx: 0, dy: -1 },
+            { dx: 0, dy: 1 },
+            { dx: -1, dy: 0 },
+            { dx: 1, dy: 0 },
         ];
 
         while (queue.length > 0) {
@@ -84,7 +93,7 @@ export class MapValidationService {
                 const newY = current.y + dir.dy;
 
                 // Vérifier les limites
-                if (newX < 0 || newX >= gridSize.width || newY < 0 || newY >= gridSize.height) {
+                if (newX < 0 || newX >= gridSize || newY < 0 || newY >= gridSize) {
                     continue;
                 }
 
@@ -94,7 +103,7 @@ export class MapValidationService {
                 }
 
                 // Vérifier si la tuile est jouable
-                const tile = gameData.tiles[newY][newX];
+                const tile = tiles[newY][newX];
                 if (!PLAYABLE_TYPES.includes(tile.type)) {
                     continue;
                 }
@@ -116,18 +125,29 @@ export class MapValidationService {
     }
 
     private countPlayableTiles(gameData: Partial<Game>): number {
-        const { gridSize } = gameData.mapConfig;
+        const tiles = gameData.mapConfig.tiles;
         let count = 0;
 
-        for (let y = 0; y < gridSize.height; y++) {
-            for (let x = 0; x < gridSize.width; x++) {
-                if (PLAYABLE_TYPES.includes(gameData.tiles[y][x].type)) {
+        for (const row of tiles) {
+            for (const tile of row) {
+                if (PLAYABLE_TYPES.includes(tile.type)) {
                     count++;
                 }
             }
         }
 
         return count;
+    }
+
+    private findStartingPoint(tiles: Tile[][]): { x: number; y: number } | null {
+        for (let y = 0; y < tiles.length; y++) {
+            for (let x = 0; x < tiles[y].length; x++) {
+                if (tiles[y][x].objects?.type === 'startingPoints') {
+                    return { x, y };
+                }
+            }
+        }
+        return null;
     }
 
 }
