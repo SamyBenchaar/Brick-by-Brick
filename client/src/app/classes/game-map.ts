@@ -1,5 +1,5 @@
 import { Tile } from '@app/classes/tile';
-import { MAP_SIZE_DIMENSIONS, MapSize, TileType } from '@common/map';
+import { MapSize, TileType } from '@common/map';
 
 export class GameMap {
 
@@ -10,11 +10,10 @@ export class GameMap {
         this._grid = this.initGrid();
     }
     private initGrid(): Tile[][] {
-        const dimension = MAP_SIZE_DIMENSIONS[this._size];
         const grid: Tile[][] = [];
-        for (let y = 0; y < dimension; y++) {
+        for (let y = 0; y < this._size; y++) {
             grid[y] = [];
-            for (let x = 0; x < dimension; x++) {
+            for (let x = 0; x < this._size; x++) {
                 grid[y][x] = new Tile(TileType.Base, x, y);
                 grid[y][x].object = undefined;
             }
@@ -26,12 +25,11 @@ export class GameMap {
         return this._grid;
     }
     getSize(): number {
-        return MAP_SIZE_DIMENSIONS[this._size];
+        return this._size;
     }
 
     getTile(x: number, y: number): Tile | null {
-        const dimension = MAP_SIZE_DIMENSIONS[this._size];
-        if (x >= 0 && x < dimension && y >= 0 && y < dimension) {
+        if (x >= 0 && x < this._size && y >= 0 && y < this._size) {
             return this._grid[y][x];
         }
         return null;

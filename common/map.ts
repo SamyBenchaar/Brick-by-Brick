@@ -10,29 +10,16 @@ export enum ObjectType {
     FLAG = 'flag',
     COMBATSANCTUARY = 'combatsanctuary',
     HEALINGSANCTUARY = 'healingsanctuary',
-    STARTPOINT = 'startpoint'
+    STARTPOINT = 'startingPoint'
 }
 
 export enum MapSize {
-    Small = 'Small',
-    Medium = 'Medium',
-    Large = 'Large',
+    Small = 10,
+    Medium = 15,
+    Large = 20,
 }
 
 export const GRID_SIZE = 750;
-
-// Mapping des tailles de carte
-export const MAP_SIZE_DIMENSIONS = {
-    'Small': 10,
-    'Medium': 15,
-    'Large': 20,
-} as const;
-
-export const MAP_SIZES = {
-    Small: 10,
-    Medium: 15,
-    Large: 20,
-} as const;
 
 // Constantes pour la validation
 export const MIN_TERRAIN_COVERAGE = 0.5;

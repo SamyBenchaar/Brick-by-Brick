@@ -8,7 +8,7 @@ export class MapObject {
     flag?: boolean;
 
     @ApiProperty()
-    @Prop({ required: true, enum: ['flag', 'startpoint', 'healingsanctuary', 'combatsanctuary'] })
+    @Prop({ required: true, enum: ['flag', 'startingPoint', 'healingsanctuary', 'combatsanctuary'] })
     type: string;
 }
 
