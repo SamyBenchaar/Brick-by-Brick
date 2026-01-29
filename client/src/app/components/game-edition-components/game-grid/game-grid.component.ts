@@ -33,7 +33,7 @@ export class GameGridComponent implements OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['gameData'] && this.gameData) {
+    if (changes.gameData && this.gameData) {
       this.loadGameData();
     }
   }
@@ -67,8 +67,6 @@ export class GameGridComponent implements OnChanges {
           }
         }
       }
-    } else {
-      console.warn('No tiles data found in game config');
     }
   }
 
@@ -80,7 +78,7 @@ export class GameGridComponent implements OnChanges {
     return this.gridSize / this.gameMap.getSize();
   }
 
-  getTile(x:number, y:number): Tile | null {
+  getTile(x: number, y: number): Tile | null {
     return this.gameMap.getTile(x, y);
   }
 
@@ -97,7 +95,7 @@ export class GameGridComponent implements OnChanges {
       event.preventDefault();//Pour ne pas ouvrir le menu contextuel
       this.isDeleting = true;
       this.applyDeletion(x, y);
-      }  
+    }
   }
 
 
@@ -117,15 +115,15 @@ export class GameGridComponent implements OnChanges {
   }
 
   @HostListener('window:keydown', ['$event'])
-  onKeyDown(event:KeyboardEvent): void {
-    if(event.key === 'Shift'){
+  onKeyDown(event: KeyboardEvent): void {
+    if (event.key === 'Shift') {
       this.isShiftPressed = true;
     }
   }
 
   @HostListener('window:keyup', ['$event'])
-  onKeyUp(event:KeyboardEvent): void {
-    if(event.key === 'Shift'){
+  onKeyUp(event: KeyboardEvent): void {
+    if (event.key === 'Shift') {
       this.isShiftPressed = false;
     }
   }
@@ -134,13 +132,13 @@ export class GameGridComponent implements OnChanges {
     event.preventDefault(); // Empêche le menu contextuel d'apparaître
   }
 
-  applyDeletion(x: number, y:number): void {
+  applyDeletion(x: number, y: number): void {
     const tile = this.getTile(x, y);
     if (tile) {
-      if(this.isShiftPressed){
+      if (this.isShiftPressed) {
         this.removeObject(x, y);
-      } else{ 
-      tile.type = TileType.Base;
+      } else {
+        tile.type = TileType.Base;
       }
     }
   }
@@ -153,9 +151,9 @@ export class GameGridComponent implements OnChanges {
     }
   }
 
-  isTileObjectFree(tile:Tile): boolean {
-    if(tile){
-      if(tile.object){
+  isTileObjectFree(tile: Tile): boolean {
+    if (tile) {
+      if (tile.object) {
         return false;
       }
     }
@@ -166,14 +164,14 @@ export class GameGridComponent implements OnChanges {
     const selectedObject = this.mapEditorService.getSelectedObject();
     const tile = this.getTile(x, y);
     if (tile && selectedObject && this.objectCounterService.canPlace(selectedObject) && this.isTileObjectFree(tile)) {
-      if (tile.type === "wall"){
+      if (tile.type === 'wall') {
         return;
       }
       tile.object = selectedObject;
       this.objectCounterService.place(selectedObject);
     }
   }
-  
+
   private removeObject(x: number, y: number): void {
     const tile = this.getTile(x, y);
     if (tile && tile.object) {

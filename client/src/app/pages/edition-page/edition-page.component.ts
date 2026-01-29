@@ -21,7 +21,7 @@ export class EditionPageComponent implements OnInit {
 
   constructor(
     private route: ActivatedRoute,
-    private communicationService: CommunicationService
+    private communicationService: CommunicationService,
   ) {}
 
   ngOnInit(): void {
