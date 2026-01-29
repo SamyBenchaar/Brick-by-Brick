@@ -24,7 +24,8 @@
             </app-text-input>
 
         </div>
-        <app-game-grid [gameData]="currentGame"></app-game-grid>
+        <app-game-grid [mapSize]="getMapSize()" [gameData]="currentGame"></app-game-grid>
+
 
         <div class="buttons">
             <button class="button" style="background-image: url('/assets/images/4x1_green.png');">

@@ -6,6 +6,8 @@ import { TextInputComponent } from '@app/components/game-edition-components/text
 import { TileTypeSidebarComponent } from '@app/components/game-edition-components/tile-type-sidebar/tile-type-sidebar.component';
 import { Game } from '@app/interfaces/game';
 import { CommunicationService } from '@app/services/communication/communication.service';
+import { MapSize } from '@common/map';
+
 
 @Component({
   selector: 'app-edition-page',
@@ -14,6 +16,8 @@ import { CommunicationService } from '@app/services/communication/communication.
   styleUrl: './edition-page.component.scss',
 })
 export class EditionPageComponent implements OnInit {
+  selectedSize: 'small' | 'medium' | 'large' | null = null;
+  gridDimensions = { width: MapSize.Small, height: MapSize.Small }; // Valeur par défaut
   gameName: string = '';
   gameDescription: string = '';
   gameId: string = '';
@@ -25,11 +29,30 @@ export class EditionPageComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    // Récupérer le paramètre 'size' depuis l'URL
     this.gameId = this.route.snapshot.paramMap.get('game_id') || '';
     if (this.gameId) {
       this.loadGame();
     }
+    this.route.queryParams.subscribe(params => {
+      this.selectedSize = params.size || null;
+    });
+    
   }
+
+  getMapSize(): MapSize {
+    switch (this.selectedSize) {
+      case 'small':
+        return MapSize.Small;
+      case 'medium':
+        return MapSize.Medium;
+      case 'large':
+        return MapSize.Large;
+      default:
+        return MapSize.Small; // Par défaut
+    }
+  }
+
 
   private loadGame(): void {
     this.communicationService.getGameById(this.gameId).subscribe((game) => {
