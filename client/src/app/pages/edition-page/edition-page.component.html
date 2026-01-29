@@ -1,7 +1,41 @@
-<div class="edition-container">
-    <app-tile-type-sidebar></app-tile-type-sidebar>
-    <app-object-sidebar></app-object-sidebar>
+<div class="edition-container pixel-font">
+    <div class="sidebar-container">
+        <app-tile-type-sidebar></app-tile-type-sidebar>
+        <app-object-sidebar></app-object-sidebar>
+    </div>
     <div class="edition-layout">
-        <app-game-grid [mapSize]="getMapSize()"></app-game-grid>
+        
+        <div class="game-info-container">
+            
+            <app-text-input
+            class="name-input pixel-font"
+            label="Nom de la partie"
+            placeholder="Entrez le nom de la partie"
+            [value]="gameName"
+            (valueChange)="gameName = $event">
+            </app-text-input>
+
+            <app-text-input
+            class="description-input pixel-font"
+            label="Description"
+            placeholder="Entrez une description"
+            [value]="gameDescription"
+            (valueChange)="gameDescription = $event">
+            </app-text-input>
+
+        </div>
+        <app-game-grid [mapSize]="getMapSize()" [gameData]="currentGame"></app-game-grid>
+
+
+        <div class="buttons">
+            <button class="button" style="background-image: url('/assets/images/4x1_green.png');">
+            Enregistrer
+            </button>
+
+            <button class="button" style="background-image: url('/assets/images/4x1_yellow.png');">
+            Réinitialiser
+            </button>
+
+        </div>
     </div>
 </div>

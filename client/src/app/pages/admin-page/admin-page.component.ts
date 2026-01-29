@@ -1,15 +1,16 @@
 import { CommonModule, DatePipe } from '@angular/common';
 import { Component } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router,RouterLink } from '@angular/router';
 import { Game } from '@app/interfaces/game';
 import { CommunicationService } from '@app/services/communication/communication.service';
 import { FormsModule } from '@angular/forms';
+
 
 @Component({
     selector: 'app-admin-page',
     templateUrl: './admin-page.component.html',
     styleUrls: ['./admin-page.component.scss'],
-    imports: [CommonModule, DatePipe, FormsModule],
+    imports: [CommonModule, DatePipe, FormsModule,RouterLink],
 })
 export class AdminPageComponent {
     showGameCreationModal = false;

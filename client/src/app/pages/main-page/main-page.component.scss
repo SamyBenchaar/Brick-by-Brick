@@ -1,3 +1,10 @@
+@font-face {
+  font-family: 'MyFont';
+  src: url('/assets/fonts/ByteBounce.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
 .container {
     min-height: 100vh;
     background-image: url("/assets/menu_background_image.png");
@@ -8,31 +15,41 @@
 
 .justified {
     display: flex;
+    font-family: 'MyFont', sans-serif;
     flex-direction: column;
     justify-content: space-between;
     align-items: center;
-    color: white;
-    
+    color: rgb(225, 207, 43);
 }
-// source pour le button: https://gradientbuttons.colorion.co/
+
 .button {
-    margin-top: 20px;
-    text-align: center;
-    padding: 15px 45px;
-    font-size: 16px;
+    background-image: url('/assets/images/brick.png');
+    background-position: center;
+    background-repeat: no-repeat;
+    background-color: transparent;
+    background-size: contain;
+
+    width: 250px;
+    height: 90px;
+
+    cursor: pointer;
+
+    color: #000000;
+    font-family: 'MyFont', sans-serif;
+    font-size: 25px;
     text-transform: uppercase;
-    transition: 0.5s;
-    color: #fff;   
-    display: block; 
-    border-radius: 10px; 
-    background-size: 200% auto;
-    background-image: linear-gradient(to right, #16222A 0%, #3A6073  51%, #16222A  100%)
+    border: none;
 }
 
 .button:hover {
-    background-position: right center; 
-    color: #fff;
-    text-decoration: none;
+    filter: brightness(1.2);
+}
+
+.button-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
 }
          
 
@@ -40,14 +57,17 @@
     font-size: 30px;
     margin-top: 0.25em;
     margin-bottom: 0.25em;
-    color: green;
+    color: rgb(225, 207, 43);
 }
 
 .header-item {
     justify-content: center;
+    -webkit-text-stroke-width: 1px;
+    -webkit-text-stroke-color: black;
+    font-size: 200px;
     text-align: center;
-    margin-top: 70px;
-    font-size: 48px;
+    margin-top: 30px;
+    margin-bottom: 10px;
 }
 
 .footer-item {
@@ -64,4 +84,3 @@
   height: 100vh;
   overflow: hidden;   
 }
-

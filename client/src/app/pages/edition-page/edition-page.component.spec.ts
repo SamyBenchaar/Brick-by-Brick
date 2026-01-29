@@ -1,3 +1,5 @@
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
@@ -12,10 +14,18 @@ describe('EditionPageComponent', () => {
     await TestBed.configureTestingModule({
       imports: [EditionPageComponent],
       providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
         {
           provide: ActivatedRoute,
           useValue: {
-            queryParams: of({ size: 'small' }),
+            snapshot: {
+              paramMap: {
+                get: () => '123',
+              },
+            },
+            queryParams: of({ id: '123' }),
+            params: of({ id: '123' }),
           },
         },
       ],

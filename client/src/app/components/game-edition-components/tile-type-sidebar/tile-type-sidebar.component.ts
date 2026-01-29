@@ -29,5 +29,9 @@ export class TileTypeSidebarComponent {
   getTileTypeDescription(type: TileType): string {
     return TILE_TYPE_DESCRIPTIONS[type];
   }
+  
+  getTilePath(tile: TileType): string {
+    return `assets/images/${tile}.jpg`;
+  }
 
 }

@@ -1,24 +1,15 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { ApiProperty } from '@nestjs/swagger';
-import { Position, positionSchema } from './position';
 
 @Schema({ _id: false })
-export class MapObjects {
+export class MapObject {
     @ApiProperty()
-    @Prop({ required: true, type: [positionSchema] })
-    startingPoints: Position[];
+    @Prop({ required: false })
+    flag?: boolean;
 
     @ApiProperty()
-    @Prop({ required: false, type: positionSchema })
-    flag?: Position;
-
-    @ApiProperty()
-    @Prop({ required: true, type: [positionSchema] })
-    healSanctuaries: Position[];
-
-    @ApiProperty()
-    @Prop({ required: true, type: [positionSchema] })
-    combatSanctuaries: Position[];
+    @Prop({ required: true, enum: ['flag', 'startingpoint', 'healingsanctuary', 'combatsanctuary'] })
+    type: string;
 }
 
-export const mapObjectsSchema = SchemaFactory.createForClass(MapObjects);
+export const mapObjectSchema = SchemaFactory.createForClass(MapObject);

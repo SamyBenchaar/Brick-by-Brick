@@ -1,5 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsOptional } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsEnum, IsOptional, ValidateNested } from 'class-validator';
+import { MapObjectsDto } from './map-objects.dto';
 
 export class TileDto {
     @ApiProperty({ description: 'Type de tuile', enum: ['base', 'wall', 'door', 'water', 'ice'], example: 'base' })
@@ -10,4 +12,10 @@ export class TileDto {
     @IsOptional()
     @IsEnum(['open', 'closed'], { message: "L'état de la tuile doit être open ou closed" })
     state?: string;
+
+    @ApiProperty({ description: 'Objets présents sur cette tuile', type: MapObjectsDto, required: false })
+    @IsOptional()
+    @ValidateNested({ message: 'Les objets de la tuile sont invalides' })
+    @Type(() => MapObjectsDto)
+    objects?: MapObjectsDto;
 }
