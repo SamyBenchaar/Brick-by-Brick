@@ -37,6 +37,10 @@ export class GameGridComponent {
     return this.gridSize / this.gameMap.getSize();
   }
 
+  getTile(x:number, y:number): Tile | null {
+    return this.gameMap.getTile(x, y);
+  }
+
   onTileMouseDown(x: number, y: number, event: MouseEvent): void {
     if (event.button === ClickEvent.Left) {
       if (this.mapEditorService.getSelectedTileType() == null) {
@@ -89,7 +93,7 @@ export class GameGridComponent {
   }
 
   applyDeletion(x: number, y:number): void {
-    const tile = this.gameMap.getTile(x, y);
+    const tile = this.getTile(x, y);
     if (tile) {
       if(this.isShiftPressed){
         this.removeObject(x, y);
@@ -101,23 +105,32 @@ export class GameGridComponent {
 
   private changeTileType(x: number, y: number): void {
     const selectedType = this.mapEditorService.getSelectedTileType();
-    const tile = this.gameMap.getTile(x, y);
+    const tile = this.getTile(x, y);
     if (tile && selectedType) {
       tile.type = selectedType;
     }
   }
 
+  isTileObjectFree(tile:Tile): boolean {
+    if(tile){
+      if(tile.object){
+        return false;
+      }
+    }
+    return true;
+  }
+
   private addObject(x: number, y: number): void {
     const selectedObject = this.mapEditorService.getSelectedObject();
-    const tile = this.gameMap.getTile(x, y);
-    if (tile && selectedObject && this.objectCounterService.canPlace(selectedObject)) {
+    const tile = this.getTile(x, y);
+    if (tile && selectedObject && this.objectCounterService.canPlace(selectedObject) && this.isTileObjectFree(tile)) {
       tile.object = selectedObject;
       this.objectCounterService.place(selectedObject);
     }
   }
   
   private removeObject(x: number, y: number): void {
-    const tile = this.gameMap.getTile(x, y);
+    const tile = this.getTile(x, y);
     if (tile && tile.object) {
       this.objectCounterService.remove(tile.object);
       tile.object = undefined;
