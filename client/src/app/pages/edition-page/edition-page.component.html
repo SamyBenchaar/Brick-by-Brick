@@ -5,7 +5,6 @@
     </div>
     <div class="edition-layout">
         
-        <app-game-grid [gameData]="currentGame"></app-game-grid>
         <div class="game-info-container">
             
             <app-text-input
@@ -25,7 +24,8 @@
             </app-text-input>
 
         </div>
-        <app-game-grid></app-game-grid>
+        <app-game-grid [gameData]="currentGame"></app-game-grid>
+
         <div class="buttons">
             <button class="button" style="background-image: url('/assets/images/4x1_green.png');">
             Enregistrer

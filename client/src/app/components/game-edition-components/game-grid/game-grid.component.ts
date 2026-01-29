@@ -29,6 +29,7 @@ export class GameGridComponent implements OnChanges {
 
   constructor() {
     this.gameMap = new GameMap(MapSize.Small);
+    this.objectCounterService.reset();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -165,6 +166,9 @@ export class GameGridComponent implements OnChanges {
     const selectedObject = this.mapEditorService.getSelectedObject();
     const tile = this.getTile(x, y);
     if (tile && selectedObject && this.objectCounterService.canPlace(selectedObject) && this.isTileObjectFree(tile)) {
+      if (tile.type === "wall"){
+        return;
+      }
       tile.object = selectedObject;
       this.objectCounterService.place(selectedObject);
     }
