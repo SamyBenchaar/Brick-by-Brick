@@ -1,8 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, HostListener, inject } from '@angular/core';
+import { Component, HostListener, inject, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { GameMap } from '@app/classes/game-map';
 import { Tile } from '@app/classes/tile';
 import { ClickEvent } from '@app/constants/click-event-constants';
+import { Game } from '@app/interfaces/game';
 import { MapEditorServiceService } from '@app/services/map-editor-service.service';
 import { ObjectCounterService } from '@app/services/object-counter/object-counter.service';
 import { GRID_SIZE, MapSize, ObjectType, TileType } from '@common/map';
@@ -14,8 +15,9 @@ import { GRID_SIZE, MapSize, ObjectType, TileType } from '@common/map';
   templateUrl: './game-grid.component.html',
   styleUrl: './game-grid.component.scss',
 })
-export class GameGridComponent {
+export class GameGridComponent implements OnChanges {
 
+  @Input() gameData: Game | null = null;
   readonly gridSize = GRID_SIZE;
   gameMap: GameMap;
   private mapEditorService = inject(MapEditorServiceService);
@@ -26,6 +28,46 @@ export class GameGridComponent {
 
   constructor() {
     this.gameMap = new GameMap(MapSize.Small);
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['gameData'] && this.gameData) {
+      this.loadGameData();
+    }
+  }
+
+  private loadGameData(): void {
+    if (!this.gameData) return;
+
+    const size = this.gameData.mapConfig.size;
+
+    let mapSize = MapSize.Small;
+    if (size === 'Medium') mapSize = MapSize.Medium;
+    else if (size === 'Large') mapSize = MapSize.Large;
+
+    this.gameMap = new GameMap(mapSize);
+
+    const tiles = this.gameData.mapConfig.tiles;
+
+    if (tiles) {
+      for (let y = 0; y < tiles.length; y++) {
+        for (let x = 0; x < tiles[y].length; x++) {
+          const tileData = tiles[y][x];
+          const tile = this.gameMap.getTile(x, y);
+
+          if (!tile) continue;
+
+          tile.type = tileData.type as TileType;
+
+          if (tileData.object) {
+            tile.object = tileData.object.type as ObjectType;
+            this.objectCounterService.place(tile.object);
+          }
+        }
+      }
+    } else {
+      console.warn('No tiles data found in game config');
+    }
   }
 
   getGrid(): Tile[][] {
@@ -58,14 +100,12 @@ export class GameGridComponent {
 
   onTileMouseEnter(x: number, y: number): void {
     if (this.isDeleting) {
-      // Mode suppression: toujours remplacer par tuile de base, peu importe l'outil sélectionné
       const tile = this.gameMap.getTile(x, y);
       if (tile) {
         tile.type = TileType.Base;
         tile.object = undefined;
       }
     } else if (this.isDrawing) {
-      // Mode peinture: utiliser l'outil sélectionné
       this.changeTileType(x, y);
     }
   }

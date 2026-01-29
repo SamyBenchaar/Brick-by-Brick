@@ -7,7 +7,7 @@ export class MapObjectsDto {
     @IsBoolean({ message: 'Le drapeau doit être un booléen' })
     flag?: boolean;
 
-    @ApiProperty({ description: 'Type d\'objet', enum: ['startingPoints', 'healSanctuaries', 'combatSanctuaries'], example: 'startingPoints' })
-    @IsEnum(['startingPoints', 'healSanctuaries', 'combatSanctuaries'], { message: 'Le type doit être startingPoints, healSanctuaries ou combatSanctuaries' })
+    @ApiProperty({ description: 'Type d\'objet', enum: ['startingpoint', 'healingsanctuary', 'combatsanctuary'], example: 'startingpoint' })
+    @IsEnum(['startingpoint', 'healingsanctuary', 'combatsanctuary'], { message: 'Le type doit être startingpoint, healingsanctuary ou combatsanctuary' })
     type: string;
 }

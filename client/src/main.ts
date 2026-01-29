@@ -25,7 +25,7 @@ const routes: Routes = [
     { path: 'game', component: GamePageComponent },
     { path: 'material', component: MaterialPageComponent },
 
-    { path:'edition', component: EditionPageComponent }, 
+    { path: 'edition/:game_id', component: EditionPageComponent },
 
     { path: 'admin', component: AdminPageComponent },
 

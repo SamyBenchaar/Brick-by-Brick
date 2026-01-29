@@ -2,6 +2,8 @@
         <app-tile-type-sidebar></app-tile-type-sidebar>
         <app-object-sidebar></app-object-sidebar>
     <div class="edition-layout">
+        
+        <app-game-grid [gameData]="currentGame"></app-game-grid>
         <div class="game-info-container">
             
             <app-text-input
@@ -21,6 +23,5 @@
             </app-text-input>
 
         </div>
-        <app-game-grid></app-game-grid>
     </div>
 </div>
