@@ -41,7 +41,7 @@ export class MapValidationService {
         let numberOfStartingPoints = 0;
         for (const row of gameData.mapConfig.tiles) {
             for (const tile of row) {
-                if (tile.object?.type === 'startingPoint') {
+                if (tile.object?.type === 'startingpoint') {
                     numberOfStartingPoints++;
                 }
             }
@@ -142,7 +142,7 @@ export class MapValidationService {
     private findStartingPoint(tiles: Tile[][]): { x: number; y: number } | null {
         for (let y = 0; y < tiles.length; y++) {
             for (let x = 0; x < tiles[y].length; x++) {
-                if (tiles[y][x].object?.type === 'startingPoint') {
+                if (tiles[y][x].object?.type === 'startingpoint') {
                     return { x, y };
                 }
             }

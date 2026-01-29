@@ -44,4 +44,12 @@ export class ObjectCounterService {
   getRemainingCount(object: ObjectType): number {
     return Math.max(this.maxCounts[object] - this.counts[object], 0 );
   }
+
+  reset():void{
+    for (const key in this.counts){
+      if (key){
+        this.counts[key as ObjectType] = 0;
+      }
+    } 
+  }
 }

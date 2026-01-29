@@ -1,8 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, HostListener, inject } from '@angular/core';
+import { Component, HostListener, inject, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { GameMap } from '@app/classes/game-map';
 import { Tile } from '@app/classes/tile';
 import { ClickEvent } from '@app/constants/click-event-constants';
+import { Game } from '@app/interfaces/game';
 import { MapEditorServiceService } from '@app/services/map-editor-service.service';
 import { ObjectCounterService } from '@app/services/object-counter/object-counter.service';
 import { GRID_SIZE, MapSize, ObjectType, TileType } from '@common/map';
@@ -14,8 +15,9 @@ import { GRID_SIZE, MapSize, ObjectType, TileType } from '@common/map';
   templateUrl: './game-grid.component.html',
   styleUrl: './game-grid.component.scss',
 })
-export class GameGridComponent {
+export class GameGridComponent implements OnChanges {
 
+  @Input() gameData: Game | null = null;
   readonly gridSize = GRID_SIZE;
   gameMap: GameMap;
   private mapEditorService = inject(MapEditorServiceService);
@@ -27,6 +29,45 @@ export class GameGridComponent {
 
   constructor() {
     this.gameMap = new GameMap(MapSize.Small);
+    this.objectCounterService.reset();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes.gameData && this.gameData) {
+      this.loadGameData();
+    }
+  }
+
+  private loadGameData(): void {
+    if (!this.gameData) return;
+
+    const size = this.gameData.mapConfig.size;
+
+    let mapSize = MapSize.Small;
+    if (size === 'Medium') mapSize = MapSize.Medium;
+    else if (size === 'Large') mapSize = MapSize.Large;
+
+    this.gameMap = new GameMap(mapSize);
+
+    const tiles = this.gameData.mapConfig.tiles;
+
+    if (tiles) {
+      for (let y = 0; y < tiles.length; y++) {
+        for (let x = 0; x < tiles[y].length; x++) {
+          const tileData = tiles[y][x];
+          const tile = this.gameMap.getTile(x, y);
+
+          if (!tile) continue;
+
+          tile.type = tileData.type as TileType;
+
+          if (tileData.object) {
+            tile.object = tileData.object.type as ObjectType;
+            this.objectCounterService.place(tile.object);
+          }
+        }
+      }
+    }
   }
 
   getGrid(): Tile[][] {
@@ -37,7 +78,7 @@ export class GameGridComponent {
     return this.gridSize / this.gameMap.getSize();
   }
 
-  getTile(x:number, y:number): Tile | null {
+  getTile(x: number, y: number): Tile | null {
     return this.gameMap.getTile(x, y);
   }
 
@@ -54,7 +95,7 @@ export class GameGridComponent {
       event.preventDefault();//Pour ne pas ouvrir le menu contextuel
       this.isDeleting = true;
       this.applyDeletion(x, y);
-      }  
+    }
   }
 
 
@@ -63,7 +104,6 @@ export class GameGridComponent {
       // Mode suppression: toujours remplacer par tuile de base, peu importe l'outil sélectionné
       this.applyDeletion(x, y);
     } else if (this.isDrawing) {
-      // Mode peinture: utiliser l'outil sélectionné
       this.changeTileType(x, y);
     }
   }
@@ -75,15 +115,15 @@ export class GameGridComponent {
   }
 
   @HostListener('window:keydown', ['$event'])
-  onKeyDown(event:KeyboardEvent): void {
-    if(event.key === 'Shift'){
+  onKeyDown(event: KeyboardEvent): void {
+    if (event.key === 'Shift') {
       this.isShiftPressed = true;
     }
   }
 
   @HostListener('window:keyup', ['$event'])
-  onKeyUp(event:KeyboardEvent): void {
-    if(event.key === 'Shift'){
+  onKeyUp(event: KeyboardEvent): void {
+    if (event.key === 'Shift') {
       this.isShiftPressed = false;
     }
   }
@@ -92,13 +132,13 @@ export class GameGridComponent {
     event.preventDefault(); // Empêche le menu contextuel d'apparaître
   }
 
-  applyDeletion(x: number, y:number): void {
+  applyDeletion(x: number, y: number): void {
     const tile = this.getTile(x, y);
     if (tile) {
-      if(this.isShiftPressed){
+      if (this.isShiftPressed) {
         this.removeObject(x, y);
-      } else{ 
-      tile.type = TileType.Base;
+      } else {
+        tile.type = TileType.Base;
       }
     }
   }
@@ -111,9 +151,9 @@ export class GameGridComponent {
     }
   }
 
-  isTileObjectFree(tile:Tile): boolean {
-    if(tile){
-      if(tile.object){
+  isTileObjectFree(tile: Tile): boolean {
+    if (tile) {
+      if (tile.object) {
         return false;
       }
     }
@@ -124,11 +164,14 @@ export class GameGridComponent {
     const selectedObject = this.mapEditorService.getSelectedObject();
     const tile = this.getTile(x, y);
     if (tile && selectedObject && this.objectCounterService.canPlace(selectedObject) && this.isTileObjectFree(tile)) {
+      if (tile.type === 'wall') {
+        return;
+      }
       tile.object = selectedObject;
       this.objectCounterService.place(selectedObject);
     }
   }
-  
+
   private removeObject(x: number, y: number): void {
     const tile = this.getTile(x, y);
     if (tile && tile.object) {

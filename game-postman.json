@@ -1,0 +1,360 @@
+{
+    "name": "Temple des Aventuriers",
+    "description": "Un donjon mystérieux avec sanctuaires et passages secrets",
+    "isVisible": true,
+    "numberOfPlayers": 4,
+    "gameMode": "classic",
+    "mapConfig": {
+        "size": "Small",
+        "tiles": [
+            [
+                {
+                    "type": "base",
+                    "objects": {
+                        "type": "startingpoint"
+                    }
+                },
+                {
+                    "type": "base"
+                },
+                {
+                    "type": "base"
+                },
+                {
+                    "type": "wall"
+                },
+                {
+                    "type": "base"
+                },
+                {
+                    "type": "base"
+                },
+                {
+                    "type": "wall"
+                },
+                {
+                    "type": "base"
+                },
+                {
+                    "type": "base"
+                },
+                {
+                    "type": "base",
+                    "objects": {
+                        "type": "startingpoint"
+                    }
+                }
+            ],
+            [
+                {
+                    "type": "base"
+                },
+                {
+                    "type": "ice"
+                },
+                {
+                    "type": "base"
+                },
+                {
+                    "type": "base"
+                },
+                {
+                    "type": "ice"
+                },
+                {
+                    "type": "ice"
+                },
+                {
+                    "type": "base"
+                },
+                {
+                    "type": "base"
+                },
+                {
+                    "type": "ice"
+                },
+                {
+                    "type": "base"
+                }
+            ],
+            [
+                {
+                    "type": "base"
+                },
+                {
+                    "type": "base"
+                },
+                {
+                    "type": "base",
+                    "objects": {
+                        "type": "healingsanctuary"
+                    }
+                },
+                {
+                    "type": "ice"
+                },
+                {
+                    "type": "base"
+                },
+                {
+                    "type": "base"
+                },
+                {
+                    "type": "ice"
+                },
+                {
+                    "type": "base",
+                    "objects": {
+                        "type": "healingsanctuary"
+                    }
+                },
+                {
+                    "type": "base"
+                },
+                {
+                    "type": "base"
+                }
+            ],
+            [
+                {
+                    "type": "wall"
+                },
+                {
+                    "type": "base"
+                },
+                {
+                    "type": "ice"
+                },
+                {
+                    "type": "base"
+                },
+                {
+                    "type": "door",
+                    "state": "closed"
+                },
+                {
+                    "type": "door",
+                    "state": "closed"
+                },
+                {
+                    "type": "base"
+                },
+                {
+                    "type": "ice"
+                },
+                {
+                    "type": "base"
+                },
+                {
+                    "type": "wall"
+                }
+            ],
+            [
+                {
+                    "type": "base"
+                },
+                {
+                    "type": "ice"
+                },
+                {
+                    "type": "base"
+                },
+                {
+                    "type": "base"
+                },
+                {
+                    "type": "base"
+                },
+                {
+                    "type": "base"
+                },
+                {
+                    "type": "base"
+                },
+                {
+                    "type": "base"
+                },
+                {
+                    "type": "ice"
+                },
+                {
+                    "type": "base"
+                }
+            ],
+            [
+                {
+                    "type": "base"
+                },
+                {
+                    "type": "ice"
+                },
+                {
+                    "type": "base"
+                },
+                {
+                    "type": "base"
+                },
+                {
+                    "type": "base"
+                },
+                {
+                    "type": "base"
+                },
+                {
+                    "type": "base"
+                },
+                {
+                    "type": "base"
+                },
+                {
+                    "type": "ice"
+                },
+                {
+                    "type": "base"
+                }
+            ],
+            [
+                {
+                    "type": "wall"
+                },
+                {
+                    "type": "base"
+                },
+                {
+                    "type": "ice"
+                },
+                {
+                    "type": "base"
+                },
+                {
+                    "type": "door",
+                    "state": "open"
+                },
+                {
+                    "type": "door",
+                    "state": "open"
+                },
+                {
+                    "type": "base"
+                },
+                {
+                    "type": "ice"
+                },
+                {
+                    "type": "base"
+                },
+                {
+                    "type": "wall"
+                }
+            ],
+            [
+                {
+                    "type": "base"
+                },
+                {
+                    "type": "base"
+                },
+                {
+                    "type": "base",
+                    "objects": {
+                        "type": "combatsanctuary"
+                    }
+                },
+                {
+                    "type": "ice"
+                },
+                {
+                    "type": "base"
+                },
+                {
+                    "type": "base"
+                },
+                {
+                    "type": "ice"
+                },
+                {
+                    "type": "base",
+                    "objects": {
+                        "type": "combatsanctuary"
+                    }
+                },
+                {
+                    "type": "base"
+                },
+                {
+                    "type": "base"
+                }
+            ],
+            [
+                {
+                    "type": "base"
+                },
+                {
+                    "type": "ice"
+                },
+                {
+                    "type": "base"
+                },
+                {
+                    "type": "base"
+                },
+                {
+                    "type": "ice"
+                },
+                {
+                    "type": "ice"
+                },
+                {
+                    "type": "base"
+                },
+                {
+                    "type": "base"
+                },
+                {
+                    "type": "ice"
+                },
+                {
+                    "type": "base"
+                }
+            ],
+            [
+                {
+                    "type": "base",
+                    "objects": {
+                        "type": "startingpoint"
+                    }
+                },
+                {
+                    "type": "base"
+                },
+                {
+                    "type": "base"
+                },
+                {
+                    "type": "wall"
+                },
+                {
+                    "type": "base"
+                },
+                {
+                    "type": "base"
+                },
+                {
+                    "type": "wall"
+                },
+                {
+                    "type": "base"
+                },
+                {
+                    "type": "base"
+                },
+                {
+                    "type": "base",
+                    "objects": {
+                        "type": "startingpoint"
+                    }
+                }
+            ]
+        ]
+    }
+}
