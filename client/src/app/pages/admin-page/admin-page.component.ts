@@ -3,16 +3,23 @@ import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { Game } from '@app/interfaces/game';
 import { CommunicationService } from '@app/services/communication/communication.service';
+import { FormsModule } from '@angular/forms';
 
 @Component({
     selector: 'app-admin-page',
     templateUrl: './admin-page.component.html',
     styleUrls: ['./admin-page.component.scss'],
-    imports: [CommonModule, DatePipe],
+    imports: [CommonModule, DatePipe, FormsModule],
 })
 export class AdminPageComponent {
     showGameCreationModal = false;
     selectedSize: 'small' | 'medium' | 'large' | null = null;
+    gameMode: 'classic' | 'ctf' = 'classic';
+
+    gameModes = [
+        { value: 'classic' as const, label: 'classique' },
+        { value: 'ctf' as const, label: 'CTF' }
+    ];
 
     gameSizes = [
         {
@@ -40,6 +47,7 @@ export class AdminPageComponent {
             height: 20,
         },
     ];
+
 
     constructor(
         private communicationService: CommunicationService,
@@ -70,11 +78,13 @@ export class AdminPageComponent {
     openGameCreationModal(): void {
         this.showGameCreationModal = true;
         this.selectedSize = null;
+        this.gameMode = 'classic';
     }
 
     closeGameCreationModal(): void {
         this.showGameCreationModal = false;
         this.selectedSize = null;
+        this.gameMode = 'classic';
     }
 
     selectSize(size: 'small' | 'medium' | 'large'): void {
@@ -84,7 +94,10 @@ export class AdminPageComponent {
     confirmAndRedirect(): void {
         if (this.selectedSize) {
             this.router.navigate(['/edition'], {
-                queryParams: { size: this.selectedSize },
+                queryParams: {
+                    size: this.selectedSize,
+                    mode: this.gameMode,
+                },
             });
         }
     }
