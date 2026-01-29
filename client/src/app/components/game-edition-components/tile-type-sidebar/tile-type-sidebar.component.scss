@@ -7,14 +7,11 @@
     min-width: 180px;          
     height: 100vh;            
     position: sticky;          
-    top: 0;                     
-    left: 0; 
   }
   
   .sidebar-title {
     margin: 0;
     font-size: 30px;
-    font-weight: bold;
     text-align: center;
     color: #333;
   }
@@ -27,8 +24,8 @@
   }
   
   .tile-type-item {
-    width: 150px;
-    height: 150px;
+    width: 70%;
+    aspect-ratio: 1 / 1;
     border: 3px solid #333;
     border-radius: 8px;
     cursor: pointer;
@@ -75,8 +72,8 @@
   }
 
   .tile-icon{
-    width: 100px;
-    height: 100px;
+    width: 60%;
+    height: 60%;
   }
 
   .tile-water {

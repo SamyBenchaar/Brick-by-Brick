@@ -7,8 +7,6 @@
     min-width: 180px;          
     height: 100vh;            
     position: sticky;          
-    top: 0;                     
-    left: 0; 
   }
   
   .sidebar-title {
@@ -26,8 +24,8 @@
   }
   
   .object-item {
-    width: 150px;
-    height: 150px;
+    width: 70%;
+    aspect-ratio: 1 / 1;
     border: 3px solid #333;
     border-radius: 8px;
     cursor: pointer;
@@ -96,10 +94,9 @@
   }
 
   .object-icon {
-    position: absolute;
-    top: 40px;
-    width: 80px;
-    height: 80px;
+    position: relative;
+    width: 60%;
+    height: 60%;
   }
 
   .tile-flag {
