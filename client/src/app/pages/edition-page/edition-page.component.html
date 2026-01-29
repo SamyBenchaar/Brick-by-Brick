@@ -12,7 +12,7 @@
             label="Nom de la partie"
             placeholder="Entrez le nom de la partie"
             [value]="gameName"
-            (valueChange)="gameName = $event">
+            (valueChange)="this.getMapEditorService().setTitle($event)">
             </app-text-input>
 
             <app-text-input
@@ -20,18 +20,18 @@
             label="Description"
             placeholder="Entrez une description"
             [value]="gameDescription"
-            (valueChange)="gameDescription = $event">
+            (valueChange)="this.getMapEditorService().setDescription($event)">
             </app-text-input>
 
         </div>
-        <app-game-grid [gameData]="currentGame"></app-game-grid>
+        <app-game-grid [gameData]="this.getMapEditorService().getCurrentGame()"></app-game-grid>
 
         <div class="buttons">
-            <button class="button" style="background-image: url('/assets/images/4x1_green.png');">
+            <button class="button" (click)="onSave()" style="background-image: url('/assets/images/4x1_green.png');">
             Enregistrer
             </button>
 
-            <button class="button" style="background-image: url('/assets/images/4x1_yellow.png');">
+            <button class="button" (click)="onReset()" style="background-image: url('/assets/images/4x1_yellow.png');">
             Réinitialiser
             </button>
 

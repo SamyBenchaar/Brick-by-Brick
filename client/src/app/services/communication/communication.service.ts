@@ -25,8 +25,8 @@ export class CommunicationService {
         return this.http.post<Game>(`${this.baseUrl}/games`, gameData).pipe(catchError(this.handleError<Game>('createGame')));
     }
 
-    updateGame(id: string, gameData: Partial<Game>): Observable<Game> {
-        return this.http.patch<Game>(`${this.baseUrl}/games/${id}`, gameData).pipe(catchError(this.handleError<Game>('updateGame')));
+    updateGame(id: string, gameData: Partial<Game | null>): Observable<Game> {
+        return this.http.put<Game>(`${this.baseUrl}/games/${id}`, gameData).pipe(catchError(this.handleError<Game>('updateGame')));
     }
 
     deleteGame(id: string): Observable<void> {

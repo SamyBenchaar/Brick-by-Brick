@@ -89,6 +89,7 @@ export class GameGridComponent implements OnChanges {
       } else {
         this.isDrawing = true;
         this.changeTileType(x, y);
+
       }
     }
     if (event.button === ClickEvent.Right) {
@@ -148,7 +149,10 @@ export class GameGridComponent implements OnChanges {
     const tile = this.getTile(x, y);
     if (tile && selectedType) {
       tile.type = selectedType;
+      this.mapEditorService.setTileType(x, y, selectedType);
+
     }
+    console.log("APRES CHANGETILETYPE DANS GAME GRID COMPONENT", this.mapEditorService.getCurrentGame());
   }
 
   isTileObjectFree(tile: Tile): boolean {
