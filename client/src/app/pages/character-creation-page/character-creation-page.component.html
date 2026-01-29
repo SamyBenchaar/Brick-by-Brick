@@ -1,0 +1,132 @@
+<div class="scale-wrapper">
+    <div class="container">
+        <button class="close-btn" (click)="close()">
+            <img src="assets/images/red_small_brick.png" alt="Close" />
+            <span class="material-icons close-icon">close</span>
+        </button>
+
+        <h2>Création personnage</h2>
+
+        <div class="layout">
+            <div class="left-column">
+                <div class="avatars">
+                    <img src="assets/images/spider_man.jpg" alt="Avatar" />
+
+                    <button class="avatar-switch">
+                        <img src="assets/images/modify_brick.png" alt="Changer avatar" />
+                    </button>
+                </div>
+
+                <h3>Bonus +2</h3>
+                <div class="bonus-buttons">
+                    <button (click)="applyBonus('life')" [class.active]="bonusTarget === 'life'">
+                        <div class="brick-wrapper">
+                            <img src="assets/images/yellow_medium_brick.png" alt="brick" />
+                            <span class="life-bonus">+2 Vie</span>
+                        </div>
+                    </button>
+                    <button (click)="applyBonus('speed')" [class.active]="bonusTarget === 'speed'">
+                        <div class="brick-wrapper">
+                            <img src="assets/images/yellow_medium_brick.png" alt="brick" />
+                            <span class="speed-bonus">+2 Speed</span>
+                        </div>
+                    </button>
+                </div>
+
+                <h3>Dés</h3>
+
+                <div class="dice-section">
+                    <span class="dice-label">Attaque:</span>
+                    <div class="dice-row">
+                        <button (click)="setDice('attackDice', 'D4')" [class.active]="character.attackDice === 'D4'">
+                            <div class="brick-wrapper">
+                                <img src="assets/images/dice_four.png" alt="D4" />
+                            </div>
+                        </button>
+
+                        <button (click)="setDice('attackDice', 'D6')" [class.active]="character.attackDice === 'D6'">
+                            <div class="brick-wrapper">
+                                <img src="assets/images/dice_six.png" alt="D6" />
+                            </div>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="dice-section">
+                    <span class="dice-label">Défense:</span>
+                    <div class="dice-row">
+                        <button (click)="setDice('defenseDice', 'D4')" [class.active]="character.defenseDice === 'D4'">
+                            <div class="brick-wrapper">
+                                <img src="assets/images/dice_four.png" alt="D4" />
+                            </div>
+                        </button>
+
+                        <button (click)="setDice('defenseDice', 'D6')" [class.active]="character.defenseDice === 'D6'">
+                            <div class="brick-wrapper">
+                                <img src="assets/images/dice_six.png" alt="D6" />
+                            </div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="right-column">
+                <label>
+                    Nom :
+                    <input placeholder="Entrer un nom..." />
+                </label>
+
+                <h3>Attributs</h3>
+                <div class="attributes">
+                    <div class="stat-vie">
+                        <div class="brick-wrapper">
+                            <img src="assets/images/red_small_brick.png" alt="Vie" />
+                            <span class="brick-value">{{ character.life }}</span>
+                        </div>
+                        <div class="stat-text">
+                            <span class="stat-label">Vie</span>
+                            <small>Détermine les points de vie</small>
+                        </div>
+                    </div>
+
+                    <div class="stat-rapidite">
+                        <div class="brick-wrapper">
+                            <img src="assets/images/orange_small_brick.png" alt="Rapidité" />
+                            <span class="brick-value">{{ character.speed }}</span>
+                        </div>
+                        <div class="stat-text">
+                            <span class="stat-label">Rapidité</span>
+                            <small>Influence l'ordre des tours</small>
+                        </div>
+                    </div>
+
+                    <div class="stat-attaque">
+                        <div class="brick-wrapper">
+                            <img src="assets/images/yellow_small_brick.png" alt="Attaque" />
+                            <span class="brick-value">{{ character.attack }}</span>
+                        </div>
+                        <div class="stat-text">
+                            <span class="stat-label">Attaque</span>
+                            <small>Dégâts infligés</small>
+                        </div>
+                    </div>
+
+                    <div class="stat-defense">
+                        <div class="brick-wrapper">
+                            <img src="assets/images/blue_small_brick.png" alt="Défense" />
+                            <span class="brick-value">{{ character.defense }}</span>
+                        </div>
+                        <div class="stat-text">
+                            <span class="stat-label">Défense</span>
+                            <small>Réduction des dégâts</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bottom-buttons">
+                    <button class="random">Personnage aléatoire</button>
+                    <button class="create">Soumettre</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
