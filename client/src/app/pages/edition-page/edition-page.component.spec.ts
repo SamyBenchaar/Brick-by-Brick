@@ -20,7 +20,7 @@ describe('EditionPageComponent', () => {
         },
       ],
     })
-    .compileComponents();
+      .compileComponents();
 
     fixture = TestBed.createComponent(EditionPageComponent);
     component = fixture.componentInstance;

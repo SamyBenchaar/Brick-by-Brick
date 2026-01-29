@@ -13,7 +13,7 @@ import { MapSize } from '@common/map';
 })
 export class EditionPageComponent implements OnInit {
   selectedSize: 'small' | 'medium' | 'large' | null = null;
-  gridDimensions = { width: 10, height: 10 }; // Valeur par défaut
+  gridDimensions = { width: MapSize.Small, height: MapSize.Small }; // Valeur par défaut
 
   constructor(private route: ActivatedRoute) {}
 
@@ -21,24 +21,7 @@ export class EditionPageComponent implements OnInit {
     // Récupérer le paramètre 'size' depuis l'URL
     this.route.queryParams.subscribe(params => {
       this.selectedSize = params.size || null;
-      this.updateGridDimensions();
     });
-  }
-
-  private updateGridDimensions(): void {
-    switch (this.selectedSize) {
-      case 'small':
-        this.gridDimensions = { width: 10, height: 10 };
-        break;
-      case 'medium':
-        this.gridDimensions = { width: 15, height: 15 };
-        break;
-      case 'large':
-        this.gridDimensions = { width: 20, height: 20 };
-        break;
-      default:
-        this.gridDimensions = { width: 10, height: 10 }; // Par défaut
-    }
   }
 
   getMapSize(): MapSize {

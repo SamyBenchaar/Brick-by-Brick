@@ -83,7 +83,6 @@ export class AdminPageComponent {
 
     confirmAndRedirect(): void {
         if (this.selectedSize) {
-            // TODO: Passer les paramètres à la vue d'édition
             this.router.navigate(['/edition'], {
                 queryParams: { size: this.selectedSize },
             });
