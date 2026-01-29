@@ -22,6 +22,7 @@ export class GameGridComponent {
   private objectCounterService = inject(ObjectCounterService);
   private isDrawing = false;
   private isDeleting = false;
+  private isShiftPressed = false;
 
 
   constructor() {
@@ -48,22 +49,15 @@ export class GameGridComponent {
     if (event.button === ClickEvent.Right) {
       event.preventDefault();//Pour ne pas ouvrir le menu contextuel
       this.isDeleting = true;
-      const tile = this.gameMap.getTile(x, y);
-      if (tile) {
-        tile.type = TileType.Base;
-        tile.object = undefined;
-      }
-    }
+      this.applyDeletion(x, y);
+      }  
   }
+
 
   onTileMouseEnter(x: number, y: number): void {
     if (this.isDeleting) {
       // Mode suppression: toujours remplacer par tuile de base, peu importe l'outil sélectionné
-      const tile = this.gameMap.getTile(x, y);
-      if (tile) {
-        tile.type = TileType.Base;
-        tile.object = undefined;
-      }
+      this.applyDeletion(x, y);
     } else if (this.isDrawing) {
       // Mode peinture: utiliser l'outil sélectionné
       this.changeTileType(x, y);
@@ -76,8 +70,33 @@ export class GameGridComponent {
     this.isDeleting = false;
   }
 
+  @HostListener('window:keydown', ['$event'])
+  onKeyDown(event:KeyboardEvent): void {
+    if(event.key === 'Shift'){
+      this.isShiftPressed = true;
+    }
+  }
+
+  @HostListener('window:keyup', ['$event'])
+  onKeyUp(event:KeyboardEvent): void {
+    if(event.key === 'Shift'){
+      this.isShiftPressed = false;
+    }
+  }
+
   onContextMenu(event: MouseEvent): void {
     event.preventDefault(); // Empêche le menu contextuel d'apparaître
+  }
+
+  applyDeletion(x: number, y:number): void {
+    const tile = this.gameMap.getTile(x, y);
+    if (tile) {
+      if(this.isShiftPressed){
+        this.removeObject(x, y);
+      } else{ 
+      tile.type = TileType.Base;
+      }
+    }
   }
 
   private changeTileType(x: number, y: number): void {
@@ -94,6 +113,14 @@ export class GameGridComponent {
     if (tile && selectedObject && this.objectCounterService.canPlace(selectedObject)) {
       tile.object = selectedObject;
       this.objectCounterService.place(selectedObject);
+    }
+  }
+  
+  private removeObject(x: number, y: number): void {
+    const tile = this.gameMap.getTile(x, y);
+    if (tile && tile.object) {
+      this.objectCounterService.remove(tile.object);
+      tile.object = undefined;
     }
   }
 
