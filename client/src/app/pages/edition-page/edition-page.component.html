@@ -1,11 +1,13 @@
-<div class="edition-container">
+<div class="edition-container pixel-font">
+    <div class="sidebar-container">
         <app-tile-type-sidebar></app-tile-type-sidebar>
         <app-object-sidebar></app-object-sidebar>
+    </div>
     <div class="edition-layout">
         <div class="game-info-container">
             
             <app-text-input
-            class="name-input"
+            class="name-input pixel-font"
             label="Nom de la partie"
             placeholder="Entrez le nom de la partie"
             [value]="gameName"
@@ -13,7 +15,7 @@
             </app-text-input>
 
             <app-text-input
-            class="description-input"
+            class="description-input pixel-font"
             label="Description"
             placeholder="Entrez une description"
             [value]="gameDescription"
@@ -22,5 +24,15 @@
 
         </div>
         <app-game-grid></app-game-grid>
+        <div class="buttons">
+            <button class="button" style="background-image: url('/assets/images/4x1_green.png');">
+            Enregistrer
+            </button>
+
+            <button class="button" style="background-image: url('/assets/images/4x1_yellow.png');">
+            Réinitialiser
+            </button>
+
+        </div>
     </div>
 </div>
