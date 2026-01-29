@@ -7,6 +7,7 @@ import { GamePageComponent } from '@app/pages/game-page/game-page.component';
 import { MainPageComponent } from '@app/pages/main-page/main-page.component';
 import { MaterialPageComponent } from '@app/pages/material-page/material-page.component';
 import { environment } from './environments/environment';
+import {CharacterCreationPageComponent} from '@app/pages/character-creation-page/character-creation-page.component';
 
 import { EditionPageComponent } from '@app/pages/edition-page/edition-page.component';
 
@@ -28,7 +29,7 @@ const routes: Routes = [
     { path: 'edition/:game_id', component: EditionPageComponent },
 
     { path: 'admin', component: AdminPageComponent },
-
+    { path: 'character-creation', component: CharacterCreationPageComponent },
     { path: '**', redirectTo: '/home' },
 ];
 

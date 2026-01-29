@@ -10,7 +10,7 @@ export enum ObjectType {
     FLAG = 'flag',
     COMBATSANCTUARY = 'combatsanctuary',
     HEALINGSANCTUARY = 'healingsanctuary',
-    STARTPOINT = 'startingPoint'
+    STARTPOINT = 'startingpoint'
 }
 
 export enum MapSize {

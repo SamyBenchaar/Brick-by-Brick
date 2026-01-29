@@ -3,19 +3,15 @@
     flex-direction: column;
     gap: 15px;
     padding: 20px;
-    background-color: #f5f5f5;
     border-right: 3px solid #333;
     min-width: 180px;          
     height: 100vh;            
     position: sticky;          
-    top: 0;                     
-    left: 0; 
   }
   
   .sidebar-title {
     margin: 0;
-    font-size: 25px;
-    font-weight: bold;
+    font-size: 30px;
     text-align: center;
     color: #333;
   }
@@ -24,11 +20,12 @@
     display: flex;
     flex-direction: column;  
     gap: 15px;
+    align-items: center;
   }
   
   .object-item {
-    width: 150px;
-    height: 150px;
+    width: 70%;
+    aspect-ratio: 1 / 1;
     border: 3px solid #333;
     border-radius: 8px;
     cursor: pointer;
@@ -46,6 +43,7 @@
     &:hover .object-description {
       visibility: visible;
       opacity: 1;
+      font-family: 'Calibri', sans-serif;
     }
 
     &.selected {
@@ -60,7 +58,6 @@
   
   .object-label {
     font-size: 20px;
-    font-weight: bold;
     color: rgb(0, 0, 0);
     pointer-events: none; 
   }
@@ -88,23 +85,22 @@
     position: absolute;
     right: 5px;
     bottom: 5px;
-    font-size: 12px;
-    font-weight: bold;
+    font-size: 15px;
     background: #7c7c7c;
     color: #fff;
     padding: 4px 7px;
     border-radius: 12px;
+    font-family: 'Calibri', sans-serif;
   }
 
   .object-icon {
-    position: absolute;
-    top: 40px;
-    width: 80px;
-    height: 80px;
+    position: relative;
+    width: 60%;
+    height: 60%;
   }
 
   .tile-flag {
-    background-color: #000000;
+    background-color: #b9b4b4;
   }
   
   .tile-healingsanctuary {
@@ -115,7 +111,7 @@
     background-color: #f89b9b;
   }
 
-  .tile-startpoint {
-    background-color: #355b42;
+  .tile-startingpoint {
+    background-color: #cbadd7;
   }
   
