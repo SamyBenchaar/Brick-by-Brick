@@ -18,7 +18,7 @@ export class AdminPageComponent {
 
     gameModes = [
         { value: 'classic' as const, label: 'classique' },
-        { value: 'ctf' as const, label: 'CTF' }
+        { value: 'ctf' as const, label: 'CTF' },
     ];
 
     gameSizes = [
