@@ -3,7 +3,6 @@
     flex-direction: column;
     gap: 15px;
     padding: 20px;
-    background-color: #f5f5f5;
     border-right: 3px solid #333;
     min-width: 180px;          
     height: 100vh;            
@@ -23,7 +22,8 @@
   .tile-list {
     display: flex;
     flex-direction: column;  
-    gap: 150px;
+    gap: 15px;
+    align-items: center;
   }
   
   .tile-type-item {
@@ -46,19 +46,13 @@
     &:hover .tile-description {
       visibility: visible;
       opacity: 1;
+      font-family: 'Calibri', sans-serif;
     }
     
     &.selected {
       border-color: #00ff08;
       border-width: 5px;
     }
-  }
-  
-  .tile-label {
-    font-size: 20px;
-    font-weight: bold;
-    color: rgb(0, 0, 0);
-    pointer-events: none; 
   }
   
   .tile-description {
@@ -78,16 +72,19 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     transition: opacity 0.2s ease, visibility 0.2s ease;
     pointer-events: none;  
-    
   }
+
+  .tile-icon{
+    width: 100px;
+    height: 100px;
+  }
+
   .tile-water {
     background-color: #4a90e2;
   }
   
   .tile-ice {
-    background-color: #b8e6ff;
-    
-    
+    background-color: #b8e6ff; 
   }
   
   .tile-wall {
