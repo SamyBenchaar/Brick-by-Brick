@@ -12,6 +12,7 @@
             label="Nom de la partie"
             placeholder="Entrez le nom de la partie"
             [value]="gameName"
+            [maxLength]="30"
             (valueChange)="gameName = $event">
             </app-text-input>
 
@@ -20,6 +21,7 @@
             label="Description"
             placeholder="Entrez une description"
             [value]="gameDescription"
+            [maxLength]="90"
             (valueChange)="gameDescription = $event">
             </app-text-input>
 
