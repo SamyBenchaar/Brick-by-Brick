@@ -113,7 +113,7 @@ export class GameGridComponent implements OnInit, OnChanges {
     }
   }
 
-  @HostListener('mouseup')
+  @HostListener('document:mouseup')
   onTileMouseUp(): void {
     this.isDrawing = false;
     this.isDeleting = false;
