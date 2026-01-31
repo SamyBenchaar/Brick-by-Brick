@@ -4,8 +4,8 @@ import { GameGridComponent } from '@app/components/game-edition-components/game-
 import { ObjectSidebarComponent } from '@app/components/game-edition-components/object-sidebar/object-sidebar.component';
 import { TextInputComponent } from '@app/components/game-edition-components/text-input/text-input.component';
 import { TileTypeSidebarComponent } from '@app/components/game-edition-components/tile-type-sidebar/tile-type-sidebar.component';
-import { Game } from '@app/interfaces/game';
 import { CommunicationService } from '@app/services/communication/communication.service';
+import { MapEditorServiceService } from '@app/services/map-editor-service.service';
 import { MapSize } from '@common/map';
 
 
@@ -21,23 +21,29 @@ export class EditionPageComponent implements OnInit {
   gameName: string = '';
   gameDescription: string = '';
   gameId: string = '';
-  currentGame: Game | null = null;
 
   constructor(
     private route: ActivatedRoute,
     private communicationService: CommunicationService,
+    private mapEditorService: MapEditorServiceService,
   ) {}
 
   ngOnInit(): void {
-    // Récupérer le paramètre 'size' depuis l'URL
-    this.gameId = this.route.snapshot.paramMap.get('game_id') || '';
-    if (this.gameId) {
-      this.loadGame();
-    }
+    this.route.paramMap.subscribe(params => {
+      this.gameId = params.get('game_id') || '';
+      if (this.gameId) {
+        this.loadGame();
+      }
+    });
+
     this.route.queryParams.subscribe(params => {
       this.selectedSize = params.size || null;
     });
-    
+
+  }
+
+  getMapEditorService(): MapEditorServiceService {
+    return this.mapEditorService;
   }
 
   getMapSize(): MapSize {
@@ -57,10 +63,28 @@ export class EditionPageComponent implements OnInit {
   private loadGame(): void {
     this.communicationService.getGameById(this.gameId).subscribe((game) => {
       if (game) {
-        this.currentGame = game;
+        this.mapEditorService.setCurrentGame(game);
         this.gameName = game.name;
         this.gameDescription = game.description;
       }
     });
+  }
+
+
+  onSave(): void {
+    const currentGame = this.mapEditorService.getCurrentGame();
+    this.communicationService.updateGame(this.gameId, currentGame).subscribe({
+      next: (updatedGame) => {
+        this.mapEditorService.setCurrentGame(updatedGame);
+      },
+    });
+  }
+
+  onReset(): void {
+    const currentGame = this.mapEditorService.getCurrentGame();
+    if (currentGame) {
+      this.gameName = currentGame.name;
+      this.gameDescription = currentGame.description;
+    }
   }
 }
