@@ -1,16 +1,16 @@
 import { CommonModule, DatePipe } from '@angular/common';
 import { Component } from '@angular/core';
-import { Router,RouterLink } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
 import { Game } from '@app/interfaces/game';
 import { CommunicationService } from '@app/services/communication/communication.service';
-import { FormsModule } from '@angular/forms';
 
 
 @Component({
     selector: 'app-admin-page',
     templateUrl: './admin-page.component.html',
     styleUrls: ['./admin-page.component.scss'],
-    imports: [CommonModule, DatePipe, FormsModule,RouterLink],
+    imports: [CommonModule, DatePipe, FormsModule, RouterLink],
 })
 export class AdminPageComponent {
     showGameCreationModal = false;
@@ -65,7 +65,7 @@ export class AdminPageComponent {
     }
 
     editGame(game: Game): void {
-        this.communicationService.updateGame(game._id, { isVisible: !game.isVisible }).subscribe((updatedGame) => {
+        this.communicationService.updateGameVisibility(game._id, !game.isVisible).subscribe((updatedGame) => {
             game.isVisible = updatedGame.isVisible;
         });
     }
