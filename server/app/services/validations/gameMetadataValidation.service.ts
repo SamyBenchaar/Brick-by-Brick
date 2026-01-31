@@ -10,12 +10,11 @@ export class GameMetadataValidationService {
     ) {}
 
     async validateMetadata(gameData: Partial<Game>): Promise<void> {
-        console.log("VALIDATION METADATA SERVICE:", gameData.description);
         if (!gameData.description || gameData.description.trim() === '') {
             throw new BadRequestException('La description ne peut pas être vide');
         }
         const existingGame = await this.gameModel.findOne({ name: gameData.name }).exec();
-        if(existingGame && gameData._id && existingGame._id.toString() === gameData._id.toString()) {
+        if (existingGame && gameData._id && existingGame._id.toString() === gameData._id.toString()) {
             return;
         }
         if (existingGame) {

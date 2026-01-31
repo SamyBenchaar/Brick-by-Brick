@@ -38,8 +38,15 @@ export class GameController {
     @ApiResponse({ status: 200, description: 'Jeu mis à jour avec succès', type: Game })
     @ApiResponse({ status: 404, description: 'Jeu non trouvé' })
     async update(@Param('id') id: string, @Body(new ValidationPipe({ transform: true })) updateGameDto: UpdateGameDto): Promise<Game> {
-        console.log("GAME DATA CONTROLLER:", updateGameDto);
         return this.gameService.update(id, updateGameDto);
+    }
+
+    @Patch(':id/visibility')
+    @ApiOperation({ summary: 'Modifier la visibilité d\'un jeu' })
+    @ApiResponse({ status: 200, description: 'Visibilité mise à jour avec succès', type: Game })
+    @ApiResponse({ status: 404, description: 'Jeu non trouvé' })
+    async updateVisibility(@Param('id') id: string, @Body('isVisible') isVisible: boolean): Promise<Game> {
+        return this.gameService.updateVisibility(id, isVisible);
     }
 
     @Delete(':id')

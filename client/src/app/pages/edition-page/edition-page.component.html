@@ -11,7 +11,7 @@
             class="name-input pixel-font"
             label="Nom de la partie"
             placeholder="Entrez le nom de la partie"
-            [value]="gameName"
+            [(value)]="gameName"
             (valueChange)="this.getMapEditorService().setTitle($event)">
             </app-text-input>
 
@@ -19,12 +19,12 @@
             class="description-input pixel-font"
             label="Description"
             placeholder="Entrez une description"
-            [value]="gameDescription"
+            [(value)]="gameDescription"
             (valueChange)="this.getMapEditorService().setDescription($event)">
             </app-text-input>
 
         </div>
-        <app-game-grid [gameData]="this.getMapEditorService().getCurrentGame()"></app-game-grid>
+        <app-game-grid [mapSize]="getMapSize()" [gameData]="this.getMapEditorService().getCurrentGame()"></app-game-grid>
 
         <div class="buttons">
             <button class="button" (click)="onSave()" style="background-image: url('/assets/images/4x1_green.png');">

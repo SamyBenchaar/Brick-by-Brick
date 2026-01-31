@@ -1,9 +1,50 @@
 <div class="container">
   <div class="header-row">
     <h1 class="header-title">ADMINISTRER LES JEUX</h1>
-    <button class="add-button" routerLink="/game-creation">Ajouter un jeu</button>
-  </div>
+    <button class="add-button" (click)="openGameCreationModal()">Ajouter un jeu</button>  </div>
+    <!-- Modal de création de jeu -->
+    @if (showGameCreationModal) {
+    <div class="modal-overlay" (click)="closeGameCreationModal()">
+        <div class="modal-content" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+                <h2>Créer un nouveau jeu</h2>
+                <button class="modal-close" (click)="closeGameCreationModal()">
+                    <span class="material-icons">close</span>
+                </button>
+            </div>
 
+            <div class="modal-body">
+                <h3>Choisissez la taille de la grille</h3>
+
+                <div class="size-options">
+                    @for (size of gameSizes; track size.id) {
+                    <div class="size-card" [class.selected]="selectedSize === size.id" (click)="selectSize(size.id)">
+                        <div class="size-icon">
+                            <span class="material-icons">grid_on</span>
+                        </div>
+                        <h4>{{ size.label }}</h4>
+                        <p class="size-grid">{{ size.gridSize }}</p>
+                        <p class="size-players">{{ size.players }}</p>
+                    </div>
+                    }
+                </div>
+                <div class="game-modes-options">
+                    <label for="game-mode">Mode de jeu</label>
+                    <select id="game-mode" [(ngModel)]="gameMode">
+                        @for (mode of gameModes; track mode){
+                        <option [value]="mode.value">{{ mode.label }}</option>
+                        }
+                    </select>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn-secondary" (click)="closeGameCreationModal()">Annuler</button>
+                <button class="btn-primary" [disabled]="!selectedSize" (click)="confirmAndRedirect()">Continuer</button>
+            </div>
+        </div>
+    </div>
+    }
   <div class="games-list">
     @for (game of games; track game._id) {
     <div class="game-item">
@@ -43,3 +84,5 @@
     }
   </div>
 </div>
+
+

@@ -31,16 +31,14 @@ export class GameService {
     }
 
     async update(id: string, gameData: Partial<Game>): Promise<Game> {
-        console.log("GAME DATA SERVICE:", gameData);
-        console.log("ID:", id);
         await this.gameMetadataValidationService.validateMetadata(gameData);
-        console.log("GAME DATA SERVICE:", gameData);
-        console.log("ID:", id);
         await this.mapValidationService.validateMap(gameData);
-        console.log("GAME DATA SERVICE:", gameData);
-        console.log("ID:", id);
 
         return this.gameModel.findByIdAndUpdate(id, gameData, { new: true }).exec();
+    }
+
+    async updateVisibility(id: string, isVisible: boolean): Promise<Game> {
+        return this.gameModel.findByIdAndUpdate(id, { isVisible }, { new: true }).exec();
     }
 
     async delete(id: string): Promise<Game> {

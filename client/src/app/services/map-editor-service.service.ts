@@ -7,10 +7,10 @@ import { ObjectType, TileType } from '@common/map';
   providedIn: 'root',
 })
 export class MapEditorServiceService {
-  private  selectedTileType = signal<TileType|null>(null);
-  private  selectedObject = signal<ObjectType|null>(null);
-  private currentGame= signal<Game | null>(null);
-  
+  private selectedTileType = signal<TileType | null>(null);
+  private selectedObject = signal<ObjectType | null>(null);
+  private currentGame = signal<Game | null>(null);
+
 
   selectTileType(type: TileType): void {
     this.selectedTileType.set(type);
@@ -22,7 +22,7 @@ export class MapEditorServiceService {
     this.selectedTileType.set(null);
   }
 
-  getSelectedTileType(): TileType | null{
+  getSelectedTileType(): TileType | null {
     return this.selectedTileType();
   }
 
@@ -40,12 +40,10 @@ export class MapEditorServiceService {
 
   setTileType(x: number, y: number, type: TileType): void {
     const game = this.currentGame();
-    console.log("SETTILETYPE DANS MAP EDITOR SERVICE",game);
     if (game) {
       game.mapConfig.tiles[y][x].type = type;
       this.currentGame.set(game);
     }
-    console.log("APRES SETTILETYPE DANS MAP EDITOR SERVICE",this.currentGame());
   }
 
   setTitle(title: string): void {

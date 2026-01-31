@@ -6,6 +6,8 @@ import { TextInputComponent } from '@app/components/game-edition-components/text
 import { TileTypeSidebarComponent } from '@app/components/game-edition-components/tile-type-sidebar/tile-type-sidebar.component';
 import { CommunicationService } from '@app/services/communication/communication.service';
 import { MapEditorServiceService } from '@app/services/map-editor-service.service';
+import { MapSize } from '@common/map';
+
 
 @Component({
   selector: 'app-edition-page',
@@ -14,6 +16,8 @@ import { MapEditorServiceService } from '@app/services/map-editor-service.servic
   styleUrl: './edition-page.component.scss',
 })
 export class EditionPageComponent implements OnInit {
+  selectedSize: 'small' | 'medium' | 'large' | null = null;
+  gridDimensions = { width: MapSize.Small, height: MapSize.Small }; // Valeur par défaut
   gameName: string = '';
   gameDescription: string = '';
   gameId: string = '';
@@ -25,15 +29,37 @@ export class EditionPageComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.gameId = this.route.snapshot.paramMap.get('game_id') || '';
-    if (this.gameId) {
-      this.loadGame();
-    }
+    // S'abonner aux changements de paramètres d'URL
+    this.route.paramMap.subscribe(params => {
+      this.gameId = params.get('game_id') || '';
+      if (this.gameId) {
+        this.loadGame();
+      }
+    });
+
+    this.route.queryParams.subscribe(params => {
+      this.selectedSize = params.size || null;
+    });
+
   }
 
   getMapEditorService(): MapEditorServiceService {
     return this.mapEditorService;
   }
+
+  getMapSize(): MapSize {
+    switch (this.selectedSize) {
+      case 'small':
+        return MapSize.Small;
+      case 'medium':
+        return MapSize.Medium;
+      case 'large':
+        return MapSize.Large;
+      default:
+        return MapSize.Small; // Par défaut
+    }
+  }
+
 
   private loadGame(): void {
     this.communicationService.getGameById(this.gameId).subscribe((game) => {
@@ -46,17 +72,11 @@ export class EditionPageComponent implements OnInit {
   }
 
 
-
   onSave(): void {
     const currentGame = this.mapEditorService.getCurrentGame();
-    console.log("VALEUR DE MON GAME DATA", this.mapEditorService.getCurrentGame());
     this.communicationService.updateGame(this.gameId, currentGame).subscribe({
       next: (updatedGame) => {
-        console.log('Jeu enregistré avec succès!', updatedGame);
         this.mapEditorService.setCurrentGame(updatedGame);
-      },
-      error: (error) => {
-        console.error('Erreur lors de la sauvegarde:', error);
       },
     });
   }
@@ -66,7 +86,6 @@ export class EditionPageComponent implements OnInit {
     if (currentGame) {
       this.gameName = currentGame.name;
       this.gameDescription = currentGame.description;
-      console.log('Formulaire réinitialisé!');
     }
   }
 }
