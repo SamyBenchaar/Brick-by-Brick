@@ -29,7 +29,6 @@ export class EditionPageComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    // S'abonner aux changements de paramètres d'URL
     this.route.paramMap.subscribe(params => {
       this.gameId = params.get('game_id') || '';
       if (this.gameId) {
