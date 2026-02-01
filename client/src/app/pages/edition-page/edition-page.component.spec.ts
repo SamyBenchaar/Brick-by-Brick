@@ -22,6 +22,9 @@ describe('EditionPageComponent', () => {
             paramMap: of({
               get: (key: string) => (key === 'game_id' ? null : null),
             }),
+            snapshot: {
+              queryParams: { size: 'Small', mode: 'classic' },
+            },
             queryParams: of({ size: null }),
             params: of({ id: '123' }),
           },

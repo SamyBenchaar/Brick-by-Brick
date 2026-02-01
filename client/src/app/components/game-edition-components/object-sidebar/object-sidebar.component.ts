@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Tile } from '@app/classes/tile';
 import { OBJECT_DESCRIPTIONS } from '@app/constants/object-descriptions';
@@ -13,7 +13,7 @@ import { MinimumStartingPt, ObjectType } from '@common/map';
   templateUrl: './object-sidebar.component.html',
   styleUrl: './object-sidebar.component.scss',
 })
-export class ObjectSidebarComponent {
+export class ObjectSidebarComponent implements OnInit {
   editableObjects = Tile.editableObjects;
   private route = inject(ActivatedRoute);
   private objectCounterService = inject(ObjectCounterService);
@@ -21,7 +21,7 @@ export class ObjectSidebarComponent {
   readonly tile = Tile;
 
   ngOnInit(): void {
-    const size = this.route.snapshot.queryParams['size']?.toLowerCase();
+    const size = this.route.snapshot.queryParams.size?.toLowerCase();
 
     switch (size) {
       case 'small':
