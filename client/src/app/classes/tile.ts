@@ -18,7 +18,7 @@ export class Tile {
     private _type: TileType;
     private _object: ObjectType | undefined;
 
-    constructor(type: TileType = TileType.Base, x: number, y: number) {
+    constructor(type: TileType = TileType.Base) {
         this._type = type;
     }
 

@@ -17,13 +17,15 @@ import { MapSize } from '@common/map';
   styleUrl: './edition-page.component.scss',
 })
 export class EditionPageComponent implements OnInit {
+  private static readonly mediumMaxPlayers = 4;
+  private static readonly largeMaxPlayers = 6;
   @ViewChild(GameGridComponent) gameGridComponent!: GameGridComponent;
   selectedSize: 'Small' | 'Medium' | 'Large' = 'Small';
   gridDimensions = { width: MapSize.Small, height: MapSize.Small }; // Valeur par défaut
   gameName: string = '';
   gameDescription: string = '';
   gameId: string = '';
-  gameMode: 'classic' | 'ctf' = 'classic'
+  gameMode: 'classic' | 'ctf' = 'classic';
 
   constructor(
     private route: ActivatedRoute,
@@ -78,13 +80,13 @@ export class EditionPageComponent implements OnInit {
   private getMaxPlayers(): number {
     switch (this.selectedSize) {
       case 'Small':
-        return 2
+        return 2;
       case 'Medium':
-        return 4
+        return EditionPageComponent.mediumMaxPlayers;
       case 'Large':
-        return 6
+        return EditionPageComponent.largeMaxPlayers;
       default:
-        return 2
+        return 2;
     }
   }
 
@@ -94,20 +96,19 @@ export class EditionPageComponent implements OnInit {
       this.communicationService.updateGame(this.gameId, currentGame).subscribe({
         next: (updatedGame) => {
           this.mapEditorService.setCurrentGame(updatedGame);
-          this.router.navigate(["/admin"]);
+          this.router.navigate(['/admin']);
         },
       });
-    }
-    else {
-      let grid = this.gameGridComponent.gameMap.getGrid()
+    } else {
+      const grid = this.gameGridComponent.gameMap.getGrid();
       const tiles = grid.map(row =>
         row.map(tile => {
-          const tileData: any = { type: tile.type };
+          const tileData: { type: string; object?: { type: string } } = { type: tile.type };
           if (tile.object) {
             tileData.object = { type: tile.object };
           }
           return tileData;
-        })
+        }),
       );
       const gameData = {
         name: this.gameName,
@@ -117,22 +118,18 @@ export class EditionPageComponent implements OnInit {
         gameMode: this.gameMode,
         mapConfig: {
           size: this.selectedSize.charAt(0).toUpperCase() + this.selectedSize.slice(1),
-          tiles: tiles
-        }
-
-      }
-      console.log("Données envoyées au backend:", JSON.stringify(gameData, null, 2));
-      this.communicationService.createGame(gameData).subscribe({
-        next: (createdGame) => {
-          console.log(" Jeu créé avec succès:", createdGame)
-          this.router.navigate(["/admin"]);
+          tiles,
         },
-        error: (error) => {
-          console.error("Erreur complète:", error);
-          console.error("Message d'erreur:", error.error);
-          console.error("Détails:", JSON.stringify(error.error, null, 2));
-        }
-      })
+
+      };
+      this.communicationService.createGame(gameData).subscribe({
+        next: () => {
+          this.router.navigate(['/admin']);
+        },
+        error: () => {
+          // Error handling
+        },
+      });
     }
   }
 
