@@ -14,7 +14,6 @@ import { WaitingRoomPage } from '@app/pages/waiting-room-page/waiting-room-page.
 
 import { AdminPageComponent } from '@app/pages/admin-page/admin-page.component';
 
-
 if (environment.production) {
     enableProdMode();
 }
@@ -27,7 +26,7 @@ const routes: Routes = [
     { path: 'material', component: MaterialPageComponent },
     { path: 'waiting-room', component: WaitingRoomPage },
     { path: 'edition/:game_id', component: EditionPageComponent },
-
+    { path: 'edition', component: EditionPageComponent },
     { path: 'admin', component: AdminPageComponent },
     { path: 'character-creation', component: CharacterCreationPageComponent },
     { path: '**', redirectTo: '/home' },

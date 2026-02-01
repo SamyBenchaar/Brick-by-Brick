@@ -25,7 +25,9 @@
   flex-direction: row;
   font-family: "myFont", sans-serif;
   padding-top: 5px;
-
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
 }
 
 .edition-layout {
@@ -39,6 +41,9 @@
     flex-direction: row;
     gap: 150px;
     padding-top: 25px;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
   }
 
 .name-input {

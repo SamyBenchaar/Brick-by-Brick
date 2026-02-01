@@ -14,6 +14,9 @@ export class GameMetadataValidationService {
             throw new BadRequestException('La description ne peut pas être vide');
         }
         const existingGame = await this.gameModel.findOne({ name: gameData.name }).exec();
+        if (existingGame && gameData._id && existingGame._id.toString() === gameData._id.toString()) {
+            return;
+        }
         if (existingGame) {
             throw new BadRequestException('Le nom du jeu doit être unique');
         }

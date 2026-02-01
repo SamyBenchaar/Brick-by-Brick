@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, HostListener, inject, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, HostListener, inject, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { GameMap } from '@app/classes/game-map';
 import { Tile } from '@app/classes/tile';
 import { ClickEvent } from '@app/constants/click-event-constants';
@@ -15,11 +15,12 @@ import { GRID_SIZE, MapSize, ObjectType, TileType } from '@common/map';
   templateUrl: './game-grid.component.html',
   styleUrl: './game-grid.component.scss',
 })
-export class GameGridComponent implements OnChanges {
+export class GameGridComponent implements OnInit, OnChanges {
+  @Input() mapSize: MapSize = MapSize.Small; // Taille par défaut
 
   @Input() gameData: Game | null = null;
   readonly gridSize = GRID_SIZE;
-  gameMap: GameMap;
+  gameMap!: GameMap;
   private mapEditorService = inject(MapEditorServiceService);
   private objectCounterService = inject(ObjectCounterService);
   private isDrawing = false;
@@ -29,9 +30,13 @@ export class GameGridComponent implements OnChanges {
 
   constructor() {
     this.gameMap = new GameMap(MapSize.Small);
-    this.objectCounterService.reset();
   }
 
+  ngOnInit(): void {
+    // Initialiser la grille avec la taille reçue en input
+    this.gameMap = new GameMap(this.mapSize);
+    this.objectCounterService.reset();
+  }
   ngOnChanges(changes: SimpleChanges): void {
     if (changes.gameData && this.gameData) {
       this.loadGameData();
@@ -89,6 +94,7 @@ export class GameGridComponent implements OnChanges {
       } else {
         this.isDrawing = true;
         this.changeTileType(x, y);
+
       }
     }
     if (event.button === ClickEvent.Right) {
@@ -108,7 +114,7 @@ export class GameGridComponent implements OnChanges {
     }
   }
 
-  @HostListener('mouseup')
+  @HostListener('document:mouseup')
   onTileMouseUp(): void {
     this.isDrawing = false;
     this.isDeleting = false;
@@ -147,7 +153,11 @@ export class GameGridComponent implements OnChanges {
     const selectedType = this.mapEditorService.getSelectedTileType();
     const tile = this.getTile(x, y);
     if (tile && selectedType) {
+      if (selectedType === TileType.Wall && tile.object) {
+        this.removeObject(x, y);
+      }
       tile.type = selectedType;
+      this.mapEditorService.setTileType(x, y, selectedType);
     }
   }
 

@@ -19,12 +19,10 @@ describe('EditionPageComponent', () => {
         {
           provide: ActivatedRoute,
           useValue: {
-            snapshot: {
-              paramMap: {
-                get: () => '123',
-              },
-            },
-            queryParams: of({ id: '123' }),
+            paramMap: of({
+              get: (key: string) => (key === 'game_id' ? null : null),
+            }),
+            queryParams: of({ size: null }),
             params: of({ id: '123' }),
           },
         },
@@ -34,7 +32,7 @@ describe('EditionPageComponent', () => {
 
     fixture = TestBed.createComponent(EditionPageComponent);
     component = fixture.componentInstance;
-    await fixture.whenStable();
+    fixture.detectChanges();
   });
 
   it('should create', () => {
