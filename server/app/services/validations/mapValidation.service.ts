@@ -1,7 +1,7 @@
 import { Game, GameDocument } from '@app/model/game';
 import { Tile } from '@app/model/tile';
 import { MapSize, MIN_TERRAIN_COVERAGE, PERCENTAGE_MULTIPLIER, PLAYABLE_TYPES } from '@common/map';
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 
@@ -11,18 +11,22 @@ export class MapValidationService {
         @InjectModel(Game.name) private gameModel: Model<GameDocument>,
     ) {}
 
-    async validateMap(gameData: Partial<Game>): Promise<void> {
+    async validateMap(gameData: Partial<Game>): Promise<string[]> {
+        const errors: string[] = [];
+
         // Validation: Plus de 50% de la surface doit être du terrain jouable
-        this.validateTerrainCoverage(gameData);
+        errors.push(...this.validateTerrainCoverage(gameData));
 
         // Validation: Tous les points de départ ont été placés
-        this.validateStartingPoints(gameData);
+        errors.push(...this.validateStartingPoints(gameData));
 
         // Validation: Toutes les tuiles de terrain doivent être accessibles
-        this.validateTerrainAccessibility(gameData);
+        errors.push(...this.validateTerrainAccessibility(gameData));
+
+        return errors;
     }
 
-    private validateTerrainCoverage(gameData: Partial<Game>): void {
+    private validateTerrainCoverage(gameData: Partial<Game>): string[] {
         const gridSize = MapSize[gameData.mapConfig.size as keyof typeof MapSize];
         const totalSurface = gridSize * gridSize;
         const playableTileCount = this.countPlayableTiles(gameData);
@@ -30,14 +34,15 @@ export class MapValidationService {
         const coverage = playableTileCount / totalSurface;
 
         if (coverage <= MIN_TERRAIN_COVERAGE) {
-            throw new BadRequestException(
+            return [
                 `La surface de terrain jouable est insuffisante: ${(coverage * PERCENTAGE_MULTIPLIER).toFixed(1)}%. ` +
                 `Au moins 50% de la surface doit être du terrain jouable.`,
-            );
+            ];
         }
+        return [];
     }
 
-    private validateStartingPoints(gameData: Partial<Game>): void {
+    private validateStartingPoints(gameData: Partial<Game>): string[] {
         let numberOfStartingPoints = 0;
         for (const row of gameData.mapConfig.tiles) {
             for (const tile of row) {
@@ -48,13 +53,14 @@ export class MapValidationService {
         }
 
         if (numberOfStartingPoints !== gameData.numberOfPlayers) {
-            throw new BadRequestException(
+            return [
                 `Le nombre de points de départ (${numberOfStartingPoints}) doit être égal au nombre de joueurs (${gameData.numberOfPlayers})`,
-            );
+            ];
         }
+        return [];
     }
 
-    private validateTerrainAccessibility(gameData: Partial<Game>): void {
+    private validateTerrainAccessibility(gameData: Partial<Game>): string[] {
         const tiles = gameData.mapConfig.tiles;
         const gridSize = MapSize[gameData.mapConfig.size as keyof typeof MapSize];
         const totalPlayableTiles = this.countPlayableTiles(gameData);
@@ -62,7 +68,7 @@ export class MapValidationService {
         // Trouver une tuile de départ
         const startPoint = this.findStartingPoint(tiles);
         if (!startPoint) {
-            throw new BadRequestException('Aucun point de départ trouvé pour vérifier l\'accessibilité');
+            return ['Aucun point de départ trouvé pour vérifier l\'accessibilité'];
         }
 
         // BFS pour compter les tuiles accessibles
@@ -117,11 +123,12 @@ export class MapValidationService {
 
         // Vérifier si toutes les tuiles jouables sont accessibles
         if (accessibleTiles !== totalPlayableTiles) {
-            throw new BadRequestException(
+            return [
                 `Certaines tuiles de terrain sont inaccessibles. ` +
                 `Tuiles accessibles: ${accessibleTiles}/${totalPlayableTiles}`,
-            );
+            ];
         }
+        return [];
     }
 
     private countPlayableTiles(gameData: Partial<Game>): number {

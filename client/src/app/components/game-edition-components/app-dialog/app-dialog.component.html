@@ -1,0 +1,23 @@
+<div class="dialog-container" [ngClass]="data.type">
+  <div class="dialog-header">
+    <div class="icon-container" [ngClass]="data.type + '-icon'">
+      <span class="icon">{{ getIcon() }}</span>
+    </div>
+    <h2 mat-dialog-title class="dialog-title">
+      {{ data.title }}
+    </h2>
+  </div>
+
+  <mat-dialog-content class="dialog-content">
+    <ul *ngIf="isArray" class="error-list">
+      <li *ngFor="let err of data.message">{{ err }}</li>
+    </ul>
+    <p *ngIf="!isArray" class="message-text">{{ data.message }}</p>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end" class="dialog-actions">
+    <button mat-raised-button [ngClass]="data.type + '-button'" (click)="close()">
+      OK
+    </button>
+  </mat-dialog-actions>
+</div>

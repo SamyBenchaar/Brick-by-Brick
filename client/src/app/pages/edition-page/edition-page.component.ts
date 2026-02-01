@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { MatDialog } from '@angular/material/dialog';
+import { ActivatedRoute, Router } from '@angular/router';
+import { AppDialogComponent } from '@app/components/game-edition-components/app-dialog/app-dialog.component';
 import { GameGridComponent } from '@app/components/game-edition-components/game-grid/game-grid.component';
 import { ObjectSidebarComponent } from '@app/components/game-edition-components/object-sidebar/object-sidebar.component';
 import { TextInputComponent } from '@app/components/game-edition-components/text-input/text-input.component';
@@ -7,7 +9,6 @@ import { TileTypeSidebarComponent } from '@app/components/game-edition-component
 import { CommunicationService } from '@app/services/communication/communication.service';
 import { MapEditorServiceService } from '@app/services/map-editor-service.service';
 import { MapSize } from '@common/map';
-
 
 @Component({
   selector: 'app-edition-page',
@@ -26,6 +27,8 @@ export class EditionPageComponent implements OnInit {
     private route: ActivatedRoute,
     private communicationService: CommunicationService,
     private mapEditorService: MapEditorServiceService,
+    private router: Router,
+    private dialog: MatDialog,
   ) {}
 
   ngOnInit(): void {
@@ -76,6 +79,25 @@ export class EditionPageComponent implements OnInit {
     this.communicationService.updateGame(this.gameId, currentGame).subscribe({
       next: (updatedGame) => {
         this.mapEditorService.setCurrentGame(updatedGame);
+        const dialogRef = this.dialog.open(AppDialogComponent, {
+          data: {
+            title: 'Sauvegarde réussie',
+            message: 'La partie a été sauvegardée.',
+            type: 'success',
+          },
+        });
+        dialogRef.afterClosed().subscribe(() => {
+          this.router.navigate(['/admin']);
+        });
+      },
+      error: (err) => {
+        this.dialog.open(AppDialogComponent, {
+          data: {
+            title: 'Erreur',
+            message: err.error.message || 'Une erreur est survenue lors de la sauvegarde de la partie.',
+            type: 'error',
+          },
+        });
       },
     });
   }

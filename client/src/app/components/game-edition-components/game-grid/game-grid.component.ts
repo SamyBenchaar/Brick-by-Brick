@@ -145,6 +145,7 @@ export class GameGridComponent implements OnInit, OnChanges {
         this.removeObject(x, y);
       } else {
         tile.type = TileType.Base;
+        this.mapEditorService.setTileType(x, y, TileType.Base);
       }
     }
   }
