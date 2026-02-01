@@ -126,8 +126,6 @@ export class EditionPageComponent implements OnInit {
         next: () => {
           this.router.navigate(['/admin']);
         },
-        error: () => {
-        },
       });
     }
   }
