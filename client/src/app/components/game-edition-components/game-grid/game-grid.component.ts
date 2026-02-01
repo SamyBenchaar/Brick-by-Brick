@@ -30,12 +30,12 @@ export class GameGridComponent implements OnInit, OnChanges {
 
   constructor() {
     this.gameMap = new GameMap(MapSize.Small);
-    this.objectCounterService.reset();
   }
 
   ngOnInit(): void {
     // Initialiser la grille avec la taille reçue en input
     this.gameMap = new GameMap(this.mapSize);
+    this.objectCounterService.reset();
   }
   ngOnChanges(changes: SimpleChanges): void {
     if (changes.gameData && this.gameData) {
