@@ -153,6 +153,9 @@ export class GameGridComponent implements OnInit, OnChanges {
     const selectedType = this.mapEditorService.getSelectedTileType();
     const tile = this.getTile(x, y);
     if (tile && selectedType) {
+      if (selectedType === TileType.Wall && tile.object) {
+        this.removeObject(x, y);
+      }
       tile.type = selectedType;
       this.mapEditorService.setTileType(x, y, selectedType);
     }
