@@ -18,19 +18,8 @@ export class Tile {
     private _type: TileType;
     private _object: ObjectType | undefined;
 
-    private readonly _x: number;
-    private readonly _y: number;
     constructor(type: TileType = TileType.Base, x: number, y: number) {
-        this._x = x;
-        this._y = y;
         this._type = type;
-    }
-
-    get x(): number {
-        return this._x;
-    }
-    get y(): number {
-        return this._y;
     }
 
     get type(): TileType {

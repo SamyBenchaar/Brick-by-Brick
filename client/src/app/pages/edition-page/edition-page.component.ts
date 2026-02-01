@@ -1,5 +1,6 @@
-import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+// import { Tile } from '@app/classes/tile';
 import { GameGridComponent } from '@app/components/game-edition-components/game-grid/game-grid.component';
 import { ObjectSidebarComponent } from '@app/components/game-edition-components/object-sidebar/object-sidebar.component';
 import { TextInputComponent } from '@app/components/game-edition-components/text-input/text-input.component';
@@ -16,16 +17,19 @@ import { MapSize } from '@common/map';
   styleUrl: './edition-page.component.scss',
 })
 export class EditionPageComponent implements OnInit {
-  selectedSize: 'small' | 'medium' | 'large' | null = null;
+  @ViewChild(GameGridComponent) gameGridComponent!: GameGridComponent;
+  selectedSize: 'Small' | 'Medium' | 'Large' = 'Small';
   gridDimensions = { width: MapSize.Small, height: MapSize.Small }; // Valeur par défaut
   gameName: string = '';
   gameDescription: string = '';
   gameId: string = '';
+  gameMode: 'classic' | 'ctf' = 'classic'
 
   constructor(
     private route: ActivatedRoute,
     private communicationService: CommunicationService,
     private mapEditorService: MapEditorServiceService,
+    private router: Router,
   ) {}
 
   ngOnInit(): void {
@@ -38,6 +42,7 @@ export class EditionPageComponent implements OnInit {
 
     this.route.queryParams.subscribe(params => {
       this.selectedSize = params.size || null;
+      this.gameMode = params.mode;
     });
 
   }
@@ -48,11 +53,11 @@ export class EditionPageComponent implements OnInit {
 
   getMapSize(): MapSize {
     switch (this.selectedSize) {
-      case 'small':
+      case 'Small':
         return MapSize.Small;
-      case 'medium':
+      case 'Medium':
         return MapSize.Medium;
-      case 'large':
+      case 'Large':
         return MapSize.Large;
       default:
         return MapSize.Small; // Par défaut
@@ -70,14 +75,65 @@ export class EditionPageComponent implements OnInit {
     });
   }
 
+  private getMaxPlayers(): number {
+    switch (this.selectedSize) {
+      case 'Small':
+        return 2
+      case 'Medium':
+        return 4
+      case 'Large':
+        return 6
+      default:
+        return 2
+    }
+  }
 
   onSave(): void {
-    const currentGame = this.mapEditorService.getCurrentGame();
-    this.communicationService.updateGame(this.gameId, currentGame).subscribe({
-      next: (updatedGame) => {
-        this.mapEditorService.setCurrentGame(updatedGame);
-      },
-    });
+    if (this.gameId !== '') {
+      const currentGame = this.mapEditorService.getCurrentGame();
+      this.communicationService.updateGame(this.gameId, currentGame).subscribe({
+        next: (updatedGame) => {
+          this.mapEditorService.setCurrentGame(updatedGame);
+          this.router.navigate(["/admin"]);
+        },
+      });
+    }
+    else {
+      let grid = this.gameGridComponent.gameMap.getGrid()
+      const tiles = grid.map(row =>
+        row.map(tile => {
+          const tileData: any = { type: tile.type };
+          if (tile.object) {
+            tileData.object = { type: tile.object };
+          }
+          return tileData;
+        })
+      );
+      const gameData = {
+        name: this.gameName,
+        description: this.gameDescription,
+        isVisible: false,
+        numberOfPlayers: this.getMaxPlayers(),
+        gameMode: this.gameMode,
+        mapConfig: {
+          size: this.selectedSize.charAt(0).toUpperCase() + this.selectedSize.slice(1),
+          tiles: tiles
+        }
+
+      }
+      console.log("Données envoyées au backend:", JSON.stringify(gameData, null, 2));
+      this.communicationService.createGame(gameData).subscribe({
+        next: (createdGame) => {
+          console.log(" Jeu créé avec succès:", createdGame)
+          this.router.navigate(["/admin"]);
+        },
+        error: (error) => {
+          console.error("Erreur complète:", error);
+          console.error("Message d'erreur:", error.error);
+          console.error("Détails:", JSON.stringify(error.error, null, 2));
+        }
+      })
+    }
   }
 
   onReset(): void {
