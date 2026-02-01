@@ -10,7 +10,7 @@ import { environment } from './environments/environment';
 import {CharacterCreationPageComponent} from '@app/pages/character-creation-page/character-creation-page.component';
 
 import { EditionPageComponent } from '@app/pages/edition-page/edition-page.component';
-
+import { WaitingRoomPage } from '@app/pages/waiting-room-page/waiting-room-page.component';
 
 import { AdminPageComponent } from '@app/pages/admin-page/admin-page.component';
 
@@ -25,7 +25,7 @@ const routes: Routes = [
     { path: 'home', component: MainPageComponent },
     { path: 'game', component: GamePageComponent },
     { path: 'material', component: MaterialPageComponent },
-
+    { path: 'waiting-room', component: WaitingRoomPage },
     { path: 'edition/:game_id', component: EditionPageComponent },
 
     { path: 'admin', component: AdminPageComponent },
