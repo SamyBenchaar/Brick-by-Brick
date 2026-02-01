@@ -8,7 +8,7 @@ import { MainPageComponent } from '@app/pages/main-page/main-page.component';
 import { MaterialPageComponent } from '@app/pages/material-page/material-page.component';
 import { environment } from './environments/environment';
 import {CharacterCreationPageComponent} from '@app/pages/character-creation-page/character-creation-page.component';
-
+import { GameCreationPageComponent } from '@app/pages/game-creation-page/game-creation-page.component';
 import { EditionPageComponent } from '@app/pages/edition-page/edition-page.component';
 import { AdminPageComponent } from '@app/pages/admin-page/admin-page.component';
 
@@ -22,7 +22,7 @@ const routes: Routes = [
     { path: 'home', component: MainPageComponent },
     { path: 'game', component: GamePageComponent },
     { path: 'material', component: MaterialPageComponent },
-
+    { path: 'game-creation', component: GameCreationPageComponent },
     { path: 'edition/:game_id', component: EditionPageComponent },
     { path: 'edition', component: EditionPageComponent },
     { path: 'admin', component: AdminPageComponent },
