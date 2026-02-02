@@ -31,7 +31,7 @@ export class GameService {
     }
 
     async findVisible(): Promise<Game[]> {
-        return this.gameModel.find({ isVisible: true }).exec();
+        return this.gameModel.find({ isVisible: true }).select('name previewImage gameMode mapConfig.size').exec();
     }
 
     async update(id: string, gameData: Partial<Game>): Promise<Game> {
