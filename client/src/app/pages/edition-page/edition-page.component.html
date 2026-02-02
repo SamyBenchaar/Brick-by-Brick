@@ -11,30 +11,29 @@
             class="name-input pixel-font"
             label="Nom de la partie"
             placeholder="Entrez le nom de la partie"
-            [value]="gameName"
+            [(value)]="gameName"
             [maxLength]="30"
-            (valueChange)="gameName = $event">
+            (valueChange)="this.getMapEditorService().setTitle($event)">
             </app-text-input>
 
             <app-text-input
             class="description-input pixel-font"
             label="Description"
             placeholder="Entrez une description"
-            [value]="gameDescription"
-            [maxLength]="90"
-            (valueChange)="gameDescription = $event">
+            [(value)]="gameDescription"
+            [maxLength]="60"
+            (valueChange)="this.getMapEditorService().setDescription($event)">
             </app-text-input>
 
         </div>
-        <app-game-grid [mapSize]="getMapSize()" [gameData]="currentGame"></app-game-grid>
-
+        <app-game-grid [mapSize]="getMapSize()" [gameData]="this.getMapEditorService().getCurrentGame()"></app-game-grid>
 
         <div class="buttons">
-            <button class="button" style="background-image: url('/assets/images/4x1_green.png');">
+            <button class="button" (click)="onSave()" style="background-image: url('/assets/images/4x1_green.png');">
             Enregistrer
             </button>
 
-            <button class="button" style="background-image: url('/assets/images/4x1_yellow.png');">
+            <button class="button" (click)="onReset()" style="background-image: url('/assets/images/4x1_yellow.png');">
             Réinitialiser
             </button>
 

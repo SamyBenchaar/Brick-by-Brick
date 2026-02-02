@@ -6,5 +6,5 @@
         [placeholder]="placeholder"
         [value]="value"
         [attr.maxlength]="maxLength"
-        (input)="valueChange.emit($any($event.target).value)">
+        (input)="onInputChange($any($event.target).value)">
 </div>

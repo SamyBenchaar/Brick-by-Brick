@@ -37,6 +37,10 @@ export class GameService {
         return this.gameModel.findByIdAndUpdate(id, gameData, { new: true }).exec();
     }
 
+    async updateVisibility(id: string, isVisible: boolean): Promise<Game> {
+        return this.gameModel.findByIdAndUpdate(id, { isVisible }, { new: true }).exec();
+    }
+
     async delete(id: string): Promise<Game> {
         return this.gameModel.findByIdAndDelete(id).exec();
     }
