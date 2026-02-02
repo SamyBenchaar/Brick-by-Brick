@@ -30,6 +30,7 @@
     </div>
     <div class="footer">
         <button class="button" style="background-image: url('/assets/images/4x1_green.png');"
-        [routerLink]="['/character-creation']">Créer une partie</button>
+        [disabled]="!selectedGameId"
+        (click)="createGameSession()">Créer une partie</button>
   </div>
 </div>

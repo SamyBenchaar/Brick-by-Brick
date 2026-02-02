@@ -25,4 +25,11 @@ export class GameCreationPageComponent {
     selectGame(gameId: string): void {
         this.selectedGameId = gameId;
     }
+
+    createGameSession(): void {
+        if (this.selectedGameId) {
+            // TODO: Logique pour créer une session de jeu avec l'ID du jeu sélectionné
+            console.log(`Créer une session de jeu pour le jeu avec l'ID: ${this.selectedGameId}`);
+        }
+    }
 }

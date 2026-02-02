@@ -134,6 +134,12 @@
     filter: brightness(1.2);
 }
 
+button:disabled {
+  filter: grayscale(100%);
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .footer {
     position: fixed;
     width: 100%;
