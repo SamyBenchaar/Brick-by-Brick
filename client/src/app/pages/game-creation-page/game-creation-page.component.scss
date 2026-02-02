@@ -8,7 +8,7 @@
     font-family: 'MyFont';
     padding: 0.5rem;
     background: radial-gradient(circle at top, #eeeff2, #d4edfc);
-    height: 100vh;
+    min-height: 100vh;
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
@@ -27,19 +27,25 @@
 
 .title {
     font-size: 30px;
+    margin-top: 0.25rem;
+    margin-bottom: 0.5rem;
+    padding: 0;
 }
 
+
 .content {
+    justify-content: center;
     display: flex;
     min-height: 0;
     flex: 1;
 }
 
 .available-games {
-    flex: 1;
     display: flex;
     flex-direction: column;
     padding-left: 0.5rem;
+    justify-content: center;
+    max-width: 1200px;
 }
 
 .game-list {
@@ -50,7 +56,7 @@
 }
 
 .game-item {
-    background: #ffffffcc; /* léger fond semi-transparent */
+    background: #ffffffcc;
     border-radius: 10px;
     border: 1px solid #000000;
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
@@ -59,22 +65,27 @@
     transition: transform 0.2s, box-shadow 0.2s;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    transition: 
+        transform 0.2s,
+        box-shadow 0.2s,
+        border 0.3s ease-in-out;
 
     &:hover {
         box-shadow: 0 12px 24px rgba(0,0,0,0.3);
     }
 
     &.selected {
-        border-color: #91d993;
+        border-color: #acf691;
         border-width: 5px;
         border-style: solid;
+        box-shadow: 0 12px 24px rgba(145, 217, 147, 0.7);
     }
 }
 
 .game-content {
     display:flex;
     flex-direction: column;
+    padding: 9px;
 }
 
 .game-image {
@@ -85,6 +96,7 @@
     align-items: center;
     justify-content: center;
     border: 1px solid #000000;
+    margin: 12px auto 0;
 }
 
 .game-info {
@@ -96,28 +108,26 @@
 .game-name {
     font-size: 22px;
     margin: 0 0 0.3rem 0;
-}
-
-.game-size {
-    background: #d4edfc;
-    padding: 2px 6px;
+    padding: 5px 10px;
+    background-size: contain;
+    background-image: url('/assets/images/3x1_orange.png');
 }
 
 .button {
-  height: 60px;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-color: transparent;
-  background-size: contain;
-  padding: 20px;
+    height: 60px;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-color: transparent;
+    background-size: contain;
+    padding: 20px;
 
-  cursor: pointer;
+    cursor: pointer;
 
-  color: #000000;
-  font-family: 'MyFont', sans-serif;
-  font-size: 20px;
-  text-transform: uppercase;
-  border: none;
+    color: #000000;
+    font-family: 'MyFont', sans-serif;
+    font-size: 20px;
+    text-transform: uppercase;
+    border: none;
 }
 
 .button:hover {
@@ -125,8 +135,9 @@
 }
 
 .footer {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: auto;
-  padding: 0.5rem 0;
+    position: fixed;
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+    bottom: 10px;
 }

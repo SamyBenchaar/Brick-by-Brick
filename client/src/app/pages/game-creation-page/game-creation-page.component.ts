@@ -13,11 +13,16 @@ export class GameCreationPageComponent {
     constructor(private communicationService: CommunicationService) {}
 
     games: Game[] = this.getVisibleGames();
+    selectedGameId: string | null = null;
 
     getVisibleGames(): Game[] {
         this.communicationService.getVisibleGames().subscribe((games) => {
             this.games = games;
         });
         return this.games;
+    }
+
+    selectGame(gameId: string): void {
+        this.selectedGameId = gameId;
     }
 }

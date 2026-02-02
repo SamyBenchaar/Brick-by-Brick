@@ -17,6 +17,12 @@ export class GameController {
         return this.gameService.findAll();
     }
 
+    @Get('visible')
+    @ApiOperation({ summary: 'Récupérer les jeux visibles' })
+    async findVisible(): Promise<Game[]> {
+        return this.gameService.findVisible();
+    }
+
     @Get(':id')
     @ApiOperation({ summary: 'Récupérer un jeu par ID' })
     @ApiResponse({ status: 200, description: 'Jeu retourné avec succès' })
