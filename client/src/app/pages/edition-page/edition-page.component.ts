@@ -149,6 +149,10 @@ export class EditionPageComponent implements OnInit {
       } else {
         this.gameName = '';
         this.gameDescription = '';
+        if (this.gameGridComponent) {
+          this.gameGridComponent.resetGrid();
+        }
+        
       }
 
     }
