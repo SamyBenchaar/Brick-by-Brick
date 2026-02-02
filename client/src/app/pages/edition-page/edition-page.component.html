@@ -11,16 +11,16 @@
             class="name-input pixel-font"
             label="Nom de la partie"
             placeholder="Entrez le nom de la partie"
-            [(value)]="gameName"
-            (valueChange)="this.getMapEditorService().setTitle($event)">
+            [(value)]="gameName">
+            <!-- (valueChange)="this.getMapEditorService().setTitle($event)"> -->
             </app-text-input>
 
             <app-text-input
             class="description-input pixel-font"
             label="Description"
             placeholder="Entrez une description"
-            [(value)]="gameDescription"
-            (valueChange)="this.getMapEditorService().setDescription($event)">
+            [(value)]="gameDescription">
+            <!-- (valueChange)="this.getMapEditorService().setDescription($event)"> -->
             </app-text-input>
 
         </div>
