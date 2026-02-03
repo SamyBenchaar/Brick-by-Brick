@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { RouterLink, Router } from '@angular/router';
 import { CommunicationService } from '@app/services/communication/communication.service';
 import { Game } from '@app/interfaces/game';
 
@@ -10,7 +10,10 @@ import { Game } from '@app/interfaces/game';
     imports: [RouterLink]
 })
 export class GameCreationPageComponent {
-    constructor(private communicationService: CommunicationService) {}
+    constructor(
+        private communicationService: CommunicationService,
+        private router: Router
+    ) {}
 
     games: Game[] = this.getVisibleGames();
     selectedGameId: string | null = null;
@@ -28,8 +31,9 @@ export class GameCreationPageComponent {
 
     createGameSession(): void {
         if (this.selectedGameId) {
-            // TODO: Logique pour créer une session de jeu avec l'ID du jeu sélectionné
-            console.log(`Créer une session de jeu pour le jeu avec l'ID: ${this.selectedGameId}`);
+            this.communicationService.createGameSession(this.selectedGameId).subscribe((gameSession) => {
+                this.router.navigate(['/character-creation'])
+            });
         }
     }
 }
