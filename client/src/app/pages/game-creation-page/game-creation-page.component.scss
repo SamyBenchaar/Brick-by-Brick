@@ -1,0 +1,155 @@
+@font-face {
+  font-family: 'MyFont';
+  src: url('/assets/fonts/ByteBounce.ttf') format('truetype');
+  font-style: normal;
+}
+
+.game-creation {
+    font-family: 'MyFont';
+    padding: 0.5rem;
+    background: radial-gradient(circle at top, #eeeff2, #d4edfc);
+    min-height: 100vh;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    background-image: url('/assets/plate_background.jpg');
+    background-repeat: repeat;
+    background-size: contain;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+}
+
+.header-title {
+    font-size: 35px;
+    padding: 20px;
+    margin: 0;
+    background-image: url('/assets/images/4x1_yellow.png');
+    background-size: contain;
+}
+
+.title {
+    font-size: 30px;
+    margin-top: 0.25rem;
+    margin-bottom: 0.5rem;
+    padding: 15px 10px;
+    background-image: url('/assets/images/3x1_orange.png');
+    background-size: contain;
+}
+
+.content {
+    justify-content: center;
+    display: flex;
+    min-height: 0;
+    flex: 1;
+}
+
+.available-games {
+    display: flex;
+    flex-direction: column;
+    padding-left: 0.5rem;
+    justify-content: center;
+    max-width: 1200px;
+}
+
+.game-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    padding: 0.5rem 0;
+}
+
+.game-item {
+    background: #ffffffcc;
+    border-radius: 10px;
+    border: 1px solid #000000;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    width: 220px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: flex;
+    flex-direction: column;
+    transition: 
+        transform 0.2s,
+        box-shadow 0.2s,
+        border 0.3s ease-in-out;
+
+    &:hover {
+        box-shadow: 0 12px 24px rgba(0,0,0,0.3);
+    }
+
+    &.selected {
+        border-color: #acf691;
+        border-width: 5px;
+        border-style: solid;
+        box-shadow: 0 12px 24px rgba(145, 217, 147, 0.7);
+    }
+}
+
+.game-content {
+    display:flex;
+    flex-direction: column;
+    padding: 9px;
+}
+
+.game-image {
+    width: 80%;
+    height: 140px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #000000;
+    margin: 12px auto 0;
+}
+
+.game-info {
+    padding: 0.5rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.game-name {
+    font-size: 22px;
+    margin: 0 0 0.3rem 0;
+    padding: 5px 10px;
+    background-size: contain;
+    background-image: url('/assets/images/3x1_orange.png');
+}
+
+.button {
+    height: 60px;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-color: transparent;
+    background-size: contain;
+    padding: 20px;
+
+    cursor: pointer;
+
+    color: #000000;
+    font-family: 'MyFont', sans-serif;
+    font-size: 20px;
+    text-transform: uppercase;
+    border: none;
+}
+
+.button:hover {
+    filter: brightness(1.2);
+}
+
+button:disabled {
+  filter: grayscale(100%);
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.footer {
+    position: fixed;
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+    bottom: 10px;
+}

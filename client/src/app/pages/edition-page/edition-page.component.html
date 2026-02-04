@@ -12,6 +12,7 @@
             label="Nom de la partie"
             placeholder="Entrez le nom de la partie"
             [(value)]="gameName"
+            [maxLength]="30"
             (valueChange)="this.getMapEditorService().setTitle($event)">
             </app-text-input>
 
@@ -20,6 +21,7 @@
             label="Description"
             placeholder="Entrez une description"
             [(value)]="gameDescription"
+            [maxLength]="60"
             (valueChange)="this.getMapEditorService().setDescription($event)">
             </app-text-input>
 

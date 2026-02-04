@@ -19,6 +19,12 @@ export enum MapSize {
     Large = 20,
 }
 
+export enum MinimumStartingPt {
+    Small = 2,
+    Medium = 4,
+    Large = 6,
+}
+
 export const GRID_SIZE = 750;
 
 // Constantes pour la validation

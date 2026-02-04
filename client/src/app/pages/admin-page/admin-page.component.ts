@@ -14,7 +14,7 @@ import { CommunicationService } from '@app/services/communication/communication.
 })
 export class AdminPageComponent {
     showGameCreationModal = false;
-    selectedSize: 'small' | 'medium' | 'large' | null = null;
+    selectedSize: 'Small' | 'Medium' | 'Large' | null = null;
     gameMode: 'classic' | 'ctf' = 'classic';
 
     gameModes = [
@@ -24,7 +24,7 @@ export class AdminPageComponent {
 
     gameSizes = [
         {
-            id: 'small' as const,
+            id: 'Small' as const,
             label: 'Petite',
             gridSize: '10x10',
             players: '2 joueurs',
@@ -32,7 +32,7 @@ export class AdminPageComponent {
             height: 10,
         },
         {
-            id: 'medium' as const,
+            id: 'Medium' as const,
             label: 'Moyenne',
             gridSize: '15x15',
             players: '2 à 4 joueurs',
@@ -40,7 +40,7 @@ export class AdminPageComponent {
             height: 15,
         },
         {
-            id: 'large' as const,
+            id: 'Large' as const,
             label: 'Grande',
             gridSize: '20x20',
             players: '2 à 6 joueurs',
@@ -88,7 +88,7 @@ export class AdminPageComponent {
         this.gameMode = 'classic';
     }
 
-    selectSize(size: 'small' | 'medium' | 'large'): void {
+    selectSize(size: 'Small' | 'Medium' | 'Large'): void {
         this.selectedSize = size;
     }
 

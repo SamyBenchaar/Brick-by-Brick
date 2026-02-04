@@ -54,6 +54,10 @@ export class GameService {
         return this.gameModel.findById(id).exec();
     }
 
+    async findVisible(): Promise<Game[]> {
+        return this.gameModel.find({ isVisible: true }).select('name previewImage gameMode mapConfig.size').exec();
+    }
+
     async update(id: string, gameData: Partial<Game>): Promise<Game> {
         const errors: string[] = [];
 
