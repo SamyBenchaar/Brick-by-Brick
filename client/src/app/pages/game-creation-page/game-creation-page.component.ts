@@ -7,12 +7,12 @@ import { Game } from '@app/interfaces/game';
     selector: 'app--page',
     templateUrl: './game-creation-page.component.html',
     styleUrls: ['./game-creation-page.component.scss'],
-    imports: [RouterLink]
+    imports: [RouterLink],
 })
 export class GameCreationPageComponent {
     constructor(
         private communicationService: CommunicationService,
-        private router: Router
+        private router: Router,
     ) {}
 
     games: Game[] = this.getVisibleGames();
@@ -31,8 +31,8 @@ export class GameCreationPageComponent {
 
     createGameSession(): void {
         if (this.selectedGameId) {
-            this.communicationService.createGameSession(this.selectedGameId).subscribe((gameSession) => {
-                this.router.navigate(['/character-creation'])
+            this.communicationService.createGameSession(this.selectedGameId).subscribe(() => {
+                this.router.navigate(['/character-creation']);
             });
         }
     }

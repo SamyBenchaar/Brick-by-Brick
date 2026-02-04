@@ -1,4 +1,4 @@
-import { Character } from "./character-model";
+import { Character } from './character-model';
 
 export interface GameSession {
     gameId: string;

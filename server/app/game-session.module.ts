@@ -6,7 +6,7 @@ import { GameSessionController } from '@app/controllers/game-session/game-sessio
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: GameSession.name, schema: gameSessionSchema }])
+    MongooseModule.forFeature([{ name: GameSession.name, schema: gameSessionSchema }]),
   ],
   controllers: [GameSessionController],
   providers: [GameSessionService],

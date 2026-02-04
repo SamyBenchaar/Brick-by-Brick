@@ -22,7 +22,7 @@ import { GameSessionModule } from './game-session.module';
         }),
         MongooseModule.forFeature([
             { name: Game.name, schema: gameSchema },
-        ]), GameSessionModule
+        ]), GameSessionModule,
     ],
     controllers: [GameController],
     providers: [ChatGateway, GameService, DateService, Logger, MapValidationService, GameMetadataValidationService],
