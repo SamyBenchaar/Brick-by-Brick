@@ -4,7 +4,8 @@
         <app-object-sidebar></app-object-sidebar>
     </div>
     <div class="edition-layout">
-        
+        <app-game-grid class="game-grid" [mapSize]="getMapSize()" [gameData]="this.getMapEditorService().getCurrentGame()"></app-game-grid>
+
         <div class="game-info-container">
             
             <app-text-input
@@ -26,7 +27,6 @@
             </app-text-input>
 
         </div>
-        <app-game-grid [mapSize]="getMapSize()" [gameData]="this.getMapEditorService().getCurrentGame()"></app-game-grid>
 
         <div class="buttons">
             <button class="button" (click)="onSave()" style="background-image: url('/assets/images/4x1_green.png');">
