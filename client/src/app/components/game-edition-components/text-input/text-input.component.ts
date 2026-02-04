@@ -12,8 +12,8 @@ export class TextInputComponent {
   @Input() label: string = '';
   @Input() value: string = '';
   @Input() placeholder: string = '';
+  @Input() maxLength?: number;
   @Output() valueChange = new EventEmitter<string>();
-  
 
   onInputChange(value: string): void {
     this.valueChange.emit(value);
