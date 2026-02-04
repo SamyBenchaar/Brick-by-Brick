@@ -1,8 +1,8 @@
-import { Tile } from './tile';
 import { TileType } from '@common/map';
+import { Tile } from './tile';
 
 describe('Tile', () => {
   it('should create an instance', () => {
-    expect(new Tile(TileType.Base, 0, 0)).toBeTruthy();
+    expect(new Tile(TileType.Base)).toBeTruthy();
   });
 });

@@ -14,7 +14,7 @@ export class GameMap {
         for (let y = 0; y < this._size; y++) {
             grid[y] = [];
             for (let x = 0; x < this._size; x++) {
-                grid[y][x] = new Tile(TileType.Base, x, y);
+                grid[y][x] = new Tile(TileType.Base);
                 grid[y][x].object = undefined;
             }
         }

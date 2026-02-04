@@ -13,9 +13,9 @@ export class TileDto {
     @IsEnum(['open', 'closed'], { message: "L'état de la tuile doit être open ou closed" })
     state?: string;
 
-    @ApiProperty({ description: 'Objets présents sur cette tuile', type: MapObjectsDto, required: false })
+    @ApiProperty({ description: 'Objet présent sur cette tuile', type: MapObjectsDto, required: false })
     @IsOptional()
-    @ValidateNested({ message: 'Les objets de la tuile sont invalides' })
+    @ValidateNested({ message: "L'objet de la tuile est invalide" })
     @Type(() => MapObjectsDto)
-    objects?: MapObjectsDto;
+    object?: MapObjectsDto;
 }
