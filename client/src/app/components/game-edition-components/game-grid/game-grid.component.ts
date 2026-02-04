@@ -19,7 +19,7 @@ import html2canvas from 'html2canvas';
 export class GameGridComponent implements OnInit, OnChanges {
   private static readonly defaultPreviewMaxWidth = 400;
   private static readonly jpegQuality = 0.8;
-  
+
   @Input() mapSize: MapSize = MapSize.Small; // Taille par défaut
 
   @Input() gameData: Game | null = null;
