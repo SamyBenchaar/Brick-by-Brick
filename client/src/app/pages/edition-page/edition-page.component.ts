@@ -1,4 +1,4 @@
-import { DragDropModule } from '@angular/cdk/drag-drop';
+import { DragDropModule, CdkDrag } from '@angular/cdk/drag-drop';
 import { Component, HostListener, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 // import { Tile } from '@app/classes/tile';
@@ -22,6 +22,7 @@ export class EditionPageComponent implements OnInit {
   private static readonly mediumMaxPlayers = 4;
   private static readonly largeMaxPlayers = 6;
   @ViewChild(GameGridComponent) gameGridComponent!: GameGridComponent;
+  @ViewChild(CdkDrag) cdkDrag!: CdkDrag;
   selectedSize: 'Small' | 'Medium' | 'Large' = 'Small';
   isDragging: boolean = false;
   gridDimensions = { width: MapSize.Small, height: MapSize.Small }; // Valeur par défaut
@@ -40,7 +41,11 @@ export class EditionPageComponent implements OnInit {
 
   @HostListener('window:resize')
   onResize(): void {
-    this.isDragging = window.innerWidth < MIN_WIDTH_DRAGGING;
+    const canDrag = window.innerWidth < MIN_WIDTH_DRAGGING;
+    if (this.isDragging && !canDrag && this.cdkDrag) {
+      this.cdkDrag.reset();
+    }
+    this.isDragging = canDrag;
   }
   ngOnInit(): void {
     this.route.paramMap.subscribe(params => {

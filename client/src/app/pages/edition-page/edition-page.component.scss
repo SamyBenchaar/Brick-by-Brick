@@ -12,13 +12,13 @@
 .edition-container {
   display: grid;
   background-color: #d4edfc;
-  grid-template-columns: minmax(120px, 20%) 1fr;
-  overflow-x: hidden;
+  grid-template-columns: minmax(200px, 25%) 1fr;
+  overflow-x: visible;
   height: 100vh;
   max-width: 100vw;
   max-height: 100vh;
   width: 100vw;
-  overflow: hidden;
+  overflow-y: hidden;
 
 }
   
@@ -50,7 +50,7 @@
   padding-right: clamp(5px, 1vmin, 15px);
   padding-bottom: clamp(15px, 2vmin, 25px);
   padding-left: clamp(30px, 2vmin, 25px);
-  margin-left: clamp(-100px, -10vmin, -30px);
+  margin-left: clamp(-60px, -10vmin, -30px);
   justify-content: flex-start;
   align-items: stretch;
   grid-row: 1;
@@ -70,7 +70,7 @@
   grid-column: 1;
   width: 100%;
   height: 100%;
-  margin-left: clamp(80px, 12vmin, 160px);
+  margin-left: clamp(110px, 12vmin, 160px);
 }
 
 .description-input {
@@ -110,7 +110,7 @@
     filter: brightness(1.2);
 }
 
-@media (max-width: 1400px) {
+@media (max-width: 1800px) {
   .game-info-container {
     position: fixed;
     top: 20px;
