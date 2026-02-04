@@ -6,7 +6,7 @@
     <div class="edition-layout">
         <app-game-grid class="game-grid" [mapSize]="getMapSize()" [gameData]="this.getMapEditorService().getCurrentGame()"></app-game-grid>
 
-        <div class="game-info-container">
+        <div class="game-info-container" cdkDrag [cdkDragDisabled]="!isDragging" cdkDragBoundary=".edition-layout">
             
             <app-text-input
             class="name-input pixel-font"
