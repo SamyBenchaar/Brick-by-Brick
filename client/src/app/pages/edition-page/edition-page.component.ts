@@ -89,11 +89,15 @@ export class EditionPageComponent implements OnInit {
     }
   }
 
-  onSave(): void {
+  async onSave(): Promise<void> {
     if (this.gameId !== '') {
       const currentGame = this.mapEditorService.getCurrentGame();
+      if (!currentGame) {
+        return;
+      }
+      currentGame.previewImage = await this.gameGridComponent.captureMapPreview();
       this.communicationService.updateGame(this.gameId, currentGame).subscribe({
-        next: (updatedGame) => {
+        next: async (updatedGame) => {
           this.mapEditorService.setCurrentGame(updatedGame);
           this.router.navigate(['/admin']);
         },
@@ -115,6 +119,7 @@ export class EditionPageComponent implements OnInit {
         isVisible: false,
         numberOfPlayers: this.getMaxPlayers(),
         gameMode: this.gameMode,
+        previewImage: await this.gameGridComponent.captureMapPreview(),
         mapConfig: {
           size: this.selectedSize.charAt(0).toUpperCase() + this.selectedSize.slice(1),
           tiles,
