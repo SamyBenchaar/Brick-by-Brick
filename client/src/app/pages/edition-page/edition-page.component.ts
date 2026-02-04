@@ -42,10 +42,9 @@ export class EditionPageComponent implements OnInit {
       }
     });
 
-    this.route.queryParams.subscribe(params => {
-      this.selectedSize = params.size || null;
-      this.gameMode = params.mode;
-    });
+    const paramss = this.route.snapshot.queryParams;
+    this.selectedSize = paramss.size || 'Small';
+    this.gameMode = paramss.mode || 'classic';
 
   }
 

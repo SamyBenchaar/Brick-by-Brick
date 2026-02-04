@@ -10,6 +10,8 @@ import { environment } from './environments/environment';
 import {CharacterCreationPageComponent} from '@app/pages/character-creation-page/character-creation-page.component';
 import { GameCreationPageComponent } from '@app/pages/game-creation-page/game-creation-page.component';
 import { EditionPageComponent } from '@app/pages/edition-page/edition-page.component';
+import { WaitingRoomPage } from '@app/pages/waiting-room-page/waiting-room-page.component';
+
 import { AdminPageComponent } from '@app/pages/admin-page/admin-page.component';
 
 if (environment.production) {
@@ -23,6 +25,7 @@ const routes: Routes = [
     { path: 'game', component: GamePageComponent },
     { path: 'material', component: MaterialPageComponent },
     { path: 'game-creation', component: GameCreationPageComponent },
+    { path: 'waiting-room', component: WaitingRoomPage },
     { path: 'edition/:game_id', component: EditionPageComponent },
     { path: 'edition', component: EditionPageComponent },
     { path: 'admin', component: AdminPageComponent },

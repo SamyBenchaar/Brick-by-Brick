@@ -18,14 +18,18 @@ export class ObjectCounterService {
     [ObjectType.STARTPOINT]: 2,
   };
 
+  set startPoint(number: number) {
+    this.maxCounts[ObjectType.STARTPOINT] = number;
+  }
+
   canPlace(object: ObjectType) {
-    if(this.counts[object] < this.maxCounts[object]) {
+    if (this.counts[object] < this.maxCounts[object]) {
       return true;
     }
     return false;
   };
 
-  place(object: ObjectType):void {
+  place(object: ObjectType): void {
     this.counts[object] = this.getCount(object) + 1;
   };
 
@@ -42,14 +46,14 @@ export class ObjectCounterService {
   }
 
   getRemainingCount(object: ObjectType): number {
-    return Math.max(this.maxCounts[object] - this.counts[object], 0 );
+    return Math.max(this.maxCounts[object] - this.counts[object], 0);
   }
 
-  reset():void{
-    for (const key in this.counts){
-      if (key){
+  reset(): void {
+    for (const key in this.counts) {
+      if (key) {
         this.counts[key as ObjectType] = 0;
       }
-    } 
+    }
   }
 }
