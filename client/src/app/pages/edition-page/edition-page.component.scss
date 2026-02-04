@@ -91,8 +91,8 @@
 }
 
 .button {
-  height: clamp(40px, 5vmin, 60px);
-  width: clamp(120px, 15vmin, 200px);
+  height: clamp(60px, 7vmin, 90px);
+  width: clamp(180px, 20vmin, 300px);
   background-position: center;
   background-repeat: no-repeat;
   background-color: transparent;
@@ -101,7 +101,7 @@
 
   color: #000000;
   font-family: 'MyFont', sans-serif;
-  font-size: clamp(14px, 1.5vmin, 20px);
+  font-size: clamp(18px, 2vmin, 28px);
   text-transform: uppercase;
   border: none;
 }
