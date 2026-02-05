@@ -23,6 +23,7 @@ import { MapSize } from '@common/map';
 export class EditionPageComponent implements OnInit {
   private static readonly mediumMaxPlayers = 4;
   private static readonly largeMaxPlayers = 6;
+  private static readonly httpNotFound = 404;
   @ViewChild(GameGridComponent) gameGridComponent!: GameGridComponent;
   @ViewChild(CdkDrag) cdkDrag!: CdkDrag;
   selectedSize: 'Small' | 'Medium' | 'Large' = 'Small';
@@ -148,17 +149,54 @@ export class EditionPageComponent implements OnInit {
         },
         error: (err) => {
           this.isSaving = false;
-          const errorMessage = Array.isArray(err.error.message)
-            ? err.error.message
-            : err.error.message || err.error || 'Une erreur est survenue lors de la sauvegarde de la partie.';
 
-          this.dialog.open(AppDialogComponent, {
-            data: {
-              title: 'Erreur',
-              message: errorMessage,
-              type: 'error',
-            },
-          });
+          if (err.status === EditionPageComponent.httpNotFound) {
+            this.dialog.open(AppDialogComponent, {
+              data: {
+                title: 'Jeu supprimé',
+                message: 'Ce jeu a été supprimé. Voulez-vous le recréer avec vos modifications ?',
+                type: 'error',
+              },
+            }).afterClosed().subscribe((result) => {
+              if (result) {
+                this.communicationService.createGame(currentGame).subscribe({
+                  next: () => {
+                    this.dialog.open(AppDialogComponent, {
+                      data: {
+                        title: 'Succès',
+                        message: 'Jeu recréé avec succès !',
+                        type: 'success',
+                      },
+                    });
+                    this.router.navigate(['/admin']);
+                  },
+                  error: (createErr) => {
+                    this.dialog.open(AppDialogComponent, {
+                      data: {
+                        title: 'Erreur',
+                        message: `Impossible de recréer le jeu: ${createErr.error?.message || 'Erreur inconnue'}`,
+                        type: 'error',
+                      },
+                    });
+                  },
+                });
+              } else {
+                this.router.navigate(['/admin']);
+              }
+            });
+          } else {
+            const errorMessage = Array.isArray(err.error.message)
+              ? err.error.message
+              : err.error.message || err.error || 'Une erreur est survenue lors de la sauvegarde de la partie.';
+
+            this.dialog.open(AppDialogComponent, {
+              data: {
+                title: 'Erreur',
+                message: errorMessage,
+                type: 'error',
+              },
+            });
+          }
         },
       });
     } else {

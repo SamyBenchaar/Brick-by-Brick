@@ -3,7 +3,7 @@ import { GameMetadataValidationService } from '@app/services/validations/gameMet
 import { MapValidationService } from '@app/services/validations/mapValidation.service';
 import { CreateGameDto } from '@common/dto/create-game.dto';
 import { UpdateGameDto } from '@common/dto/update-game.dto';
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable,NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
@@ -82,14 +82,32 @@ export class GameService {
             throw new BadRequestException(errors);
         }
 
-        return this.gameModel.findByIdAndUpdate(id, gameData, { new: true }).exec();
+        const updatedGame = await this.gameModel.findByIdAndUpdate(id, gameData, { new: true }).exec();
+
+        if (!updatedGame) {
+            throw new NotFoundException(`Jeu avec ID ${id} non trouvé`);
+        }
+
+        return updatedGame;
     }
 
     async updateVisibility(id: string, isVisible: boolean): Promise<Game> {
-        return this.gameModel.findByIdAndUpdate(id, { isVisible }, { new: true }).exec();
+        const updatedGame = await this.gameModel.findByIdAndUpdate(id, { isVisible }, { new: true }).exec();
+
+        if (!updatedGame) {
+            throw new NotFoundException(`Jeu avec ID ${id} non trouvé`);
+        }
+
+        return updatedGame;
     }
 
     async delete(id: string): Promise<Game> {
-        return this.gameModel.findByIdAndDelete(id).exec();
+        const deletedGame = await this.gameModel.findByIdAndDelete(id).exec();
+
+        if (!deletedGame) {
+            throw new NotFoundException(`Jeu avec ID ${id} non trouvé`);
+        }
+
+        return deletedGame;
     }
 }

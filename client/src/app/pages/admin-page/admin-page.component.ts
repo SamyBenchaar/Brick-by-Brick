@@ -68,8 +68,14 @@ export class AdminPageComponent {
     }
 
     deleteGame(game: Game): void {
-        this.communicationService.deleteGame(game._id).subscribe(() => {
-            this.games = this.games.filter(g => g._id !== game._id);
+        this.communicationService.deleteGame(game._id).subscribe({
+            next: () => {
+                this.games = this.games.filter(g => g._id !== game._id);
+                alert('Jeu supprimé avec succès !');
+            },
+            error: (err) => {
+                alert(`Erreur: ${err.error?.message || 'Impossible de supprimer ce jeu'}`);
+            },
         });
     }
 
