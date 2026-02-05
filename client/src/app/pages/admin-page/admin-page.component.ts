@@ -55,10 +55,10 @@ export class AdminPageComponent {
         private router: Router,
     ) {}
 
-    games: Game[] = this.getAllGames();
+    games: Game[] = this.getAllGamesAdmin();
 
-    getAllGames(): Game[] {
-        this.communicationService.getAllGames().subscribe((games) => {
+    getAllGamesAdmin(): Game[] {
+        this.communicationService.getAllGamesAdmin().subscribe((games) => {
             this.games = games;
         });
         return this.games;

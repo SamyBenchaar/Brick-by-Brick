@@ -18,6 +18,10 @@ export class CommunicationService {
         return this.http.get<Game[]>(`${this.baseUrl}/games`).pipe(catchError(this.handleError));
     }
 
+    getAllGamesAdmin(): Observable<Game[]> {
+        return this.http.get<Game[]>(`${this.baseUrl}/games/admin`).pipe(catchError(this.handleError));
+    }
+
     getVisibleGames(): Observable<Game[]> {
         return this.http.get<Game[]>(`${this.baseUrl}/games/visible`);
     }

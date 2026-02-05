@@ -30,6 +30,10 @@ export class GameService {
         return this.gameModel.findById(id).exec();
     }
 
+    async findAdminMenuGames(): Promise<Game[]> {
+        return this.gameModel.find({}, { _id: 1, name: 1, mapConfig: { size: 1 } , lastModified: 1, isVisible: 1, description: 1 }).exec();
+    }
+
     async findVisible(): Promise<Game[]> {
         return this.gameModel.find({ isVisible: true }).select('name previewImage gameMode mapConfig.size').exec();
     }
