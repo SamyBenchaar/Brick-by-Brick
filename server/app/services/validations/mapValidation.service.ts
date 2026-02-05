@@ -1,6 +1,6 @@
 import { Game, GameDocument } from '@app/model/game';
 import { Tile } from '@app/model/tile';
-import { MapSize, MIN_TERRAIN_COVERAGE, PERCENTAGE_MULTIPLIER, PLAYABLE_TYPES } from '@common/map';
+import { MapSize, MIN_TERRAIN_COVERAGE, PERCENTAGE_MULTIPLIER, PLAYABLE_TYPES, TilesTypes } from '@common/map';
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -110,7 +110,7 @@ export class MapValidationService {
 
                 // Vérifier si la tuile est jouable
                 const tile = tiles[newY][newX];
-                if (!PLAYABLE_TYPES.includes(tile.type)) {
+                if (!PLAYABLE_TYPES.includes(tile.type as TilesTypes)) {
                     continue;
                 }
 
@@ -137,7 +137,7 @@ export class MapValidationService {
 
         for (const row of tiles) {
             for (const tile of row) {
-                if (PLAYABLE_TYPES.includes(tile.type)) {
+                if (PLAYABLE_TYPES.includes(tile.type as TilesTypes)) {
                     count++;
                 }
             }

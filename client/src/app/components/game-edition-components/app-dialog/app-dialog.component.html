@@ -9,10 +9,16 @@
   </div>
 
   <mat-dialog-content class="dialog-content">
-    <ul *ngIf="isArray" class="error-list">
-      <li *ngFor="let err of data.message">{{ err }}</li>
-    </ul>
-    <p *ngIf="!isArray" class="message-text">{{ data.message }}</p>
+    @if (isArray) {
+      <ul class="error-list">
+        @for (err of data.message; track $index) {
+          <li>{{ err }}</li>
+        }
+      </ul>
+    }
+    @if (!isArray) {
+      <p class="message-text">{{ data.message }}</p>
+    }
   </mat-dialog-content>
 
   <mat-dialog-actions align="end" class="dialog-actions">

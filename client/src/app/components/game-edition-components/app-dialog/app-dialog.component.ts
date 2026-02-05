@@ -1,4 +1,4 @@
-import { NgClass, NgFor, NgIf } from '@angular/common';
+import { NgClass } from '@angular/common';
 import { Component, Inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -6,7 +6,7 @@ import { AppDialogData } from '@app/interfaces/dialog-model';
 
 @Component({
   selector: 'app-dialog',
-  imports: [NgClass, NgIf, NgFor, MatDialogModule, MatButtonModule],
+  imports: [NgClass, MatDialogModule, MatButtonModule],
   templateUrl: './app-dialog.component.html',
   styleUrl: './app-dialog.component.scss',
 })
