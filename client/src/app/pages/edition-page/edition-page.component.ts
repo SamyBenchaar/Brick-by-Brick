@@ -19,6 +19,7 @@ import { MapSize } from '@common/map';
 export class EditionPageComponent implements OnInit {
   private static readonly mediumMaxPlayers = 4;
   private static readonly largeMaxPlayers = 6;
+  private static readonly httpNotFound = 404;
   @ViewChild(GameGridComponent) gameGridComponent!: GameGridComponent;
   selectedSize: 'Small' | 'Medium' | 'Large' = 'Small';
   gridDimensions = { width: MapSize.Small, height: MapSize.Small }; // Valeur par défaut
@@ -92,10 +93,38 @@ export class EditionPageComponent implements OnInit {
   onSave(): void {
     if (this.gameId !== '') {
       const currentGame = this.mapEditorService.getCurrentGame();
+      if (!currentGame) {
+        return;
+      }
+      currentGame.isVisible = false;
+
       this.communicationService.updateGame(this.gameId, currentGame).subscribe({
         next: (updatedGame) => {
           this.mapEditorService.setCurrentGame(updatedGame);
           this.router.navigate(['/admin']);
+        },
+        error: (err) => {
+          if (err.status === EditionPageComponent.httpNotFound) {
+            const shouldRecreate = confirm(
+              'Ce jeu a été supprimé. Voulez-vous le recréer avec vos modifications ?',
+            );
+
+            if (shouldRecreate) {
+              this.communicationService.createGame(currentGame).subscribe({
+                next: () => {
+                  alert('Jeu recréé avec succès !');
+                  this.router.navigate(['/admin']);
+                },
+                error: (createErr) => {
+                  alert(`Impossible de recréer le jeu: ${createErr.error?.message || 'Erreur inconnue'}`);
+                },
+              });
+            } else {
+              this.router.navigate(['/admin']);
+            }
+          } else {
+            alert(`Erreur: ${err.error?.message || 'Impossible de sauvegarder'}`);
+          }
         },
       });
     } else {
@@ -124,6 +153,9 @@ export class EditionPageComponent implements OnInit {
       this.communicationService.createGame(gameData).subscribe({
         next: () => {
           this.router.navigate(['/admin']);
+        },
+        error: (err) => {
+          alert(`Erreur: ${err.error?.message || 'Impossible de créer le jeu'}`);
         },
       });
     }
