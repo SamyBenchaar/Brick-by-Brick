@@ -25,6 +25,14 @@ export enum MinimumStartingPt {
     Large = 6,
 }
 
+export enum TilesTypes {
+    Base = 'base',
+    Water = 'water',
+    Ice = 'ice',
+    Wall = 'wall',
+    Door = 'door',
+}
+
 export const GRID_SIZE = 750;
 
 // Constantes pour la validation
@@ -32,4 +40,4 @@ export const MIN_TERRAIN_COVERAGE = 0.5;
 
 export const PERCENTAGE_MULTIPLIER = 100;
 
-export const PLAYABLE_TYPES = ['base', 'ice', 'door'];
+export const PLAYABLE_TYPES = [TilesTypes.Base, TilesTypes.Ice, TilesTypes.Door, TilesTypes.Water];

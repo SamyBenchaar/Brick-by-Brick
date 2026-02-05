@@ -1,48 +1,85 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
-// import { CommunicationService } from '@app/services/communication/communication.service';
+import { FormsModule } from '@angular/forms';
 import { Character, Dice } from '@app/interfaces/character-model';
+import {BASE_LIFE, BASE_SPEED, BASE_ATTACK, BASE_DEFENSE, 
+    BONUS_AMOUNT, AVATARS, BONUS_ATTRIBUTES, RANDOM_NAME_MAX, DICE_PROBABILITY} from '@app/constants/character.constants';
 
+interface AvatarOption {
+    id: number;
+    name: string;
+    image: string;
+}
 
 @Component({
     selector: 'app-character-creation-page',
     templateUrl: './character-creation-page.component.html',
     styleUrls: ['./character-creation-page.component.scss'],
-    imports: [],
+    imports: [FormsModule],
 })
 
 export class CharacterCreationPageComponent {
-    // constructor(private communicationService: CommunicationService) {}
-    constructor(private router: Router) {}
+    private router = inject(Router);
     character: Character = this.createBaseCharacter();
     bonusTarget: 'life' | 'speed' | null = null;
+    avatars = AVATARS;
 
     createBaseCharacter(): Character {
-        return {
-            name: '',
-            avatarId: 1,
-            life: 6,
-            speed: 6,
-            attack: 4,
-            defense: 4,
-            attackDice: 'D6' as Dice,
-            defenseDice: 'D6' as Dice,
-        };
-    }
-    applyBonus(target: 'life' | 'speed') {
-        this.character.life = 6;
-        this.character.speed = 6;
+    return {
+        name: '',
+        avatarId: 1,
+        life: BASE_LIFE,
+        speed: BASE_SPEED,
+        attack: BASE_ATTACK,
+        defense: BASE_DEFENSE,
+        attackDice: 'D4',
+        defenseDice: 'D6',
+    };
+}
 
-        this.character[target] += 2;
+    selectAvatar(avatar: AvatarOption): void {
+        this.character.avatarId = avatar.id;
+    }
+
+    getSelectedAvatarImage(): string {
+        const avatar = this.avatars.find(a => a.id === this.character.avatarId);
+        return avatar ? avatar.image : this.avatars[0].image;
+    }
+
+    applyBonus(target: 'life' | 'speed') {
+        this.character.life = BASE_LIFE;
+        this.character.speed = BASE_SPEED;
+
+        this.character[target] += BONUS_AMOUNT;
         this.bonusTarget = target;
     }
     setDice(attribute: 'attackDice' | 'defenseDice', dice: Dice) {
         this.character[attribute] = dice;
+        
+        if (attribute === 'attackDice') {
+            this.character.defenseDice = dice === 'D6' ? 'D4' : 'D6';
+        } else {
+            this.character.attackDice = dice === 'D6' ? 'D4' : 'D6';
+        }
     }
-
     close() {
         this.router.navigate(['/game-creation']);
     }
-    // ajouter une methode pour creer un personnage aleatoire
-    // ajouter une methode pour soumettre le character créé
+    createRandomCharacter() {
+        const randomName = 'Hero' + Math.floor(Math.random() * RANDOM_NAME_MAX);
+        const randomAvatarId = Math.floor(Math.random() * this.avatars.length) + 1;
+        const attributes = ['life', 'speed'] as const;
+        const randomAttribute = attributes[Math.floor(Math.random() * BONUS_ATTRIBUTES.length)];
+
+        this.character.name = randomName;
+        this.character.avatarId = randomAvatarId;
+
+        this.applyBonus(randomAttribute as 'life' | 'speed');
+
+        this.character.attackDice = Math.random() < DICE_PROBABILITY ? 'D4' : 'D6';
+        this.character.defenseDice = this.character.attackDice === 'D6' ? 'D4' : 'D6';
+    }
+    submitCharacter() {
+        this.router.navigate(['/waiting-room']);
+    }
 }

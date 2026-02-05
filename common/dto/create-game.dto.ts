@@ -11,7 +11,6 @@ export class CreateGameDto {
 
     @ApiProperty({ description: 'Description du jeu', example: 'Un jeu de test' })
     @IsString({ message: 'La description doit être une chaîne de caractères' })
-    @IsNotEmpty({ message: 'La description ne peut pas être vide' })
     description: string;
 
     @ApiProperty({ description: 'Visibilité du jeu', example: false })

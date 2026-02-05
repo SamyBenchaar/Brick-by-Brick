@@ -1,8 +1,12 @@
 import { Game, GameDocument } from '@app/model/game';
 import { GameMetadataValidationService } from '@app/services/validations/gameMetadataValidation.service';
 import { MapValidationService } from '@app/services/validations/mapValidation.service';
-import { Injectable } from '@nestjs/common';
+import { CreateGameDto } from '@common/dto/create-game.dto';
+import { UpdateGameDto } from '@common/dto/update-game.dto';
+import { BadRequestException, Injectable,NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { plainToInstance } from 'class-transformer';
+import { validate } from 'class-validator';
 import { Model } from 'mongoose';
 
 @Injectable()
@@ -15,8 +19,28 @@ export class GameService {
     ) {}
 
     async create(gameData: Partial<Game>): Promise<Game> {
-        await this.gameMetadataValidationService.validateMetadata(gameData);
-        await this.mapValidationService.validateMap(gameData);
+        const errors: string[] = [];
+
+        // Validation du DTO
+        const dtoInstance = plainToInstance(CreateGameDto, gameData);
+        const validationErrors = await validate(dtoInstance);
+        if (validationErrors.length > 0) {
+            validationErrors.forEach(error => {
+                if (error.constraints) {
+                    errors.push(...Object.values(error.constraints));
+                }
+            });
+        }
+
+        // Validation des métadonnées
+        errors.push(...await this.gameMetadataValidationService.validateMetadata(gameData));
+
+        // Validation de la carte
+        errors.push(...await this.mapValidationService.validateMap(gameData));
+
+        if (errors.length > 0) {
+            throw new BadRequestException(errors);
+        }
 
         const createdGame = new this.gameModel(gameData);
         return createdGame.save();
@@ -30,22 +54,64 @@ export class GameService {
         return this.gameModel.findById(id).exec();
     }
 
+    async findAdminMenuGames(): Promise<Game[]> {
+        return this.gameModel.find({}, { _id: 1, name: 1, mapConfig: { size: 1 } , lastModified: 1, isVisible: 1, description: 1 }).exec();
+    }
+
     async findVisible(): Promise<Game[]> {
         return this.gameModel.find({ isVisible: true }).select('name previewImage gameMode mapConfig.size').exec();
     }
 
     async update(id: string, gameData: Partial<Game>): Promise<Game> {
-        await this.gameMetadataValidationService.validateMetadata(gameData);
-        await this.mapValidationService.validateMap(gameData);
+        const errors: string[] = [];
 
-        return this.gameModel.findByIdAndUpdate(id, gameData, { new: true }).exec();
+        // Validation du DTO
+        const dtoInstance = plainToInstance(UpdateGameDto, gameData);
+        const validationErrors = await validate(dtoInstance);
+        if (validationErrors.length > 0) {
+            validationErrors.forEach(error => {
+                if (error.constraints) {
+                    errors.push(...Object.values(error.constraints));
+                }
+            });
+        }
+
+        // Validation des métadonnées
+        errors.push(...await this.gameMetadataValidationService.validateMetadata(gameData));
+
+        // Validation de la carte
+        errors.push(...await this.mapValidationService.validateMap(gameData));
+
+        if (errors.length > 0) {
+            throw new BadRequestException(errors);
+        }
+
+        const updatedGame = await this.gameModel.findByIdAndUpdate(id, gameData, { new: true }).exec();
+
+        if (!updatedGame) {
+            throw new NotFoundException(`Jeu avec ID ${id} non trouvé`);
+        }
+
+        return updatedGame;
     }
 
     async updateVisibility(id: string, isVisible: boolean): Promise<Game> {
-        return this.gameModel.findByIdAndUpdate(id, { isVisible }, { new: true }).exec();
+        const updatedGame = await this.gameModel.findByIdAndUpdate(id, { isVisible }, { new: true }).exec();
+
+        if (!updatedGame) {
+            throw new NotFoundException(`Jeu avec ID ${id} non trouvé`);
+        }
+
+        return updatedGame;
     }
 
     async delete(id: string): Promise<Game> {
-        return this.gameModel.findByIdAndDelete(id).exec();
+        const deletedGame = await this.gameModel.findByIdAndDelete(id).exec();
+
+        if (!deletedGame) {
+            throw new NotFoundException(`Jeu avec ID ${id} non trouvé`);
+        }
+
+        return deletedGame;
     }
 }
