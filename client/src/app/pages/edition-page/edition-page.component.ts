@@ -9,6 +9,7 @@ import { TileTypeSidebarComponent } from '@app/components/game-edition-component
 import { MIN_WIDTH_DRAGGING } from '@app/constants/window-event-constants';
 import { CommunicationService } from '@app/services/communication/communication.service';
 import { MapEditorServiceService } from '@app/services/map-editor-service.service';
+import { ObjectCounterService } from '@app/services/object-counter/object-counter.service';
 import { MapSize } from '@common/map';
 
 
@@ -34,7 +35,8 @@ export class EditionPageComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private communicationService: CommunicationService,
-    private mapEditorService: MapEditorServiceService,
+    private mapEditorService: MapEditorServiceService,  
+    private objectCounterService: ObjectCounterService,
     private router: Router,
   ) {}
 
@@ -65,6 +67,10 @@ export class EditionPageComponent implements OnInit {
     return this.mapEditorService;
   }
 
+  getObjectCounterService(): ObjectCounterService {
+    return this.objectCounterService;
+  }
+
   getMapSize(): MapSize {
     switch (this.selectedSize) {
       case 'Small':
@@ -82,6 +88,8 @@ export class EditionPageComponent implements OnInit {
   private loadGame(): void {
     this.communicationService.getGameById(this.gameId).subscribe((game) => {
       if (game) {
+        this.selectedSize = game.mapConfig.size as 'Small' | 'Medium' | 'Large';
+        this.objectCounterService.startPoint = this.getMaxPlayers();
         this.mapEditorService.setCurrentGame(game);
         this.gameName = game.name;
         this.gameDescription = game.description;
@@ -102,11 +110,17 @@ export class EditionPageComponent implements OnInit {
     }
   }
 
-  onSave(): void {
+  async onSave(): Promise<void> {
+    this.getMapEditorService().setTitle(this.gameName);
+    this.getMapEditorService().setDescription(this.gameDescription);
     if (this.gameId !== '') {
       const currentGame = this.mapEditorService.getCurrentGame();
+      if (!currentGame) {
+        return;
+      }
+      currentGame.previewImage = await this.gameGridComponent.captureMapPreview();
       this.communicationService.updateGame(this.gameId, currentGame).subscribe({
-        next: (updatedGame) => {
+        next: async (updatedGame) => {
           this.mapEditorService.setCurrentGame(updatedGame);
           this.router.navigate(['/admin']);
         },
@@ -128,6 +142,7 @@ export class EditionPageComponent implements OnInit {
         isVisible: false,
         numberOfPlayers: this.getMaxPlayers(),
         gameMode: this.gameMode,
+        previewImage: await this.gameGridComponent.captureMapPreview(),
         mapConfig: {
           size: this.selectedSize.charAt(0).toUpperCase() + this.selectedSize.slice(1),
           tiles,
@@ -145,8 +160,17 @@ export class EditionPageComponent implements OnInit {
   onReset(): void {
     const currentGame = this.mapEditorService.getCurrentGame();
     if (currentGame) {
-      this.gameName = currentGame.name;
-      this.gameDescription = currentGame.description;
+      if (this.gameId !== '') {
+        this.loadGame();
+      } else {
+        this.gameName = '';
+        this.gameDescription = '';
+        if (this.gameGridComponent) {
+          this.gameGridComponent.resetGrid();
+        }
+        
+      }
+
     }
   }
 }
