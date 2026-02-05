@@ -52,10 +52,11 @@ export class AdminPageComponent {
         },
     ];
 
-    games: Game[] = this.getAllGames();
 
-    getAllGames(): Game[] {
-        this.communicationService.getAllGames().subscribe((games) => {
+    games: Game[] = this.getAllGamesAdmin();
+
+    getAllGamesAdmin(): Game[] {
+        this.communicationService.getAllGamesAdmin().subscribe((games) => {
             this.games = games;
         });
         return this.games;
