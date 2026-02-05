@@ -1,39 +1,57 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { CdkDrag, DragDropModule } from '@angular/cdk/drag-drop';
+import { Component, HostListener, inject, OnInit, ViewChild } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
+import { AppDialogComponent } from '@app/components/game-edition-components/app-dialog/app-dialog.component';
 // import { Tile } from '@app/classes/tile';
 import { GameGridComponent } from '@app/components/game-edition-components/game-grid/game-grid.component';
 import { ObjectSidebarComponent } from '@app/components/game-edition-components/object-sidebar/object-sidebar.component';
 import { TextInputComponent } from '@app/components/game-edition-components/text-input/text-input.component';
 import { TileTypeSidebarComponent } from '@app/components/game-edition-components/tile-type-sidebar/tile-type-sidebar.component';
+import { MIN_WIDTH_DRAGGING } from '@app/constants/window-event-constants';
 import { CommunicationService } from '@app/services/communication/communication.service';
 import { MapEditorServiceService } from '@app/services/map-editor-service.service';
+import { ObjectCounterService } from '@app/services/object-counter/object-counter.service';
 import { MapSize } from '@common/map';
-
 
 @Component({
   selector: 'app-edition-page',
-  imports: [GameGridComponent, TileTypeSidebarComponent, ObjectSidebarComponent, TextInputComponent],
+  imports: [GameGridComponent, TileTypeSidebarComponent, ObjectSidebarComponent, TextInputComponent, DragDropModule],
   templateUrl: './edition-page.component.html',
   styleUrl: './edition-page.component.scss',
 })
 export class EditionPageComponent implements OnInit {
   private static readonly mediumMaxPlayers = 4;
   private static readonly largeMaxPlayers = 6;
+  private static readonly httpNotFound = 404;
   @ViewChild(GameGridComponent) gameGridComponent!: GameGridComponent;
+  @ViewChild(CdkDrag) cdkDrag!: CdkDrag;
   selectedSize: 'Small' | 'Medium' | 'Large' = 'Small';
+  isDragging: boolean = false;
   gridDimensions = { width: MapSize.Small, height: MapSize.Small }; // Valeur par défaut
   gameName: string = '';
   gameDescription: string = '';
+  imagePreview: string = '';
   gameId: string = '';
   gameMode: 'classic' | 'ctf' = 'classic';
+  isSaving: boolean = false;
 
-  constructor(
-    private route: ActivatedRoute,
-    private communicationService: CommunicationService,
-    private mapEditorService: MapEditorServiceService,
-    private router: Router,
-  ) {}
+  private route = inject(ActivatedRoute);
+  private communicationService = inject(CommunicationService);
+  private mapEditorService = inject(MapEditorServiceService);
+  private objectCounterService = inject(ObjectCounterService);
+  private router = inject(Router);
+  private dialog = inject(MatDialog);
 
+
+  @HostListener('window:resize')
+  onResize(): void {
+    const canDrag = window.innerWidth < MIN_WIDTH_DRAGGING;
+    if (this.isDragging && !canDrag && this.cdkDrag) {
+      this.cdkDrag.reset();
+    }
+    this.isDragging = canDrag;
+  }
   ngOnInit(): void {
     this.route.paramMap.subscribe(params => {
       this.gameId = params.get('game_id') || '';
@@ -50,6 +68,10 @@ export class EditionPageComponent implements OnInit {
 
   getMapEditorService(): MapEditorServiceService {
     return this.mapEditorService;
+  }
+
+  getObjectCounterService(): ObjectCounterService {
+    return this.objectCounterService;
   }
 
   getMapSize(): MapSize {
@@ -69,7 +91,9 @@ export class EditionPageComponent implements OnInit {
   private loadGame(): void {
     this.communicationService.getGameById(this.gameId).subscribe((game) => {
       if (game) {
-        this.mapEditorService.setCurrentGame(game);
+        this.selectedSize = game.mapConfig.size as 'Small' | 'Medium' | 'Large';
+        this.getObjectCounterService().startPoint = this.getMaxPlayers();
+        this.getMapEditorService().setCurrentGame(game);
         this.gameName = game.name;
         this.gameDescription = game.description;
       }
@@ -89,13 +113,90 @@ export class EditionPageComponent implements OnInit {
     }
   }
 
-  onSave(): void {
+  async onSave(): Promise<void> {
+    if (this.isSaving) {
+      return;
+    }
+    this.isSaving = true;
+
+    // Forcer la mise à jour du DOM avant les opérations lourdes
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    this.getMapEditorService().setTitle(this.gameName);
+    this.getMapEditorService().setDescription(this.gameDescription);
     if (this.gameId !== '') {
-      const currentGame = this.mapEditorService.getCurrentGame();
+      const currentGame = this.getMapEditorService().getCurrentGame();
+      if (!currentGame) {
+        this.isSaving = false;
+        return;
+      }
+      const previewImage = await this.gameGridComponent.captureMapPreview();
+      this.getMapEditorService().setImagePreview(previewImage);
       this.communicationService.updateGame(this.gameId, currentGame).subscribe({
         next: (updatedGame) => {
-          this.mapEditorService.setCurrentGame(updatedGame);
-          this.router.navigate(['/admin']);
+          this.isSaving = false;
+          this.getMapEditorService().setCurrentGame(updatedGame);
+          const dialogRef = this.dialog.open(AppDialogComponent, {
+            data: {
+              title: 'Sauvegarde réussie',
+              message: 'La partie a été sauvegardée.',
+              type: 'success',
+            },
+          });
+          dialogRef.afterClosed().subscribe(() => {
+            this.router.navigate(['/admin']);
+          });
+        },
+        error: (err) => {
+          this.isSaving = false;
+
+          if (err.status === EditionPageComponent.httpNotFound) {
+            this.dialog.open(AppDialogComponent, {
+              data: {
+                title: 'Jeu supprimé',
+                message: 'Ce jeu a été supprimé. Voulez-vous le recréer avec vos modifications ?',
+                type: 'error',
+              },
+            }).afterClosed().subscribe((result) => {
+              if (result) {
+                this.communicationService.createGame(currentGame).subscribe({
+                  next: () => {
+                    this.dialog.open(AppDialogComponent, {
+                      data: {
+                        title: 'Succès',
+                        message: 'Jeu recréé avec succès !',
+                        type: 'success',
+                      },
+                    });
+                    this.router.navigate(['/admin']);
+                  },
+                  error: (createErr) => {
+                    this.dialog.open(AppDialogComponent, {
+                      data: {
+                        title: 'Erreur',
+                        message: `Impossible de recréer le jeu: ${createErr.error?.message || 'Erreur inconnue'}`,
+                        type: 'error',
+                      },
+                    });
+                  },
+                });
+              } else {
+                this.router.navigate(['/admin']);
+              }
+            });
+          } else {
+            const errorMessage = Array.isArray(err.error.message)
+              ? err.error.message
+              : err.error.message || err.error || 'Une erreur est survenue lors de la sauvegarde de la partie.';
+
+            this.dialog.open(AppDialogComponent, {
+              data: {
+                title: 'Erreur',
+                message: errorMessage,
+                type: 'error',
+              },
+            });
+          }
         },
       });
     } else {
@@ -115,6 +216,7 @@ export class EditionPageComponent implements OnInit {
         isVisible: false,
         numberOfPlayers: this.getMaxPlayers(),
         gameMode: this.gameMode,
+        previewImage: await this.gameGridComponent.captureMapPreview(),
         mapConfig: {
           size: this.selectedSize.charAt(0).toUpperCase() + this.selectedSize.slice(1),
           tiles,
@@ -123,17 +225,41 @@ export class EditionPageComponent implements OnInit {
       };
       this.communicationService.createGame(gameData).subscribe({
         next: () => {
+          this.isSaving = false;
           this.router.navigate(['/admin']);
+        },
+        error: (err) => {
+          this.isSaving = false;
+          const errorMessage = Array.isArray(err.error.message)
+            ? err.error.message
+            : err.error.message || err.error || 'Une erreur est survenue lors de la création de la partie.';
+
+          this.dialog.open(AppDialogComponent, {
+            data: {
+              title: 'Erreur',
+              message: errorMessage,
+              type: 'error',
+            },
+          });
         },
       });
     }
   }
 
   onReset(): void {
-    const currentGame = this.mapEditorService.getCurrentGame();
+    const currentGame = this.getMapEditorService().getCurrentGame();
     if (currentGame) {
-      this.gameName = currentGame.name;
-      this.gameDescription = currentGame.description;
+      if (this.gameId !== '') {
+        this.loadGame();
+      } else {
+        this.gameName = '';
+        this.gameDescription = '';
+        if (this.gameGridComponent) {
+          this.gameGridComponent.resetGrid();
+        }
+
+      }
+
     }
   }
 }

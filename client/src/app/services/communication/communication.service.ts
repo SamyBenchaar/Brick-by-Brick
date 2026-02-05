@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { Game } from '@app/interfaces/game';
 import { GameSession } from '@app/interfaces/game-session';
 import { Observable, throwError } from 'rxjs';
@@ -10,9 +10,8 @@ import { environment } from 'src/environments/environment';
     providedIn: 'root',
 })
 export class CommunicationService {
+    private readonly http = inject(HttpClient);
     private readonly baseUrl: string = environment.serverUrl;
-
-    constructor(private readonly http: HttpClient) {}
 
     getAllGames(): Observable<Game[]> {
         return this.http.get<Game[]>(`${this.baseUrl}/games`).pipe(catchError(this.handleError));
@@ -35,7 +34,7 @@ export class CommunicationService {
     }
 
     createGameSession(gameId: string): Observable<GameSession> {
-        return this.http.post<GameSession>(`${this.baseUrl}/game-sessions`, {gameId}).pipe(catchError(this.handleError));
+        return this.http.post<GameSession>(`${this.baseUrl}/game-sessions`, { gameId }).pipe(catchError(this.handleError));
     }
 
     updateGame(id: string, gameData: Partial<Game | null>): Observable<Game> {

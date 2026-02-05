@@ -4,8 +4,9 @@
         <app-object-sidebar></app-object-sidebar>
     </div>
     <div class="edition-layout">
-        
-        <div class="game-info-container">
+        <app-game-grid class="game-grid" [mapSize]="getMapSize()" [gameData]="this.getMapEditorService().getCurrentGame()"></app-game-grid>
+
+        <div class="game-info-container" cdkDrag [cdkDragDisabled]="!isDragging" cdkDragBoundary=".edition-layout">
             
             <app-text-input
             class="name-input pixel-font"
@@ -26,11 +27,10 @@
             </app-text-input>
 
         </div>
-        <app-game-grid [mapSize]="getMapSize()" [gameData]="this.getMapEditorService().getCurrentGame()"></app-game-grid>
 
         <div class="buttons">
-            <button class="button" (click)="onSave()" style="background-image: url('/assets/images/4x1_green.png');">
-            Enregistrer
+            <button class="button" (click)="onSave()" [disabled]="isSaving" [style.opacity]="isSaving ? '0.5' : '1'" [style.cursor]="isSaving ? 'not-allowed' : 'pointer'" style="background-image: url('/assets/images/4x1_green.png');">
+            {{ isSaving ? 'Sauvegarde...' : 'Enregistrer' }}
             </button>
 
             <button class="button" (click)="onReset()" style="background-image: url('/assets/images/4x1_yellow.png');">

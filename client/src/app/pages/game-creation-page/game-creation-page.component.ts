@@ -1,7 +1,7 @@
-import { Component } from '@angular/core';
-import { RouterLink, Router } from '@angular/router';
-import { CommunicationService } from '@app/services/communication/communication.service';
+import { Component, inject } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
 import { Game } from '@app/interfaces/game';
+import { CommunicationService } from '@app/services/communication/communication.service';
 
 @Component({
     selector: 'app--page',
@@ -10,10 +10,8 @@ import { Game } from '@app/interfaces/game';
     imports: [RouterLink],
 })
 export class GameCreationPageComponent {
-    constructor(
-        private communicationService: CommunicationService,
-        private router: Router,
-    ) {}
+    private communicationService = inject(CommunicationService);
+    private router = inject(Router);
 
     games: Game[] = this.getVisibleGames();
     selectedGameId: string | null = null;
