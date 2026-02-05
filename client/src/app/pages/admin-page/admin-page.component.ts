@@ -1,5 +1,5 @@
 import { CommonModule, DatePipe } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { Game } from '@app/interfaces/game';
@@ -13,6 +13,9 @@ import { CommunicationService } from '@app/services/communication/communication.
     imports: [CommonModule, DatePipe, FormsModule, RouterLink],
 })
 export class AdminPageComponent {
+    private communicationService = inject(CommunicationService);
+    private router = inject(Router);
+
     showGameCreationModal = false;
     selectedSize: 'Small' | 'Medium' | 'Large' | null = null;
     gameMode: 'classic' | 'ctf' = 'classic';
@@ -48,12 +51,6 @@ export class AdminPageComponent {
             height: 20,
         },
     ];
-
-
-    constructor(
-        private communicationService: CommunicationService,
-        private router: Router,
-    ) {}
 
     games: Game[] = this.getAllGames();
 

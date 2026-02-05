@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
 // import { CommunicationService } from '@app/services/communication/communication.service';
 import { Character, Dice } from '@app/interfaces/character-model';
@@ -12,8 +12,7 @@ import { Character, Dice } from '@app/interfaces/character-model';
 })
 
 export class CharacterCreationPageComponent {
-    // constructor(private communicationService: CommunicationService) {}
-    constructor(private router: Router) {}
+    private router = inject(Router);
     character: Character = this.createBaseCharacter();
     bonusTarget: 'life' | 'speed' | null = null;
 

@@ -1,5 +1,5 @@
 import { NgClass } from '@angular/common';
-import { Component, Inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { AppDialogData } from '@app/interfaces/dialog-model';
@@ -11,10 +11,8 @@ import { AppDialogData } from '@app/interfaces/dialog-model';
   styleUrl: './app-dialog.component.scss',
 })
 export class AppDialogComponent {
-  constructor(
-    private dialogRef: MatDialogRef<AppDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: AppDialogData,
-  ) {}
+  private dialogRef = inject(MatDialogRef<AppDialogComponent>);
+  data = inject<AppDialogData>(MAT_DIALOG_DATA);
 
   get isArray(): boolean {
     return Array.isArray(this.data.message);

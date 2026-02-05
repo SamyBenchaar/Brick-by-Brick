@@ -7,6 +7,7 @@ import { Game } from '@app/interfaces/game';
 import { MapEditorServiceService } from '@app/services/map-editor-service.service';
 import { ObjectCounterService } from '@app/services/object-counter/object-counter.service';
 import { GRID_SIZE, MapSize, ObjectType, TileType } from '@common/map';
+import html2canvas from 'html2canvas';
 
 @Component({
   selector: 'app-game-grid',
@@ -16,6 +17,9 @@ import { GRID_SIZE, MapSize, ObjectType, TileType } from '@common/map';
   styleUrl: './game-grid.component.scss',
 })
 export class GameGridComponent implements OnInit, OnChanges {
+  private static readonly defaultPreviewMaxWidth = 400;
+  private static readonly jpegQuality = 0.8;
+
   @Input() mapSize: MapSize = MapSize.Small; // Taille par défaut
 
   @Input() gameData: Game | null = null;
@@ -138,6 +142,11 @@ export class GameGridComponent implements OnInit, OnChanges {
     event.preventDefault(); // Empêche le menu contextuel d'apparaître
   }
 
+  resetGrid(): void {
+    this.gameMap = new GameMap(this.mapSize);
+    this.objectCounterService.reset();
+  }
+
   applyDeletion(x: number, y: number): void {
     const tile = this.getTile(x, y);
     if (tile) {
@@ -199,4 +208,20 @@ export class GameGridComponent implements OnInit, OnChanges {
     return `assets/images/${tile}.jpg`;
   }
 
+  async captureMapPreview(maxWidth: number = GameGridComponent.defaultPreviewMaxWidth): Promise<string> {
+    try {
+      const gridElement = document.querySelector('.grid-container') as HTMLElement;
+      if (!gridElement) return '';
+      const scale = Math.min(1, maxWidth / gridElement.offsetWidth);
+      const gridCanva = await html2canvas(gridElement, {
+        scale,
+        backgroundColor: null,
+        logging: false,
+      });
+      return gridCanva.toDataURL('image/jpeg', GameGridComponent.jpegQuality);
+
+    } catch {
+      return '';
+    }
+  }
 }
