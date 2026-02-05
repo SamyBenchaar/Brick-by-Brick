@@ -118,7 +118,25 @@ export class EditionPageComponent implements OnInit {
       if (!currentGame) {
         return;
       }
+
+      // Récupérer la grille actuelle (modifiée par l'utilisateur)
+      const grid = this.gameGridComponent.gameMap.getGrid();
+      const tiles = grid.map(row =>
+        row.map(tile => {
+          const tileData: { type: string; object?: { type: string } } = { type: tile.type };
+          if (tile.object) {
+            tileData.object = { type: tile.object };
+          }
+          return tileData;
+        }),
+      );
+
+      // Mettre à jour la carte dans currentGame
+      currentGame.mapConfig.tiles = tiles;
+      currentGame.name = this.gameName;
+      currentGame.description = this.gameDescription;
       currentGame.previewImage = await this.gameGridComponent.captureMapPreview();
+
       this.communicationService.updateGame(this.gameId, currentGame).subscribe({
         next: (updatedGame) => {
           this.getMapEditorService().setCurrentGame(updatedGame);
@@ -134,10 +152,14 @@ export class EditionPageComponent implements OnInit {
           });
         },
         error: (err) => {
+          const errorMessage = Array.isArray(err.error.message)
+            ? err.error.message
+            : err.error.message || err.error || 'Une erreur est survenue lors de la sauvegarde de la partie.';
+
           this.dialog.open(AppDialogComponent, {
             data: {
               title: 'Erreur',
-              message: err.error.message || 'Une erreur est survenue lors de la sauvegarde de la partie.',
+              message: errorMessage,
               type: 'error',
             },
           });
