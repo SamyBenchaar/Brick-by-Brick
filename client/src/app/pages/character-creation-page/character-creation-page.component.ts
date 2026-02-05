@@ -1,7 +1,6 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-// import { CommunicationService } from '@app/services/communication/communication.service';
 import { Character, Dice } from '@app/interfaces/character-model';
 import {BASE_LIFE, BASE_SPEED, BASE_ATTACK, BASE_DEFENSE, 
     BONUS_AMOUNT, AVATARS, BONUS_ATTRIBUTES, RANDOM_NAME_MAX, DICE_PROBABILITY} from '@app/constants/character.constants';
@@ -82,7 +81,6 @@ export class CharacterCreationPageComponent {
         this.character.defenseDice = this.character.attackDice === 'D6' ? 'D4' : 'D6';
     }
     submitCharacter() {
-        // this.communicationService.sendCharacter(this.character);
         this.router.navigate(['/waiting-room']);
     }
 }

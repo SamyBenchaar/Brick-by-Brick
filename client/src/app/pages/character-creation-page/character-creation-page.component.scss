@@ -37,25 +37,63 @@ $yellow-dark: #b38f00;
   position: fixed;
   width: 100%;
   height: 100%;
-  padding: 2rem;
+  padding: clamp(0.5rem, 2vw, 2rem);
   @include flex-center;
-  justify-content: space-evenly;
+  justify-content: center;
   background: radial-gradient(circle at top, #eeeff2, #f1e87e);
   font-family: 'Segoe UI', sans-serif;
   box-sizing: border-box;
-  overflow-y: hidden;
-  overflow-x: hidden;
+  overflow: hidden;
 }
 
 .scale-wrapper {
   transform-origin: center;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  @media (max-width: 900px) {
+    transform: scale(0.9);
+  }
+  
+  @media (max-width: 800px) {
+    transform: scale(0.8);
+  }
+  
+  @media (max-width: 700px) {
+    transform: scale(0.6);
+  }
+  
+  @media (max-width: 600px) {
+    transform: scale(0.4);
+  }
+  
+  @media (max-width: 500px) {
+    transform: scale(0.3);
+  }
+  
+  @media (max-height: 800px) {
+    transform: scale(0.85);
+  }
+  
+  @media (max-height: 700px) {
+    transform: scale(0.75);
+  }
+  
+  @media (max-height: 600px) {
+    transform: scale(0.65);
+  }
+
 }
 
 .container {
   position: relative;
   width: 800px;
   max-width: 100%;
-  max-height: 100%;
+  height: fit-content;
+  max-height: 90vh;
   padding: 2rem;
   display: flex;
   flex-direction: column;
@@ -63,6 +101,7 @@ $yellow-dark: #b38f00;
   border-radius: 16px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
   overflow-y: auto;
+  margin: 0 auto;
 
   h2 {
     font-family: 'MyFont';
@@ -138,7 +177,7 @@ $yellow-dark: #b38f00;
 }
 
 .avatar-selection-panel {
-  flex: 0 0 240px;
+  flex: 0 0 250px;
   padding: 1rem;
   margin-left: 10px;
   display: flex;
@@ -146,7 +185,7 @@ $yellow-dark: #b38f00;
   background: rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   overflow-y: auto;
-  max-height: 500px;
+  max-height: 570px;
 
   h3 {
     font-family: 'MyFont';
@@ -256,13 +295,16 @@ $yellow-dark: #b38f00;
 
 .avatars {
   position: relative;
-  height: clamp(120px, 20vw, 160px);
+  height: clamp(180px, 20vw, 160px);
   border: 3px solid $dark;
   border-radius: 10px;
   @include flex-center;
 
   img {
-    @include img-contain;
+    width: 100%;
+    height: 100%;
+    object-fit: fill;
+    border-radius: 10px;
   }
 }
 
