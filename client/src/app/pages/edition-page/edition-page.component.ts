@@ -1,6 +1,8 @@
-import { DragDropModule, CdkDrag } from '@angular/cdk/drag-drop';
-import { Component, HostListener, OnInit, ViewChild } from '@angular/core';
+import { CdkDrag, DragDropModule } from '@angular/cdk/drag-drop';
+import { Component, HostListener, inject, OnInit, ViewChild } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
+import { AppDialogComponent } from '@app/components/game-edition-components/app-dialog/app-dialog.component';
 // import { Tile } from '@app/classes/tile';
 import { GameGridComponent } from '@app/components/game-edition-components/game-grid/game-grid.component';
 import { ObjectSidebarComponent } from '@app/components/game-edition-components/object-sidebar/object-sidebar.component';
@@ -11,7 +13,6 @@ import { CommunicationService } from '@app/services/communication/communication.
 import { MapEditorServiceService } from '@app/services/map-editor-service.service';
 import { ObjectCounterService } from '@app/services/object-counter/object-counter.service';
 import { MapSize } from '@common/map';
-
 
 @Component({
   selector: 'app-edition-page',
@@ -30,16 +31,17 @@ export class EditionPageComponent implements OnInit {
   gridDimensions = { width: MapSize.Small, height: MapSize.Small }; // Valeur par défaut
   gameName: string = '';
   gameDescription: string = '';
+  imagePreview: string = '';
   gameId: string = '';
   gameMode: 'classic' | 'ctf' = 'classic';
+  isSaving: boolean = false;
 
-  constructor(
-    private route: ActivatedRoute,
-    private communicationService: CommunicationService,
-    private mapEditorService: MapEditorServiceService,
-    private objectCounterService: ObjectCounterService,
-    private router: Router,
-  ) {}
+  private route = inject(ActivatedRoute);
+  private communicationService = inject(CommunicationService);
+  private mapEditorService = inject(MapEditorServiceService);
+  private objectCounterService = inject(ObjectCounterService);
+  private router = inject(Router);
+  private dialog = inject(MatDialog);
 
 
   @HostListener('window:resize')
@@ -90,8 +92,8 @@ export class EditionPageComponent implements OnInit {
     this.communicationService.getGameById(this.gameId).subscribe((game) => {
       if (game) {
         this.selectedSize = game.mapConfig.size as 'Small' | 'Medium' | 'Large';
-        this.objectCounterService.startPoint = this.getMaxPlayers();
-        this.mapEditorService.setCurrentGame(game);
+        this.getObjectCounterService().startPoint = this.getMaxPlayers();
+        this.getMapEditorService().setCurrentGame(game);
         this.gameName = game.name;
         this.gameDescription = game.description;
       }
@@ -112,42 +114,88 @@ export class EditionPageComponent implements OnInit {
   }
 
   async onSave(): Promise<void> {
+    if (this.isSaving) {
+      return;
+    }
+    this.isSaving = true;
+
+    // Forcer la mise à jour du DOM avant les opérations lourdes
+    await new Promise(resolve => setTimeout(resolve, 0));
+
     this.getMapEditorService().setTitle(this.gameName);
     this.getMapEditorService().setDescription(this.gameDescription);
     if (this.gameId !== '') {
-      const currentGame = this.mapEditorService.getCurrentGame();
+      const currentGame = this.getMapEditorService().getCurrentGame();
       if (!currentGame) {
+        this.isSaving = false;
         return;
       }
-      currentGame.isVisible = false;
-
-      currentGame.previewImage = await this.gameGridComponent.captureMapPreview();
+      const previewImage = await this.gameGridComponent.captureMapPreview();
+      this.getMapEditorService().setImagePreview(previewImage);
       this.communicationService.updateGame(this.gameId, currentGame).subscribe({
-        next: async (updatedGame) => {
-          this.mapEditorService.setCurrentGame(updatedGame);
-          this.router.navigate(['/admin']);
+        next: (updatedGame) => {
+          this.isSaving = false;
+          this.getMapEditorService().setCurrentGame(updatedGame);
+          const dialogRef = this.dialog.open(AppDialogComponent, {
+            data: {
+              title: 'Sauvegarde réussie',
+              message: 'La partie a été sauvegardée.',
+              type: 'success',
+            },
+          });
+          dialogRef.afterClosed().subscribe(() => {
+            this.router.navigate(['/admin']);
+          });
         },
         error: (err) => {
-          if (err.status === EditionPageComponent.httpNotFound) {
-            const shouldRecreate = confirm(
-              'Ce jeu a été supprimé. Voulez-vous le recréer avec vos modifications ?',
-            );
+          this.isSaving = false;
 
-            if (shouldRecreate) {
-              this.communicationService.createGame(currentGame).subscribe({
-                next: () => {
-                  alert('Jeu recréé avec succès !');
-                  this.router.navigate(['/admin']);
-                },
-                error: (createErr) => {
-                  alert(`Impossible de recréer le jeu: ${createErr.error?.message || 'Erreur inconnue'}`);
-                },
-              });
-            } else {
-              this.router.navigate(['/admin']);
-            }
+          if (err.status === EditionPageComponent.httpNotFound) {
+            this.dialog.open(AppDialogComponent, {
+              data: {
+                title: 'Jeu supprimé',
+                message: 'Ce jeu a été supprimé. Voulez-vous le recréer avec vos modifications ?',
+                type: 'error',
+              },
+            }).afterClosed().subscribe((result) => {
+              if (result) {
+                this.communicationService.createGame(currentGame).subscribe({
+                  next: () => {
+                    this.dialog.open(AppDialogComponent, {
+                      data: {
+                        title: 'Succès',
+                        message: 'Jeu recréé avec succès !',
+                        type: 'success',
+                      },
+                    });
+                    this.router.navigate(['/admin']);
+                  },
+                  error: (createErr) => {
+                    this.dialog.open(AppDialogComponent, {
+                      data: {
+                        title: 'Erreur',
+                        message: `Impossible de recréer le jeu: ${createErr.error?.message || 'Erreur inconnue'}`,
+                        type: 'error',
+                      },
+                    });
+                  },
+                });
+              } else {
+                this.router.navigate(['/admin']);
+              }
+            });
           } else {
-            alert(`Erreur: ${err.error?.message || 'Impossible de sauvegarder'}`);
+            const errorMessage = Array.isArray(err.error.message)
+              ? err.error.message
+              : err.error.message || err.error || 'Une erreur est survenue lors de la sauvegarde de la partie.';
+
+            this.dialog.open(AppDialogComponent, {
+              data: {
+                title: 'Erreur',
+                message: errorMessage,
+                type: 'error',
+              },
+            });
           }
         },
       });
@@ -177,17 +225,29 @@ export class EditionPageComponent implements OnInit {
       };
       this.communicationService.createGame(gameData).subscribe({
         next: () => {
+          this.isSaving = false;
           this.router.navigate(['/admin']);
         },
         error: (err) => {
-          alert(`Erreur: ${err.error?.message || 'Impossible de créer le jeu'}`);
+          this.isSaving = false;
+          const errorMessage = Array.isArray(err.error.message)
+            ? err.error.message
+            : err.error.message || err.error || 'Une erreur est survenue lors de la création de la partie.';
+
+          this.dialog.open(AppDialogComponent, {
+            data: {
+              title: 'Erreur',
+              message: errorMessage,
+              type: 'error',
+            },
+          });
         },
       });
     }
   }
 
   onReset(): void {
-    const currentGame = this.mapEditorService.getCurrentGame();
+    const currentGame = this.getMapEditorService().getCurrentGame();
     if (currentGame) {
       if (this.gameId !== '') {
         this.loadGame();
