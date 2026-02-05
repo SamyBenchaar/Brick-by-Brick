@@ -30,8 +30,10 @@ export class EditionPageComponent implements OnInit {
   gridDimensions = { width: MapSize.Small, height: MapSize.Small }; // Valeur par défaut
   gameName: string = '';
   gameDescription: string = '';
+  imagePreview: string = '';
   gameId: string = '';
   gameMode: 'classic' | 'ctf' = 'classic';
+  isSaving: boolean = false;
 
   private route = inject(ActivatedRoute);
   private communicationService = inject(CommunicationService);
@@ -111,34 +113,27 @@ export class EditionPageComponent implements OnInit {
   }
 
   async onSave(): Promise<void> {
+    if (this.isSaving) {
+      return;
+    }
+    this.isSaving = true;
+
+    // Forcer la mise à jour du DOM avant les opérations lourdes
+    await new Promise(resolve => setTimeout(resolve, 0));
+
     this.getMapEditorService().setTitle(this.gameName);
     this.getMapEditorService().setDescription(this.gameDescription);
     if (this.gameId !== '') {
       const currentGame = this.getMapEditorService().getCurrentGame();
       if (!currentGame) {
+        this.isSaving = false;
         return;
       }
-
-      // Récupérer la grille actuelle (modifiée par l'utilisateur)
-      const grid = this.gameGridComponent.gameMap.getGrid();
-      const tiles = grid.map(row =>
-        row.map(tile => {
-          const tileData: { type: string; object?: { type: string } } = { type: tile.type };
-          if (tile.object) {
-            tileData.object = { type: tile.object };
-          }
-          return tileData;
-        }),
-      );
-
-      // Mettre à jour la carte dans currentGame
-      currentGame.mapConfig.tiles = tiles;
-      currentGame.name = this.gameName;
-      currentGame.description = this.gameDescription;
-      currentGame.previewImage = await this.gameGridComponent.captureMapPreview();
-
+      const previewImage = await this.gameGridComponent.captureMapPreview();
+      this.getMapEditorService().setImagePreview(previewImage);
       this.communicationService.updateGame(this.gameId, currentGame).subscribe({
         next: (updatedGame) => {
+          this.isSaving = false;
           this.getMapEditorService().setCurrentGame(updatedGame);
           const dialogRef = this.dialog.open(AppDialogComponent, {
             data: {
@@ -152,6 +147,7 @@ export class EditionPageComponent implements OnInit {
           });
         },
         error: (err) => {
+          this.isSaving = false;
           const errorMessage = Array.isArray(err.error.message)
             ? err.error.message
             : err.error.message || err.error || 'Une erreur est survenue lors de la sauvegarde de la partie.';
@@ -191,7 +187,22 @@ export class EditionPageComponent implements OnInit {
       };
       this.communicationService.createGame(gameData).subscribe({
         next: () => {
+          this.isSaving = false;
           this.router.navigate(['/admin']);
+        },
+        error: (err) => {
+          this.isSaving = false;
+          const errorMessage = Array.isArray(err.error.message)
+            ? err.error.message
+            : err.error.message || err.error || 'Une erreur est survenue lors de la création de la partie.';
+
+          this.dialog.open(AppDialogComponent, {
+            data: {
+              title: 'Erreur',
+              message: errorMessage,
+              type: 'error',
+            },
+          });
         },
       });
     }
