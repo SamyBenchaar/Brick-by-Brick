@@ -142,6 +142,11 @@ export class GameGridComponent implements OnInit, OnChanges {
     event.preventDefault(); // Empêche le menu contextuel d'apparaître
   }
 
+  resetGrid(): void {
+    this.gameMap = new GameMap(this.mapSize);
+    this.objectCounterService.reset();
+  }
+
   applyDeletion(x: number, y: number): void {
     const tile = this.getTile(x, y);
     if (tile) {

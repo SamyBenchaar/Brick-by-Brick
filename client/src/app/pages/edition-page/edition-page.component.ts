@@ -7,6 +7,7 @@ import { TextInputComponent } from '@app/components/game-edition-components/text
 import { TileTypeSidebarComponent } from '@app/components/game-edition-components/tile-type-sidebar/tile-type-sidebar.component';
 import { CommunicationService } from '@app/services/communication/communication.service';
 import { MapEditorServiceService } from '@app/services/map-editor-service.service';
+import { ObjectCounterService } from '@app/services/object-counter/object-counter.service';
 import { MapSize } from '@common/map';
 
 
@@ -30,7 +31,8 @@ export class EditionPageComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private communicationService: CommunicationService,
-    private mapEditorService: MapEditorServiceService,
+    private mapEditorService: MapEditorServiceService,  
+    private objectCounterService: ObjectCounterService,
     private router: Router,
   ) {}
 
@@ -52,6 +54,10 @@ export class EditionPageComponent implements OnInit {
     return this.mapEditorService;
   }
 
+  getObjectCounterService(): ObjectCounterService {
+    return this.objectCounterService;
+  }
+
   getMapSize(): MapSize {
     switch (this.selectedSize) {
       case 'Small':
@@ -69,6 +75,8 @@ export class EditionPageComponent implements OnInit {
   private loadGame(): void {
     this.communicationService.getGameById(this.gameId).subscribe((game) => {
       if (game) {
+        this.selectedSize = game.mapConfig.size as 'Small' | 'Medium' | 'Large';
+        this.objectCounterService.startPoint = this.getMaxPlayers();
         this.mapEditorService.setCurrentGame(game);
         this.gameName = game.name;
         this.gameDescription = game.description;
@@ -90,6 +98,8 @@ export class EditionPageComponent implements OnInit {
   }
 
   async onSave(): Promise<void> {
+    this.getMapEditorService().setTitle(this.gameName);
+    this.getMapEditorService().setDescription(this.gameDescription);
     if (this.gameId !== '') {
       const currentGame = this.mapEditorService.getCurrentGame();
       if (!currentGame) {
@@ -137,8 +147,17 @@ export class EditionPageComponent implements OnInit {
   onReset(): void {
     const currentGame = this.mapEditorService.getCurrentGame();
     if (currentGame) {
-      this.gameName = currentGame.name;
-      this.gameDescription = currentGame.description;
+      if (this.gameId !== '') {
+        this.loadGame();
+      } else {
+        this.gameName = '';
+        this.gameDescription = '';
+        if (this.gameGridComponent) {
+          this.gameGridComponent.resetGrid();
+        }
+        
+      }
+
     }
   }
 }
