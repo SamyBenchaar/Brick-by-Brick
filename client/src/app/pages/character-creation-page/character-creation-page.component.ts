@@ -33,7 +33,7 @@ export class CharacterCreationPageComponent {
         speed: BASE_SPEED,
         attack: BASE_ATTACK,
         defense: BASE_DEFENSE,
-        attackDice: 'D6',
+        attackDice: 'D4',
         defenseDice: 'D6',
     };
 }
