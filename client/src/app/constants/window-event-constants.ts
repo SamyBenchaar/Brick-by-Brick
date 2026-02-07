@@ -1,1 +1,1 @@
-export const MIN_WIDTH_DRAGGING = 1800;
+export const MIN_WIDTH_DRAGGING = 1650;
