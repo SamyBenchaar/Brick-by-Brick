@@ -7,7 +7,8 @@
         <app-game-grid class="game-grid" [mapSize]="getMapSize()" [gameData]="this.getMapEditorService().getCurrentGame()"></app-game-grid>
 
         <div class="game-info-container">
-
+            <button class=" button return-button" 
+            [routerLink]="['/admin']">Retour</button>
             <app-text-input
             class="name-input"
             label="Nom de la partie"
@@ -29,11 +30,11 @@
         </div>
 
         <div class="buttons">
-            <button class="button" (click)="onSave()" [disabled]="isSaving" [style.opacity]="isSaving ? '0.5' : '1'" [style.cursor]="isSaving ? 'not-allowed' : 'pointer'" style="background-image: url('/assets/images/4x1_green.png');">
+            <button class="button bottom-button" (click)="onSave()" [disabled]="isSaving" [style.opacity]="isSaving ? '0.5' : '1'" [style.cursor]="isSaving ? 'not-allowed' : 'pointer'" style="background-image: url('/assets/images/4x1_green.png');">
             {{ isSaving ? 'Sauvegarde...' : 'Enregistrer' }}
             </button>
 
-            <button class="button" (click)="onReset()" style="background-image: url('/assets/images/4x1_yellow.png');">
+            <button class="button bottom-button" (click)="onReset()" style="background-image: url('/assets/images/4x1_yellow.png');">
             Réinitialiser
             </button>
 

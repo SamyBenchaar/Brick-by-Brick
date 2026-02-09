@@ -1,6 +1,6 @@
 import { Component,  inject, OnInit, ViewChild } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AppDialogComponent } from '@app/components/game-edition-components/app-dialog/app-dialog.component';
 // import { Tile } from '@app/classes/tile';
 import { GameGridComponent } from '@app/components/game-edition-components/game-grid/game-grid.component';
@@ -14,7 +14,7 @@ import { MapSize } from '@common/map';
 
 @Component({
   selector: 'app-edition-page',
-  imports: [GameGridComponent, TileTypeSidebarComponent, ObjectSidebarComponent, TextInputComponent],
+  imports: [GameGridComponent, TileTypeSidebarComponent, ObjectSidebarComponent, TextInputComponent, RouterLink],
   templateUrl: './edition-page.component.html',
   styleUrl: './edition-page.component.scss',
 })
