@@ -1,16 +1,16 @@
-import { CommonModule, DatePipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
+import { GameListComponent } from '@app/components/game-list/game-list.component';
 import { Game } from '@app/interfaces/game';
 import { CommunicationService } from '@app/services/communication/communication.service';
-
 
 @Component({
     selector: 'app-admin-page',
     templateUrl: './admin-page.component.html',
     styleUrls: ['./admin-page.component.scss'],
-    imports: [CommonModule, DatePipe, FormsModule, RouterLink],
+    imports: [CommonModule, FormsModule, GameListComponent],
 })
 export class AdminPageComponent {
     private communicationService = inject(CommunicationService);
@@ -68,7 +68,7 @@ export class AdminPageComponent {
         });
     }
 
-    deleteGame(game: Game): void {
+    onGameDeleted(game: Game): void {
         this.communicationService.deleteGame(game._id).subscribe({
             next: () => {
                 this.games = this.games.filter(g => g._id !== game._id);
