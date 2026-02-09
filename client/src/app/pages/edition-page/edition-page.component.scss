@@ -1,15 +1,5 @@
-@font-face {
-  font-family: 'MyFont';
-  src: url('/assets/fonts/ByteBounce.ttf') format('truetype');
-  font-weight: lighter;
-  font-style: normal;
-}
-
-.pixel-font {
-  font-family: 'MyFont', sans-serif;
-}
-
 .edition-container {
+  font-family: 'MyFont';
   display: grid;
   background-color: #d4edfc;
   grid-template-columns: minmax(200px, 25%) 1fr;
@@ -25,7 +15,6 @@
 .sidebar-container {
   display: flex;
   flex-direction: row;
-  font-family: "myFont", sans-serif;
   padding-top: clamp(3px, 0.5vmin, 8px);
   user-select: none;
   -webkit-user-select: none;
@@ -87,25 +76,17 @@
   gap: clamp(10px, 1.5vmin, 20px);
   grid-row: 2;
   grid-column: 2;
-
 }
 
-.button {
+.bottom-button {
   height: clamp(60px, 7vmin, 90px);
   width: clamp(180px, 20vmin, 300px);
-  background-position: center;
-  background-repeat: no-repeat;
-  background-color: transparent;
   background-size: 100% 100%;
-  cursor: pointer;
-
-  color: #000000;
-  font-family: 'MyFont', sans-serif;
   font-size: clamp(22px, 3vmin, 30px);
-  text-transform: uppercase;
-  border: none;
 }
 
-.button:hover {
-    filter: brightness(1.2);
+.return-button{
+  position: absolute;
+  top: 10px;
+  right: 6px;
 }

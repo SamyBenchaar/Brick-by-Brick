@@ -1,13 +1,13 @@
-<div class="game-creation">
+<div class="container">
     <div class="header">
         <span class="header-title">Création de partie</span>
-        <button class="button" style="background-image: url('/assets/images/red_large_brick.png');"
-        [routerLink]="['/home']">Quitter</button>
+        <button class=" button return-button" 
+        [routerLink]="['/home']">Retour</button>
     </div>
 
     <div class="content">
         <section class="available-games">
-            <h3 class="title">Jeux disponibles</h3>
+            <h3 class="title brick-orange">Jeux disponibles</h3>
             <div class="game-list">
             @for (game of games; track game._id) {
                 <div class="game-item"
@@ -18,7 +18,7 @@
                         <img [src]="game.previewImage" [alt]="game.name">
                         </div>
                         <div class="game-info">
-                            <span class="game-name">{{ game.name }}</span>
+                            <span class="game-name brick-orange">{{ game.name }}</span>
                             <span class="game-size">{{ game.mapConfig.size }}</span>
                             <span class="game-mode">{{game.gameMode}}</span>
                         </div>

@@ -1,48 +1,15 @@
-@font-face {
-  font-family: 'MyFont';
-  src: url('/assets/fonts/ByteBounce.ttf') format('truetype');
-  font-weight: normal;
-  font-style: normal;
-}
-
 .container {
-    min-height: 100vh;
     background-image: url("/assets/menu_background_image.png");
-    background-size: cover; 
-    background-position: center;
-    background-repeat: no-repeat;
-}
-
-.justified {
-    display: flex;
-    font-family: 'MyFont', sans-serif;
-    flex-direction: column;
-    justify-content: space-between;
     align-items: center;
-    color: rgb(225, 207, 43);
+    justify-content: space-between;
+
 }
 
 .button {
     background-image: url('/assets/images/brick.png');
-    background-position: center;
-    background-repeat: no-repeat;
-    background-color: transparent;
-    background-size: contain;
-
     width: 250px;
     height: 90px;
-
-    cursor: pointer;
-
-    color: #000000;
-    font-family: 'MyFont', sans-serif;
     font-size: 25px;
-    text-transform: uppercase;
-    border: none;
-}
-
-.button:hover {
-    filter: brightness(1.2);
 }
 
 .button-wrapper {
@@ -51,7 +18,6 @@
     align-items: center;
     gap: 20px;
 }
-         
 
 .team-name {
     font-size: 30px;
@@ -60,27 +26,32 @@
     color: rgb(225, 207, 43);
 }
 
-.header-item {
-    justify-content: center;
+.header-title {
     -webkit-text-stroke-width: 1px;
     -webkit-text-stroke-color: black;
     font-size: 200px;
-    text-align: center;
-    margin-top: 30px;
-    margin-bottom: 10px;
+    background-image: none;
+    line-height: 0.5;
+    color: rgb(225, 207, 43);
 }
 
 .footer-item {
     text-align: center;
-}
-
-.footer-item {
     color: white;
 }
-
 
 :host {
   display: block;
   height: 100vh;
   overflow: hidden;   
+}
+
+.game-logo {
+    width: 90px;
+    height: auto;
+    margin-top: 5px;
+}
+
+.names {
+    font-size: 30px;
 }
