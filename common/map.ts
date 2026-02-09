@@ -7,10 +7,10 @@ export enum TileType {
 }
 
 export enum ObjectType {
-    FLAG = 'flag',
-    COMBATSANCTUARY = 'combatsanctuary',
-    HEALINGSANCTUARY = 'healingsanctuary',
     STARTPOINT = 'startingpoint'
+    // FLAG = 'flag',
+    // COMBATSANCTUARY = 'combatsanctuary',
+    // HEALINGSANCTUARY = 'healingsanctuary'
 }
 
 export enum MapSize {
@@ -40,4 +40,4 @@ export const MIN_TERRAIN_COVERAGE = 0.5;
 
 export const PERCENTAGE_MULTIPLIER = 100;
 
-export const PLAYABLE_TYPES = [TilesTypes.Base, TilesTypes.Ice, TilesTypes.Door, TilesTypes.Water];
+export const PLAYABLE_TYPES = [TilesTypes.Base, TilesTypes.Ice, TilesTypes.Water];

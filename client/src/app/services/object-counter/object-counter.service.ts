@@ -6,15 +6,15 @@ import { ObjectType } from '@common/map';
 })
 export class ObjectCounterService {
   private counts: Record<ObjectType, number> = {
-    [ObjectType.FLAG]: 0,
-    [ObjectType.HEALINGSANCTUARY]: 0,
-    [ObjectType.COMBATSANCTUARY]: 0,
+    // [ObjectType.FLAG]: 0,
+    // [ObjectType.HEALINGSANCTUARY]: 0,
+    // [ObjectType.COMBATSANCTUARY]: 0,
     [ObjectType.STARTPOINT]: 0,
   };
   private maxCounts: Record<ObjectType, number> = {
-    [ObjectType.FLAG]: 1,
-    [ObjectType.HEALINGSANCTUARY]: 1,
-    [ObjectType.COMBATSANCTUARY]: 1,
+    // [ObjectType.FLAG]: 1,
+    // [ObjectType.HEALINGSANCTUARY]: 1,
+    // [ObjectType.COMBATSANCTUARY]: 1,
     [ObjectType.STARTPOINT]: 2,
   };
 
