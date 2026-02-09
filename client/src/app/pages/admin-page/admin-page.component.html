@@ -1,7 +1,10 @@
 <div class="container">
-  <div class="header-row">
-    <h1 class="header-title">ADMINISTRER LES JEUX</h1>
-    <button class="add-button" (click)="openGameCreationModal()">Ajouter un jeu</button>  </div>
+  <div class="header">
+    <span class="header-title">ADMINISTRER LES JEUX</span>
+    <button class="button return-button" [routerLink]="['/home']">Retour</button>
+  </div>
+
+  <div class="content">
     <!-- Modal de création de jeu -->
     @if (showGameCreationModal) {
     <div class="modal-overlay" (click)="closeGameCreationModal()">
@@ -52,5 +55,9 @@
     [showOnlyVisible]="false"
     (gameDeleted)="onGameDeleted($event)">
   </app-game-list>
+  </div>
 
-
+  <div class="footer">
+    <button class="button add-button" (click)="openGameCreationModal()">Ajouter un jeu</button>
+  </div>
+</div>

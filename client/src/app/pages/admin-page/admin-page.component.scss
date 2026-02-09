@@ -12,18 +12,14 @@
   padding: 0;
 }
 
-.container {
-  width: 100%;
-  max-width: none;
-  margin: 0;
-  padding: 2rem;
-}
-
-.header-row {
+.content {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+  padding-top: 0.5rem;
+  padding-left: 0.5rem;
+  max-width: 1200px;
 }
 
 .add-button {
@@ -51,12 +47,13 @@
   }
 }
 
-.header-title {
-  font-size: 35px;
-  padding: 20px;
-  margin: 0;
-  background-image: url('/assets/images/4x1_yellow.png');
-  background-size: contain;
+.footer {
+  position: fixed;
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  bottom: 10px;
+  padding-right: 1rem;
 }
 
 // Modal styles
@@ -88,6 +85,7 @@
   background: #ffffffee;
   border: 2px solid #000000;
   border-radius: 16px;
+  font-size: 1.05rem;
   width: 90%;
   max-width: 700px;
   max-height: 85vh;
@@ -116,7 +114,7 @@
 
   h2 {
     margin: 0;
-    font-size: 1.75rem;
+    font-size: 2rem;
     color: #000000;
     font-weight: 600;
   }
@@ -140,7 +138,7 @@
   }
 
   .material-icons {
-    font-size: 24px;
+    font-size: 28px;
   }
 }
 
@@ -151,7 +149,7 @@
 
   h3 {
     margin: 0 0 1.5rem 0;
-    font-size: 1.25rem;
+    font-size: 1.5rem;
     color: #000000;
     text-align: center;
   }
@@ -168,6 +166,7 @@
   border: 2px solid #000000;
   border-radius: 12px;
   padding: 2rem 1.5rem;
+  padding: 2.25rem 1.75rem;
   cursor: pointer;
   transition: all 0.3s ease;
   text-align: center;
@@ -201,27 +200,27 @@
   transition: all 0.3s ease;
 
   .material-icons {
-    font-size: 48px;
+    font-size: 56px;
   }
 }
 
 .size-card h4 {
   margin: 0 0 0.75rem 0;
-  font-size: 1.25rem;
+  font-size: 1.5rem;
   color: #000000;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .size-grid {
   margin: 0.5rem 0;
-  font-size: 1.125rem;
+  font-size: 1.25rem;
   color: #333333;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .size-players {
   margin: 0;
-  font-size: 0.875rem;
+  font-size: 1rem;
   color: #666666;
 }
 
@@ -236,11 +235,11 @@
 
 .btn-secondary,
 .btn-primary {
-  padding: 0.75rem 1.5rem;
+  padding: 0.9rem 1.75rem;
   border: 1px solid #000000;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 600;
+  border-radius: 10px;
+  font-size: 1.125rem;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -277,17 +276,17 @@
     gap: 0.75rem;
     
     label {
-        font-weight: 600;
-        color: #000000;
-        font-size: 1rem;
-        letter-spacing: 0.5px;
+      font-weight: 700;
+      color: #000000;
+      font-size: 1.125rem;
+      letter-spacing: 0.5px;
     }
     
     select {
-        padding: 0.75rem 1rem;
-        border: 2px solid #000000;
-        border-radius: 8px;
-        font-size: 0.875rem;
+      padding: 0.9rem 1rem;
+      border: 2px solid #000000;
+      border-radius: 8px;
+      font-size: 1rem;
         cursor: pointer;
         background-color: #ffffff;
         color: #000000;

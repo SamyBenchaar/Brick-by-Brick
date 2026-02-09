@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { GameListComponent } from '@app/components/game-list/game-list.component';
 import { Game } from '@app/interfaces/game';
 import { CommunicationService } from '@app/services/communication/communication.service';
@@ -10,7 +10,7 @@ import { CommunicationService } from '@app/services/communication/communication.
     selector: 'app-admin-page',
     templateUrl: './admin-page.component.html',
     styleUrls: ['./admin-page.component.scss'],
-    imports: [CommonModule, FormsModule, GameListComponent],
+    imports: [CommonModule, FormsModule, GameListComponent, RouterLink],
 })
 export class AdminPageComponent {
     private communicationService = inject(CommunicationService);
