@@ -7,13 +7,6 @@ $avatar-bg-hover: rgba(100, 120, 150, 0.4);
 $yellow: #ffd500;
 $yellow-dark: #b38f00;
 
-@font-face {
-  font-family: 'MyFont';
-  src: url('/assets/fonts/ByteBounce.ttf') format('truetype');
-  font-weight: normal;
-  font-style: normal;
-}
-
 @mixin flex-center {
   display: flex;
   align-items: center;
