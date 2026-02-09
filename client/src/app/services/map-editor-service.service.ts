@@ -46,6 +46,18 @@ export class MapEditorServiceService {
     }
   }
 
+  setObject(x: number, y: number, type: ObjectType | null): void {
+    const game = this.currentGame();
+    if (game) {
+      if (type) {
+        game.mapConfig.tiles[y][x].object = { type };
+      } else {
+        delete game.mapConfig.tiles[y][x].object;
+      }
+      this.currentGame.set(game);
+    }
+  }
+
   setTitle(title: string): void {
     const game = this.currentGame();
     if (game) {
@@ -58,6 +70,14 @@ export class MapEditorServiceService {
     const game = this.currentGame();
     if (game) {
       game.description = description;
+      this.currentGame.set(game);
+    }
+  }
+
+  setImagePreview(previewImage: string): void {
+    const game = this.currentGame();
+    if (game) {
+      game.previewImage = previewImage;
       this.currentGame.set(game);
     }
   }

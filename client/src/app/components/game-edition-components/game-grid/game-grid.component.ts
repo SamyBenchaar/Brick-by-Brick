@@ -18,7 +18,7 @@ import html2canvas from 'html2canvas';
 })
 export class GameGridComponent implements OnInit, OnChanges {
   private static readonly defaultPreviewMaxWidth = 400;
-  private static readonly jpegQuality = 0.8;
+  private static readonly jpegQuality = 0.3;
 
   @Input() mapSize: MapSize = MapSize.Small; // Taille par défaut
 
@@ -154,6 +154,7 @@ export class GameGridComponent implements OnInit, OnChanges {
         this.removeObject(x, y);
       } else {
         tile.type = TileType.Base;
+        this.mapEditorService.setTileType(x, y, TileType.Base);
       }
     }
   }
@@ -188,6 +189,7 @@ export class GameGridComponent implements OnInit, OnChanges {
       }
       tile.object = selectedObject;
       this.objectCounterService.place(selectedObject);
+      this.mapEditorService.setObject(x, y, selectedObject);
     }
   }
 
@@ -196,6 +198,7 @@ export class GameGridComponent implements OnInit, OnChanges {
     if (tile && tile.object) {
       this.objectCounterService.remove(tile.object);
       tile.object = undefined;
+      this.mapEditorService.setObject(x, y, null);
     }
   }
 

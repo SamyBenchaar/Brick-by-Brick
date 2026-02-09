@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Character, Dice } from '@app/interfaces/character-model';
@@ -19,8 +19,7 @@ interface AvatarOption {
 })
 
 export class CharacterCreationPageComponent {
-    // constructor(private communicationService: CommunicationService) {}
-    constructor(private router: Router) {}
+    private router = inject(Router);
     character: Character = this.createBaseCharacter();
     bonusTarget: 'life' | 'speed' | null = null;
     avatars = AVATARS;
@@ -33,7 +32,7 @@ export class CharacterCreationPageComponent {
         speed: BASE_SPEED,
         attack: BASE_ATTACK,
         defense: BASE_DEFENSE,
-        attackDice: 'D6',
+        attackDice: 'D4',
         defenseDice: 'D6',
     };
 }

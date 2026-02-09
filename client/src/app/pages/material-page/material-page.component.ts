@@ -42,8 +42,7 @@ export class MaterialPageComponent {
     favoriteTheme: string = MATERIAL_DEFAULT_PREBUILT_THEME.value;
 
     private readonly router = inject(Router);
-
-    constructor(private readonly matDialog: MatDialog) {}
+    private readonly matDialog = inject(MatDialog);
 
     onLikeTheme(): void {
         this.matDialog.open(this.merciDialogContentRef);

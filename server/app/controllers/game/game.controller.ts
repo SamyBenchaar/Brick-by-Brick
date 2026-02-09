@@ -2,7 +2,7 @@ import { Game } from '@app/model/game';
 import { GameService } from '@app/services/game/game.service';
 import { CreateGameDto } from '@common/dto/create-game.dto';
 import { UpdateGameDto } from '@common/dto/update-game.dto';
-import { Body, Controller, Delete, Get, Param, Patch, Post, Put, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Put } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('games')
@@ -15,6 +15,13 @@ export class GameController {
     @ApiResponse({ status: 200, description: 'Liste des jeux retournée avec succès' })
     async findAll(): Promise<Game[]> {
         return this.gameService.findAll();
+    }
+
+    @Get('admin')
+    @ApiOperation({ summary: 'Récupérer tous les jeux pour le menu admin' })
+    @ApiResponse({ status: 200, description: 'Liste des jeux retournée avec succès' })
+    async findAdminMenuGames(): Promise<Game[]> {
+        return this.gameService.findAdminMenuGames();
     }
 
     @Get('visible')
@@ -35,7 +42,7 @@ export class GameController {
     @ApiOperation({ summary: 'Créer un nouveau jeu' })
     @ApiResponse({ status: 201, description: 'Jeu créé avec succès', type: Game })
     @ApiResponse({ status: 400, description: 'Données invalides' })
-    async create(@Body(new ValidationPipe({ transform: true })) createGameDto: CreateGameDto): Promise<Game> {
+    async create(@Body() createGameDto: CreateGameDto): Promise<Game> {
         return this.gameService.create(createGameDto);
     }
 
@@ -43,7 +50,7 @@ export class GameController {
     @ApiOperation({ summary: 'Mettre à jour un jeu' })
     @ApiResponse({ status: 200, description: 'Jeu mis à jour avec succès', type: Game })
     @ApiResponse({ status: 404, description: 'Jeu non trouvé' })
-    async update(@Param('id') id: string, @Body(new ValidationPipe({ transform: true })) updateGameDto: UpdateGameDto): Promise<Game> {
+    async update(@Param('id') id: string, @Body() updateGameDto: UpdateGameDto): Promise<Game> {
         return this.gameService.update(id, updateGameDto);
     }
 
