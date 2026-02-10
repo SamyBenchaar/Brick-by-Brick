@@ -76,14 +76,27 @@ export class EditionPageComponent implements OnInit {
 
 
   private loadGame(): void {
-    this.communicationService.getGameById(this.gameId).subscribe((game) => {
-      if (game) {
-        this.selectedSize = game.mapConfig.size as 'Small' | 'Medium' | 'Large';
-        this.getObjectCounterService().startPoint = this.getMaxPlayers();
-        this.getMapEditorService().setCurrentGame(game);
-        this.gameName = game.name;
-        this.gameDescription = game.description;
-      }
+    this.communicationService.getGameById(this.gameId).subscribe({
+      next: (game) => {
+        if (game) {
+          this.selectedSize = game.mapConfig.size as 'Small' | 'Medium' | 'Large';
+          this.getObjectCounterService().startPoint = this.getMaxPlayers();
+          this.getMapEditorService().setCurrentGame(game);
+          this.gameName = game.name;
+          this.gameDescription = game.description;
+        }
+      },
+      error: () => {
+        this.dialog.open(AppDialogComponent, {
+          data: {
+            title: 'Jeu introuvable',
+            message: 'Le jeu demandé n\'existe pas ou a été supprimé.',
+            type: 'error',
+          },
+        }).afterClosed().subscribe(() => {
+          this.router.navigate(['/admin']);
+        });
+      },
     });
   }
 
