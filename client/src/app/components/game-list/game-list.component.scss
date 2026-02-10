@@ -47,8 +47,11 @@
     background: transparent;
     border-top: none;
     transition: max-height 220ms ease, padding 220ms ease;
-    font-size: 1.5rem;
-    line-height: 1.3;
+    font-size: 1.35rem;
+    line-height: 0.85;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    white-space: normal;
   }
 
   .hover-description.visible {
