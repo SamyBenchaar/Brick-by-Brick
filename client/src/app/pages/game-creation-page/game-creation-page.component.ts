@@ -2,6 +2,7 @@ import { Component, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { Game } from '@app/interfaces/game';
 import { CommunicationService } from '@app/services/communication/communication.service';
+import { getGameModeLabel, getGameSizeLabel } from '@app/constants/game-config-constants';
 
 @Component({
     selector: 'app--page',
@@ -27,6 +28,13 @@ export class GameCreationPageComponent {
         this.selectedGameId = gameId;
     }
 
+    getGameSizeLabel(sizeId: string): string {
+        return getGameSizeLabel(sizeId);
+    }
+
+    getGameModeLabel(gameMode: string): string {
+        return getGameModeLabel(gameMode);
+    }
     createGameSession(): void {
         if (this.selectedGameId) {
             this.communicationService.createGameSession(this.selectedGameId).subscribe(() => {

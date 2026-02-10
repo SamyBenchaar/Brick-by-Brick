@@ -1,7 +1,8 @@
 <div class="container">
-  <div class="header-row">
-    <h1 class="header-title">ADMINISTRER LES JEUX</h1>
-    <button class="add-button" (click)="openGameCreationModal()">Ajouter un jeu</button>  </div>
+    <div class="header-row">
+        <h1 class="header-title">ADMINISTRER LES JEUX</h1>
+        <button class="add-button" (click)="openGameCreationModal()">Ajouter un jeu</button>
+    </div>
     <!-- Modal de création de jeu -->
     @if (showGameCreationModal) {
     <div class="modal-overlay" (click)="closeGameCreationModal()">
@@ -23,15 +24,19 @@
                             <span class="material-icons">grid_on</span>
                         </div>
                         <h4>{{ size.label }}</h4>
-                        <p class="size-grid">{{ size.gridSize }}</p>
-                        <p class="size-players">{{ size.players }}</p>
+                        <p class="size-grid">{{ size.gridSize }}x{{ size.gridSize }}</p>
+                        @if (size.maxPlayers === 2){
+                        <p class="size-players">{{ size.maxPlayers }} joueurs</p>
+                        } @else {
+                        <p class="size-players">2 à {{ size.maxPlayers }} joueurs</p>
+                        }
                     </div>
                     }
                 </div>
                 <div class="game-modes-options">
                     <label for="game-mode">Mode de jeu</label>
-                    <select id="game-mode" [(ngModel)]="gameMode">
-                        @for (mode of gameModes; track mode){
+                    <select id="game-mode" [(ngModel)]="selectedGameMode">
+                        @for (mode of gameModes; track mode.value) {
                         <option [value]="mode.value">{{ mode.label }}</option>
                         }
                     </select>
@@ -45,44 +50,36 @@
         </div>
     </div>
     }
-  <div class="games-list">
-    @for (game of games; track game._id) {
-    <div class="game-item">
-      <div class="game-content">
-        <div class="game-image">
-          <img [src]="game.previewImage" [alt]="game.name">
+    <div class="games-list">
+        @for (game of games; track game._id) {
+        <div class="game-item">
+            <div class="game-content">
+                <div class="game-image">
+                    <img [src]="game.previewImage" [alt]="game.name" />
+                </div>
+                <div class="game-info">
+                    <p class="game-name">{{ game.name }}</p>
+                    <div class="game-details">
+                        <span class="game-size">{{ getGameSizeLabel(game.mapConfig.size) }}</span>
+                        <span class="game-date">{{ game.lastModified | date: 'medium':'':'fr-CA' }}</span>
+                    </div>
+                </div>
+                <div class="game-actions">
+                    <button class="btn-icon btn-edit" title="Modifier" routerLink="/edition/{{ game._id }}">
+                        <span class="material-icons">edit</span>
+                    </button>
+                    <button class="btn-icon btn-visibility" [title]="game.isVisible ? 'Masquer' : 'Afficher'" (click)="editGame(game)">
+                        <span class="material-icons">{{ game.isVisible ? 'visibility' : 'visibility_off' }}</span>
+                    </button>
+                    <button class="btn-icon btn-delete" title="Supprimer" (click)="deleteGame(game)">
+                        <span class="material-icons">delete</span>
+                    </button>
+                </div>
+            </div>
+            <div class="game-description">
+                {{ game.description }}
+            </div>
         </div>
-        <div class="game-info">
-          <p class="game-name">{{ game.name }}</p>
-          <div class="game-details">
-            <span class="game-size">{{ game.mapConfig.size }}</span>
-            <span class="game-date">{{ game.lastModified | date:'medium' }}</span>
-          </div>
-        </div>
-        <div class="game-actions">
-            <button class="btn-icon btn-edit" 
-                    title="Modifier"
-                    routerLink="/edition/{{game._id}}">
-                <span class="material-icons">edit</span>
-            </button>
-            <button class="btn-icon btn-visibility" 
-                    [title]="game.isVisible ? 'Masquer' : 'Afficher'"
-                    (click)="editGame(game)">
-                <span class="material-icons">{{ game.isVisible ? 'visibility' : 'visibility_off' }}</span>
-            </button>
-            <button class="btn-icon btn-delete" 
-                    title="Supprimer"
-                    (click)="deleteGame(game)">
-                <span class="material-icons">delete</span>
-            </button>
-        </div>
-      </div>
-      <div class="game-description">
-        {{ game.description }}
-      </div>
+        }
     </div>
-    }
-  </div>
 </div>
-
-

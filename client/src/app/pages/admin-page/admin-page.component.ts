@@ -1,10 +1,10 @@
 import { CommonModule, DatePipe } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { GAME_MODES_DISPLAY, GAME_SIZES_DISPLAY, GameModeValue, GameSizeId, getGameSizeLabel } from '@app/constants/game-config-constants';
 import { Game } from '@app/interfaces/game';
 import { CommunicationService } from '@app/services/communication/communication.service';
-
 
 @Component({
     selector: 'app-admin-page',
@@ -12,54 +12,26 @@ import { CommunicationService } from '@app/services/communication/communication.
     styleUrls: ['./admin-page.component.scss'],
     imports: [CommonModule, DatePipe, FormsModule, RouterLink],
 })
-export class AdminPageComponent {
+export class AdminPageComponent implements OnInit {
     private communicationService = inject(CommunicationService);
     private router = inject(Router);
 
+    readonly gameSizes = GAME_SIZES_DISPLAY;
+    readonly gameModes = GAME_MODES_DISPLAY;
+
     showGameCreationModal = false;
-    selectedSize: 'Small' | 'Medium' | 'Large' | null = null;
-    gameMode: 'classic' | 'ctf' = 'classic';
+    selectedSize: GameSizeId | null = null;
+    selectedGameMode: GameModeValue = 'classic';
+    games: Game[] = [];
 
-    gameModes = [
-        { value: 'classic' as const, label: 'classique' },
-        { value: 'ctf' as const, label: 'CTF' },
-    ];
+    ngOnInit(): void {
+        this.loadGames();
+    }
 
-    gameSizes = [
-        {
-            id: 'Small' as const,
-            label: 'Petite',
-            gridSize: '10x10',
-            players: '2 joueurs',
-            width: 10,
-            height: 10,
-        },
-        {
-            id: 'Medium' as const,
-            label: 'Moyenne',
-            gridSize: '15x15',
-            players: '2 à 4 joueurs',
-            width: 15,
-            height: 15,
-        },
-        {
-            id: 'Large' as const,
-            label: 'Grande',
-            gridSize: '20x20',
-            players: '2 à 6 joueurs',
-            width: 20,
-            height: 20,
-        },
-    ];
-
-
-    games: Game[] = this.getAllGamesAdmin();
-
-    getAllGamesAdmin(): Game[] {
+    private loadGames(): void {
         this.communicationService.getAllGamesAdmin().subscribe((games) => {
             this.games = games;
         });
-        return this.games;
     }
 
     editGame(game: Game): void {
@@ -83,17 +55,21 @@ export class AdminPageComponent {
     openGameCreationModal(): void {
         this.showGameCreationModal = true;
         this.selectedSize = null;
-        this.gameMode = 'classic';
+        this.selectedGameMode = 'classic';
     }
 
     closeGameCreationModal(): void {
         this.showGameCreationModal = false;
         this.selectedSize = null;
-        this.gameMode = 'classic';
+        this.selectedGameMode = 'classic';
     }
 
-    selectSize(size: 'Small' | 'Medium' | 'Large'): void {
+    selectSize(size: GameSizeId): void {
         this.selectedSize = size;
+    }
+
+    getGameSizeLabel(sizeId: string): string {
+        return getGameSizeLabel(sizeId);
     }
 
     confirmAndRedirect(): void {
@@ -101,7 +77,7 @@ export class AdminPageComponent {
             this.router.navigate(['/edition'], {
                 queryParams: {
                     size: this.selectedSize,
-                    mode: this.gameMode,
+                    mode: this.selectedGameMode,
                 },
             });
         }
