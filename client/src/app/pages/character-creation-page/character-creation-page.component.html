@@ -140,7 +140,7 @@
 
                         <div class="bottom-buttons">
                             <button class="random" (click)="createRandomCharacter()">Personnage aléatoire</button>
-                            <button class="create" (click)="submitCharacter()">Soumettre</button>
+                            <button class="create" (click)="submitCharacter()" [disabled]="!character.name">Soumettre</button>
                         </div>
                     </div>
                 </div>
