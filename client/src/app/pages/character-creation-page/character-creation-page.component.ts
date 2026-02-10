@@ -88,4 +88,14 @@ export class CharacterCreationPageComponent {
         this.submitHover = isHovering;
     }
 
+    getTooltipText(): string { 
+        let text = 'Il manque:\n';
+        if (!this.character.name) {
+            text += '- Le nom du personnage\n';
+        }
+        if (!this.bonusTarget) {
+            text += '- Le bonus\n';
+        }
+        return text;
+    }
 }

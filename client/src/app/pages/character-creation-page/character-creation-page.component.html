@@ -144,12 +144,12 @@
                                 <button 
                                     class="create" 
                                     (click)="submitCharacter()" 
-                                    [disabled]="!character.name"
+                                    [disabled]="!character.name && !bonusTarget"
                                     (mouseenter)="submitHover = true"
                                     (mouseleave)="submitHover = false">
                                     Soumettre
                                 </button>
-                                <div class="tooltip">SVP mettre un nom</div>
+                                <div class="tooltip">{{getTooltipText()}}</div>
                             </div>
                         </div>
                     </div>

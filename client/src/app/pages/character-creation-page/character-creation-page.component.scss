@@ -448,10 +448,11 @@ button {
     display: inline-block;
 
     .tooltip {
+        white-space: pre-line;
         visibility: hidden;
         background-color: #333;
         color: #fff;
-        text-align: center;
+        text-align: left;
         border-radius: 6px;
         padding: 8px 12px;
         position: absolute;
@@ -461,7 +462,6 @@ button {
         margin-left: -60px;
         opacity: 0;
         transition: opacity 0.3s;
-        white-space: nowrap;
         font-size: 12px;
 
         &::after {
