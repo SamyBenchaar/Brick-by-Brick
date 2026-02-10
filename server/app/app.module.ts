@@ -9,6 +9,7 @@ import { Logger, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { GameSessionModule } from './game-session.module';
+import { GameGateway } from './gateways/game/game.gateway';
 
 @Module({
     imports: [
@@ -25,6 +26,13 @@ import { GameSessionModule } from './game-session.module';
         ]), GameSessionModule,
     ],
     controllers: [GameController],
-    providers: [ChatGateway, GameService, DateService, Logger, MapValidationService, GameMetadataValidationService],
+    providers: [GameGateway, ChatGateway, GameService, DateService, Logger, MapValidationService, GameMetadataValidationService],
 })
-export class AppModule {}
+export class AppModule {
+    constructor(
+        private readonly gameGateway: GameGateway,
+        private readonly gameService: GameService,
+
+    ) {}
+}
+
