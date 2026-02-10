@@ -2,7 +2,7 @@ import { GameGateway } from '@app/gateways/game/game.gateway';
 import { Game, GameDocument } from '@app/model/game';
 import { GameMetadataValidationService } from '@app/services/validations/gameMetadataValidation.service';
 import { MapValidationService } from '@app/services/validations/mapValidation.service';
-import { Inject, Injectable, forwardRef } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, forwardRef } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 
@@ -18,8 +18,13 @@ export class GameService {
     ) {}
 
     async create(gameData: Partial<Game>): Promise<Game> {
-        await this.gameMetadataValidationService.validateMetadata(gameData);
-        await this.mapValidationService.validateMap(gameData);
+        const metadataErrors = await this.gameMetadataValidationService.validateMetadata(gameData);
+        const mapErrors = await this.mapValidationService.validateMap(gameData);
+
+        const errors = [...metadataErrors, ...mapErrors];
+        if (errors.length > 0) {
+            throw new BadRequestException(errors);
+        }
 
         const createdGame = new this.gameModel(gameData);
 
@@ -50,8 +55,13 @@ export class GameService {
     }
 
     async update(id: string, gameData: Partial<Game>): Promise<Game> {
-        await this.gameMetadataValidationService.validateMetadata(gameData);
-        await this.mapValidationService.validateMap(gameData);
+        const metadataErrors = await this.gameMetadataValidationService.validateMetadata(gameData);
+        const mapErrors = await this.mapValidationService.validateMap(gameData);
+
+        const errors = [...metadataErrors, ...mapErrors];
+        if (errors.length > 0) {
+            throw new BadRequestException(errors);
+        }
 
         const updatedGame = await this.gameModel.findByIdAndUpdate(id, gameData, { new: true }).exec();
 
