@@ -91,6 +91,9 @@
       font-size: 1.5rem;
       color: #666;
       text-align: center;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+      white-space: normal;
     }
   }
 
@@ -102,6 +105,9 @@
     background-image: url('/assets/images/3x1_orange.png');
     font-weight: bold;
     color: #333;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    white-space: normal;
   }
 
   .game-size,
