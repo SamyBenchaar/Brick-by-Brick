@@ -140,11 +140,11 @@
 
                         <div class="bottom-buttons">
                             <button class="random" (click)="createRandomCharacter()">Personnage aléatoire</button>
-                            <div class="tooltip-wrapper" [class.show-tooltip]="!character.name && submitHover">
+                            <div class="tooltip-wrapper" [class.show-tooltip]="isSubmitDisabled() && submitHover">
                                 <button 
                                     class="create" 
                                     (click)="submitCharacter()" 
-                                    [disabled]="!character.name && !bonusTarget"
+                                    [disabled]="isSubmitDisabled() "
                                     (mouseenter)="submitHover = true"
                                     (mouseleave)="submitHover = false">
                                     Soumettre

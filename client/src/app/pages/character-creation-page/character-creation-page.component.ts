@@ -88,6 +88,10 @@ export class CharacterCreationPageComponent {
         this.submitHover = isHovering;
     }
 
+    isSubmitDisabled(): boolean {
+        return !this.character.name || !this.bonusTarget;
+    }
+
     getTooltipText(): string { 
         let text = 'Il manque:\n';
         if (!this.character.name) {
