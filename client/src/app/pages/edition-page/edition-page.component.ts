@@ -1,6 +1,6 @@
 import { Component, inject, OnInit, ViewChild } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AppDialogComponent } from '@app/components/game-edition-components/app-dialog/app-dialog.component';
 import { GameGridComponent } from '@app/components/game-edition-components/game-grid/game-grid.component';
 import { ObjectSidebarComponent } from '@app/components/game-edition-components/object-sidebar/object-sidebar.component';
@@ -14,7 +14,7 @@ import { MapSize } from '@common/map';
 
 @Component({
   selector: 'app-edition-page',
-  imports: [GameGridComponent, TileTypeSidebarComponent, ObjectSidebarComponent, TextInputComponent],
+  imports: [GameGridComponent, TileTypeSidebarComponent, ObjectSidebarComponent, TextInputComponent, RouterLink],
   templateUrl: './edition-page.component.html',
   styleUrl: './edition-page.component.scss',
 })
@@ -71,14 +71,27 @@ export class EditionPageComponent implements OnInit {
 
 
   private loadGame(): void {
-    this.communicationService.getGameById(this.gameId).subscribe((game) => {
-      if (game) {
-        this.selectedSize = game.mapConfig.size as GameSizeId;
-        this.getObjectCounterService().startPoint = this.getMaxPlayers();
-        this.getMapEditorService().setCurrentGame(game);
-        this.gameName = game.name;
-        this.gameDescription = game.description;
-      }
+    this.communicationService.getGameById(this.gameId).subscribe({
+      next: (game) => {
+        if (game) {
+          this.selectedSize = game.mapConfig.size as GameSizeId;
+          this.getObjectCounterService().startPoint = this.getMaxPlayers();
+          this.getMapEditorService().setCurrentGame(game);
+          this.gameName = game.name;
+          this.gameDescription = game.description;
+        }
+      },
+      error: () => {
+        this.dialog.open(AppDialogComponent, {
+          data: {
+            title: 'Jeu introuvable',
+            message: 'Le jeu demandé n\'existe pas ou a été supprimé.',
+            type: 'error',
+          },
+        }).afterClosed().subscribe(() => {
+          this.router.navigate(['/admin']);
+        });
+      },
     });
   }
 
@@ -91,6 +104,10 @@ export class EditionPageComponent implements OnInit {
     if (this.isSaving) {
       return;
     }
+
+    this.gameName = this.gameName?.trim();
+    this.gameDescription = this.gameDescription?.trim();
+
     this.isSaving = true;
 
     // Forcer la mise à jour du DOM avant les opérations lourdes
@@ -200,7 +217,16 @@ export class EditionPageComponent implements OnInit {
       this.communicationService.createGame(gameData).subscribe({
         next: () => {
           this.isSaving = false;
-          this.router.navigate(['/admin']);
+          const dialogRef = this.dialog.open(AppDialogComponent, {
+            data: {
+              title: 'Succès',
+              message: 'Jeu créé avec succès !',
+              type: 'success',
+            },
+          });
+          dialogRef.afterClosed().subscribe(() => {
+            this.router.navigate(['/admin']);
+          });
         },
         error: (err) => {
           this.isSaving = false;
@@ -221,19 +247,14 @@ export class EditionPageComponent implements OnInit {
   }
 
   onReset(): void {
-    const currentGame = this.getMapEditorService().getCurrentGame();
-    if (currentGame) {
-      if (this.gameId !== '') {
-        this.loadGame();
-      } else {
-        this.gameName = '';
-        this.gameDescription = '';
-        if (this.gameGridComponent) {
-          this.gameGridComponent.resetGrid();
-        }
-
+    if (this.gameId !== '') {
+      this.loadGame();
+    } else {
+      this.gameName = '';
+      this.gameDescription = '';
+      if (this.gameGridComponent) {
+        this.gameGridComponent.resetGrid();
       }
-
     }
   }
 }

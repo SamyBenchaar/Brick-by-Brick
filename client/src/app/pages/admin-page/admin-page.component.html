@@ -2,6 +2,7 @@
     <div class="header-row">
         <h1 class="header-title">ADMINISTRER LES JEUX</h1>
         <button class="add-button" (click)="openGameCreationModal()">Ajouter un jeu</button>
+        <button class="button return-button" [routerLink]="['/home']">Retour</button>
     </div>
     <!-- Modal de création de jeu -->
     @if (showGameCreationModal) {
@@ -61,7 +62,7 @@
                     <p class="game-name">{{ game.name }}</p>
                     <div class="game-details">
                         <span class="game-size">{{ getGameSizeLabel(game.mapConfig.size) }}</span>
-                        <span class="game-date">{{ game.lastModified | date: 'medium':'':'fr-CA' }}</span>
+                        <span class="game-date">{{ game.lastModified | date: 'medium' : '' : 'fr-CA' }}</span>
                     </div>
                 </div>
                 <div class="game-actions">

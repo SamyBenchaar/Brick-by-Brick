@@ -1,4 +1,4 @@
-import { CommonModule, DatePipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { Component, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -10,7 +10,7 @@ import { CommunicationService } from '@app/services/communication/communication.
     selector: 'app-admin-page',
     templateUrl: './admin-page.component.html',
     styleUrls: ['./admin-page.component.scss'],
-    imports: [CommonModule, DatePipe, FormsModule, RouterLink],
+    imports: [CommonModule, FormsModule, RouterLink],
 })
 export class AdminPageComponent implements OnInit {
     private communicationService = inject(CommunicationService);
@@ -29,7 +29,7 @@ export class AdminPageComponent implements OnInit {
     }
 
     private loadGames(): void {
-        this.communicationService.getAllGamesAdmin().subscribe((games) => {
+        this.communicationService.getAllGames().subscribe((games) => {
             this.games = games;
         });
     }

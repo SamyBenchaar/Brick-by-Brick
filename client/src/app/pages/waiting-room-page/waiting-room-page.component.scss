@@ -1,32 +1,6 @@
-@font-face {
-  font-family: 'MyFont';
-  src: url('/assets/fonts/ByteBounce.ttf') format('truetype');
-  font-style: normal;
-}
-
-.waiting-room {
-    font-family: 'MyFont';
-    padding: 0.5rem;
-    background: radial-gradient(circle at top, #eeeff2, #d4edfc);
-    height: 100vh;
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-}
-
-.header {
-    display: flex;
-    justify-content: space-between;
-}
-
-.header-title {
-    font-size: 40px;
-    padding: 20px;
-    margin: 0;
-}
-
 .title {
     font-size: 30px;
+    padding: 10px;
 }
 
 .content {
@@ -45,25 +19,4 @@
 
 .players {
     border-right: 3px solid #333;
-}
-
-.button {
-  height: 60px;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-color: transparent;
-  background-size: contain;
-  padding: 20px;
-
-  cursor: pointer;
-
-  color: #000000;
-  font-family: 'MyFont', sans-serif;
-  font-size: 20px;
-  text-transform: uppercase;
-  border: none;
-}
-
-.button:hover {
-    filter: brightness(1.2);
 }
