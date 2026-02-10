@@ -82,4 +82,10 @@ export class CharacterCreationPageComponent {
     submitCharacter() {
         this.router.navigate(['/waiting-room']);
     }
+    submitHover = false;
+
+    onSubmitHover(isHovering: boolean): void {
+        this.submitHover = isHovering;
+    }
+
 }
