@@ -1,0 +1,161 @@
+@font-face {
+  font-family: 'MyFont';
+  src: url('/assets/fonts/ByteBounce.ttf') format('truetype');
+  font-style: normal;
+}
+
+.games-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 0.5rem 0;
+  font-family: 'MyFont';
+
+  .game-item {
+    background: #ffffffcc;
+    border-radius: 10px;
+    border: 1px solid #000000;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    width: 220px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s, border 0.3s ease-in-out;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+
+    &:hover {
+      box-shadow: 0 12px 24px rgba(0,0,0,0.3);
+    }
+
+    &.selected {
+      border-color: #acf691;
+      border-width: 5px;
+      border-style: solid;
+      box-shadow: 0 12px 24px rgba(145, 217, 147, 0.7);
+    }
+  }
+
+  .game-content {
+    display: flex;
+  .hover-description {
+    box-sizing: border-box;
+    width: 100%;
+    max-height: 0;
+    overflow: hidden;
+    padding: 0 0.5rem;
+    color: #111;
+    background: transparent;
+    border-top: none;
+    transition: max-height 220ms ease, padding 220ms ease;
+    font-size: 1.5rem;
+    line-height: 1.3;
+  }
+
+  .hover-description.visible {
+    padding: 0.75rem 0.5rem;
+    max-height: 200px;
+  }
+    flex-direction: column;
+    padding: 9px;
+  }
+
+  .game-image {
+    width: 80%;
+    height: 140px;
+    overflow: hidden;
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto;
+    border: 1px solid #000000;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+
+  .game-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.5rem;
+
+    span {
+      font-size: 1.5rem;
+      color: #666;
+      text-align: center;
+    }
+  }
+
+  .game-name {
+    font-size: 40px;
+    margin: 0 0 0.3rem 0;
+    padding: 5px 10px;
+    background-size: contain;
+    background-image: url('/assets/images/3x1_orange.png');
+    font-weight: bold;
+    color: #333;
+  }
+
+  .game-size,
+  .game-mode,
+  .game-date {
+    font-size: 1.35rem;
+    color: #555;
+  }
+
+  .game-actions {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    border-top: 1px solid #e0e0e0;
+    margin-top: auto;
+  }
+
+  .btn-icon {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: none;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: rgba(0, 0, 0, 0.05);
+    color: #333;
+
+    &:hover {
+      transform: translateY(-2px);
+      background: rgba(0, 0, 0, 0.1);
+    }
+
+    .material-icons {
+      font-size: 20px;
+    }
+  }
+
+  .btn-edit:hover {
+    background: rgba(90, 159, 212, 0.3);
+    color: #2563eb;
+    box-shadow: 0 4px 12px rgba(90, 159, 212, 0.3);
+  }
+
+  .btn-delete:hover {
+    background: rgba(220, 38, 38, 0.2);
+    color: #dc2626;
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+  }
+
+  .btn-visibility:hover {
+    background: rgba(234, 179, 8, 0.2);
+    color: #eab308;
+    box-shadow: 0 4px 12px rgba(234, 179, 8, 0.3);
+  }
+}

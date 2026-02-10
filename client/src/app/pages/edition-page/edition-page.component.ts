@@ -1,4 +1,4 @@
-import { Component,  inject, OnInit, ViewChild } from '@angular/core';
+import { Component, inject, OnInit, ViewChild } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AppDialogComponent } from '@app/components/game-edition-components/app-dialog/app-dialog.component';
@@ -234,19 +234,14 @@ export class EditionPageComponent implements OnInit {
   }
 
   onReset(): void {
-    const currentGame = this.getMapEditorService().getCurrentGame();
-    if (currentGame) {
-      if (this.gameId !== '') {
-        this.loadGame();
-      } else {
-        this.gameName = '';
-        this.gameDescription = '';
-        if (this.gameGridComponent) {
-          this.gameGridComponent.resetGrid();
-        }
-
+    if (this.gameId !== '') {
+      this.loadGame();
+    } else {
+      this.gameName = '';
+      this.gameDescription = '';
+      if (this.gameGridComponent) {
+        this.gameGridComponent.resetGrid();
       }
-
     }
   }
 }

@@ -3,7 +3,7 @@ import { GameMetadataValidationService } from '@app/services/validations/gameMet
 import { MapValidationService } from '@app/services/validations/mapValidation.service';
 import { CreateGameDto } from '@common/dto/create-game.dto';
 import { UpdateGameDto } from '@common/dto/update-game.dto';
-import { BadRequestException, Injectable,NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
@@ -55,12 +55,14 @@ export class GameService {
     }
 
     async findAdminMenuGames(): Promise<Game[]> {
-        return this.gameModel.find({}, { _id: 1, name: 1, mapConfig: { size: 1 } , lastModified: 1, isVisible: 1,
-             description: 1, previewImage: 1 }).exec();
+        return this.gameModel.find({}, {
+            _id: 1, name: 1, mapConfig: { size: 1 }, lastModified: 1, isVisible: 1,
+            description: 1, previewImage: 1,
+        }).exec();
     }
 
     async findVisible(): Promise<Game[]> {
-        return this.gameModel.find({ isVisible: true }).select('name previewImage gameMode mapConfig.size').exec();
+        return this.gameModel.find({ isVisible: true }).select('name previewImage gameMode mapConfig.size isVisible').exec();
     }
 
     async update(id: string, gameData: Partial<Game>): Promise<Game> {

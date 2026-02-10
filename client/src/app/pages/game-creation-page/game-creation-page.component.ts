@@ -1,5 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
+import { GameListComponent } from '@app/components/game-list/game-list.component';
 import { Game } from '@app/interfaces/game';
 import { CommunicationService } from '@app/services/communication/communication.service';
 
@@ -7,7 +8,7 @@ import { CommunicationService } from '@app/services/communication/communication.
     selector: 'app--page',
     templateUrl: './game-creation-page.component.html',
     styleUrls: ['./game-creation-page.component.scss'],
-    imports: [RouterLink],
+    imports: [RouterLink, GameListComponent],
 })
 export class GameCreationPageComponent {
     private communicationService = inject(CommunicationService);
