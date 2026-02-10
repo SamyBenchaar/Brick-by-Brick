@@ -68,6 +68,11 @@ export class GameListComponent implements OnInit, OnDestroy {
     toggleVisibility(game: Game, event: Event): void {
         event.stopPropagation();
         this.communicationService.updateGameVisibility(game._id, !game.isVisible).subscribe({
+            next: (updated) => {
+                this.gameSocketService.games.update(current =>
+                    current.map(g => (g._id === updated._id ? updated : g)),
+                );
+            },
             error: (err) => {
                 alert(`Erreur: ${err.error?.message || 'Impossible de modifier la visibilité'}`);
             },

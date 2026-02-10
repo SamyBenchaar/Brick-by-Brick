@@ -73,7 +73,13 @@ export class GameService {
     }
 
     async updateVisibility(id: string, isVisible: boolean): Promise<Game> {
-        return this.gameModel.findByIdAndUpdate(id, { isVisible }, { new: true }).exec();
+        const updatedGame = await this.gameModel.findByIdAndUpdate(id, { isVisible }, { new: true }).exec();
+
+        if (this.gameGateway && updatedGame) {
+            this.gameGateway.notifyGameUpdated(updatedGame);
+        }
+
+        return updatedGame;
     }
 
     async delete(id: string): Promise<Game> {
