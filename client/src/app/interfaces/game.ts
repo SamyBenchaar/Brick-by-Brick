@@ -10,7 +10,6 @@ export interface Tile {
 }
 
 export interface MapObject {
-    flag?: boolean;
     type: string;
 }
 

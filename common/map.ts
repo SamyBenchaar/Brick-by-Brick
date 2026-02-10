@@ -8,9 +8,7 @@ export enum TileType {
 
 export enum ObjectType {
     STARTPOINT = 'startingpoint'
-    // FLAG = 'flag',
-    // COMBATSANCTUARY = 'combatsanctuary',
-    // HEALINGSANCTUARY = 'healingsanctuary'
+
 }
 
 export enum MapSize {

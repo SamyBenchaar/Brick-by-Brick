@@ -24,7 +24,7 @@ export class Game {
     numberOfPlayers: number;
 
     @ApiProperty()
-    @Prop({ required: true, enum: ['classic', 'ctf'] })
+    @Prop({ required: true, enum: ['classic'] })
     gameMode: string;
 
     @ApiProperty()

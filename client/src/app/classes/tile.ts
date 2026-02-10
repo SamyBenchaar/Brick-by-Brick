@@ -10,9 +10,6 @@ export class Tile {
         ];
     static readonly editableObjects: ObjectType[] =
         [
-            // ObjectType.FLAG,
-            // ObjectType.HEALINGSANCTUARY,
-            // ObjectType.COMBATSANCTUARY,
             ObjectType.STARTPOINT,
         ];
     private _type: TileType;
