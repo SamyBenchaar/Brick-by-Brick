@@ -3,8 +3,6 @@ import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { GameListComponent } from '@app/components/game-list/game-list.component';
-import { Game } from '@app/interfaces/game';
-import { CommunicationService } from '@app/services/communication/communication.service';
 
 @Component({
     selector: 'app-admin-page',
@@ -13,7 +11,6 @@ import { CommunicationService } from '@app/services/communication/communication.
     imports: [CommonModule, FormsModule, GameListComponent, RouterLink],
 })
 export class AdminPageComponent {
-    private communicationService = inject(CommunicationService);
     private router = inject(Router);
 
     showGameCreationModal = false;
@@ -51,34 +48,6 @@ export class AdminPageComponent {
             height: 20,
         },
     ];
-
-
-    games: Game[] = this.getAllGamesAdmin();
-
-    getAllGamesAdmin(): Game[] {
-        this.communicationService.getAllGamesAdmin().subscribe((games) => {
-            this.games = games;
-        });
-        return this.games;
-    }
-
-    editGame(game: Game): void {
-        this.communicationService.updateGameVisibility(game._id, !game.isVisible).subscribe((updatedGame) => {
-            game.isVisible = updatedGame.isVisible;
-        });
-    }
-
-    onGameDeleted(game: Game): void {
-        this.communicationService.deleteGame(game._id).subscribe({
-            next: () => {
-                this.games = this.games.filter(g => g._id !== game._id);
-                alert('Jeu supprimé avec succès !');
-            },
-            error: (err) => {
-                alert(`Erreur: ${err.error?.message || 'Impossible de supprimer ce jeu'}`);
-            },
-        });
-    }
 
     openGameCreationModal(): void {
         this.showGameCreationModal = true;

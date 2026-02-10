@@ -1,8 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, inject, Input, OnInit, Output, signal } from '@angular/core';
+import { Component, computed, inject, Input, OnDestroy, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Game } from '@app/interfaces/game';
 import { CommunicationService } from '@app/services/communication/communication.service';
+import { GameSocketService } from '@app/services/communication/game-socket.service';
 
 @Component({
     selector: 'app-game-list',
@@ -10,74 +11,67 @@ import { CommunicationService } from '@app/services/communication/communication.
     styleUrls: ['./game-list.component.scss'],
     imports: [CommonModule, RouterLink],
 })
-export class GameListComponent implements OnInit {
+export class GameListComponent implements OnInit, OnDestroy {
     @Input() mode: 'creation' | 'admin' = 'creation';
     @Input() showOnlyVisible = true;
-    @Output() gameSelected = new EventEmitter<string>();
-    @Output() gameVisibilityToggled = new EventEmitter<Game>();
-    @Output() gameDeleted = new EventEmitter<Game>();
 
     private communicationService = inject(CommunicationService);
+    private gameSocketService = inject(GameSocketService);
 
-    games: Game[] = [];
-    selectedGameId: string | null = null;
-    filteredGames = signal<Game[]>([]);
-    hoveredGameId: string | null = null;
+    selectedGameId = signal<string | null>(null);
+    hoveredGameId = signal<string | null>(null);
+
+    filteredGames = computed(() => {
+        const allGames = this.gameSocketService.games();
+        if (this.showOnlyVisible) {
+            return allGames.filter(game => game.isVisible);
+        }
+        return allGames;
+    });
 
     ngOnInit(): void {
-        this.loadGames();
+        this.gameSocketService.connect();
+        this.gameSocketService.requestGameList(this.showOnlyVisible);
     }
 
-    loadGames(): void {
-        if (this.mode === 'admin') {
-            this.communicationService.getAllGamesAdmin().subscribe((games) => {
-                this.games = games;
-                this.updateFilteredGames();
-            });
-        } else {
-            this.communicationService.getVisibleGames().subscribe((games) => {
-                this.games = games;
-                this.updateFilteredGames();
-            });
-        }
-    }
-
-    updateFilteredGames(): void {
-        if (this.showOnlyVisible) {
-            this.filteredGames.set(this.games.filter(game => game.isVisible));
-        } else {
-            this.filteredGames.set(this.games);
-        }
+    ngOnDestroy(): void {
+        this.gameSocketService.disconnect();
     }
 
     selectGame(gameId: string): void {
         if (this.mode !== 'creation') {
             return;
         }
+        this.selectedGameId.set(gameId);
+    }
 
-        this.selectedGameId = gameId;
-        this.gameSelected.emit(gameId);
+    getSelectedGameId(): string | null {
+        return this.selectedGameId();
     }
 
     onImageEnter(gameId: string): void {
-        this.hoveredGameId = gameId;
+        this.hoveredGameId.set(gameId);
     }
 
     onImageLeave(): void {
-        this.hoveredGameId = null;
+        this.hoveredGameId.set(null);
     }
 
     isSelected(gameId: string): boolean {
-        return this.selectedGameId === gameId;
+        return this.selectedGameId() === gameId;
+    }
+
+    isHovered(gameId: string): boolean {
+        return this.hoveredGameId() === gameId;
     }
 
     toggleVisibility(game: Game, event: Event): void {
         event.stopPropagation();
         this.communicationService.updateGameVisibility(game._id, !game.isVisible).subscribe({
-            next: (updatedGame) => {
-                game.isVisible = updatedGame.isVisible;
-                this.gameVisibilityToggled.emit(game);
-                this.updateFilteredGames();
+            next: (updated) => {
+                this.gameSocketService.games.update(current =>
+                    current.map(g => (g._id === updated._id ? updated : g)),
+                );
             },
             error: (err) => {
                 alert(`Erreur: ${err.error?.message || 'Impossible de modifier la visibilité'}`);
@@ -88,7 +82,14 @@ export class GameListComponent implements OnInit {
     deleteGame(game: Game, event: Event): void {
         event.stopPropagation();
         if (confirm(`Êtes-vous sûr de vouloir supprimer le jeu "${game.name}" ?`)) {
-            this.gameDeleted.emit(game);
+            this.communicationService.deleteGame(game._id).subscribe({
+                next: () => {
+                    alert('Jeu supprimé avec succès !');
+                },
+                error: (err) => {
+                    alert(`Erreur: ${err.error?.message || 'Impossible de supprimer ce jeu'}`);
+                },
+            });
         }
     }
 }

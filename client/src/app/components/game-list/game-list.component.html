@@ -16,7 +16,7 @@
                     }
                 </div>
                 @if (mode === 'admin') {
-                    <div class="hover-description" [class.visible]="hoveredGameId === game._id">{{ game.description }}</div>
+                    <div class="hover-description" [class.visible]="isHovered(game._id)">{{ game.description }}</div>
                 }
             </div>
             @if (mode === 'admin') {
