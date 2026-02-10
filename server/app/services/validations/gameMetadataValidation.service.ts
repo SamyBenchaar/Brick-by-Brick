@@ -12,11 +12,11 @@ export class GameMetadataValidationService {
     async validateMetadata(gameData: Partial<Game>): Promise<string[]> {
         const errors: string[] = [];
 
-        if (!gameData.name || gameData.name.trim() === '') {
-            errors.push('Le nom ne peut pas être vide');
+        if (gameData.name && gameData.name.includes(' ')) {
+            errors.push('Le nom ne peut pas contenir d\'espaces');
         }
 
-        if (!gameData.description || gameData.description.trim() === '') {
+        if (!gameData.description || gameData.description.trim() === ' ') {
             errors.push('La description ne peut pas être vide');
         }
 

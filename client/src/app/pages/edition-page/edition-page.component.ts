@@ -104,6 +104,10 @@ export class EditionPageComponent implements OnInit {
     if (this.isSaving) {
       return;
     }
+
+    this.gameName = this.gameName?.trim();
+    this.gameDescription = this.gameDescription?.trim();
+
     this.isSaving = true;
 
     // Forcer la mise à jour du DOM avant les opérations lourdes
@@ -213,7 +217,16 @@ export class EditionPageComponent implements OnInit {
       this.communicationService.createGame(gameData).subscribe({
         next: () => {
           this.isSaving = false;
-          this.router.navigate(['/admin']);
+          const dialogRef = this.dialog.open(AppDialogComponent, {
+            data: {
+              title: 'Succès',
+              message: 'Jeu créé avec succès !',
+              type: 'success',
+            },
+          });
+          dialogRef.afterClosed().subscribe(() => {
+            this.router.navigate(['/admin']);
+          });
         },
         error: (err) => {
           this.isSaving = false;
