@@ -442,3 +442,42 @@ button {
 .create {
   background-image: url('/assets/images/green_large_brick.png');
 }
+
+.tooltip-wrapper {
+    position: relative;
+    display: inline-block;
+
+    .tooltip {
+        white-space: pre-line;
+        visibility: hidden;
+        background-color: #333;
+        color: #fff;
+        text-align: left;
+        border-radius: 6px;
+        padding: 8px 12px;
+        position: absolute;
+        z-index: 1;
+        bottom: 125%;
+        left: 50%;
+        margin-left: -60px;
+        opacity: 0;
+        transition: opacity 0.3s;
+        font-size: 12px;
+
+        &::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #333 transparent transparent transparent;
+        }
+    }
+
+    &.show-tooltip .tooltip {
+        visibility: visible;
+        opacity: 1;
+    }
+}
