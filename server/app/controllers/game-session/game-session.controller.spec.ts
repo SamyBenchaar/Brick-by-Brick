@@ -1,9 +1,9 @@
+import { CreateGameSessionDto } from '@app/dto/create-game-session.dto';
+import { GameSession } from '@app/model/game-session';
+import { GameSessionService } from '@app/services/game-session/game-session.service';
+import { BadRequestException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { GameSessionController } from './game-session.controller';
-import { GameSessionService } from '@app/services/game-session/game-session.service';
-import { CreateGameSessionDto } from '@common/dto/create-game-session.dto';
-import { BadRequestException } from '@nestjs/common';
-import { GameSession } from '@app/model/game-session';
 
 describe('GameSessionController', () => {
   let controller: GameSessionController;
@@ -31,7 +31,7 @@ describe('GameSessionController', () => {
   describe('create', () => {
     it('doit appeler service.create et retourner une session de jeu', async () => {
       const dto: CreateGameSessionDto = { gameId: '697b866e802124cfdcaa01b4' };
-      const mockSession: GameSession = {gameId: dto.gameId, players: [] } as GameSession;
+      const mockSession: GameSession = { gameId: dto.gameId, players: [] } as GameSession;
 
       mockGameSessionService.create.mockResolvedValue(mockSession);
 

@@ -1,12 +1,12 @@
+import { GameGateway } from '@app/gateways/game/game.gateway';
 import { Game, GameDocument } from '@app/model/game';
 import { GameMetadataValidationService } from '@app/services/validations/gameMetadataValidation.service';
 import { MapValidationService } from '@app/services/validations/mapValidation.service';
 import { BadRequestException } from '@nestjs/common';
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
-import { GameGateway } from '@app/gateways/game/game.gateway';
-import { GameService } from './game.service';
 import { Model } from 'mongoose';
+import { GameService } from './game.service';
 /**
  * Stratégie de test pour GameService:
  * Communication avec la base de données: find(), findById(), findByIdAndUpdate(), findByIdAndDelete()
@@ -114,21 +114,21 @@ describe('GameService', () => {
     });
   });
 
-    describe('findVisible', () => {
-        it('retourne les jeux visibles', async () => {
-            model.find.mockReturnValue({
-                exec: jest.fn().mockResolvedValue([validGameData]),
-            } as never);
+  describe('findVisible', () => {
+    it('retourne les jeux visibles', async () => {
+      model.find.mockReturnValue({
+        exec: jest.fn().mockResolvedValue([validGameData]),
+      } as never);
 
-            const result = await service.findVisible();
+      const result = await service.findVisible();
 
-            expect(model.find).toHaveBeenCalledWith(
-                { isVisible: true },
-                expect.any(Object), 
-            );
-            expect(result).toEqual([validGameData]);
-        });
+      expect(model.find).toHaveBeenCalledWith(
+        { isVisible: true },
+        expect.any(Object),
+      );
+      expect(result).toEqual([validGameData]);
     });
+  });
 
   describe('findOne', () => {
     it('retourne un jeu', async () => {

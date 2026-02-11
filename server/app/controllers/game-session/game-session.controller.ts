@@ -1,6 +1,6 @@
+import { CreateGameSessionDto } from '@app/dto/create-game-session.dto';
 import { GameSession } from '@app/model/game-session';
 import { GameSessionService } from '@app/services/game-session/game-session.service';
-import { CreateGameSessionDto } from '@common/dto/create-game-session.dto';
 import { Body, Controller, Post, ValidationPipe } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 

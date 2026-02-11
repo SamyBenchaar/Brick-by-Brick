@@ -8,7 +8,7 @@ export class MapConfigDto {
     @IsEnum(['Small', 'Medium', 'Large'], { message: 'La taille doit être Small, Medium ou Large' })
     size: string;
 
-    @ApiProperty({description: 'Grille de tuiles (matrice 2D)', type: [TileDto],isArray: true,})
+    @ApiProperty({description: 'Grille de tuiles (matrice 2D)', type: [TileDto],isArray: true})
     @IsArray({ message: 'Les tuiles doivent être un tableau' })
     @ValidateNested({ each: true })
     @Type(() => TileDto)

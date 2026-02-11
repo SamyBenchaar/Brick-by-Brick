@@ -1,8 +1,8 @@
 import { Game } from '@app/model/game';
 import { GameService } from '@app/services/game/game.service';
-import { CreateGameDto } from '@common/dto/create-game.dto';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { CreateGameDto } from '@app/dto/create-game.dto';
 import { GameController } from './game.controller';
 
 /**
