@@ -26,6 +26,8 @@ export class AppDialogComponent {
         return '✕';
       case 'info':
         return 'ℹ';
+      case 'warning':
+        return '⚠';
       default:
         return '';
     }

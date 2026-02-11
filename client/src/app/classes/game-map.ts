@@ -1,4 +1,5 @@
 import { Tile } from '@app/classes/tile';
+import { Position } from '@app/interfaces/position';
 import { MapSize, TileType } from '@common/map';
 
 export class GameMap {
@@ -28,9 +29,9 @@ export class GameMap {
         return this._size;
     }
 
-    getTile(x: number, y: number): Tile | null {
-        if (x >= 0 && x < this._size && y >= 0 && y < this._size) {
-            return this._grid[y][x];
+    getTile(position: Position): Tile | null {
+        if (position.x >= 0 && position.x < this._size && position.y >= 0 && position.y < this._size) {
+            return this._grid[position.y][position.x];
         }
         return null;
     }

@@ -16,7 +16,7 @@ export class Game {
     description: string;
 
     @ApiProperty()
-    @Prop({ required: true, default: false })
+    @Prop({ required: true, default: true })
     isVisible: boolean;
 
     @ApiProperty()
