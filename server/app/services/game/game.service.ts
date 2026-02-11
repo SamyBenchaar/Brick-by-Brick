@@ -2,8 +2,12 @@ import { GameGateway } from '@app/gateways/game/game.gateway';
 import { Game, GameDocument } from '@app/model/game';
 import { GameMetadataValidationService } from '@app/services/validations/gameMetadataValidation.service';
 import { MapValidationService } from '@app/services/validations/mapValidation.service';
-import { BadRequestException, Inject, Injectable, forwardRef } from '@nestjs/common';
+import { CreateGameDto } from '@common/dto/create-game.dto';
+import { UpdateGameDto } from '@common/dto/update-game.dto';
+import { BadRequestException, Inject, Injectable, NotFoundException, forwardRef } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { plainToInstance } from 'class-transformer';
+import { validate } from 'class-validator';
 import { Model } from 'mongoose';
 
 @Injectable()
@@ -18,10 +22,25 @@ export class GameService {
     ) {}
 
     async create(gameData: Partial<Game>): Promise<Game> {
-        const metadataErrors = await this.gameMetadataValidationService.validateMetadata(gameData);
-        const mapErrors = await this.mapValidationService.validateMap(gameData);
 
-        const errors = [...metadataErrors, ...mapErrors];
+        const errors: string[] = [];
+
+        // Validation du DTO
+        const dtoInstance = plainToInstance(CreateGameDto, gameData);
+        const validationErrors = await validate(dtoInstance);
+        if (validationErrors.length > 0) {
+            validationErrors.forEach(error => {
+                if (error.constraints) {
+                    errors.push(...Object.values(error.constraints));
+                }
+            });
+        }
+
+        // Validation des métadonnées
+        errors.push(...await this.gameMetadataValidationService.validateMetadata(gameData));
+
+        // Validation de la carte
+        errors.push(...await this.mapValidationService.validateMap(gameData));
         if (errors.length > 0) {
             throw new BadRequestException(errors);
         }
@@ -42,9 +61,18 @@ export class GameService {
         return this.gameModel.find().exec();
     }
 
+    async findAdminMenuGames(): Promise<Game[]> {
+        return this.gameModel.find({}, {
+            _id: 1, name: 1, mapConfig: { size: 1 }, lastModified: 1, isVisible: 1,
+            description: 1, previewImage: 1,
+        }).exec();
+    }
 
     async findVisible(): Promise<Game[]> {
-        return this.gameModel.find({ isVisible: true }).exec();
+        return this.gameModel.find({ isVisible: true }, {
+            _id: 1, name: 1, mapConfig: { size: 1 }, lastModified: 1, isVisible: 1,
+            description: 1, previewImage: 1,
+        }).exec();
     }
 
     async findOne(id: string): Promise<Game> {
@@ -52,16 +80,29 @@ export class GameService {
     }
 
     async update(id: string, gameData: Partial<Game>): Promise<Game> {
-        const metadataErrors = await this.gameMetadataValidationService.validateMetadata(gameData);
-        const mapErrors = await this.mapValidationService.validateMap(gameData);
+        const errors: string[] = [];
 
-        const errors = [...metadataErrors, ...mapErrors];
+        // Validation du DTO
+        const dtoInstance = plainToInstance(UpdateGameDto, gameData);
+        const validationErrors = await validate(dtoInstance);
+        if (validationErrors.length > 0) {
+            validationErrors.forEach(error => {
+                if (error.constraints) {
+                    errors.push(...Object.values(error.constraints));
+                }
+            });
+        }
+
+        // Validation des métadonnées
+        errors.push(...await this.gameMetadataValidationService.validateMetadata(gameData));
+        errors.push(...await this.mapValidationService.validateMap(gameData));
         if (errors.length > 0) {
             throw new BadRequestException(errors);
         }
 
         const updatedGame = await this.gameModel.findByIdAndUpdate(id, gameData, { new: true }).exec();
-
+        if (!updatedGame)
+            throw new NotFoundException(`Jeu avec ID ${id} non trouvé`);
         if (this.gameGateway && updatedGame) {
             this.gameGateway.notifyGameUpdated(updatedGame);
         }

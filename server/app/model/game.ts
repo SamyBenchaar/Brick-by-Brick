@@ -16,7 +16,7 @@ export class Game {
     description: string;
 
     @ApiProperty()
-    @Prop({ required: true, default: false })
+    @Prop({ required: true, default: true })
     isVisible: boolean;
 
     @ApiProperty()
@@ -24,7 +24,7 @@ export class Game {
     numberOfPlayers: number;
 
     @ApiProperty()
-    @Prop({ required: true, enum: ['classic', 'ctf'] })
+    @Prop({ required: true, enum: ['classic'] })
     gameMode: string;
 
     @ApiProperty()

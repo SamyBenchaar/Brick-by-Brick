@@ -82,4 +82,24 @@ export class CharacterCreationPageComponent {
     submitCharacter() {
         this.router.navigate(['/waiting-room']);
     }
+    submitHover = false;
+
+    onSubmitHover(isHovering: boolean): void {
+        this.submitHover = isHovering;
+    }
+
+    isSubmitDisabled(): boolean {
+        return !this.character.name || !this.bonusTarget;
+    }
+
+    getTooltipText(): string { 
+        let text = 'Il manque:\n';
+        if (!this.character.name) {
+            text += '- Le nom du personnage\n';
+        }
+        if (!this.bonusTarget) {
+            text += '- Le bonus\n';
+        }
+        return text;
+    }
 }

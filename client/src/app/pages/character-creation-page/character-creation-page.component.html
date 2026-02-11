@@ -1,4 +1,4 @@
- <div class="whole-page">
+<div class="whole-page">
     <div class="layout">
         <div class="scale-wrapper">
         <div class="avatar-selection-panel">
@@ -140,7 +140,17 @@
 
                         <div class="bottom-buttons">
                             <button class="random" (click)="createRandomCharacter()">Personnage aléatoire</button>
-                            <button class="create" (click)="submitCharacter()">Soumettre</button>
+                            <div class="tooltip-wrapper" [class.show-tooltip]="isSubmitDisabled() && submitHover">
+                                <button 
+                                    class="create" 
+                                    (click)="submitCharacter()" 
+                                    [disabled]="isSubmitDisabled() "
+                                    (mouseenter)="submitHover = true"
+                                    (mouseleave)="submitHover = false">
+                                    Soumettre
+                                </button>
+                                <div class="tooltip">{{getTooltipText()}}</div>
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -1,4 +1,6 @@
+import { registerLocaleData } from '@angular/common';
 import { provideHttpClient } from '@angular/common/http';
+import localeFr from '@angular/common/locales/fr-CA';
 import { enableProdMode, enableProfiling, provideZoneChangeDetection } from '@angular/core';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { Routes, provideRouter, withHashLocation } from '@angular/router';
@@ -9,8 +11,9 @@ import {CharacterCreationPageComponent} from '@app/pages/character-creation-page
 import { GameCreationPageComponent } from '@app/pages/game-creation-page/game-creation-page.component';
 import { EditionPageComponent } from '@app/pages/edition-page/edition-page.component';
 import { WaitingRoomPage } from '@app/pages/waiting-room-page/waiting-room-page.component';
-
 import { AdminPageComponent } from '@app/pages/admin-page/admin-page.component';
+
+registerLocaleData(localeFr);
 
 if (environment.production) {
     enableProdMode();

@@ -3,12 +3,9 @@ import { ApiProperty } from '@nestjs/swagger';
 
 @Schema({ _id: false })
 export class MapObject {
-    @ApiProperty()
-    @Prop({ required: false })
-    flag?: boolean;
 
     @ApiProperty()
-    @Prop({ required: true, enum: ['flag', 'startingpoint', 'healingsanctuary', 'combatsanctuary'] })
+    @Prop({ required: true, enum: ['startingpoint'] })
     type: string;
 }
 

@@ -38,7 +38,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
 
     @SubscribeMessage(GameEvents.RequestGameList)
     async handleRequestGameList(socket: Socket) {
-        const games = await this.gameService.findAll();
+        const games = await this.gameService.findAdminMenuGames();
         socket.emit(GameEvents.GameList, games);
     }
 

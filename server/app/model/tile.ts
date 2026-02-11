@@ -8,9 +8,6 @@ export class Tile {
     @Prop({ required: true, enum: ['base', 'wall', 'door', 'water', 'ice'] })
     type: string;
 
-    @ApiProperty()
-    @Prop({ required: false, enum: ['open', 'closed'] })
-    state?: string;
 
     @ApiProperty()
     @Prop({ required: false, type: mapObjectSchema })

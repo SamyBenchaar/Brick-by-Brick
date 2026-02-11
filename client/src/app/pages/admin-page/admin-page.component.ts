@@ -3,59 +3,37 @@ import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { GameListComponent } from '@app/components/game-list/game-list.component';
+import { GAME_MODES_DISPLAY, GAME_SIZES_DISPLAY, GameModeValue, GameSizeId } from '@app/constants/game-config-constants';
 
 @Component({
     selector: 'app-admin-page',
     templateUrl: './admin-page.component.html',
     styleUrls: ['./admin-page.component.scss'],
-    imports: [CommonModule, FormsModule, GameListComponent, RouterLink],
+    imports: [CommonModule, FormsModule, RouterLink, GameListComponent],
 })
 export class AdminPageComponent {
     private router = inject(Router);
 
+    readonly gameSizes = GAME_SIZES_DISPLAY;
+    readonly gameModes = GAME_MODES_DISPLAY;
+
     showGameCreationModal = false;
-    selectedSize: 'Small' | 'Medium' | 'Large' | null = null;
-    gameMode: 'classic' | 'ctf' = 'classic';
-
-    gameModes = [
-        { value: 'classic' as const, label: 'classique' },
-        { value: 'ctf' as const, label: 'CTF' },
-    ];
-
-    gameSizes = [
-        {
-            id: 'Small' as const,
-            label: 'Petite',
-            gridSize: '10x10',
-            players: '2 joueurs',
-        },
-        {
-            id: 'Medium' as const,
-            label: 'Moyenne',
-            gridSize: '15x15',
-            players: '2 à 4 joueurs',
-        },
-        {
-            id: 'Large' as const,
-            label: 'Grande',
-            gridSize: '20x20',
-            players: '2 à 6 joueurs',
-        },
-    ];
+    selectedSize: GameSizeId | null = null;
+    selectedGameMode: GameModeValue = 'classic';
 
     openGameCreationModal(): void {
         this.showGameCreationModal = true;
         this.selectedSize = null;
-        this.gameMode = 'classic';
+        this.selectedGameMode = 'classic';
     }
 
     closeGameCreationModal(): void {
         this.showGameCreationModal = false;
         this.selectedSize = null;
-        this.gameMode = 'classic';
+        this.selectedGameMode = 'classic';
     }
 
-    selectSize(size: 'Small' | 'Medium' | 'Large'): void {
+    selectSize(size: GameSizeId): void {
         this.selectedSize = size;
     }
 
@@ -64,7 +42,7 @@ export class AdminPageComponent {
             this.router.navigate(['/edition'], {
                 queryParams: {
                     size: this.selectedSize,
-                    mode: this.gameMode,
+                    mode: this.selectedGameMode,
                 },
             });
         }

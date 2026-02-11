@@ -1,51 +1,10 @@
-@font-face {
-  font-family: 'MyFont';
-  src: url('/assets/fonts/ByteBounce.ttf') format('truetype');
-  font-style: normal;
-}
-
-:host {
-  display: block;
-  font-family: 'MyFont', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-  background: none;
-  min-height: 100vh;
-  padding: 0;
-}
-
-.content {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  flex: 1;
-  padding-top: 0.5rem;
-  padding-left: 0.5rem;
-  padding-bottom: 6.5rem; 
-  max-width: 1200px;
-}
-
 .add-button {
-  height: 60px;
+  height: 55px;
   width: 220px;
-  padding: 0;
-  background-image: url('/assets/images/3x1_orange.png');
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-  background-color: transparent;
-  border: none;
-  color: #000;
   font-weight: 700;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   font-size: 18px;
   border-radius: 8px;
-    pointer-events: auto; 
   transition: filter 0.3s ease;
-
-  &:hover {
-    filter: brightness(1.2);
-  }
 }
 
 .footer {
@@ -55,7 +14,6 @@
   justify-content: flex-end;
   bottom: 10px;
   padding-right: 1rem;
-  pointer-events: none;
 }
 
 // Modal styles
@@ -147,26 +105,18 @@
 }
 
 .modal-body {
-  padding: 2rem;
-  overflow-y: auto;
-  max-height: calc(85vh - 200px);
-
+  flex: 1 1 auto;
+  padding: 1rem 1.25rem 1.25rem 1.25rem;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
   h3 {
     margin: 0 0 1.5rem 0;
     font-size: 1.5rem;
     color: #000000;
     text-align: center;
   }
-
-.modal-body {
-  flex: 1 1 auto;
-  padding: 1rem 1.25rem 1.25rem 1.25rem;
-  overflow: auto;
-  -webkit-overflow-scrolling: touch;
-
-  }
-
 }
+
 
 .size-options {
   display: grid;
@@ -178,7 +128,6 @@
   background: #ffffffcc;
   border: 2px solid #000000;
   border-radius: 12px;
-  padding: 2rem 1.5rem;
   padding: 2.25rem 1.75rem;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -237,15 +186,6 @@
   color: #666666;
 }
 
-.modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
-  padding: 1.5rem 2rem;
-  border-top: 2px solid #000000;
-  background: rgba(238, 239, 242, 0.8);
-  padding-bottom: calc(1.5rem + env(safe-area-inset-bottom));
-}
 .modal-footer {
   display: flex;
   justify-content: flex-end;
