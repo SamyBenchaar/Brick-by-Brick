@@ -34,7 +34,7 @@
                 </div>
                 <div class="game-modes-options">
                     <label for="game-mode">Mode de jeu</label>
-                    <select id="game-mode" [(ngModel)]="gameMode">
+                    <select id="game-mode" [(ngModel)]="selectedGameMode">
                         @for (mode of gameModes; track mode){
                         <option [value]="mode.value" [disabled]="mode.disabled">{{ mode.label }}</option>
                         }
