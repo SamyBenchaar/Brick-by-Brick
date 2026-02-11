@@ -9,13 +9,9 @@
                 <span class="game-name">{{ game.name }}</span>
                 <span class="game-size">{{ getGameSizeLabel(game.mapConfig.size) }}</span>
                 <span class="game-mode">{{ getGameModeLabel(game.gameMode) }}</span>
-                @if (mode === 'admin') {
                 <span class="game-date">{{ game.lastModified | date: 'short' }}</span>
-                }
             </div>
-            @if (mode === 'admin') {
             <div class="hover-description" [class.visible]="isHovered(game._id)">{{ game.description }}</div>
-            }
         </div>
         @if (mode === 'admin') {
         <div class="game-actions">
