@@ -9,10 +9,12 @@ import { ObjectCounterService } from '@app/services/object-counter/object-counte
 import { GRID_SIZE, MapSize, ObjectType, TileType } from '@common/map';
 import html2canvas from 'html2canvas';
 import { Position } from '@app/interfaces/position';
+import { OBJECT_DESCRIPTIONS } from "@app/constants/object-descriptions";
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
   selector: 'app-game-grid',
-  imports: [CommonModule],
+  imports: [CommonModule, MatTooltipModule],
   templateUrl: './game-grid.component.html',
   styleUrl: './game-grid.component.scss',
 })
@@ -24,6 +26,8 @@ export class GameGridComponent implements OnInit, OnChanges {
 
   @Input() gameData: Game | null = null;
   readonly gridSize = GRID_SIZE;
+  readonly objectDescriptions = OBJECT_DESCRIPTIONS;
+
   gameMap!: GameMap;
   private mapEditorService = inject(MapEditorServiceService);
   private objectCounterService = inject(ObjectCounterService);
@@ -174,9 +178,7 @@ export class GameGridComponent implements OnInit, OnChanges {
 
   isTileObjectFree(tile: Tile): boolean {
     if (tile) {
-      if (tile.object) {
-        return false;
-      }
+      return !tile.object;
     }
     return true;
   }

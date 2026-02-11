@@ -8,9 +8,12 @@
             [style.backgroundImage]="'url(' + getTilePath(tile.type) + ')'"
             (mousedown)="onTileMouseDown(position, $event)"
             (mouseenter)="onTileMouseEnter(position)"
-        >
+            [matTooltip]="tile.object ? objectDescriptions[tile.object] : ''"
+            matTooltipShowDelay="0"
+            matTooltipClass="description-tooltip"
+            >
             @if(tile.object) {
-            <img [src]="getObjectPath(tile.object)" class="tile-object-image" />
+            <img [src]="getObjectPath(tile.object)" class="tile-object-image"/>
             }
         </div>
         }
