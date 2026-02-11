@@ -89,6 +89,16 @@ describe('GameMetadataValidationService', () => {
     expect(result).toContain('Le nom du jeu ne peut pas etre vide');
   });
 
+  //cas limite: nom avec espaces
+  it('devrait retourner une erreur si le nom contient des espaces - cas limite', async () => {
+    const result = await service.validateMetadata({
+      ...baseGame,
+      name: 'Nom Avec Espaces',
+    });
+    
+    expect(result).toContain('Le nom ne peut pas contenir d\'espaces');
+  });
+
   // Cas limite: nom et description vides
   it('devrait retourner des erreurs pour nom et description vides - cas limite', async () => {
     const result = await service.validateMetadata({
