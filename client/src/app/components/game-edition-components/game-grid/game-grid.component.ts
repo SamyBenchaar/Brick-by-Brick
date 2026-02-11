@@ -8,6 +8,7 @@ import { MapEditorServiceService } from '@app/services/map-editor-service.servic
 import { ObjectCounterService } from '@app/services/object-counter/object-counter.service';
 import { GRID_SIZE, MapSize, ObjectType, TileType } from '@common/map';
 import html2canvas from 'html2canvas';
+import { Position } from '@app/interfaces/position';
 
 @Component({
   selector: 'app-game-grid',
@@ -62,8 +63,9 @@ export class GameGridComponent implements OnInit, OnChanges {
     if (tiles) {
       for (let y = 0; y < tiles.length; y++) {
         for (let x = 0; x < tiles[y].length; x++) {
-          const tileData = tiles[y][x];
-          const tile = this.gameMap.getTile(x, y);
+          const position = { x, y };
+          const tileData = tiles[position.y][position.x];
+          const tile = this.gameMap.getTile(position);
 
           if (!tile) continue;
 
@@ -86,34 +88,34 @@ export class GameGridComponent implements OnInit, OnChanges {
     return this.gridSize / this.gameMap.getSize();
   }
 
-  getTile(x: number, y: number): Tile | null {
-    return this.gameMap.getTile(x, y);
+  getTile(position: Position): Tile | null {
+    return this.gameMap.getTile(position);
   }
 
-  onTileMouseDown(x: number, y: number, event: MouseEvent): void {
+  onTileMouseDown(position: Position, event: MouseEvent): void {
     if (event.button === ClickEvent.Left) {
       if (this.mapEditorService.getSelectedTileType() == null) {
-        this.addObject(x, y);
+        this.addObject(position);
       } else {
         this.isDrawing = true;
-        this.changeTileType(x, y);
+        this.changeTileType(position);
 
       }
     }
     if (event.button === ClickEvent.Right) {
       event.preventDefault();//Pour ne pas ouvrir le menu contextuel
       this.isDeleting = true;
-      this.applyDeletion(x, y);
+      this.applyDeletion(position);
     }
   }
 
 
-  onTileMouseEnter(x: number, y: number): void {
+  onTileMouseEnter(position: Position): void {
     if (this.isDeleting) {
       // Mode suppression: toujours remplacer par tuile de base, peu importe l'outil sélectionné
-      this.applyDeletion(x, y);
+      this.applyDeletion(position);
     } else if (this.isDrawing) {
-      this.changeTileType(x, y);
+      this.changeTileType(position);
     }
   }
 
@@ -146,27 +148,27 @@ export class GameGridComponent implements OnInit, OnChanges {
     this.objectCounterService.reset();
   }
 
-  applyDeletion(x: number, y: number): void {
-    const tile = this.getTile(x, y);
+  applyDeletion(position: Position): void {
+    const tile = this.getTile(position);
     if (tile) {
       if (this.isShiftPressed) {
-        this.removeObject(x, y);
+        this.removeObject(position);
       } else {
         tile.type = TileType.Base;
-        this.mapEditorService.setTileType(x, y, TileType.Base);
+        this.mapEditorService.setTileType(position, TileType.Base);
       }
     }
   }
 
-  private changeTileType(x: number, y: number): void {
+  private changeTileType(position: Position): void {
     const selectedType = this.mapEditorService.getSelectedTileType();
-    const tile = this.getTile(x, y);
+    const tile = this.getTile(position);
     if (tile && selectedType) {
       if (selectedType === TileType.Wall && tile.object) {
-        this.removeObject(x, y);
+        this.removeObject(position);
       }
       tile.type = selectedType;
-      this.mapEditorService.setTileType(x, y, selectedType);
+      this.mapEditorService.setTileType(position, selectedType);
     }
   }
 
@@ -179,25 +181,25 @@ export class GameGridComponent implements OnInit, OnChanges {
     return true;
   }
 
-  private addObject(x: number, y: number): void {
+  private addObject(position: Position): void {
     const selectedObject = this.mapEditorService.getSelectedObject();
-    const tile = this.getTile(x, y);
+    const tile = this.getTile(position);
     if (tile && selectedObject && this.objectCounterService.canPlace(selectedObject) && this.isTileObjectFree(tile)) {
       if (tile.type === 'wall') {
         return;
       }
       tile.object = selectedObject;
       this.objectCounterService.place(selectedObject);
-      this.mapEditorService.setObject(x, y, selectedObject);
+      this.mapEditorService.setObject(position, selectedObject);
     }
   }
 
-  private removeObject(x: number, y: number): void {
-    const tile = this.getTile(x, y);
+  private removeObject(position: Position): void {
+    const tile = this.getTile(position);
     if (tile && tile.object) {
       this.objectCounterService.remove(tile.object);
       tile.object = undefined;
-      this.mapEditorService.setObject(x, y, null);
+      this.mapEditorService.setObject(position, null);
     }
   }
 
