@@ -10,13 +10,6 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 export class GameController {
     constructor(private readonly gameService: GameService) {}
 
-    @Get()
-    @ApiOperation({ summary: 'Récupérer tous les jeux' })
-    @ApiResponse({ status: 200, description: 'Liste des jeux retournée avec succès' })
-    async findAll(): Promise<Game[]> {
-        return this.gameService.findAll();
-    }
-
     @Get('admin')
     @ApiOperation({ summary: 'Récupérer tous les jeux pour le menu admin' })
     @ApiResponse({ status: 200, description: 'Liste des jeux retournée avec succès' })
