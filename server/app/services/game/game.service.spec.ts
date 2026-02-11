@@ -9,38 +9,48 @@ import { GameService } from './game.service';
 describe('GameService', () => {
     let service: GameService;
 
+    const mockGameModel = {
+        find: jest.fn().mockReturnThis(),
+        findById: jest.fn().mockReturnThis(),
+        findByIdAndUpdate: jest.fn().mockReturnThis(),
+        findByIdAndDelete: jest.fn().mockReturnThis(),
+        create: jest.fn(),
+        exec: jest.fn().mockResolvedValue([]),
+    };
+
+    const mockMapValidationService = {
+        validateMap: jest.fn().mockResolvedValue([]),
+    };
+
+    const mockGameMetadataValidationService = {
+        validateMetadata: jest.fn().mockResolvedValue([]),
+    };
+
+    const mockGameGateway = {
+        notifyGameCreated: jest.fn(),
+        notifyGameUpdated: jest.fn(),
+        notifyGameDeleted: jest.fn(),
+    };
+
     beforeEach(async () => {
         const module: TestingModule = await Test.createTestingModule({
             providers: [
                 GameService,
                 {
                     provide: getModelToken(Game.name),
-                    useValue: {
-                        find: jest.fn(),
-                        findById: jest.fn(),
-                        findByIdAndUpdate: jest.fn(),
-                        findByIdAndDelete: jest.fn(),
-                    },
+                    useValue: mockGameModel,
                 },
                 {
                     provide: MapValidationService,
-                    useValue: {
-                        validateMap: jest.fn().mockResolvedValue([]),
-                    },
+                    useValue: mockMapValidationService,
                 },
                 {
                     provide: GameMetadataValidationService,
-                    useValue: {
-                        validateMetadata: jest.fn().mockResolvedValue([]),
-                    },
+                    useValue: mockGameMetadataValidationService,
                 },
                 {
                     provide: GameGateway,
-                    useValue: {
-                        notifyGameCreated: jest.fn(),
-                        notifyGameUpdated: jest.fn(),
-                        notifyGameDeleted: jest.fn(),
-                    },
+                    useValue: mockGameGateway,
                 },
             ],
         }).compile();
@@ -51,5 +61,8 @@ describe('GameService', () => {
     it('should be defined', () => {
         expect(service).toBeDefined();
     });
-});
 
+    it('should have findAdminMenuGames method', () => {
+        expect(service.findAdminMenuGames).toBeDefined();
+    });
+});
