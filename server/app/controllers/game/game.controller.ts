@@ -1,7 +1,6 @@
+import { CreateGameDto } from '@app/dto/create-game.dto';
 import { Game } from '@app/model/game';
 import { GameService } from '@app/services/game/game.service';
-import { CreateGameDto } from '@common/dto/create-game.dto';
-import { UpdateGameDto } from '@common/dto/update-game.dto';
 import { Body, Controller, Delete, Get, Param, Patch, Post, Put } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
@@ -43,7 +42,7 @@ export class GameController {
     @ApiOperation({ summary: 'Mettre à jour un jeu' })
     @ApiResponse({ status: 200, description: 'Jeu mis à jour avec succès', type: Game })
     @ApiResponse({ status: 404, description: 'Jeu non trouvé' })
-    async update(@Param('id') id: string, @Body() updateGameDto: UpdateGameDto): Promise<Game> {
+    async update(@Param('id') id: string, @Body() updateGameDto: CreateGameDto): Promise<Game> {
         return this.gameService.update(id, updateGameDto);
     }
 
