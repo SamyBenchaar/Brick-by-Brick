@@ -1,7 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Game } from '@app/interfaces/game';
-import { GameSession } from '@app/interfaces/game-session';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
@@ -19,10 +18,6 @@ export class CommunicationService {
 
     createGame(gameData: Partial<Game>): Observable<Game> {
         return this.http.post<Game>(`${this.baseUrl}/games`, gameData).pipe(catchError(this.handleError));
-    }
-
-    createGameSession(gameId: string): Observable<GameSession> {
-        return this.http.post<GameSession>(`${this.baseUrl}/game-sessions`, { gameId }).pipe(catchError(this.handleError));
     }
 
     updateGame(id: string, gameData: Partial<Game | null>): Observable<Game> {

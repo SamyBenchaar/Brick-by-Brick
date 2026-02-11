@@ -16,10 +16,6 @@ export class GameMetadataValidationService {
             errors.push('Le nom ne peut pas contenir d\'espaces');
         }
 
-        if (gameData.name.includes('')) {
-            errors.push('Le nom du jeu ne peut pas etre vide');
-        }
-
         if (!gameData.description || gameData.description.trim() === ' ') {
             errors.push('La description ne peut pas être vide');
         }

@@ -2,7 +2,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { GameListComponent } from '@app/components/game-list/game-list.component';
 import { CommunicationService } from '@app/services/communication/communication.service';
-import { of } from 'rxjs';
 import { GameCreationPageComponent } from './game-creation-page.component';
 
 /**
@@ -33,7 +32,6 @@ describe('GameCreationPageComponent', () => {
         routerSpy = jasmine.createSpyObj('Router', ['navigate']);
         gameListComponentSpy = jasmine.createSpyObj('GameListComponent', ['getSelectedGameId']);
 
-        communicationServiceSpy.createGameSession.and.returnValue(of({ gameId: '', players: [] }));
         gameListComponentSpy.getSelectedGameId.and.returnValue(null);
 
         await TestBed.configureTestingModule({
@@ -54,37 +52,6 @@ describe('GameCreationPageComponent', () => {
         expect(component).toBeTruthy();
     });
 
-    it('devrait appeler createGameSession du service et router.navigate lors de createGameSession', () => {
-        const gameSession = { gameId: '1', players: [] };
-        gameListComponentSpy.getSelectedGameId.and.returnValue('1');
-        communicationServiceSpy.createGameSession.and.returnValue(of(gameSession));
-
-        component.createGameSession();
-
-        expect(communicationServiceSpy.createGameSession).toHaveBeenCalledWith('1');
-        expect(routerSpy.navigate).toHaveBeenCalledWith(['/character-creation']);
-    });
-
-    it('ne doit pas appeler createGameSession si selectedGameId est null', () => {
-        gameListComponentSpy.getSelectedGameId.and.returnValue(null);
-        component.createGameSession();
-        expect(communicationServiceSpy.createGameSession).not.toHaveBeenCalled();
-        expect(routerSpy.navigate).not.toHaveBeenCalled();
-    });
-
-    it('ne doit pas appeler createGameSession si selectedGameId est undefined', () => {
-        gameListComponentSpy.getSelectedGameId.and.returnValue(null);
-        component.createGameSession();
-        expect(communicationServiceSpy.createGameSession).not.toHaveBeenCalled();
-        expect(routerSpy.navigate).not.toHaveBeenCalled();
-    });
-
-    it('ne doit pas appeler createGameSession avec une chaîne vide - cas limite de validation', () => {
-        gameListComponentSpy.getSelectedGameId.and.returnValue('');
-        component.createGameSession();
-        expect(communicationServiceSpy.createGameSession).not.toHaveBeenCalled();
-    });
-
     it('devrait retourner false pour canCreateSession quand aucun jeu n\'est sélectionné', () => {
         gameListComponentSpy.getSelectedGameId.and.returnValue(null);
         expect(component.canCreateSession).toBeFalse();
@@ -94,28 +61,5 @@ describe('GameCreationPageComponent', () => {
         gameListComponentSpy.getSelectedGameId.and.returnValue('123');
         expect(component.canCreateSession).toBeTrue();
     });
-
-    it('devrait permettre de créer une session avec un ID de jeu valide - cas limite de validation', () => {
-        gameListComponentSpy.getSelectedGameId.and.returnValue('valid-game-id');
-        communicationServiceSpy.createGameSession.and.returnValue(of({ gameId: 'valid-game-id', players: [] }));
-
-        component.createGameSession();
-
-        expect(communicationServiceSpy.createGameSession).toHaveBeenCalledWith('valid-game-id');
-        expect(routerSpy.navigate).toHaveBeenCalledWith(['/character-creation']);
-    });
-
-    // Cas limite: Jeux avec caractères spéciaux
-    it('devrait gérer les identifiants de jeu avec caractères spéciaux - cas limite de saisie', () => {
-        const specialGameId = 'game-id_123@456';
-        gameListComponentSpy.getSelectedGameId.and.returnValue(specialGameId);
-        communicationServiceSpy.createGameSession.and.returnValue(of({ gameId: specialGameId, players: [] }));
-
-        component.createGameSession();
-
-        expect(communicationServiceSpy.createGameSession).toHaveBeenCalledWith(specialGameId);
-        expect(routerSpy.navigate).toHaveBeenCalledWith(['/character-creation']);
-    });
-
 
 });

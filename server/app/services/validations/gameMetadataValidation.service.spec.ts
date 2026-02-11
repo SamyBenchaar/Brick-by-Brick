@@ -13,7 +13,7 @@ type MockModel<T> = Partial<Record<keyof Model<T>, jest.Mock>>;
  * 1. Tests de validation : Vérifier que les métadonnées sont validées correctement
  * 2. Tests d'unicité : Tester que les noms de jeu sont uniques sauf en mise à jour
  * 3. Tests de champs obligatoires : Confirmer que description et name sont présents
- * 4. Cas limites : Données vides, valeurs nulles, doublons
+ * 4. Cas limites : valeurs nulles, doublons
  */
 describe('GameMetadataValidationService', () => {
   let service: GameMetadataValidationService;
@@ -77,16 +77,6 @@ describe('GameMetadataValidationService', () => {
     });
 
     expect(result).not.toContain('Le nom du jeu doit être unique');
-  });
-
-  // Cas limite: nom vide
-  it('doit retourner une erreur si le nom est vide - cas limite', async () => {
-    const result = await service.validateMetadata({
-      ...baseGame,
-      name: '',
-    });
-
-    expect(result).toContain('Le nom du jeu ne peut pas etre vide');
   });
 
   //cas limite: nom avec espaces

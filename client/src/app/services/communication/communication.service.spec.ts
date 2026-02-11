@@ -1,7 +1,6 @@
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { Game } from '@app/interfaces/game';
-import { GameSession } from '@app/interfaces/game-session';
 import { environment } from 'src/environments/environment';
 import { CommunicationService } from './communication.service';
 
@@ -39,11 +38,6 @@ describe('CommunicationService', () => {
             size: '10x10',
             tiles: [],
         },
-    };
-
-    const sessionJeuMocke: GameSession = {
-        gameId: '123',
-        players: [],
     };
 
     beforeEach(() => {
@@ -141,27 +135,6 @@ describe('CommunicationService', () => {
 
             const requete = httpMock.expectOne(`${baseUrl}/games`);
             requete.error(new ProgressEvent('erreur'), { status: 400, statusText: 'Mauvaise requête' });
-        });
-    });
-
-    describe('creerSessionJeu', () => {
-        it('devrait créer une session de jeu avec une requête POST', (fait) => {
-            const idJeu = '123';
-
-            service.createGameSession(idJeu).subscribe({
-                next: (session: GameSession) => {
-                    expect(session.gameId).toBe('123');
-                    fait();
-                },
-                error: () => {
-                    fail('ne devrait pas avoir d\'erreur');
-                },
-            });
-
-            const requete = httpMock.expectOne(`${baseUrl}/game-sessions`);
-            expect(requete.request.method).toBe('POST');
-            expect(requete.request.body).toEqual({ gameId: idJeu });
-            requete.flush(sessionJeuMocke);
         });
     });
 
