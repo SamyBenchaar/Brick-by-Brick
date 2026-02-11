@@ -69,3 +69,11 @@ button:disabled {
     background-image: url('/assets/images/3x1_orange.png');
     background-size: contain;
 }
+
+.description-tooltip {
+    background-color: rgba(44, 62, 80, 0.8);
+    color: #ffffff;
+    font-size: 13px;
+    padding: 5px 5px;
+    border-radius: 4px;
+}
