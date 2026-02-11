@@ -7,15 +7,15 @@ import { ObjectType } from '@common/map';
 export class ObjectCounterService {
   private counts: Record<ObjectType, number> = {
 
-    [ObjectType.STARTPOINT]: 0,
+    [ObjectType.Startpoint]: 0,
   };
   private maxCounts: Record<ObjectType, number> = {
 
-    [ObjectType.STARTPOINT]: 2,
+    [ObjectType.Startpoint]: 2,
   };
 
   set startPoint(number: number) {
-    this.maxCounts[ObjectType.STARTPOINT] = number;
+    this.maxCounts[ObjectType.Startpoint] = number;
   }
 
   canPlace(object: ObjectType) {
