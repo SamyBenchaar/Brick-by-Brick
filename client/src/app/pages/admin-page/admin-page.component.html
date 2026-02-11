@@ -1,5 +1,5 @@
 <div class="container">
-    <div class="header-row">
+    <div class="header">
         <h1 class="header-title">ADMINISTRER LES JEUX</h1>
         <button class="add-button" (click)="openGameCreationModal()">Ajouter un jeu</button>
         <button class="button return-button" [routerLink]="['/home']">Retour</button>
@@ -17,7 +17,6 @@
 
             <div class="modal-body">
                 <h3>Choisissez la taille de la grille</h3>
-
                 <div class="size-options">
                     @for (size of gameSizes; track size.id) {
                     <div class="size-card" [class.selected]="selectedSize === size.id" (click)="selectSize(size.id)">
