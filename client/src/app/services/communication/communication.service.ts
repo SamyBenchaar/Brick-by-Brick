@@ -13,10 +13,6 @@ export class CommunicationService {
     private readonly http = inject(HttpClient);
     private readonly baseUrl: string = environment.serverUrl;
 
-    getAllGames(): Observable<Game[]> {
-        return this.http.get<Game[]>(`${this.baseUrl}/games`).pipe(catchError(this.handleError));
-    }
-
     getGameById(id: string): Observable<Game> {
         return this.http.get<Game>(`${this.baseUrl}/games/${id}`).pipe(catchError(this.handleError));
     }

@@ -1,7 +1,5 @@
 import { GameController } from '@app/controllers/game/game.controller';
-import { ChatGateway } from '@app/gateways/chat/chat.gateway';
 import { Game, gameSchema } from '@app/model/game';
-import { DateService } from '@app/services/date/date.service';
 import { GameService } from '@app/services/game/game.service';
 import { GameMetadataValidationService } from '@app/services/validations/gameMetadataValidation.service';
 import { MapValidationService } from '@app/services/validations/mapValidation.service';
@@ -26,7 +24,7 @@ import { GameGateway } from './gateways/game/game.gateway';
         ]), GameSessionModule,
     ],
     controllers: [GameController],
-    providers: [GameGateway, ChatGateway, GameService, DateService, Logger, MapValidationService, GameMetadataValidationService],
+    providers: [GameGateway, GameService, Logger, MapValidationService, GameMetadataValidationService],
 })
 export class AppModule {
     constructor(

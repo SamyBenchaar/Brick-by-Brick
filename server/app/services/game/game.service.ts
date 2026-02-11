@@ -2,13 +2,13 @@ import { GameGateway } from '@app/gateways/game/game.gateway';
 import { Game, GameDocument } from '@app/model/game';
 import { GameMetadataValidationService } from '@app/services/validations/gameMetadataValidation.service';
 import { MapValidationService } from '@app/services/validations/mapValidation.service';
-import { BadRequestException, Inject, Injectable, NotFoundException, forwardRef } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { plainToInstance } from 'class-transformer';
-import { validate } from 'class-validator';
 import { CreateGameDto } from '@common/dto/create-game.dto';
 import { UpdateGameDto } from '@common/dto/update-game.dto';
+import { BadRequestException, Inject, Injectable, NotFoundException, forwardRef } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { plainToInstance } from 'class-transformer';
+import { validate } from 'class-validator';
+import { Model } from 'mongoose';
 
 @Injectable()
 export class GameService {
@@ -57,6 +57,10 @@ export class GameService {
 
     }
 
+    async findAll(): Promise<Game[]> {
+        return this.gameModel.find().exec();
+    }
+
     async findAdminMenuGames(): Promise<Game[]> {
         return this.gameModel.find({}, {
             _id: 1, name: 1, mapConfig: { size: 1 }, lastModified: 1, isVisible: 1,
@@ -65,7 +69,7 @@ export class GameService {
     }
 
     async findVisible(): Promise<Game[]> {
-        return this.gameModel.find({ isVisible: true },{
+        return this.gameModel.find({ isVisible: true }, {
             _id: 1, name: 1, mapConfig: { size: 1 }, lastModified: 1, isVisible: 1,
             description: 1, previewImage: 1,
         }).exec();
@@ -75,7 +79,7 @@ export class GameService {
         return this.gameModel.findById(id).exec();
     }
 
- async update(id: string, gameData: Partial<Game>): Promise<Game> {
+    async update(id: string, gameData: Partial<Game>): Promise<Game> {
         const errors: string[] = [];
 
         // Validation du DTO
@@ -97,7 +101,7 @@ export class GameService {
         }
 
         const updatedGame = await this.gameModel.findByIdAndUpdate(id, gameData, { new: true }).exec();
-        if (!updatedGame) 
+        if (!updatedGame)
             throw new NotFoundException(`Jeu avec ID ${id} non trouvé`);
         if (this.gameGateway && updatedGame) {
             this.gameGateway.notifyGameUpdated(updatedGame);

@@ -28,7 +28,6 @@ export class EditionPageComponent implements OnInit {
   gridDimensions = { width: MapSize.Small, height: MapSize.Small };
   gameName: string = '';
   gameDescription: string = '';
-  imagePreview: string = '';
   gameId: string = '';
   isSaving: boolean = false;
 

@@ -1,11 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { GAME_MODES_DISPLAY, GAME_SIZES_DISPLAY, GameModeValue, GameSizeId, getGameSizeLabel } from '@app/constants/game-config-constants';
-import { Game } from '@app/interfaces/game';
-import { CommunicationService } from '@app/services/communication/communication.service';
 import { GameListComponent } from '@app/components/game-list/game-list.component';
+import { GAME_MODES_DISPLAY, GAME_SIZES_DISPLAY, GameModeValue, GameSizeId } from '@app/constants/game-config-constants';
 
 @Component({
     selector: 'app-admin-page',
@@ -13,8 +11,7 @@ import { GameListComponent } from '@app/components/game-list/game-list.component
     styleUrls: ['./admin-page.component.scss'],
     imports: [CommonModule, FormsModule, RouterLink, GameListComponent],
 })
-export class AdminPageComponent implements OnInit {
-    private communicationService = inject(CommunicationService);
+export class AdminPageComponent {
     private router = inject(Router);
 
     readonly gameSizes = GAME_SIZES_DISPLAY;
@@ -23,35 +20,6 @@ export class AdminPageComponent implements OnInit {
     showGameCreationModal = false;
     selectedSize: GameSizeId | null = null;
     selectedGameMode: GameModeValue = 'classic';
-    games: Game[] = [];
-
-    ngOnInit(): void {
-        this.loadGames();
-    }
-
-    private loadGames(): void {
-        this.communicationService.getAllGames().subscribe((games) => {
-            this.games = games;
-        });
-    }
-
-    editGame(game: Game): void {
-        this.communicationService.updateGameVisibility(game._id, !game.isVisible).subscribe((updatedGame) => {
-            game.isVisible = updatedGame.isVisible;
-        });
-    }
-
-    deleteGame(game: Game): void {
-        this.communicationService.deleteGame(game._id).subscribe({
-            next: () => {
-                this.games = this.games.filter(g => g._id !== game._id);
-                alert('Jeu supprimé avec succès !');
-            },
-            error: (err) => {
-                alert(`Erreur: ${err.error?.message || 'Impossible de supprimer ce jeu'}`);
-            },
-        });
-    }
 
     openGameCreationModal(): void {
         this.showGameCreationModal = true;
@@ -67,10 +35,6 @@ export class AdminPageComponent implements OnInit {
 
     selectSize(size: GameSizeId): void {
         this.selectedSize = size;
-    }
-
-    getGameSizeLabel(sizeId: string): string {
-        return getGameSizeLabel(sizeId);
     }
 
     confirmAndRedirect(): void {

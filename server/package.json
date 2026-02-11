@@ -1,7 +1,7 @@
 {
     "name": "server-nestjs",
     "description": "Serveur du projet de base pour le cours de LOG2995",
-    "version": "1.4.0",
+    "version": "1.4.1",
     "private": true,
     "scripts": {
         "prebuild": "rimraf out",
