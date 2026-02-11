@@ -2,8 +2,8 @@ export type GameSizeId = 'Small' | 'Medium' | 'Large';
 export type GameModeValue = 'classic' | 'ctf';
 
 export const GAME_MODES_DISPLAY = [
-    { value: 'classic' as const, label: 'Classique' },
-    { value: 'ctf' as const, label: 'Capture du drapeau' },
+    { value: 'classic' as const, label: 'Classique', disabled: false },
+    { value: 'ctf' as const, label: 'Capture du drapeau', disabled: true },
 ];
 
 export const GAME_SIZES_DISPLAY = [
