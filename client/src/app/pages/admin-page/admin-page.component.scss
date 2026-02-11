@@ -8,12 +8,17 @@
 }
 
 .footer {
+  pointer-events: none;
   position: fixed;
   width: 100%;
   display: flex;
   justify-content: flex-end;
   bottom: 10px;
   padding-right: 1rem;
+}
+
+.footer .button {
+  pointer-events: auto;
 }
 
 // Modal styles
