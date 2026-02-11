@@ -6,7 +6,6 @@ import { MapValidationService } from '@app/services/validations/mapValidation.se
 import { Logger, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
-import { GameSessionModule } from './game-session.module';
 import { GameGateway } from './gateways/game/game.gateway';
 
 @Module({
@@ -21,7 +20,7 @@ import { GameGateway } from './gateways/game/game.gateway';
         }),
         MongooseModule.forFeature([
             { name: Game.name, schema: gameSchema },
-        ]), GameSessionModule,
+        ]), 
     ],
     controllers: [GameController],
     providers: [GameGateway, GameService, Logger, MapValidationService, GameMetadataValidationService],
