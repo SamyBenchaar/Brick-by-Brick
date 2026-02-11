@@ -2,11 +2,11 @@ import { Component, inject, OnInit, ViewChild } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AppDialogComponent } from '@app/components/game-edition-components/app-dialog/app-dialog.component';
-// import { Tile } from '@app/classes/tile';
 import { GameGridComponent } from '@app/components/game-edition-components/game-grid/game-grid.component';
 import { ObjectSidebarComponent } from '@app/components/game-edition-components/object-sidebar/object-sidebar.component';
 import { TextInputComponent } from '@app/components/game-edition-components/text-input/text-input.component';
 import { TileTypeSidebarComponent } from '@app/components/game-edition-components/tile-type-sidebar/tile-type-sidebar.component';
+import { GameModeValue, GameSizeId, getGameSizeConfig } from '@app/constants/game-config-constants';
 import { CommunicationService } from '@app/services/communication/communication.service';
 import { MapEditorServiceService } from '@app/services/map-editor-service.service';
 import { ObjectCounterService } from '@app/services/object-counter/object-counter.service';
@@ -19,17 +19,17 @@ import { MapSize } from '@common/map';
   styleUrl: './edition-page.component.scss',
 })
 export class EditionPageComponent implements OnInit {
-  private static readonly mediumMaxPlayers = 4;
-  private static readonly largeMaxPlayers = 6;
   private static readonly httpNotFound = 404;
   @ViewChild(GameGridComponent) gameGridComponent!: GameGridComponent;
-  selectedSize: 'Small' | 'Medium' | 'Large' = 'Small';
-  gridDimensions = { width: MapSize.Small, height: MapSize.Small }; // Valeur par défaut
+
+  selectedSize: GameSizeId = 'Small';
+  gameMode: GameModeValue = 'classic';
+
+  gridDimensions = { width: MapSize.Small, height: MapSize.Small };
   gameName: string = '';
   gameDescription: string = '';
   imagePreview: string = '';
   gameId: string = '';
-  gameMode: 'classic' | 'ctf' = 'classic';
   isSaving: boolean = false;
 
   private route = inject(ActivatedRoute);
@@ -40,17 +40,20 @@ export class EditionPageComponent implements OnInit {
   private dialog = inject(MatDialog);
 
   ngOnInit(): void {
-    this.route.paramMap.subscribe(params => {
-      this.gameId = params.get('game_id') || '';
+    this.route.paramMap.subscribe(paramss => {
+      this.gameId = paramss.get('game_id') || '';
       if (this.gameId) {
         this.loadGame();
       }
     });
 
-    const paramss = this.route.snapshot.queryParams;
-    this.selectedSize = paramss.size || 'Small';
-    this.gameMode = paramss.mode || 'classic';
-
+    const params = this.route.snapshot.queryParams;
+    if (params.size) {
+      this.selectedSize = params.size as GameSizeId;
+    }
+    if (params.mode) {
+      this.gameMode = params.mode as GameModeValue;
+    }
   }
 
   getMapEditorService(): MapEditorServiceService {
@@ -62,16 +65,8 @@ export class EditionPageComponent implements OnInit {
   }
 
   getMapSize(): MapSize {
-    switch (this.selectedSize) {
-      case 'Small':
-        return MapSize.Small;
-      case 'Medium':
-        return MapSize.Medium;
-      case 'Large':
-        return MapSize.Large;
-      default:
-        return MapSize.Small; // Par défaut
-    }
+    const config = getGameSizeConfig(this.selectedSize);
+    return config.gridSize;
   }
 
 
@@ -79,7 +74,7 @@ export class EditionPageComponent implements OnInit {
     this.communicationService.getGameById(this.gameId).subscribe({
       next: (game) => {
         if (game) {
-          this.selectedSize = game.mapConfig.size as 'Small' | 'Medium' | 'Large';
+          this.selectedSize = game.mapConfig.size as GameSizeId;
           this.getObjectCounterService().startPoint = this.getMaxPlayers();
           this.getMapEditorService().setCurrentGame(game);
           this.gameName = game.name;
@@ -101,16 +96,8 @@ export class EditionPageComponent implements OnInit {
   }
 
   private getMaxPlayers(): number {
-    switch (this.selectedSize) {
-      case 'Small':
-        return 2;
-      case 'Medium':
-        return EditionPageComponent.mediumMaxPlayers;
-      case 'Large':
-        return EditionPageComponent.largeMaxPlayers;
-      default:
-        return 2;
-    }
+    const config = getGameSizeConfig(this.selectedSize);
+    return config.maxPlayers;
   }
 
   async onSave(): Promise<void> {
@@ -222,7 +209,7 @@ export class EditionPageComponent implements OnInit {
         gameMode: this.gameMode,
         previewImage: await this.gameGridComponent.captureMapPreview(),
         mapConfig: {
-          size: this.selectedSize.charAt(0).toUpperCase() + this.selectedSize.slice(1),
+          size: this.selectedSize,
           tiles,
         },
 

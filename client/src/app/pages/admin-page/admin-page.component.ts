@@ -1,68 +1,76 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { GAME_MODES_DISPLAY, GAME_SIZES_DISPLAY, GameModeValue, GameSizeId, getGameSizeLabel } from '@app/constants/game-config-constants';
+import { Game } from '@app/interfaces/game';
+import { CommunicationService } from '@app/services/communication/communication.service';
 import { GameListComponent } from '@app/components/game-list/game-list.component';
 
 @Component({
     selector: 'app-admin-page',
     templateUrl: './admin-page.component.html',
     styleUrls: ['./admin-page.component.scss'],
-    imports: [CommonModule, FormsModule, GameListComponent, RouterLink],
+    imports: [CommonModule, FormsModule, RouterLink, GameListComponent],
 })
-export class AdminPageComponent {
+export class AdminPageComponent implements OnInit {
+    private communicationService = inject(CommunicationService);
     private router = inject(Router);
 
+    readonly gameSizes = GAME_SIZES_DISPLAY;
+    readonly gameModes = GAME_MODES_DISPLAY;
+
     showGameCreationModal = false;
-    selectedSize: 'Small' | 'Medium' | 'Large' | null = null;
-    gameMode: 'classic' | 'ctf' = 'classic';
+    selectedSize: GameSizeId | null = null;
+    selectedGameMode: GameModeValue = 'classic';
+    games: Game[] = [];
 
-    gameModes = [
-        { value: 'classic' as const, label: 'classique' },
-        { value: 'ctf' as const, label: 'CTF' },
-    ];
+    ngOnInit(): void {
+        this.loadGames();
+    }
 
-    gameSizes = [
-        {
-            id: 'Small' as const,
-            label: 'Petite',
-            gridSize: '10x10',
-            players: '2 joueurs',
-            width: 10,
-            height: 10,
-        },
-        {
-            id: 'Medium' as const,
-            label: 'Moyenne',
-            gridSize: '15x15',
-            players: '2 à 4 joueurs',
-            width: 15,
-            height: 15,
-        },
-        {
-            id: 'Large' as const,
-            label: 'Grande',
-            gridSize: '20x20',
-            players: '2 à 6 joueurs',
-            width: 20,
-            height: 20,
-        },
-    ];
+    private loadGames(): void {
+        this.communicationService.getAllGames().subscribe((games) => {
+            this.games = games;
+        });
+    }
+
+    editGame(game: Game): void {
+        this.communicationService.updateGameVisibility(game._id, !game.isVisible).subscribe((updatedGame) => {
+            game.isVisible = updatedGame.isVisible;
+        });
+    }
+
+    deleteGame(game: Game): void {
+        this.communicationService.deleteGame(game._id).subscribe({
+            next: () => {
+                this.games = this.games.filter(g => g._id !== game._id);
+                alert('Jeu supprimé avec succès !');
+            },
+            error: (err) => {
+                alert(`Erreur: ${err.error?.message || 'Impossible de supprimer ce jeu'}`);
+            },
+        });
+    }
 
     openGameCreationModal(): void {
         this.showGameCreationModal = true;
         this.selectedSize = null;
-        this.gameMode = 'classic';
+        this.selectedGameMode = 'classic';
     }
 
     closeGameCreationModal(): void {
         this.showGameCreationModal = false;
         this.selectedSize = null;
-        this.gameMode = 'classic';
+        this.selectedGameMode = 'classic';
     }
 
-    selectSize(size: 'Small' | 'Medium' | 'Large'): void {
+    selectSize(size: GameSizeId): void {
         this.selectedSize = size;
+    }
+
+    getGameSizeLabel(sizeId: string): string {
+        return getGameSizeLabel(sizeId);
     }
 
     confirmAndRedirect(): void {
@@ -70,7 +78,7 @@ export class AdminPageComponent {
             this.router.navigate(['/edition'], {
                 queryParams: {
                     size: this.selectedSize,
-                    mode: this.gameMode,
+                    mode: this.selectedGameMode,
                 },
             });
         }

@@ -4,7 +4,7 @@ import { RouterLink } from '@angular/router';
 import { Game } from '@app/interfaces/game';
 import { CommunicationService } from '@app/services/communication/communication.service';
 import { GameSocketService } from '@app/services/communication/game-socket.service';
-
+import { getGameModeLabel, getGameSizeLabel } from '@app/constants/game-config-constants';
 @Component({
     selector: 'app-game-list',
     templateUrl: './game-list.component.html',
@@ -36,6 +36,14 @@ export class GameListComponent implements OnInit, OnDestroy {
 
     ngOnDestroy(): void {
         this.gameSocketService.disconnect();
+    }
+
+    getGameModeLabel(mode: string): string {
+        return getGameModeLabel(mode);
+    }
+
+    getGameSizeLabel(size: string): string {
+        return getGameSizeLabel(size);
     }
 
     selectGame(gameId: string): void {

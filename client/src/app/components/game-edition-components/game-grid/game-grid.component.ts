@@ -11,7 +11,6 @@ import html2canvas from 'html2canvas';
 
 @Component({
   selector: 'app-game-grid',
-  standalone: true,
   imports: [CommonModule],
   templateUrl: './game-grid.component.html',
   styleUrl: './game-grid.component.scss',

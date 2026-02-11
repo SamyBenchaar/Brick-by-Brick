@@ -1,10 +1,8 @@
 <div class="container">
-  <div class="header">
-    <span class="header-title">ADMINISTRER LES JEUX</span>
-    <button class="button return-button" [routerLink]="['/home']">Retour</button>
-  </div>
-
-  <div class="content">
+    <div class="header">
+        <h1 class="header-title">ADMINISTRER LES JEUX</h1>
+        <button class="button return-button" [routerLink]="['/home']">Retour</button>
+    </div>
     <!-- Modal de création de jeu -->
     @if (showGameCreationModal) {
     <div class="modal-overlay" (click)="closeGameCreationModal()">
@@ -18,7 +16,6 @@
 
             <div class="modal-body">
                 <h3>Choisissez la taille de la grille</h3>
-
                 <div class="size-options">
                     @for (size of gameSizes; track size.id) {
                     <div class="size-card" [class.selected]="selectedSize === size.id" (click)="selectSize(size.id)">
@@ -26,15 +23,19 @@
                             <span class="material-icons">grid_on</span>
                         </div>
                         <h4>{{ size.label }}</h4>
-                        <p class="size-grid">{{ size.gridSize }}</p>
-                        <p class="size-players">{{ size.players }}</p>
+                        <p class="size-grid">{{ size.gridSize }}x{{ size.gridSize }}</p>
+                        @if (size.maxPlayers === 2){
+                        <p class="size-players">{{ size.maxPlayers }} joueurs</p>
+                        } @else {
+                        <p class="size-players">2 à {{ size.maxPlayers }} joueurs</p>
+                        }
                     </div>
                     }
                 </div>
                 <div class="game-modes-options">
                     <label for="game-mode">Mode de jeu</label>
-                    <select id="game-mode" [(ngModel)]="gameMode">
-                        @for (mode of gameModes; track mode){
+                    <select id="game-mode" [(ngModel)]="selectedGameMode">
+                        @for (mode of gameModes; track mode.value) {
                         <option [value]="mode.value">{{ mode.label }}</option>
                         }
                     </select>
@@ -48,15 +49,8 @@
         </div>
     </div>
     }
-
-  
-  <app-game-list 
-    mode="admin" 
-    [showOnlyVisible]="false">
-  </app-game-list>
-  </div>
-
-  <div class="footer">
-    <button class="button add-button" (click)="openGameCreationModal()">Ajouter un jeu</button>
-  </div>
+    <app-game-list mode="admin" [showOnlyVisible]="false"> </app-game-list>
+    <div class="footer">
+        <button class="button add-button" (click)="openGameCreationModal()">Ajouter un jeu</button>
+    </div>
 </div>
