@@ -1,6 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, inject, Input, OnDestroy, OnInit, signal } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
 import { RouterLink } from '@angular/router';
+import { AppDialogComponent } from '@app/components/game-edition-components/app-dialog/app-dialog.component';
 import { Game } from '@app/interfaces/game';
 import { CommunicationService } from '@app/services/communication/communication.service';
 import { GameSocketService } from '@app/services/communication/game-socket.service';
@@ -17,6 +19,7 @@ export class GameListComponent implements OnInit, OnDestroy {
 
     private communicationService = inject(CommunicationService);
     private gameSocketService = inject(GameSocketService);
+    private dialog = inject(MatDialog);
 
     selectedGameId = signal<string | null>(null);
     hoveredGameId = signal<string | null>(null);
@@ -82,22 +85,50 @@ export class GameListComponent implements OnInit, OnDestroy {
                 );
             },
             error: (err) => {
-                alert(`Erreur: ${err.error?.message || 'Impossible de modifier la visibilité'}`);
+                this.dialog.open(AppDialogComponent, {
+                    data: {
+                        title: 'Erreur',
+                        message: err.error?.message || 'Impossible de modifier la visibilité',
+                        type: 'error',
+                    },
+                });
             },
         });
     }
 
     deleteGame(game: Game, event: Event): void {
         event.stopPropagation();
-        if (confirm(`Êtes-vous sûr de vouloir supprimer le jeu "${game.name}" ?`)) {
-            this.communicationService.deleteGame(game._id).subscribe({
-                next: () => {
-                    alert('Jeu supprimé avec succès !');
-                },
-                error: (err) => {
-                    alert(`Erreur: ${err.error?.message || 'Impossible de supprimer ce jeu'}`);
-                },
-            });
-        }
+        const dialogRef = this.dialog.open(AppDialogComponent, {
+            data: {
+                title: 'Confirmation de suppression',
+                message: `Êtes-vous sûr de vouloir supprimer le jeu "${game.name}" ?`,
+                type: 'warning',
+            },
+        });
+
+        dialogRef.afterClosed().subscribe((result) => {
+            if (result) {
+                this.communicationService.deleteGame(game._id).subscribe({
+                    next: () => {
+                        this.dialog.open(AppDialogComponent, {
+                            data: {
+                                title: 'Succès',
+                                message: 'Jeu supprimé avec succès !',
+                                type: 'success',
+                            },
+                        });
+                    },
+                    error: (err) => {
+                        this.dialog.open(AppDialogComponent, {
+                            data: {
+                                title: 'Erreur',
+                                message: err.error?.message || 'Impossible de supprimer ce jeu',
+                                type: 'error',
+                            },
+                        });
+                    },
+                });
+            }
+        });
     }
 }
