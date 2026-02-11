@@ -28,24 +28,18 @@ export class AdminPageComponent {
             label: 'Petite',
             gridSize: '10x10',
             players: '2 joueurs',
-            width: 10,
-            height: 10,
         },
         {
             id: 'Medium' as const,
             label: 'Moyenne',
             gridSize: '15x15',
             players: '2 à 4 joueurs',
-            width: 15,
-            height: 15,
         },
         {
             id: 'Large' as const,
             label: 'Grande',
             gridSize: '20x20',
             players: '2 à 6 joueurs',
-            width: 20,
-            height: 20,
         },
     ];
 

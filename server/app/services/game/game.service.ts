@@ -42,9 +42,6 @@ export class GameService {
         return this.gameModel.find().exec();
     }
 
-    async findAdminMenuGames(): Promise<Game[]> {
-        return this.gameModel.find().exec();
-    }
 
     async findVisible(): Promise<Game[]> {
         return this.gameModel.find({ isVisible: true }).exec();

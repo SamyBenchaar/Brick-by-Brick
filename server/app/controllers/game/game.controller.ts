@@ -17,19 +17,6 @@ export class GameController {
         return this.gameService.findAll();
     }
 
-    @Get('admin')
-    @ApiOperation({ summary: 'Récupérer tous les jeux pour le menu admin' })
-    @ApiResponse({ status: 200, description: 'Liste des jeux retournée avec succès' })
-    async findAdminMenuGames(): Promise<Game[]> {
-        return this.gameService.findAdminMenuGames();
-    }
-
-    @Get('visible')
-    @ApiOperation({ summary: 'Récupérer les jeux visibles' })
-    async findVisible(): Promise<Game[]> {
-        return this.gameService.findVisible();
-    }
-
     @Get(':id')
     @ApiOperation({ summary: 'Récupérer un jeu par ID' })
     @ApiResponse({ status: 200, description: 'Jeu retourné avec succès' })
