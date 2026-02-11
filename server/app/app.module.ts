@@ -1,14 +1,12 @@
+import { GameController } from '@app/controllers/game/game.controller';
+import { Game, gameSchema } from '@app/model/game';
+import { GameService } from '@app/services/game/game.service';
+import { GameMetadataValidationService } from '@app/services/validations/gameMetadataValidation.service';
+import { MapValidationService } from '@app/services/validations/mapValidation.service';
 import { Logger, Module } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { Course, courseSchema } from '@app/model/database/course';
-import { CourseController } from '@app/controllers/course/course.controller';
-import { CourseService } from '@app/services/course/course.service';
-import { DateController } from '@app/controllers/date/date.controller';
-import { DateService } from '@app/services/date/date.service';
-import { ChatGateway } from '@app/gateways/chat/chat.gateway';
-import { ExampleService } from '@app/services/example/example.service';
-import { ExampleController } from '@app/controllers/example/example.controller';
+import { MongooseModule } from '@nestjs/mongoose';
+import { GameGateway } from './gateways/game/game.gateway';
 
 @Module({
     imports: [
@@ -20,9 +18,18 @@ import { ExampleController } from '@app/controllers/example/example.controller';
                 uri: config.get<string>('DATABASE_CONNECTION_STRING'), // Loaded from .env
             }),
         }),
-        MongooseModule.forFeature([{ name: Course.name, schema: courseSchema }]),
+        MongooseModule.forFeature([
+            { name: Game.name, schema: gameSchema },
+        ]), 
     ],
-    controllers: [CourseController, DateController, ExampleController],
-    providers: [ChatGateway, CourseService, DateService, ExampleService, Logger],
+    controllers: [GameController],
+    providers: [GameGateway, GameService, Logger, MapValidationService, GameMetadataValidationService],
 })
-export class AppModule {}
+export class AppModule {
+    constructor(
+        private readonly gameGateway: GameGateway,
+        private readonly gameService: GameService,
+
+    ) {}
+}
+

@@ -1,0 +1,10 @@
+<div class="input-container">
+    <label class="input-label">{{ label }}</label>
+    <input
+        type="text"
+        class="input-field"
+        [placeholder]="placeholder"
+        [value]="value"
+        [attr.maxlength]="maxLength"
+        (input)="onInputChange($any($event.target).value)">
+</div>

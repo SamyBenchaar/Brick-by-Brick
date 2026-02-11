@@ -1,0 +1,26 @@
+.input-container {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(5px, 1vh, 10px);
+    margin-bottom: clamp(10px, 2vmin, 25px); 
+  }
+  
+  .input-label {
+    font-size: clamp(16px, 3vmin, 35px);
+    color: #333;
+  }
+  
+  .input-field {
+    padding: clamp(8px, 1.5vmin, 15px);
+    border: clamp(1px, 0.2vmin, 3px) solid #ccc;
+    border-radius: clamp(4px, 0.8vmin, 8px);
+    font-size: clamp(12px, 1.5vmin, 16px);
+    transition: border-color 0.2s;
+    width: 100%;
+    box-sizing: border-box;
+  
+    &:focus {
+      outline: none;
+      border-color: #4a90e2;
+    }
+  }

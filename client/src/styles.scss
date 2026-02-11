@@ -1,81 +1,79 @@
-// // Custom Theming for Angular Material
-// // For more information: https://material.angular.io/guide/theming
-// @use '@angular/material' as mat;
-// @use './app/pages/material-page/material-page.component.theme' as material-page;
-// // Plus imports for other components in your app.
+@font-face {
+  font-family: 'MyFont';
+  src: url('/assets/fonts/ByteBounce.ttf') format('truetype');
+  font-style: normal;
+}
 
-// // Include the common styles for Angular Material. We include this here so that you only
-// // have to load a single css file for Angular Material in your app.
-// // Be sure that you only ever include this mixin once!
-// @include mat.elevation-classes();
-// @include mat.app-background();
+body {
+    margin: 0;
+}
 
-// $indigo-pink-theme: mat.m2-define-light-theme(
-//     (
-//         color: (
-//             primary: mat.m2-define-palette(mat.$m2-indigo-palette),
-//             accent: mat.m2-define-palette(mat.$m2-pink-palette, A200, A100, A400),
-//             warn: mat.m2-define-palette(mat.$m2-red-palette),
-//         ),
-//     )
-// );
+.container {
+    font-family: 'MyFont';
+    padding: 0.5rem;
+    min-height: 100vh;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    background-image: url('/assets/plate_background.jpg');
+    background-repeat: repeat;
+    background-size: cover; 
+}
 
-// // Include theme styles for core and each component used in your app.
-// // Alternatively, you can import and @include the theme mixins for each component
-// // that you are using.
-// @include mat.all-component-themes($indigo-pink-theme);
-// // @include material-page.theme($indigo-pink-theme);
+.header {
+    display: flex;
+    justify-content: space-between;
+}
 
-// .indigo-pink-theme {
-//     // Nothing to do. This is the default theme
-// }
+.header-title {
+    font-size: 35px;
+    padding: 20px;
+    margin: 0;
+    background-image: url('/assets/images/4x1_yellow.png');
+    background-size: contain;
+}
 
-// .deeppurple-amber-theme {
-//     // $deeppurple-amber-theme: mat.m2-define-light-theme(
-//         (
-//             color: (
-//                 primary: mat.m2-define-palette(mat.$m2-deep-purple-palette),
-//                 accent: mat.m2-define-palette(mat.$m2-amber-palette, A200, A100, A400),
-//             ),
-//         )
-//     );
-//     @include mat.all-component-colors($deeppurple-amber-theme);
-//     @include material-page.theme($deeppurple-amber-theme);
-// }
+.button {
+    height: 60px;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-color: transparent;
+    background-size: contain;
+    padding: 20px;
 
-// .pink-bluegrey-theme {
-//     $pink-bluegrey-theme: mat.m2-define-dark-theme(
-//         (
-//             color: (
-//                 primary: mat.m2-define-palette(mat.$m2-pink-palette, 700, 500, 900),
-//                 accent: mat.m2-define-palette(mat.$m2-blue-grey-palette, A200, A100, A400),
-//             ),
-//         )
-//     );
-//     @include mat.all-component-colors($pink-bluegrey-theme);
-//     @include material-page.theme($pink-bluegrey-theme);
-// }
+    cursor: pointer;
 
-// .purple-green-theme {
-//     $purple-green-theme: mat.m2-define-dark-theme(
-//         (
-//             color: (
-//                 primary: mat.m2-define-palette(mat.$m2-purple-palette, 700, 500, 800),
-//                 accent: mat.m2-define-palette(mat.$m2-green-palette, A200, A100, A400),
-//             ),
-//         )
-//     );
-//     @include mat.all-component-colors($purple-green-theme);
-//     @include material-page.theme($purple-green-theme);
-// }
+    color: #000000;
+    font-family: 'MyFont', sans-serif;
+    font-size: 20px;
+    text-transform: uppercase;
+    border: none;
+}
 
-// /* You can add global styles to this file, and also import other style files */
+.button:hover {
+    filter: brightness(1.2);
+}
 
-// html,
-// body {
-//     height: 100%;
-// }
-// body {
-//     margin: 0;
-//     font-family: Roboto, 'Helvetica Neue', sans-serif;
-// }
+button:disabled {
+    filter: grayscale(100%);
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.return-button {
+    background-image: url('/assets/images/red_large_brick.png');
+    background-repeat: no-repeat;
+}
+
+.brick-orange {
+    background-image: url('/assets/images/3x1_orange.png');
+    background-size: contain;
+}
+
+.description-tooltip {
+    background-color: rgba(44, 62, 80, 0.8);
+    color: #ffffff;
+    font-size: 13px;
+    padding: 5px 5px;
+    border-radius: 4px;
+}

@@ -1,0 +1,43 @@
+<div class="edition-container">
+    <div class="sidebar-container">
+        <app-tile-type-sidebar></app-tile-type-sidebar>
+        <app-object-sidebar></app-object-sidebar>
+    </div>
+    <div class="edition-layout">
+        <app-game-grid class="game-grid" [mapSize]="getMapSize()" [gameData]="this.getMapEditorService().getCurrentGame()"></app-game-grid>
+
+        <div class="game-info-container">
+            <button class=" button return-button" 
+            [routerLink]="['/admin']">Retour</button>
+            <app-text-input
+            class="name-input"
+            label="Nom de la partie"
+            placeholder="Entrez le nom de la partie"
+            [(value)]="gameName"
+            [maxLength]="30"
+            (valueChange)="this.getMapEditorService().setTitle($event)">
+            </app-text-input>
+
+            <app-text-input
+            class="description-input"
+            label="Description"
+            placeholder="Entrez une description"
+            [(value)]="gameDescription"
+            [maxLength]="60"
+            (valueChange)="this.getMapEditorService().setDescription($event)">
+            </app-text-input>
+
+        </div>
+
+        <div class="buttons">
+            <button class="button bottom-button" (click)="onSave()" [disabled]="isSaving" [style.opacity]="isSaving ? '0.5' : '1'" [style.cursor]="isSaving ? 'not-allowed' : 'pointer'" style="background-image: url('/assets/images/4x1_green.png');">
+            {{ isSaving ? 'Sauvegarde...' : 'Enregistrer' }}
+            </button>
+
+            <button class="button bottom-button" (click)="onReset()" style="background-image: url('/assets/images/4x1_yellow.png');">
+            Réinitialiser
+            </button>
+
+        </div>
+    </div>
+</div>

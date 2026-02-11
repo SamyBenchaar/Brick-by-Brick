@@ -1,0 +1,31 @@
+<div class="games-list">
+    @for (game of filteredGames(); track game._id) {
+    <div class="game-item" [class.selected]="isSelected(game._id)" (click)="selectGame(game._id)">
+        <div class="game-content">
+            <div class="game-image" (mouseenter)="onImageEnter(game._id)" (mouseleave)="onImageLeave()">
+                <img [src]="game.previewImage" [alt]="game.name" />
+            </div>
+            <div class="game-info">
+                <span class="game-name">{{ game.name }}</span>
+                <span class="game-size">{{ getGameSizeLabel(game.mapConfig.size) }}</span>
+                <span class="game-mode">{{ getGameModeLabel(game.gameMode) }}</span>
+                <span class="game-date">{{ game.lastModified | date: 'short' }}</span>
+            </div>
+            <div class="hover-description" [class.visible]="isHovered(game._id)">{{ game.description }}</div>
+        </div>
+        @if (mode === 'admin') {
+        <div class="game-actions">
+            <button class="btn-icon btn-edit" title="Modifier" [routerLink]="['/edition', game._id]">
+                <span class="material-icons">edit</span>
+            </button>
+            <button class="btn-icon btn-visibility" [title]="game.isVisible ? 'Masquer' : 'Afficher'" (click)="toggleVisibility(game, $event)">
+                <span class="material-icons">{{ game.isVisible ? 'visibility' : 'visibility_off' }}</span>
+            </button>
+            <button class="btn-icon btn-delete" title="Supprimer" (click)="deleteGame(game, $event)">
+                <span class="material-icons">delete</span>
+            </button>
+        </div>
+        }
+    </div>
+    }
+</div>

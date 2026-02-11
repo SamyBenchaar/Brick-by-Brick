@@ -1,0 +1,55 @@
+.title {
+    font-size: 30px;
+    margin-top: 0.25rem;
+    margin-bottom: 0.5rem;
+    padding: 15px 10px;
+}
+
+.content {
+    display: flex;
+    min-height: 0;
+    flex: 1;
+    padding-top: 0.5rem;
+}
+
+.available-games {
+    display: flex;
+    flex-direction: column;
+    padding-left: 0.5rem;
+    max-width: 1200px;
+}
+
+.button {
+    height: 60px;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-color: transparent;
+    background-size: contain;
+    padding: 20px;
+
+    cursor: pointer;
+
+    color: #000000;
+    font-family: 'MyFont', sans-serif;
+    font-size: 20px;
+    text-transform: uppercase;
+    border: none;
+}
+
+.button:hover {
+    filter: brightness(1.2);
+}
+
+button:disabled {
+  filter: grayscale(100%);
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.footer {
+    position: fixed;
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+    bottom: 10px;
+}
