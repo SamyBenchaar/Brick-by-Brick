@@ -9,7 +9,7 @@ import { ObjectCounterService } from '@app/services/object-counter/object-counte
 import { GRID_SIZE, MapSize, ObjectType, TileType } from '@common/map';
 import html2canvas from 'html2canvas';
 import { Position } from '@app/interfaces/position';
-import { OBJECT_DESCRIPTIONS } from "@app/constants/object-descriptions";
+import { OBJECT_DESCRIPTIONS } from '@app/constants/object-descriptions';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
