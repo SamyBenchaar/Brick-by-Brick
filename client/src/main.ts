@@ -1,18 +1,22 @@
+import { registerLocaleData } from '@angular/common';
 import { provideHttpClient } from '@angular/common/http';
+import localeFr from '@angular/common/locales/fr-CA';
 import { enableProdMode, enableProfiling, provideZoneChangeDetection } from '@angular/core';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { Routes, provideRouter, withHashLocation } from '@angular/router';
 import { AppComponent } from '@app/pages/app/app.component';
+import { CharacterCreationPageComponent } from '@app/pages/character-creation-page/character-creation-page.component';
+import { EditionPageComponent } from '@app/pages/edition-page/edition-page.component';
+import { GameCreationPageComponent } from '@app/pages/game-creation-page/game-creation-page.component';
 import { GamePageComponent } from '@app/pages/game-page/game-page.component';
 import { MainPageComponent } from '@app/pages/main-page/main-page.component';
 import { MaterialPageComponent } from '@app/pages/material-page/material-page.component';
-import { environment } from './environments/environment';
-import {CharacterCreationPageComponent} from '@app/pages/character-creation-page/character-creation-page.component';
-import { GameCreationPageComponent } from '@app/pages/game-creation-page/game-creation-page.component';
-import { EditionPageComponent } from '@app/pages/edition-page/edition-page.component';
 import { WaitingRoomPage } from '@app/pages/waiting-room-page/waiting-room-page.component';
+import { environment } from './environments/environment';
 
 import { AdminPageComponent } from '@app/pages/admin-page/admin-page.component';
+
+registerLocaleData(localeFr);
 
 if (environment.production) {
     enableProdMode();
