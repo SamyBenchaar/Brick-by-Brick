@@ -1,7 +1,6 @@
 import { Game } from '@app/model/game';
 import { GameService } from '@app/services/game/game.service';
 import { CreateGameDto } from '@common/dto/create-game.dto';
-import { UpdateGameDto } from '@common/dto/update-game.dto';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { GameController } from './game.controller';
@@ -122,26 +121,6 @@ describe('GameController', () => {
       mockGameService.create.mockRejectedValue(new BadRequestException('Données invalides'));
 
       await expect(controller.create(dto)).rejects.toThrow(BadRequestException);
-    });
-  });
-
-  describe('update', () => {
-    it('devrait mettre à jour un jeu', async () => {
-      const dto: UpdateGameDto = { name: 'Updated' } as UpdateGameDto;
-      const mockGame: Game = { name: dto.name } as Game;
-      mockGameService.update.mockResolvedValue(mockGame);
-
-      const result = await controller.update('id1', dto);
-      expect(result).toEqual(mockGame);
-      expect(service.update).toHaveBeenCalledWith('id1', dto);
-    });
-
-    // Cas limite: jeu inexistant
-    it('devrait lancer NotFoundException si le jeu n\'existe pas - cas limite', async () => {
-      const dto: UpdateGameDto = { name: 'Updated' } as UpdateGameDto;
-      mockGameService.update.mockRejectedValue(new NotFoundException('Jeu non trouvé'));
-
-      await expect(controller.update('idX', dto)).rejects.toThrow(NotFoundException);
     });
   });
 

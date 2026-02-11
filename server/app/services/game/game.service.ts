@@ -3,7 +3,6 @@ import { Game, GameDocument } from '@app/model/game';
 import { GameMetadataValidationService } from '@app/services/validations/gameMetadataValidation.service';
 import { MapValidationService } from '@app/services/validations/mapValidation.service';
 import { CreateGameDto } from '@common/dto/create-game.dto';
-import { UpdateGameDto } from '@common/dto/update-game.dto';
 import { BadRequestException, Inject, Injectable, NotFoundException, forwardRef } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { plainToInstance } from 'class-transformer';
@@ -83,7 +82,7 @@ export class GameService {
         const errors: string[] = [];
 
         // Validation du DTO
-        const dtoInstance = plainToInstance(UpdateGameDto, gameData);
+        const dtoInstance = plainToInstance(CreateGameDto, gameData);
         const validationErrors = await validate(dtoInstance);
         if (validationErrors.length > 0) {
             validationErrors.forEach(error => {
