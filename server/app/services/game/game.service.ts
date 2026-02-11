@@ -57,10 +57,6 @@ export class GameService {
 
     }
 
-    async findAll(): Promise<Game[]> {
-        return this.gameModel.find().exec();
-    }
-
     async findAdminMenuGames(): Promise<Game[]> {
         return this.gameModel.find({}, {
             _id: 1, name: 1, mapConfig: { size: 1 }, lastModified: 1, isVisible: 1,
@@ -69,7 +65,10 @@ export class GameService {
     }
 
     async findVisible(): Promise<Game[]> {
-        return this.gameModel.find({ isVisible: true }).exec();
+        return this.gameModel.find({ isVisible: true },{
+            _id: 1, name: 1, mapConfig: { size: 1 }, lastModified: 1, isVisible: 1,
+            description: 1, previewImage: 1,
+        }).exec();
     }
 
     async findOne(id: string): Promise<Game> {
