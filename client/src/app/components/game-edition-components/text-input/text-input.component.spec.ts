@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
 import { TextInputComponent } from './text-input.component';
 
 describe('TextInputComponent', () => {
@@ -17,7 +16,15 @@ describe('TextInputComponent', () => {
     await fixture.whenStable();
   });
 
-  it('should create', () => {
+  it('doit créer', () => {
     expect(component).toBeTruthy();
+  });
+  
+  it('doit émettre la valeur lors du changement de saisie', () => {
+    spyOn(component.valueChange, 'emit');
+    const inputElement = fixture.nativeElement.querySelector('input');
+    inputElement.value = 'Test';
+    inputElement.dispatchEvent(new Event('input'));
+    expect(component.valueChange.emit).toHaveBeenCalledWith('Test');
   });
 });

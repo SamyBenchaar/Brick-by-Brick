@@ -32,7 +32,26 @@ describe('AppDialogComponent', () => {
     await fixture.whenStable();
   });
 
-  it('should create', () => {
+  it('doit créer', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('doit retourner l\'icône correcte pour le type success', () => {
+    component.data.type = 'success';
+    expect(component.getIcon()).toBe('✓');
+  });
+
+  it('doit retourner l\'icône correcte pour le type error', () => {
+    component.data.type = 'error';
+    expect(component.getIcon()).toBe('✕');
+  });
+
+  it('doit retourner l\'icône correcte pour le type info', () => {
+    component.data.type = 'info';
+    expect(component.getIcon()).toBe('ℹ');
+  });
+  it('doit retourner une chaîne vide pour un type inconnu', () => {
+    component.data.type = 'unknown' as unknown as typeof component.data.type;
+    expect(component.getIcon()).toBe('');
   });
 });
