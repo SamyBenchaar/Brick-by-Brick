@@ -5,12 +5,13 @@ import { Router, RouterLink } from '@angular/router';
 import { GAME_MODES_DISPLAY, GAME_SIZES_DISPLAY, GameModeValue, GameSizeId, getGameSizeLabel } from '@app/constants/game-config-constants';
 import { Game } from '@app/interfaces/game';
 import { CommunicationService } from '@app/services/communication/communication.service';
+import { GameListComponent } from '@app/components/game-list/game-list.component';
 
 @Component({
     selector: 'app-admin-page',
     templateUrl: './admin-page.component.html',
     styleUrls: ['./admin-page.component.scss'],
-    imports: [CommonModule, FormsModule, RouterLink],
+    imports: [CommonModule, FormsModule, RouterLink, GameListComponent],
 })
 export class AdminPageComponent implements OnInit {
     private communicationService = inject(CommunicationService);
