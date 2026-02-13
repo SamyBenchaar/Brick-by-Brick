@@ -1,9 +1,16 @@
 import { Component, inject } from '@angular/core';
-import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+import {
+    AVATARS,
+    BASE_ATTACK, BASE_DEFENSE,
+    BASE_LIFE, BASE_SPEED,
+    BONUS_AMOUNT,
+    BONUS_ATTRIBUTES,
+    DICE_PROBABILITY,
+    RANDOM_NAME_MAX,
+} from '@app/constants/character.constants';
 import { Character, Dice } from '@app/interfaces/character-model';
-import {BASE_LIFE, BASE_SPEED, BASE_ATTACK, BASE_DEFENSE, 
-    BONUS_AMOUNT, AVATARS, BONUS_ATTRIBUTES, RANDOM_NAME_MAX, DICE_PROBABILITY} from '@app/constants/character.constants';
 
 interface AvatarOption {
     id: number;
@@ -25,17 +32,17 @@ export class CharacterCreationPageComponent {
     avatars = AVATARS;
 
     createBaseCharacter(): Character {
-    return {
-        name: '',
-        avatarId: 1,
-        life: BASE_LIFE,
-        speed: BASE_SPEED,
-        attack: BASE_ATTACK,
-        defense: BASE_DEFENSE,
-        attackDice: 'D4',
-        defenseDice: 'D6',
-    };
-}
+        return {
+            name: '',
+            avatarId: 1,
+            life: BASE_LIFE,
+            speed: BASE_SPEED,
+            attack: BASE_ATTACK,
+            defense: BASE_DEFENSE,
+            attackDice: 'D4',
+            defenseDice: 'D6',
+        };
+    }
 
     selectAvatar(avatar: AvatarOption): void {
         this.character.avatarId = avatar.id;
@@ -55,7 +62,7 @@ export class CharacterCreationPageComponent {
     }
     setDice(attribute: 'attackDice' | 'defenseDice', dice: Dice) {
         this.character[attribute] = dice;
-        
+
         if (attribute === 'attackDice') {
             this.character.defenseDice = dice === 'D6' ? 'D4' : 'D6';
         } else {
@@ -89,11 +96,16 @@ export class CharacterCreationPageComponent {
     }
 
     isSubmitDisabled(): boolean {
-        return !this.character.name || !this.bonusTarget;
+        return !this.character.name || !this.bonusTarget || this.character.name.includes(' ');
     }
 
-    getTooltipText(): string { 
-        let text = 'Il manque:\n';
+
+    getTooltipText(): string {
+        let text = 'Attention:\n';
+        if (this.character.name.includes(' ')) {
+            text += '- Le nom ne peut pas contenir d\'espaces\n';
+        }
+
         if (!this.character.name) {
             text += '- Le nom du personnage\n';
         }
