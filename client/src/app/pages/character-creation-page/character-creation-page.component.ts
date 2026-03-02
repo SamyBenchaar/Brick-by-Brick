@@ -37,22 +37,22 @@ export class CharacterCreationPageComponent {
     }
 
     selectAvatar(avatar: AvatarOption): void {
-        this.character.setAvatarId(avatar.id);
+        this.character.avatarId = avatar.id;
     }
 
     getSelectedAvatarImage(): string {
-        const avatar = this.avatars.find(a => a.id === this.character.getAvatarId());
+        const avatar = this.avatars.find(a => a.id === this.character.avatarId);
         return avatar ? avatar.image : this.avatars[0].image;
     }
 
     applyBonus(target: 'life' | 'speed') {
-        this.character.setLife(BASE_LIFE);
-        this.character.setSpeed(BASE_SPEED);
+        this.character.life = BASE_LIFE;
+        this.character.speed = BASE_SPEED;
 
         if (target === 'life') {
-            this.character.setLife(this.character.getLife() + BONUS_AMOUNT);
+            this.character.life += BONUS_AMOUNT;
         } else {
-            this.character.setSpeed(this.character.getSpeed() + BONUS_AMOUNT);
+            this.character.speed += BONUS_AMOUNT;
         }
         this.bonusTarget = target;
     }
@@ -60,9 +60,9 @@ export class CharacterCreationPageComponent {
         this.character[attribute] = dice;
 
         if (attribute === 'attackDice') {
-            this.character.setDefenseDice(dice === 'D6' ? 'D4' : 'D6');
+            this.character.defenseDice = dice === 'D6' ? 'D4' : 'D6';
         } else {
-            this.character.setAttackDice(dice === 'D6' ? 'D4' : 'D6');
+            this.character.attackDice = dice === 'D6' ? 'D4' : 'D6';
         }
     }
     close() {
@@ -74,13 +74,13 @@ export class CharacterCreationPageComponent {
         const attributes = ['life', 'speed'] as const;
         const randomAttribute = attributes[Math.floor(Math.random() * BONUS_ATTRIBUTES.length)];
 
-        this.character.setName(randomName);
-        this.character.setAvatarId(randomAvatarId);
+        this.character.name = randomName;
+        this.character.avatarId = randomAvatarId;
 
         this.applyBonus(randomAttribute as 'life' | 'speed');
 
-        this.character.setAttackDice(Math.random() < DICE_PROBABILITY ? 'D4' : 'D6');
-        this.character.setDefenseDice(this.character.getAttackDice() === 'D6' ? 'D4' : 'D6');
+        this.character.attackDice = Math.random() < DICE_PROBABILITY ? 'D4' : 'D6';
+        this.character.defenseDice = this.character.attackDice === 'D6' ? 'D4' : 'D6';
     }
     submitCharacter() {
         this.router.navigate(['/waiting-room']);
@@ -92,17 +92,17 @@ export class CharacterCreationPageComponent {
     }
 
     isSubmitDisabled(): boolean {
-        return !this.character.getName() || !this.bonusTarget || this.character.getName().includes(' ');
+        return !this.character.name || !this.bonusTarget || this.character.name.includes(' ');
     }
 
 
     getTooltipText(): string {
         let text = 'Attention:\n';
-        if (this.character.getName().includes(' ')) {
+        if (this.character.name.includes(' ')) {
             text += '- Le nom ne peut pas contenir d\'espaces\n';
         }
 
-        if (!this.character.getName()) {
+        if (!this.character.name) {
             text += '- Le nom du personnage\n';
         }
         if (!this.bonusTarget) {
