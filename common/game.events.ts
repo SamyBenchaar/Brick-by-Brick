@@ -6,3 +6,10 @@ export enum GameEvents {
     GameDeleted = 'gameDeleted',
     GameList = 'gameList',
 }
+
+export enum ChatEvents {
+    SendMessage = 'sendMessage',
+    ReceiveMessage = 'receiveMessage',
+    LoadChatHistory = 'loadChatHistory',
+    ChatHistory = 'chatHistory',
+}
