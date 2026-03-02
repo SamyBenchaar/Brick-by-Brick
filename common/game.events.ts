@@ -24,10 +24,3 @@ export enum GameEvents {
     GameStarted = 'gameStarted',
     RoomError = 'roomError',
 }
-
-export enum ChatEvents {
-    SendMessage = 'sendMessage',
-    ReceiveMessage = 'receiveMessage',
-    LoadChatHistory = 'loadChatHistory',
-    ChatHistory = 'chatHistory',
-}
