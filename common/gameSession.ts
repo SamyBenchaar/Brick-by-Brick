@@ -18,7 +18,7 @@ export class GameSession {
     }
 
     removePlayer(character):void {
-        this.players = this.players.filter(player => player.getId() !== character.getId())
+        this.players = this.players.filter(player => player.id !== character.id);
     }
 
     getRoomId(): string {

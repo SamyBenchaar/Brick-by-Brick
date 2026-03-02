@@ -1,71 +1,75 @@
 import { Dice } from '@common/dice';
 
 export class Character {
-  private id: string;
+  private _id: string;
 
   constructor (
-    private name: string,
-    private avatarId: number,
+    private _name: string,
+    private _avatarId: number,
 
-    private life: number,
-    private speed: number,
-    private attack: number,
-    private defense: number,
+    private _life: number,
+    private _speed: number,
+    private _attack: number,
+    private _defense: number,
 
-    private attackDice: Dice,
-    private defenseDice: Dice,
+    private _attackDice: Dice,
+    private _defenseDice: Dice,
   ){};
 
-  getId(): string {
-    return this.id;
+  get id(): string {
+    return this._id;
   }
-  getName(): string {
-    return this.name;
+  get name(): string {
+    return this._name;
   }
-  getAvatarId(): number {
-    return this.avatarId;
+  get avatarId(): number {
+    return this._avatarId;
   }
-  getLife(): number {
-    return this.life;
+  get life(): number {
+    return this._life;
   }
-  getSpeed(): number {
-    return this.speed;
+  get speed(): number {
+    return this._speed;
   }
-  getAttack(): number {
-    return this.attack;
+  get attack(): number {
+    return this._attack;
   }
-  getDefense(): number {
-    return this.defense;
+  get defense(): number {
+    return this._defense;
   }
-  getAttackDice(): Dice {
-    return this.attackDice;
+  get attackDice(): Dice {
+    return this._attackDice;
   }
-  getDefenseDice(): Dice {
-    return this.defenseDice;
+  get defenseDice(): Dice {
+    return this._defenseDice;
   }
 
-  setName(name: string): void {
-    this.name = name;
+  set id(value: string) {
+    this._id = value;
   }
-  setAvatarId(avatarId: number): void {
-    this.avatarId = avatarId;
+  set name(value: string) {
+    this._name = value;
   }
-  setLife(life: number): void {
-    this.life = life;
+  set avatarId(value: number) {
+    this._avatarId = value;
   }
-  setSpeed(speed: number): void {
-    this.speed = speed;
+  set life(value: number) {
+    this._life = value;
   }
-  setAttack(attack: number): void {
-    this.attack = attack;
+  set speed(value: number) {
+    this._speed = value;
   }
-  setDefense(defense: number): void {
-    this.defense = defense;
+  set attack(value: number) {
+    this._attack = value;
   }
-  setAttackDice(attackDice: Dice): void {
-    this.attackDice = attackDice;
+  set defense(value: number) {
+    this._defense = value;
   }
-  setDefenseDice(defenseDice: Dice): void {
-    this.defenseDice = defenseDice;
+  set attackDice(value: Dice) {
+    this._attackDice = value;
   }
+  set defenseDice(value: Dice) {
+    this._defenseDice = value;
+  }
+  
 }
