@@ -1,4 +1,4 @@
-import { Dice } from '@app/interfaces/character-model';
+import { Dice } from '@common/dice';
 
 export const BASE_LIFE = 6;
 export const BASE_SPEED = 6;

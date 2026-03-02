@@ -10,7 +10,8 @@ import {
     DICE_PROBABILITY,
     RANDOM_NAME_MAX,
 } from '@app/constants/character.constants';
-import { Character, Dice } from '@app/interfaces/character-model';
+import { Dice } from '@common/dice';
+import { Character } from '@common/character';
 
 interface AvatarOption {
     id: number;
@@ -32,16 +33,7 @@ export class CharacterCreationPageComponent {
     avatars = AVATARS;
 
     createBaseCharacter(): Character {
-        return {
-            name: '',
-            avatarId: 1,
-            life: BASE_LIFE,
-            speed: BASE_SPEED,
-            attack: BASE_ATTACK,
-            defense: BASE_DEFENSE,
-            attackDice: 'D4',
-            defenseDice: 'D6',
-        };
+        return new Character('', 1, BASE_LIFE, BASE_SPEED, BASE_ATTACK, BASE_DEFENSE, 'D4', 'D6');
     }
 
     selectAvatar(avatar: AvatarOption): void {
@@ -57,7 +49,11 @@ export class CharacterCreationPageComponent {
         this.character.life = BASE_LIFE;
         this.character.speed = BASE_SPEED;
 
-        this.character[target] += BONUS_AMOUNT;
+        if (target === 'life') {
+            this.character.life += BONUS_AMOUNT;
+        } else {
+            this.character.speed += BONUS_AMOUNT;
+        }
         this.bonusTarget = target;
     }
     setDice(attribute: 'attackDice' | 'defenseDice', dice: Dice) {
