@@ -33,41 +33,36 @@ export class CharacterCreationPageComponent {
     avatars = AVATARS;
 
     createBaseCharacter(): Character {
-        return {
-            name: '',
-            avatarId: 1,
-            life: BASE_LIFE,
-            speed: BASE_SPEED,
-            attack: BASE_ATTACK,
-            defense: BASE_DEFENSE,
-            attackDice: 'D4',
-            defenseDice: 'D6',
-        };
+        return new Character('', 1, BASE_LIFE, BASE_SPEED, BASE_ATTACK, BASE_DEFENSE, 'D4', 'D6');
     }
 
     selectAvatar(avatar: AvatarOption): void {
-        this.character.avatarId = avatar.id;
+        this.character.setAvatarId(avatar.id);
     }
 
     getSelectedAvatarImage(): string {
-        const avatar = this.avatars.find(a => a.id === this.character.avatarId);
+        const avatar = this.avatars.find(a => a.id === this.character.getAvatarId());
         return avatar ? avatar.image : this.avatars[0].image;
     }
 
     applyBonus(target: 'life' | 'speed') {
-        this.character.life = BASE_LIFE;
-        this.character.speed = BASE_SPEED;
+        this.character.setLife(BASE_LIFE);
+        this.character.setSpeed(BASE_SPEED);
 
-        this.character[target] += BONUS_AMOUNT;
+        if (target === 'life') {
+            this.character.setLife(this.character.getLife() + BONUS_AMOUNT);
+        } else {
+            this.character.setSpeed(this.character.getSpeed() + BONUS_AMOUNT);
+        }
         this.bonusTarget = target;
     }
     setDice(attribute: 'attackDice' | 'defenseDice', dice: Dice) {
         this.character[attribute] = dice;
 
         if (attribute === 'attackDice') {
-            this.character.defenseDice = dice === 'D6' ? 'D4' : 'D6';
+            this.character.setDefenseDice(dice === 'D6' ? 'D4' : 'D6');
         } else {
-            this.character.attackDice = dice === 'D6' ? 'D4' : 'D6';
+            this.character.setAttackDice(dice === 'D6' ? 'D4' : 'D6');
         }
     }
     close() {
@@ -79,13 +74,13 @@ export class CharacterCreationPageComponent {
         const attributes = ['life', 'speed'] as const;
         const randomAttribute = attributes[Math.floor(Math.random() * BONUS_ATTRIBUTES.length)];
 
-        this.character.name = randomName;
-        this.character.avatarId = randomAvatarId;
+        this.character.setName(randomName);
+        this.character.setAvatarId(randomAvatarId);
 
         this.applyBonus(randomAttribute as 'life' | 'speed');
 
-        this.character.attackDice = Math.random() < DICE_PROBABILITY ? 'D4' : 'D6';
-        this.character.defenseDice = this.character.attackDice === 'D6' ? 'D4' : 'D6';
+        this.character.setAttackDice(Math.random() < DICE_PROBABILITY ? 'D4' : 'D6');
+        this.character.setDefenseDice(this.character.getAttackDice() === 'D6' ? 'D4' : 'D6');
     }
     submitCharacter() {
         this.router.navigate(['/waiting-room']);
@@ -97,17 +92,17 @@ export class CharacterCreationPageComponent {
     }
 
     isSubmitDisabled(): boolean {
-        return !this.character.name || !this.bonusTarget || this.character.name.includes(' ');
+        return !this.character.getName() || !this.bonusTarget || this.character.getName().includes(' ');
     }
 
 
     getTooltipText(): string {
         let text = 'Attention:\n';
-        if (this.character.name.includes(' ')) {
+        if (this.character.getName().includes(' ')) {
             text += '- Le nom ne peut pas contenir d\'espaces\n';
         }
 
-        if (!this.character.name) {
+        if (!this.character.getName()) {
             text += '- Le nom du personnage\n';
         }
         if (!this.bonusTarget) {
