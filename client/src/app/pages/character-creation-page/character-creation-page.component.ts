@@ -10,7 +10,8 @@ import {
     DICE_PROBABILITY,
     RANDOM_NAME_MAX,
 } from '@app/constants/character.constants';
-import { Character, Dice } from '@app/interfaces/character-model';
+import { Dice } from '@common/dice';
+import { Character } from '@common/character';
 
 interface AvatarOption {
     id: number;

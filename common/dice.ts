@@ -1,0 +1,1 @@
+export type Dice = 'D4' | 'D6';
