@@ -1,6 +1,7 @@
 import { Component, ViewChild } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { RouterLink, Router } from '@angular/router';
 import { GameSessionListComponent } from '@app/components/game-session-list/game-session-list.component';
+import { inject } from '@angular/core';
 
 @Component({
   selector: 'app-join-game-page',
@@ -9,11 +10,13 @@ import { GameSessionListComponent } from '@app/components/game-session-list/game
   styleUrl: './join-game-page.component.scss',
 })
 export class JoinGamePageComponent {
-    @ViewChild(GameSessionListComponent) gameSessionListComponent!: GameSessionListComponent;    
+    @ViewChild(GameSessionListComponent) gameSessionListComponent!: GameSessionListComponent;
+    private router = inject(Router);
 
     join(): void {
-      const selectedGameSessionId = this.gameSessionListComponent?.selectedGameSessionId();
+      const selectedGameSessionId = this.gameSessionListComponent.selectedGameSessionId();
       if (selectedGameSessionId) {
+        this.router.navigate(['/character-creation'], { queryParams: { roomId: selectedGameSessionId } });
       }
     }
 

@@ -12,6 +12,9 @@ import {
 } from '@app/constants/character.constants';
 import { Dice } from '@common/dice';
 import { Character } from '@common/character';
+import { GameSessionSocketService } from '@app/services/communication/game-session-socket.service';
+import { ActivatedRoute } from '@angular/router';
+import { GameSession } from '@common/gameSession';
 
 interface AvatarOption {
     id: number;
@@ -28,9 +31,26 @@ interface AvatarOption {
 
 export class CharacterCreationPageComponent {
     private router = inject(Router);
+    private gameSessionSocketService = inject(GameSessionSocketService);
     character: Character = this.createBaseCharacter();
     bonusTarget: 'life' | 'speed' | null = null;
     avatars = AVATARS;
+    
+    private route = inject(ActivatedRoute);
+    roomId: string | null = null;
+    gameId: string | null = null;
+    fromGameCreation = false;
+    
+    ngOnInit(): void {
+        this.gameSessionSocketService.connect();
+        this.route.queryParams.subscribe(params => {
+        this.gameId = params['gameId'] || null;
+        this.roomId = params['roomId'] || null;
+
+        if (this.gameId) {
+            this.fromGameCreation = true;  // vient de créer une partie
+        }});
+    }
 
     createBaseCharacter(): Character {
         return new Character('', 1, BASE_LIFE, BASE_SPEED, BASE_ATTACK, BASE_DEFENSE, 'D4', 'D6');
@@ -83,7 +103,19 @@ export class CharacterCreationPageComponent {
         this.character.defenseDice = this.character.attackDice === 'D6' ? 'D4' : 'D6';
     }
     submitCharacter() {
-        this.router.navigate(['/waiting-room']);
+        //todo: verifier quil reste de la place dans la session de jeu avant de rejoindre
+        if(this.fromGameCreation && this.gameId) {
+            this.gameSessionSocketService.createGameSession(this.gameId, this.character)
+
+            this.gameSessionSocketService.onGameSessionCreated((gameSession: GameSession) => {
+                this.roomId = gameSession.roomId; 
+                this.router.navigate(['/waiting-room'], { queryParams: { roomId: this.roomId } });
+            });
+
+        } else if (this.roomId) {
+            this.gameSessionSocketService.joinGameSession(this.roomId, this.character);
+            this.router.navigate(['/waiting-room'], { queryParams: { roomId: this.roomId } });
+        }
     }
     submitHover = false;
 

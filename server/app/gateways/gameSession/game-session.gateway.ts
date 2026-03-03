@@ -1,4 +1,5 @@
 import { GameSession } from '@common/gameSession';
+import { Character } from '@common/character';
 import { GameSessionService } from '@app/services/gameSession/gameSession.service';
 import { GameSessionEvents } from '@common/game.events';
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
@@ -34,6 +35,16 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
     async handleRequestAvailableGameSessionList(socket: Socket) {
         const gameSessions = await this.gameSessionService.getAvailableGameSessions();
         socket.emit(GameSessionEvents.GameSessionList, gameSessions);
+    }
+
+    @SubscribeMessage(GameSessionEvents.CreateGameSession)
+    async handleCreateGameSession(socket: Socket, payload: { gameId: string, hostPlayer: Character }) {
+        const { gameId, hostPlayer } = payload;
+
+        const gameSession = this.gameSessionService.createGameSession(hostPlayer, gameId);
+
+        socket.emit(GameSessionEvents.GameSessionCreated, gameSession);
+        this.notifyGameSessionCreated(gameSession);
     }
 
     notifyGameSessionCreated(gameSession: GameSession): void {

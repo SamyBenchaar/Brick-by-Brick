@@ -16,6 +16,7 @@ export enum GameSessionEvents {
     GameSessionUpdated = 'gameSessionUpdated',
     GameSessionDeleted = 'gameSessionDeleted',
 
+    CreateGameSession = 'createGameSession',
     JoinGameSession = 'joinGameSession',
     LeaveGameSession = 'leaveGameSession',
 

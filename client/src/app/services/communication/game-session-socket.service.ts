@@ -2,6 +2,7 @@ import { Injectable, signal, WritableSignal } from '@angular/core';
 import { SocketService } from './socket.service';
 import { GameSession } from '@common/gameSession';
 import { GameSessionEvents } from '@common/game.events';
+import { Character } from '@common/character';
 
 @Injectable({
     providedIn: 'root',
@@ -38,8 +39,18 @@ export class GameSessionSocketService {
         this.socketService.emit(GameSessionEvents.RequestGameSessionList);
     }
 
-    joinGameSession(roomId: string, playerId: string): void {
-        this.socketService.emit(GameSessionEvents.JoinGameSession, { roomId, playerId });
+    createGameSession(gameId: string, hostPlayer: Character): void {
+        this.socketService.emit(GameSessionEvents.CreateGameSession, { gameId, hostPlayer });
+    }
+
+    onGameSessionCreated(callback: (gameSession: GameSession) => void) {
+        this.socketService.on<GameSession>(GameSessionEvents.GameSessionCreated, (gameSession) => {
+            callback(gameSession);
+        });
+    }
+
+    joinGameSession(roomId: string, player: Character): void {
+        this.socketService.emit(GameSessionEvents.JoinGameSession, { roomId, player });
     }
 
     leaveGameSession(roomId: string, playerId: string): void {

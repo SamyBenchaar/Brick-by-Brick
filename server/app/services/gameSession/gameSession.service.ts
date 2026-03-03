@@ -8,7 +8,7 @@ export class GameSessionService {
     private gameSessions: Map<string, GameSession> = new Map();
 
     onModuleInit() {
-        this.seedGameSessions();
+        // this.seedGameSessions();
     }
 
     createGameSession(hostPlayer: Character, mapId: string ): GameSession {
