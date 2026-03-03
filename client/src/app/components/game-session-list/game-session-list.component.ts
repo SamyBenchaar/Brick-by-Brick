@@ -14,7 +14,9 @@ export class GameSessionListComponent {
     private gameSessionSocketService = inject(GameSessionSocketService);
     selectedGameSessionId = signal<string | null>(null);
 
-    availableGameSessions = computed (() => this.gameSessionSocketService.gameSessions());
+    availableGameSessions = computed (() => this.gameSessionSocketService.gameSessions().filter(
+      session => session.status === 'waiting' && session.players.length < session.maxPlayers
+    ));
 
     ngOnInit(): void {
       this.gameSessionSocketService.connect();

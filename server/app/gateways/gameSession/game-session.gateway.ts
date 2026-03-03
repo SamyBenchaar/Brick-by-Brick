@@ -6,6 +6,7 @@ import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import { OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, SubscribeMessage, 
     WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
+import e from 'express';
 
 @WebSocketGateway({ cors: true })
 @Injectable()
@@ -45,6 +46,28 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
 
         socket.emit(GameSessionEvents.GameSessionCreated, gameSession);
         this.notifyGameSessionCreated(gameSession);
+    }
+
+    @SubscribeMessage(GameSessionEvents.JoinGameSession)
+    async handleJoinGameSession(socket: Socket, payload: { roomId: string, player: Character }) {
+        const { roomId, player } = payload;
+        const gameSession = this.gameSessionService.getGameSession(roomId);
+
+        if (!gameSession) {
+            socket.emit(GameSessionEvents.GameSessionJoinError, 'Session de jeu introuvable');
+            return;
+        }
+        
+        if (gameSession.status !== 'waiting') {
+            socket.emit(GameSessionEvents.GameSessionJoinError, 'La session de jeu a déjà commencé');
+            return;
+        }
+        else if (gameSession.players.length >= gameSession.maxPlayers) {
+            socket.emit(GameSessionEvents.GameSessionJoinError, 'La session de jeu est pleine');
+            return;
+        }
+        gameSession.addPlayer(player);
+        this.notifyGameSessionUpdated(gameSession);
     }
 
     notifyGameSessionCreated(gameSession: GameSession): void {

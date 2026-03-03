@@ -18,6 +18,7 @@ export enum GameSessionEvents {
 
     CreateGameSession = 'createGameSession',
     JoinGameSession = 'joinGameSession',
+    GameSessionJoinError = 'gameSessionJoinError',
     LeaveGameSession = 'leaveGameSession',
 
     LockGameSession = 'lockGameSession',
