@@ -1,0 +1,73 @@
+.player-sign-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px 12px;
+    min-width: 200px;
+
+    background-color: #c8a96e;
+    border: 3px solid #6b4c2a;
+    border-radius: 4px;
+    box-shadow:
+        inset 0 0 0 2px #e8c98a,
+        2px 2px 0px #3a2510;
+
+    font-family: 'MyFont', sans-serif;
+}
+
+.player-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #6b4c2a;
+}
+
+.player-avatar {
+    width: 48px;
+    height: 48px;
+    object-fit: cover;
+    border: 2px solid #6b4c2a;
+    border-radius: 3px;
+    image-rendering: pixelated;
+}
+
+.player-name {
+    font-size: 16px;
+    color: #3a2510;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: bold;
+}
+
+.stats-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 3px 6px;
+    border-radius: 3px;
+    background-color: rgba(255, 255, 255, 0.2);
+
+    &:nth-child(even) {
+        background-color: rgba(0, 0, 0, 0.07);
+    }
+}
+
+.stat-label {
+    font-size: 13px;
+    color: #3a2510;
+    white-space: nowrap;
+}
+
+.stat-value {
+    font-size: 13px;
+    color: #3a2510;
+    font-weight: bold;
+    letter-spacing: 1px;
+}

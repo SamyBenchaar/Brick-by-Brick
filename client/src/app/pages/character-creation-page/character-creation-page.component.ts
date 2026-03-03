@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import {
     AVATARS,
     BASE_ATTACK, BASE_DEFENSE,
-    BASE_LIFE, BASE_SPEED,
+    BASE_LIFE, BASE_SPEED,BASE_ACTIONS,
     BONUS_AMOUNT,
     BONUS_ATTRIBUTES,
     DICE_PROBABILITY,
@@ -33,7 +33,7 @@ export class CharacterCreationPageComponent {
     avatars = AVATARS;
 
     createBaseCharacter(): Character {
-        return new Character('', 1, BASE_LIFE, BASE_SPEED, BASE_ATTACK, BASE_DEFENSE, 'D4', 'D6');
+        return new Character('', 1, BASE_LIFE, BASE_LIFE, BASE_SPEED, BASE_ATTACK, BASE_DEFENSE, BASE_SPEED, BASE_ACTIONS, 'D4', 'D6');
     }
 
     selectAvatar(avatar: AvatarOption): void {
