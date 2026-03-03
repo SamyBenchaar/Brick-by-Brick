@@ -12,4 +12,13 @@
             <app-game-session-list></app-game-session-list>
         </section>
     </div>
+
+    <div class="footer">
+        <button
+            class="join-button button"
+            style="background-image: url('/assets/images/4x1_green.png')"
+            [disabled]="!canJoinGameSession()"
+            (click)="join()">
+            <span class="join-button-text">Rejoindre<br>la partie</span>
+        </button>
 </div>

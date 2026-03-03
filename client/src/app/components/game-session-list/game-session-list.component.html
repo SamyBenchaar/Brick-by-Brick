@@ -1,6 +1,11 @@
 <div class="game-session-list">
     @for (gameSession of getAvailableGameSessions(); track gameSession.roomId) {
-        <div class="game-session-item">
-        <p class="game-session-description">{{ gameSession.maxPlayers }}</p>
-    </div>> }
+        <div class="game-session-item" [class.selected]="isSelected(gameSession.roomId)" (click)="selectGameSession(gameSession.roomId)">
+            <div class="game-session-description">
+                <p>Nom de la carte utilisée:</p> 
+                <!-- TODO: ajouter le nom de la carte utilisée -->
+                <p>{{gameSession.players.length}} / {{ gameSession.maxPlayers }} joueurs</p>
+            </div>
+        </div> 
+    }
 </div>
