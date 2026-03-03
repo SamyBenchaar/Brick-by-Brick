@@ -1,0 +1,11 @@
+.game-sessions {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(15px, 2vmin, 30px);
+    padding: clamp(20px, 3vmin, 50px);
+}
+
+.title {
+    font-size: 30px;
+    padding: 10px;
+}

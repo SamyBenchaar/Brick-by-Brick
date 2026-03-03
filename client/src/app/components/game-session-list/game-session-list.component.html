@@ -1,0 +1,6 @@
+<div class="game-session-list">
+    @for (gameSession of getAvailableGameSessions(); track gameSession.roomId) {
+        <div class="game-session-item">
+        <p class="game-session-description">{{ gameSession.maxPlayers }}</p>
+    </div>> }
+</div>
