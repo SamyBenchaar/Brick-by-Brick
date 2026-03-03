@@ -3,7 +3,6 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
     AVATARS,
-    BASE_ACTIONS,
     BASE_ATTACK, BASE_DEFENSE,
     BASE_LIFE, BASE_SPEED,
     BONUS_AMOUNT,
@@ -58,7 +57,23 @@ export class CharacterCreationPageComponent implements OnInit, OnDestroy {
     }
 
     createBaseCharacter(): Character {
-        return new Character('', 1, BASE_LIFE, BASE_LIFE, BASE_SPEED, BASE_ATTACK, BASE_DEFENSE, BASE_SPEED, BASE_ACTIONS, 'D4', 'D6');
+        return new Character(
+            '',
+            1,
+            BASE_LIFE,
+            BASE_SPEED,
+            BASE_ATTACK,
+            BASE_DEFENSE,
+            'D4',
+            'D6',
+            0, // _victories
+            { x: 0, y: 0 }, // _position
+            { x: 0, y: 0 }, // _startPosition
+            true, // _isActive
+            () => undefined, // _resetMovement
+            () => undefined, // _moveTo
+            () => undefined, // _addVictory
+        );
     }
 
     selectAvatar(avatar: AvatarOption): void {
@@ -108,29 +123,23 @@ export class CharacterCreationPageComponent implements OnInit, OnDestroy {
         this.character.defenseDice = this.character.attackDice === 'D6' ? 'D4' : 'D6';
     }
     submitCharacter() {
-        // Vérifie qu'on a soit un gameId soit un roomId
         if (!this.gameId && !this.roomId) {
             alert('Erreur: Identifiant de session manquant. Veuillez revenir à la page précédente.');
             return;
         }
 
-        // Store player info in sessionStorage
         sessionStorage.setItem('playerUsername', this.character.name);
 
         if (this.fromGameCreation && this.gameId) {
-            // Le créateur: créer la session et attendre que le roomId soit reçu du serveur
             this.gameSessionSocketService.createGameSession(this.gameId, this.character);
 
-            // Créer un effect dans le contexte injecteur pour écouter les changements
             effect(() => {
-                const roomId = this.gameSessionSocketService.currentSession()?.roomId;
+                const roomId = this.gameSessionSocketService.currentSession()?.getRoomId();
                 if (roomId && roomId !== '') {
-                    // Naviguer avec le vrai roomId de la session
                     this.router.navigate(['/waiting-room', roomId]);
                 }
             }, { injector: this.injector });
         } else if (this.roomId) {
-            // Le rejoindeur: joindre la session et naviguer immédiatement
             this.gameSessionSocketService.joinGameSession(this.roomId, this.character);
             this.router.navigate(['/waiting-room', this.roomId]);
         }

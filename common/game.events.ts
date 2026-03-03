@@ -5,6 +5,11 @@ export enum GameEvents {
     GameUpdated = 'gameUpdated',
     GameDeleted = 'gameDeleted',
     GameList = 'gameList',
+    RequestMove = 'requestMove',
+    JoinGameSession = "JoinGameSession",
+    PlayerAbandoned = "PlayerAbandoned",
+    RequestCombat = "RequestCombat",
+    EndTurnRequest = "EndTurnRequest",
 }
 
 export enum GameSessionEvents {
@@ -28,6 +33,29 @@ export enum GameSessionEvents {
 
     StartGame = 'startGame',
     GameStarted = 'gameStarted',
+
+    GameSessionStarted = 'gameSessionStarted',
+    PlayerJoined = 'playerJoined',
+    PlayerLeft = 'playerLeft',
+
+    TurnStarting = 'turnStarting',
+    TurnStarted = 'turnStarted',
+    TurnTimeUpdate = 'turnTimeUpdate',
+    TurnEnded = 'turnEnded',
+    EndTurnRequest = 'endTurnRequest',
+
+    RequestMove = 'requestMove',
+    MoveExecuted = 'moveExecuted',
+    ReachableTiles = 'reachableTiles',
+
+    RequestCombat = 'requestCombat',
+    CombatResult = 'combatResult',
+
+    PlayerAbandoned = 'playerAbandoned',
+    GameEnded = 'gameEnded',
+
+    RequestPlayerInfo = 'requestPlayerInfo',
+    RequestTileInfo = 'requestTileInfo',
 }
 
 export enum ChatEvents {
@@ -36,4 +64,5 @@ export enum ChatEvents {
     LoadChatHistory = 'loadChatHistory',
     ChatHistory = 'chatHistory',
     ClearChatHistory = 'clearChatHistory',
+
 }

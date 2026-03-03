@@ -62,9 +62,9 @@ export class GameSessionSocketService {
 
         this.socketService.on<GameSession>(GameSessionEvents.GameSessionUpdated, (updatedSession) => {
             this.gameSessions.update(current =>
-                current.map(gameSession => gameSession.roomId === updatedSession.roomId ? updatedSession : gameSession));
+                current.map(gameSession => gameSession.getRoomId() === updatedSession.getRoomId() ? updatedSession : gameSession));
             const mySocketId = this.socketService.getSocketId();
-            const isCurrentPlayerInSession = updatedSession.players.find(p => p.socketId === mySocketId);
+            const isCurrentPlayerInSession = updatedSession.getPlayers().find(p => p.socketId === mySocketId);
 
             if (isCurrentPlayerInSession) {
                 this.currentSession.set(updatedSession);
@@ -73,8 +73,8 @@ export class GameSessionSocketService {
 
         this.socketService.on<string>(GameSessionEvents.GameSessionDeleted, (deletedRoomId) => {
             this.gameSessions.update(current =>
-                current.filter(gameSession => gameSession.roomId !== deletedRoomId));
-            if (this.currentSession()?.roomId === deletedRoomId) {
+                current.filter(gameSession => gameSession.getRoomId() !== deletedRoomId));
+            if (this.currentSession()?.getRoomId() === deletedRoomId) {
                 this.currentSession.set(null);
             }
         });
@@ -121,14 +121,14 @@ export class GameSessionSocketService {
     }
 
     kickPlayer(targetId: string): void {
-        const currentRoomId = this.currentSession()?.roomId;
+        const currentRoomId = this.currentSession()?.getRoomId();
         if (currentRoomId) {
             this.socketService.emit(GameSessionEvents.KickPlayer, { roomId: currentRoomId, targetId });
         }
     }
 
     leaveGameSession(): void {
-        const currentRoomId = this.currentSession()?.roomId;
+        const currentRoomId = this.currentSession()?.getRoomId();
         if (currentRoomId) {
             this.socketService.emit(GameSessionEvents.LeaveGameSession, { roomId: currentRoomId });
             this.currentSession.set(null);
@@ -136,7 +136,7 @@ export class GameSessionSocketService {
     }
 
     startGame(): void {
-        const currentRoomId = this.currentSession()?.roomId;
+        const currentRoomId = this.currentSession()?.getRoomId();
         if (currentRoomId) {
             this.socketService.emit(GameSessionEvents.StartGame, { roomId: currentRoomId });
         }
@@ -148,16 +148,16 @@ export class GameSessionSocketService {
 
     isCurrentUserHost(): boolean {
         const session = this.currentSession();
-        return session?.players[0]?.socketId === this.getSocketId();
+        return session?.getPlayers()[0]?.socketId === this.getSocketId();
     }
 
     isPlayerHost(socketId: string): boolean {
-        return this.currentSession()?.players[0]?.socketId === socketId;
+        return this.currentSession()?.getPlayers()[0]?.socketId === socketId;
     }
 
     canStartGame(): boolean {
         const session = this.currentSession();
-        return this.isCurrentUserHost() && (session?.players.length ?? 0) >= 2;
+        return this.isCurrentUserHost() && (session?.getPlayers().length ?? 0) >= 2;
     }
 }
 
