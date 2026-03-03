@@ -33,6 +33,22 @@ export class GameSessionSocketService {
         this.socketService.on<GameSession[]>(GameSessionEvents.GameSessionList, (gameSessions) => {
             this.gameSessions.set(gameSessions);
         });
+
+        this.socketService.on<GameSession>(GameSessionEvents.GameSessionCreated, (gameSession) => {
+            this.gameSessions.update(current => [...current, gameSession]);
+        });
+
+        this.socketService.on<GameSession>(GameSessionEvents.GameSessionUpdated, (updatedSession) => {
+            this.gameSessions.update(current =>
+                current.map(gameSession => gameSession.roomId === updatedSession.roomId ? updatedSession : gameSession)
+            );
+        });
+
+        this.socketService.on<string>(GameSessionEvents.GameSessionDeleted, (deletedRoomId) => {
+            this.gameSessions.update(current =>
+                current.filter(gs => gs.roomId !== deletedRoomId)
+            );
+        });
     }
 
     requestGameSessionList(): void {

@@ -1,5 +1,5 @@
 <div class="game-session-list">
-    @for (gameSession of getAvailableGameSessions(); track gameSession.roomId) {
+    @for (gameSession of availableGameSessions(); track gameSession.roomId) {
         <div class="game-session-item" [class.selected]="isSelected(gameSession.roomId)" (click)="selectGameSession(gameSession.roomId)">
             <div class="game-session-description">
                 <p>Nom de la carte utilisée:</p> 

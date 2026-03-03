@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { inject } from '@angular/core';
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket.service';
 import { signal } from '@angular/core';
+import { computed } from '@angular/core';
 
 @Component({
   selector: 'app-game-session-list',
@@ -12,6 +13,8 @@ import { signal } from '@angular/core';
 export class GameSessionListComponent {
     private gameSessionSocketService = inject(GameSessionSocketService);
     selectedGameSessionId = signal<string | null>(null);
+
+    availableGameSessions = computed (() => this.gameSessionSocketService.gameSessions());
 
     ngOnInit(): void {
       this.gameSessionSocketService.connect();
@@ -27,9 +30,5 @@ export class GameSessionListComponent {
 
     isSelected(gameSessionId: string): boolean {
       return this.selectedGameSessionId() === gameSessionId;
-    }
-
-    getAvailableGameSessions() {
-        return this.gameSessionSocketService.gameSessions();
     }
 }
