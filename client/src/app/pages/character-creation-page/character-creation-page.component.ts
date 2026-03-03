@@ -31,6 +31,7 @@ export class CharacterCreationPageComponent {
     character: Character = this.createBaseCharacter();
     bonusTarget: 'life' | 'speed' | null = null;
     avatars = AVATARS;
+    
 
     createBaseCharacter(): Character {
         return new Character('', 1, BASE_LIFE, BASE_LIFE, BASE_SPEED, BASE_ATTACK, BASE_DEFENSE, BASE_SPEED, BASE_ACTIONS, 'D4', 'D6');
