@@ -62,6 +62,8 @@ export class ChatComponent implements OnInit, OnChanges, OnDestroy {
     clearChat(): void {
         this.messages = [];
         this.chatService.clearMessages();
+        const roomId = this.gameId || 'waiting-room';
+        this.chatService.clearChatHistoryOnServer(roomId);
     }
 
     onKeyPress(event: KeyboardEvent): void {

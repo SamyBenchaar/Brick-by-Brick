@@ -69,6 +69,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
         this.server.to(`game-${roomId}`).emit(ChatEvents.ReceiveMessage, chatMessage);
     }
 
+    @SubscribeMessage(ChatEvents.ClearChatHistory)
+    handleClearChatHistory(socket: Socket, payload: { gameId?: string }) {
+        const roomId = payload.gameId || 'waiting-room';
+        this.chatHistoryByGame.delete(roomId);
+        this.server.to(`game-${roomId}`).emit(ChatEvents.ChatHistory, []);
+    }
+
     private generateMessageId(): string {
         const radix = 36;
         const substringStart = 2;

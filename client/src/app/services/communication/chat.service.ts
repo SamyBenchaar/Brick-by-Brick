@@ -57,6 +57,10 @@ export class ChatService {
         this.socketService.emit(ChatEvents.LoadChatHistory, { username, gameId });
     }
 
+    clearChatHistoryOnServer(gameId?: string): void {
+        this.socketService.emit(ChatEvents.ClearChatHistory, { gameId });
+    }
+
     getCurrentMessages(): ChatMessage[] {
         return this.messages();
     }
