@@ -5,24 +5,25 @@ export enum GameEvents {
     GameUpdated = 'gameUpdated',
     GameDeleted = 'gameDeleted',
     GameList = 'gameList',
+}
 
-    CreateRoom = 'createRoom',
-    JoinRoom = 'joinRoom',
-    LeaveRoom = 'leaveRoom',
-    KickPlayer = 'kickPlayer',
-    SendMessage = 'sendMessage',
-    StartGame = 'startGame',
+export enum GameSessionEvents {
+    RequestGameSessionList = 'requestGameSessionList',
+    GameSessionList = 'gameSessionList',
+    GameSessionListUpdated = 'gameSessionListUpdated',
 
-    RoomCreated = 'roomCreated',
-    RoomJoined = 'roomJoined',
-    RoomLeft = 'roomLeft',
-    PlayerKicked = 'playerKicked',
-    RoomLocked = 'roomLocked',
-    RoomUnlocked = 'roomUnlocked',
-    RoomCancelled = 'roomCancelled',
-    ChatMessage = 'chatMessage',
-    GameStarted = 'gameStarted',
-    RoomError = 'roomError',
+    GameSessionCreated = 'gameSessionCreated',
+    GameSessionUpdated = 'gameSessionUpdated',
+    GameSessionDeleted = 'gameSessionDeleted',
+
+    CreateGameSession = 'createGameSession',
+    JoinGameSession = 'joinGameSession',
+    GameSessionJoinError = 'gameSessionJoinError',
+    GameSessionFull = 'gameSessionFull',
+    LeaveGameSession = 'leaveGameSession',
+
+    LockGameSession = 'lockGameSession',
+    UnlockGameSession = 'unlockGameSession',
 }
 
 export enum ChatEvents {

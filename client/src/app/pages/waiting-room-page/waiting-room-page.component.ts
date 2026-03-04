@@ -1,20 +1,28 @@
-import { Component, OnInit } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Component, inject, OnInit, OnDestroy } from '@angular/core';
+import { Router } from '@angular/router';
+import { GameSessionSocketService } from '@app/services/communication/game-session-socket.service';
 import { ChatComponent } from '@app/components/chat/chat.component';
 
 @Component({
     selector: 'app-waiting-room-page',
-    imports: [RouterLink, ChatComponent],
+    imports: [ChatComponent],
     templateUrl: './waiting-room-page.component.html',
     styleUrls: ['./waiting-room-page.component.scss'],
 })
-export class WaitingRoomPage implements OnInit {
-    username: string = 'Player'; // aller chercher le nom du joueur à partir de la session 
-    gameId: string = ''; // aller chercher l'ID du jeu à partir de la session
-
+export class WaitingRoomPage implements OnInit, OnDestroy {
+    private router = inject(Router);
+    private gameSessionSocketService = inject(GameSessionSocketService);
+    
     ngOnInit(): void {
-        // aller chercher le nom du joueur et l'ID du jeu à partir de la sessionStorage
-        this.username = sessionStorage.getItem('playerUsername') || 'Player';
-        this.gameId = sessionStorage.getItem('gameId') || '';
+        this.gameSessionSocketService.connect();
+    }
+    
+    ngOnDestroy(): void {
+        this.gameSessionSocketService.disconnect();
+    }
+
+    leave(): void {
+        this.gameSessionSocketService.leaveGameSession();
+        this.router.navigate(['/home']);
     }
 }
