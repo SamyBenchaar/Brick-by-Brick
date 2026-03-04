@@ -6,7 +6,6 @@ import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import { OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, SubscribeMessage, 
     WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import e from 'express';
 
 @WebSocketGateway({ cors: true })
 @Injectable()
@@ -79,8 +78,7 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
         if (gameSession.status !== 'waiting') {
             socket.emit(GameSessionEvents.GameSessionJoinError, 'La session de jeu a déjà commencé');
             return;
-        }
-        else if (gameSession.players.length >= gameSession.maxPlayers) {
+        } else if (gameSession.players.length >= gameSession.maxPlayers) {
             socket.emit(GameSessionEvents.GameSessionFull, 'La session de jeu est pleine');
             return;
         }

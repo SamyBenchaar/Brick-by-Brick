@@ -1,7 +1,6 @@
-import { Component, ViewChild } from '@angular/core';
+import { Component, ViewChild, inject } from '@angular/core';
 import { RouterLink, Router } from '@angular/router';
 import { GameSessionListComponent } from '@app/components/game-session-list/game-session-list.component';
-import { inject } from '@angular/core';
 
 @Component({
   selector: 'app-join-game-page',

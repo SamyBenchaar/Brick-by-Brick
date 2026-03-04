@@ -1,8 +1,5 @@
-import { Component } from '@angular/core';
-import { inject } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, OnDestroy } from '@angular/core';
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket.service';
-import { signal } from '@angular/core';
-import { computed } from '@angular/core';
 
 @Component({
   selector: 'app-game-session-list',
@@ -10,13 +7,12 @@ import { computed } from '@angular/core';
   templateUrl: './game-session-list.component.html',
   styleUrl: './game-session-list.component.scss',
 })
-export class GameSessionListComponent {
+export class GameSessionListComponent implements OnInit, OnDestroy {
     private gameSessionSocketService = inject(GameSessionSocketService);
     selectedGameSessionId = signal<string | null>(null);
 
     availableGameSessions = computed (() => this.gameSessionSocketService.gameSessions().filter(
-      session => session.status === 'waiting' && session.players.length < session.maxPlayers
-    ));
+      session => session.status === 'waiting' && session.players.length < session.maxPlayers));
 
     ngOnInit(): void {
       this.gameSessionSocketService.connect();

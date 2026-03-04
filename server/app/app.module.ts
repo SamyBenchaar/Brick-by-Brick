@@ -26,7 +26,8 @@ import { ChatGateway } from './gateways/chat/chat.gateway';
         ]), 
     ],
     controllers: [GameController],
-    providers: [GameGateway, ChatGateway, GameSessionGateway, GameService, GameSessionService, Logger, MapValidationService, GameMetadataValidationService],
+    providers: [GameGateway, ChatGateway, GameSessionGateway, GameService, 
+        GameSessionService, Logger, MapValidationService, GameMetadataValidationService],
 })
 export class AppModule {
     constructor(

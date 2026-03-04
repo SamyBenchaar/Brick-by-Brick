@@ -1,6 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
-import { inject } from '@angular/core';
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket.service';
 import { ChatComponent } from '@app/components/chat/chat.component';
 
@@ -10,7 +9,7 @@ import { ChatComponent } from '@app/components/chat/chat.component';
     templateUrl: './waiting-room-page.component.html',
     styleUrls: ['./waiting-room-page.component.scss'],
 })
-export class WaitingRoomPage {
+export class WaitingRoomPage implements OnInit, OnDestroy {
     private router = inject(Router);
     private gameSessionSocketService = inject(GameSessionSocketService);
     
@@ -24,6 +23,6 @@ export class WaitingRoomPage {
 
     leave(): void {
         this.gameSessionSocketService.leaveGameSession();
-        this.router.navigate(["/home"]);
+        this.router.navigate(['/home']);
     }
 }

@@ -44,8 +44,7 @@ export class GameSessionSocketService {
 
         this.socketService.on<GameSession>(GameSessionEvents.GameSessionUpdated, (updatedSession) => {
             this.gameSessions.update(current =>
-                current.map(gameSession => gameSession.roomId === updatedSession.roomId ? updatedSession : gameSession)
-            );
+                current.map(gameSession => gameSession.roomId === updatedSession.roomId ? updatedSession : gameSession));
             if (this.currentSession()?.roomId === updatedSession.roomId) {
                 this.currentSession.set(updatedSession);
             }
@@ -53,8 +52,7 @@ export class GameSessionSocketService {
 
         this.socketService.on<string>(GameSessionEvents.GameSessionDeleted, (deletedRoomId) => {
             this.gameSessions.update(current =>
-                current.filter(gameSession => gameSession.roomId !== deletedRoomId)
-            );
+                current.filter(gameSession => gameSession.roomId !== deletedRoomId));
             if (this.currentSession()?.roomId === deletedRoomId) {
                 this.currentSession.set(null);
             }

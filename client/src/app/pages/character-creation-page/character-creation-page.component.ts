@@ -1,6 +1,6 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import {
     AVATARS,
     BASE_ATTACK, BASE_DEFENSE,
@@ -13,7 +13,6 @@ import {
 import { Dice } from '@common/dice';
 import { Character } from '@common/character';
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket.service';
-import { ActivatedRoute } from '@angular/router';
 
 interface AvatarOption {
     id: number;
@@ -28,7 +27,7 @@ interface AvatarOption {
     imports: [FormsModule],
 })
 
-export class CharacterCreationPageComponent {
+export class CharacterCreationPageComponent implements OnInit {
     private router = inject(Router);
     private gameSessionSocketService = inject(GameSessionSocketService);
     character: Character = this.createBaseCharacter();
@@ -43,12 +42,13 @@ export class CharacterCreationPageComponent {
     ngOnInit(): void {
         this.gameSessionSocketService.connect();
         this.route.queryParams.subscribe(params => {
-        this.gameId = params['gameId'] || null;
-        this.roomId = params['roomId'] || null;
+            this.gameId = params.gameId || null;
+            this.roomId = params.roomId || null;
 
-        if (this.gameId) {
-            this.fromGameCreation = true;
-        }});
+            if (this.gameId) {
+                this.fromGameCreation = true;
+            }
+        });
     }
 
     createBaseCharacter(): Character {
@@ -103,7 +103,7 @@ export class CharacterCreationPageComponent {
     }
     submitCharacter() {
         if(this.fromGameCreation && this.gameId) {
-            this.gameSessionSocketService.createGameSession(this.gameId, this.character)
+            this.gameSessionSocketService.createGameSession(this.gameId, this.character);
             this.router.navigate(['/waiting-room']);
         } else if (this.roomId) {
             this.gameSessionSocketService.joinGameSession(this.roomId, this.character);
