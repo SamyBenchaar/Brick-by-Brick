@@ -16,8 +16,8 @@ import { Server, Socket } from 'socket.io';
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit {
     @WebSocketServer() private server: Server;
     private readonly logger = new Logger('ChatGateway');
-    private chatHistoryByGame = new Map<string, ChatMessage[]>(); 
-    private userSessions = new Map<string, { username: string; gameId: string }>(); 
+    private chatHistoryByGame = new Map<string, ChatMessage[]>();
+    private userSessions = new Map<string, { username: string; gameId: string; hostPlayerId?: string }>();
 
     afterInit() {
         this.logger.log('ChatGateway initialisé');
@@ -33,11 +33,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
     }
 
     @SubscribeMessage(ChatEvents.LoadChatHistory)
-    handleLoadChatHistory(socket: Socket, payload: { username: string; gameId: string }) {
-        const { username, gameId } = payload;
+    handleLoadChatHistory(socket: Socket, payload: { username: string; gameId: string; hostPlayerId?: string }) {
+        const { username, gameId, hostPlayerId } = payload;
         const roomId = gameId || 'waiting-room';
 
-        this.userSessions.set(socket.id, { username, gameId: roomId });
+        this.userSessions.set(socket.id, { username, gameId: roomId, hostPlayerId });
 
         // Get chat history for this specific game room
         const gameHistory = this.chatHistoryByGame.get(roomId) || [];
@@ -57,6 +57,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
             content: message.content,
             timestamp: new Date(message.timestamp),
             gameId: message.gameId,
+            hostPlayerId: message.hostPlayerId,
         };
 
         const roomId = chatMessage.gameId || 'waiting-room';

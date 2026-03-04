@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit, OnDestroy } from '@angular/core';
+import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket.service';
 
 @Component({
@@ -8,25 +8,25 @@ import { GameSessionSocketService } from '@app/services/communication/game-sessi
   styleUrl: './game-session-list.component.scss',
 })
 export class GameSessionListComponent implements OnInit, OnDestroy {
-    private gameSessionSocketService = inject(GameSessionSocketService);
-    selectedGameSessionId = signal<string | null>(null);
+  gameSessionSocketService = inject(GameSessionSocketService);
+  selectedGameSessionId = signal<string | null>(null);
 
-    availableGameSessions = computed (() => this.gameSessionSocketService.gameSessions().filter(
-      session => session.status === 'waiting' && session.players.length < session.maxPlayers));
+  availableGameSessions = computed(() => this.gameSessionSocketService.gameSessions().filter(
+    session => session.status === 'waiting' && session.players.length < session.maxPlayers));
 
-    ngOnInit(): void {
-      this.gameSessionSocketService.connect();
-    }
+  ngOnInit(): void {
+    this.gameSessionSocketService.connect();
+  }
 
-    ngOnDestroy(): void {
-        this.gameSessionSocketService.disconnect();
-    }
+  ngOnDestroy(): void {
+    this.gameSessionSocketService.disconnect();
+  }
 
-    selectGameSession(gameSessionId: string): void {
-      this.selectedGameSessionId.set(gameSessionId);
-    }
+  selectGameSession(gameSessionId: string): void {
+    this.selectedGameSessionId.set(gameSessionId);
+  }
 
-    isSelected(gameSessionId: string): boolean {
-      return this.selectedGameSessionId() === gameSessionId;
-    }
+  isSelected(gameSessionId: string): boolean {
+    return this.selectedGameSessionId() === gameSessionId;
+  }
 }

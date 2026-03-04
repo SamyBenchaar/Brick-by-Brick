@@ -14,6 +14,7 @@ import { ChatMessage } from '@common/message';
 export class ChatComponent implements OnInit, OnChanges, OnDestroy {
     @Input() username: string = 'Anonymous';
     @Input() gameId?: string;
+    @Input() hostPlayerId?: string;
 
     private chatService = inject(ChatService);
 
@@ -30,7 +31,7 @@ export class ChatComponent implements OnInit, OnChanges, OnDestroy {
 
     ngOnInit(): void {
         const roomId = this.gameId || 'waiting-room';
-        this.chatService.connect(this.username, roomId);
+        this.chatService.connect(this.username, roomId, this.hostPlayerId);
     }
 
     ngOnChanges(changes: SimpleChanges): void {
@@ -40,7 +41,7 @@ export class ChatComponent implements OnInit, OnChanges, OnDestroy {
             this.messageInput.set('');
             // a voir si ceci marche avec un gameID
             const roomId = this.gameId || 'waiting-room';
-            this.chatService.loadChatHistory(this.username, roomId);
+            this.chatService.loadChatHistory(this.username, roomId, this.hostPlayerId);
         }
     }
 
@@ -55,7 +56,7 @@ export class ChatComponent implements OnInit, OnChanges, OnDestroy {
         }
 
         const roomId = this.gameId || 'waiting-room';
-        this.chatService.sendMessage(this.username, content, roomId);
+        this.chatService.sendMessage(this.username, content, roomId, this.hostPlayerId);
         this.messageInput.set('');
     }
 

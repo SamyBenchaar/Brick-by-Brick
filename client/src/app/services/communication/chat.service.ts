@@ -12,13 +12,13 @@ export class ChatService {
 
     constructor(private socketService: SocketService) {}
 
-    connect(username: string, gameId?: string): void {
+    connect(username: string, gameId?: string, hostPlayerId?: string): void {
         if (!this.socketService.isConnected()) {
             this.socketService.connect();
         }
 
         this.setupEventListeners();
-        this.loadChatHistory(username, gameId);
+        this.loadChatHistory(username, gameId, hostPlayerId);
     }
 
     disconnect(): void {
@@ -37,7 +37,7 @@ export class ChatService {
         });
     }
 
-    sendMessage(username: string, content: string, gameId?: string): void {
+    sendMessage(username: string, content: string, gameId?: string, hostPlayerId?: string): void {
         if (!content.trim()) {
             return;
         }
@@ -47,14 +47,15 @@ export class ChatService {
             content,
             timestamp: new Date(),
             gameId,
+            hostPlayerId,
         };
 
         this.socketService.emit(ChatEvents.SendMessage, message);
     }
 
-    loadChatHistory(username: string, gameId?: string): void {
+    loadChatHistory(username: string, gameId?: string, hostPlayerId?: string): void {
         this.isLoading.set(true);
-        this.socketService.emit(ChatEvents.LoadChatHistory, { username, gameId });
+        this.socketService.emit(ChatEvents.LoadChatHistory, { username, gameId, hostPlayerId });
     }
 
     clearChatHistoryOnServer(gameId?: string): void {
