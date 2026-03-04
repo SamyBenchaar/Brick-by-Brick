@@ -2,8 +2,10 @@ import { Dice } from '@common/dice';
 
 export class Character {
   private _id: string;
+  private _isActif: boolean = false;
+  private _battlesWon: number = 0;
 
-  constructor (
+  constructor(
     private _name: string,
     private _avatarId: number,
 
@@ -14,10 +16,16 @@ export class Character {
 
     private _attackDice: Dice,
     private _defenseDice: Dice,
-  ){};
+  ) {};
 
   get id(): string {
     return this._id;
+  }
+  get isActif(): boolean {
+    return this._isActif;
+  }
+  get battleWon(): number {
+    return this._battlesWon;
   }
   get name(): string {
     return this._name;
@@ -71,5 +79,13 @@ export class Character {
   set defenseDice(value: Dice) {
     this._defenseDice = value;
   }
-  
+
+  toggleActif(): void {
+    this._isActif = !this._isActif;
+  }
+
+  addWin(): void {
+    this._battlesWon++;
+  }
+
 }

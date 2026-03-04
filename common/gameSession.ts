@@ -1,9 +1,10 @@
 import { Character } from './character';
+// import { OnInit } from '@angular/core';
 
 export type SessionStatus = 'waiting' | 'playing';
 
 export class GameSession {
-    
+
     players: {
         socketId: string;
         character: Character;
@@ -12,23 +13,27 @@ export class GameSession {
     roomId: string;
     maxPlayers: number;
     mapCopy: null;
+    host: Character;
 
-    constructor(socketId: string, hostPlayer: Character, mapId: string ) {
+    constructor(socketId: string, hostPlayer: Character, mapId: string) {
+        this.host = hostPlayer;
         this.addPlayer(socketId, hostPlayer);
         // to do: roomId, maxplayers et mapcopy, la cest des valeurs temporaires
-        if (!mapId){}
+        if (!mapId) {}
         this.roomId = 4 + Math.random().toString(16).slice(2, 6);
         this.maxPlayers = 4;
     };
+
 
     addPlayer(socketId: string, character: Character): void {
         // if (this.players.length >= this.maxPlayers) {
         //     throw new Error('Game session is full');
         // }
-        this.players.push({ socketId, character });
+        const nouvelleListe = [...this.players, { socketId, character }];
+        this.players = nouvelleListe.sort((a, b) => b.character.speed - a.character.speed);
     }
 
-    removePlayer(socketId: string):void {
+    removePlayer(socketId: string): void {
         this.players = this.players.filter(player => player.socketId !== socketId);
     }
 
@@ -57,7 +62,7 @@ export class GameSession {
     // }
 
     isHost(characterId: string): boolean {
-        return this.players[0]?.character.id === characterId;
+        return this.host.id === characterId;
     }
 
     isFull(): boolean {
