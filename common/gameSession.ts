@@ -33,6 +33,14 @@ export class GameSession {
         this.players = nouvelleListe.sort((a, b) => b.character.speed - a.character.speed);
     }
 
+    getRoomId(): string {
+        return this.roomId;
+    }
+
+    getHostSocketId(): string {
+        return this.players[0]?.socketId || '';
+    }
+
     removePlayer(socketId: string): void {
         this.players = this.players.filter(player => player.socketId !== socketId);
     }

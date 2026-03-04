@@ -1,5 +1,5 @@
 import { Component, ViewChild, inject } from '@angular/core';
-import { RouterLink, Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { GameSessionListComponent } from '@app/components/game-session-list/game-session-list.component';
 
 @Component({
@@ -9,18 +9,18 @@ import { GameSessionListComponent } from '@app/components/game-session-list/game
   styleUrl: './join-game-page.component.scss',
 })
 export class JoinGamePageComponent {
-    @ViewChild(GameSessionListComponent) gameSessionListComponent!: GameSessionListComponent;
-    private router = inject(Router);
+  @ViewChild(GameSessionListComponent) gameSessionListComponent!: GameSessionListComponent;
+  private router = inject(Router);
 
-    join(): void {
-      const selectedGameSessionId = this.gameSessionListComponent.selectedGameSessionId();
-      if (selectedGameSessionId) {
-        this.router.navigate(['/character-creation'], { queryParams: { roomId: selectedGameSessionId } });
-      }
+  join(): void {
+    const selectedGameSessionId = this.gameSessionListComponent.selectedGameSessionId();
+    if (selectedGameSessionId) {
+      this.router.navigate(['/character-creation'], { queryParams: { roomId: selectedGameSessionId } });
     }
+  }
 
-    canJoinGameSession(): boolean {
-        return !!this.gameSessionListComponent?.selectedGameSessionId();
-    }
+  canJoinGameSession(): boolean {
+    return !!this.gameSessionListComponent?.selectedGameSessionId();
+  }
 
 }
