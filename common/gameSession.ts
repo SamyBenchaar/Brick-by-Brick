@@ -3,7 +3,7 @@ import { Character } from './character';
 export type SessionStatus = 'waiting' | 'playing';
 
 export class GameSession {
-    
+
     players: {
         socketId: string;
         character: Character;
@@ -13,10 +13,10 @@ export class GameSession {
     maxPlayers: number;
     mapCopy: null;
 
-    constructor(socketId: string, hostPlayer: Character, mapId: string ) {
+    constructor(socketId: string, hostPlayer: Character, mapId: string) {
         this.addPlayer(socketId, hostPlayer);
         // to do: roomId, maxplayers et mapcopy, la cest des valeurs temporaires
-        if (!mapId){}
+        if (!mapId) {}
         this.roomId = 4 + Math.random().toString(16).slice(2, 6);
         this.maxPlayers = 4;
     };
@@ -28,7 +28,15 @@ export class GameSession {
         this.players.push({ socketId, character });
     }
 
-    removePlayer(socketId: string):void {
+    getRoomId(): string {
+        return this.roomId;
+    }
+
+    getHostSocketId(): string {
+        return this.players[0]?.socketId || '';
+    }
+
+    removePlayer(socketId: string): void {
         this.players = this.players.filter(player => player.socketId !== socketId);
     }
 
