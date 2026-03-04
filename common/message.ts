@@ -4,4 +4,5 @@ export interface ChatMessage {
     content: string;
     timestamp: Date;
     gameId?: string;
+    hostPlayerId?: string;
 }

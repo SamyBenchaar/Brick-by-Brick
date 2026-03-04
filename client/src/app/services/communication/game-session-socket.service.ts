@@ -1,8 +1,8 @@
 import { Injectable, signal, WritableSignal } from '@angular/core';
-import { SocketService } from './socket.service';
-import { GameSession } from '@common/gameSession';
-import { GameSessionEvents } from '@common/game.events';
 import { Character } from '@common/character';
+import { GameSessionEvents } from '@common/game.events';
+import { GameSession } from '@common/gameSession';
+import { SocketService } from './socket.service';
 
 @Injectable({
     providedIn: 'root',
@@ -10,12 +10,21 @@ import { Character } from '@common/character';
 export class GameSessionSocketService {
     gameSessions: WritableSignal<GameSession[]> = signal<GameSession[]>([]);
     currentSession: WritableSignal<GameSession | null> = signal<GameSession | null>(null);
+    playerSocketId: WritableSignal<string | null> = signal<string | null>(null);
+    roomId: WritableSignal<string> = signal<string>('');
+    hostSocketId: WritableSignal<string> = signal<string>('');
 
     constructor(private socketService: SocketService) {}
 
     connect(): void {
         if (!this.socketService.isConnected()) {
             this.socketService.connect();
+        }
+
+        // Get the player's socket ID after connection
+        const socketId = this.socketService.getSocketId();
+        if (socketId) {
+            this.playerSocketId.set(socketId);
         }
 
         this.setupEventListeners();
@@ -37,8 +46,10 @@ export class GameSessionSocketService {
 
         this.socketService.on<GameSession>(GameSessionEvents.GameSessionCreated, (gameSession) => {
             this.gameSessions.update(current => [...current, gameSession]);
-            if(!this.currentSession()) {
+            if (!this.currentSession()) {
                 this.currentSession.set(gameSession);
+                this.roomId.set(gameSession.roomId);
+                this.hostSocketId.set(gameSession.getHostSocketId());
             }
         });
 
@@ -47,7 +58,11 @@ export class GameSessionSocketService {
                 current.map(gameSession => gameSession.roomId === updatedSession.roomId ? updatedSession : gameSession));
             if (this.currentSession()?.roomId === updatedSession.roomId) {
                 this.currentSession.set(updatedSession);
+                this.roomId.set(updatedSession.roomId);
+                this.hostSocketId.set(updatedSession.getHostSocketId());
             }
+            // Re-demander la liste complète pour être sûr que c'est à jour
+            this.requestGameSessionList();
         });
 
         this.socketService.on<string>(GameSessionEvents.GameSessionDeleted, (deletedRoomId) => {
@@ -55,6 +70,8 @@ export class GameSessionSocketService {
                 current.filter(gameSession => gameSession.roomId !== deletedRoomId));
             if (this.currentSession()?.roomId === deletedRoomId) {
                 this.currentSession.set(null);
+                this.roomId.set('');
+                this.hostSocketId.set('');
             }
         });
 
@@ -84,6 +101,20 @@ export class GameSessionSocketService {
         if (currentRoomId) {
             this.socketService.emit(GameSessionEvents.LeaveGameSession, { roomId: currentRoomId });
             this.currentSession.set(null);
+            this.roomId.set('');
+            this.hostSocketId.set('');
         }
+    }
+
+    getRoomId(): string {
+        return this.currentSession()?.roomId || '';
+    }
+
+    getHostSocketId(): string {
+        return this.currentSession()?.getHostSocketId() || '';
+    }
+
+    getPlayerSocketId(): string | null {
+        return this.playerSocketId();
     }
 }

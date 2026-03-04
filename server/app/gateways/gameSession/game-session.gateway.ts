@@ -1,10 +1,12 @@
-import { GameSession } from '@common/gameSession';
-import { Character } from '@common/character';
 import { GameSessionService } from '@app/services/gameSession/gameSession.service';
+import { Character } from '@common/character';
 import { GameSessionEvents } from '@common/game.events';
+import { GameSession } from '@common/gameSession';
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
-import { OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, SubscribeMessage, 
-    WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
+import {
+    OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, SubscribeMessage,
+    WebSocketGateway, WebSocketServer
+} from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 
 @WebSocketGateway({ cors: true })
@@ -74,7 +76,7 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
             socket.emit(GameSessionEvents.GameSessionJoinError, 'Session de jeu introuvable');
             return;
         }
-        
+
         if (gameSession.status !== 'waiting') {
             socket.emit(GameSessionEvents.GameSessionJoinError, 'La session de jeu a déjà commencé');
             return;
@@ -82,8 +84,14 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
             socket.emit(GameSessionEvents.GameSessionFull, 'La session de jeu est pleine');
             return;
         }
-        player.id = socket.id;  
+        player.id = socket.id;
         gameSession.addPlayer(socket.id, player);
+
+        // Si la session est maintenant pleine, passer le statut à 'playing'
+        if (gameSession.players.length >= gameSession.maxPlayers) {
+            gameSession.status = 'playing';
+        }
+
         this.notifyGameSessionUpdated(gameSession);
     }
 
