@@ -1,6 +1,13 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100%;
+}
 .title {
     font-size: 30px;
     padding: 10px;
+    flex-shrink: 0;
 }
 
 .content {
@@ -14,9 +21,20 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    padding-left: 0.5rem;
+    padding: 0.5rem;
+    min-height: 0;
 }
 
 .players {
     border-right: 3px solid #333;
+}
+
+.chat {
+    padding-left: 1rem;
+    padding-right: 0.5rem;
+    
+    app-chat {
+        flex: 1;
+        min-height: 0;
+    }
 }

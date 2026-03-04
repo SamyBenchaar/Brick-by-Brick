@@ -1,10 +1,10 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import {
     AVATARS,
     BASE_ATTACK, BASE_DEFENSE,
-    BASE_LIFE, BASE_SPEED,BASE_ACTIONS,
+    BASE_LIFE, BASE_SPEED, BASE_ACTIONS,
     BONUS_AMOUNT,
     BONUS_ATTRIBUTES,
     DICE_PROBABILITY,
@@ -12,6 +12,7 @@ import {
 } from '@app/constants/character.constants';
 import { Dice } from '@common/dice';
 import { Character } from '@common/character';
+import { GameSessionSocketService } from '@app/services/communication/game-session-socket.service';
 
 interface AvatarOption {
     id: number;
@@ -26,12 +27,29 @@ interface AvatarOption {
     imports: [FormsModule],
 })
 
-export class CharacterCreationPageComponent {
+export class CharacterCreationPageComponent implements OnInit {
     private router = inject(Router);
+    private gameSessionSocketService = inject(GameSessionSocketService);
     character: Character = this.createBaseCharacter();
     bonusTarget: 'life' | 'speed' | null = null;
     avatars = AVATARS;
-    
+
+    private route = inject(ActivatedRoute);
+    roomId: string | null = null;
+    gameId: string | null = null;
+    fromGameCreation = false;
+
+    ngOnInit(): void {
+        this.gameSessionSocketService.connect();
+        this.route.queryParams.subscribe(params => {
+            this.gameId = params.gameId || null;
+            this.roomId = params.roomId || null;
+
+            if (this.gameId) {
+                this.fromGameCreation = true;
+            }
+        });
+    }
 
     createBaseCharacter(): Character {
         return new Character('', 1, BASE_LIFE, BASE_LIFE, BASE_SPEED, BASE_ATTACK, BASE_DEFENSE, BASE_SPEED, BASE_ACTIONS, 'D4', 'D6');
@@ -84,7 +102,13 @@ export class CharacterCreationPageComponent {
         this.character.defenseDice = this.character.attackDice === 'D6' ? 'D4' : 'D6';
     }
     submitCharacter() {
-        this.router.navigate(['/waiting-room']);
+        if (this.fromGameCreation && this.gameId) {
+            this.gameSessionSocketService.createGameSession(this.gameId, this.character);
+            this.router.navigate(['/waiting-room']);
+        } else if (this.roomId) {
+            this.gameSessionSocketService.joinGameSession(this.roomId, this.character);
+            this.router.navigate(['/waiting-room']);
+        }
     }
     submitHover = false;
 

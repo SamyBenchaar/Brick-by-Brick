@@ -1,0 +1,37 @@
+.game-session-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    padding: 0.5rem 0;        
+}
+  
+.game-session-item {
+    background: #ffffffcc;
+    border-radius: 10px;
+    border: 1px solid #000000;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    width: 220px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s, border 0.3s ease-in-out;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+
+    &:hover {
+      box-shadow: 0 12px 24px rgba(0,0,0,0.3);
+    }
+
+    &.selected {
+      border-color: #acf691;
+      border-width: 5px;
+      border-style: solid;
+      box-shadow: 0 12px 24px rgba(145, 217, 147, 0.7);
+    }
+}
+
+.game-session-description {
+    font-size: 18px;
+    color: #000000;
+    padding: 0.75rem;
+    text-align: center;
+}

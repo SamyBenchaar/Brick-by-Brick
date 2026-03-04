@@ -2,17 +2,19 @@
     <div class="header">
         <span class="header-title">Salle d'attente</span>
         <button class="button" style="background-image: url('/assets/images/red_large_brick.png');"
-        [routerLink]="['/home']">retour</button>
+        (click)="leave()">retour</button>
 
     </div>
 
     <div class="content">
         <section class="players">
             <h3 class="title brick-orange">Joueurs dans la partie</h3>
+            <!-- ajouter les joueurs -->
         </section>
 
         <section class="chat">
             <h3 class="title brick-orange">Clavardage</h3>
+            <app-chat></app-chat>
         </section>
     </div>
 </div>

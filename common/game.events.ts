@@ -6,3 +6,30 @@ export enum GameEvents {
     GameDeleted = 'gameDeleted',
     GameList = 'gameList',
 }
+
+export enum GameSessionEvents {
+    RequestGameSessionList = 'requestGameSessionList',
+    GameSessionList = 'gameSessionList',
+    GameSessionListUpdated = 'gameSessionListUpdated',
+
+    GameSessionCreated = 'gameSessionCreated',
+    GameSessionUpdated = 'gameSessionUpdated',
+    GameSessionDeleted = 'gameSessionDeleted',
+
+    CreateGameSession = 'createGameSession',
+    JoinGameSession = 'joinGameSession',
+    GameSessionJoinError = 'gameSessionJoinError',
+    GameSessionFull = 'gameSessionFull',
+    LeaveGameSession = 'leaveGameSession',
+
+    LockGameSession = 'lockGameSession',
+    UnlockGameSession = 'unlockGameSession',
+}
+
+export enum ChatEvents {
+    SendMessage = 'sendMessage',
+    ReceiveMessage = 'receiveMessage',
+    LoadChatHistory = 'loadChatHistory',
+    ChatHistory = 'chatHistory',
+    ClearChatHistory = 'clearChatHistory',
+}

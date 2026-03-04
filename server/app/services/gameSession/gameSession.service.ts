@@ -1,24 +1,33 @@
-import { Injectable } from '@nestjs/common';
-import { GameSession } from '@common/gameSession';
 import { Character } from '@common/character';
+import { GameSession } from '@common/gameSession';
+import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class GameSessionService {
 
     private gameSessions: Map<string, GameSession> = new Map();
 
-    createGameSession(hostPlayer: Character, mapId: string ): GameSession {
-        const newGameSession = new GameSession(hostPlayer, mapId);
-        this.gameSessions.set(newGameSession.getRoomId(), newGameSession);
+    createGameSession(socketId: string, hostPlayer: Character, mapId: string): GameSession {
+        const newGameSession = new GameSession(socketId, hostPlayer, mapId);
+        hostPlayer.id = socketId;
+        this.gameSessions.set(newGameSession.roomId, newGameSession);
 
         return newGameSession;
     }
 
-    getGameSession(roomId): GameSession {
+    getGameSession(roomId: string): GameSession {
         return this.gameSessions.get(roomId);
     }
 
-    deleteGameSession(roomId): void {
+    getAvailableGameSessions(): GameSession[] {
+        return Array.from(this.gameSessions.values()).filter(session => session.status === 'waiting');
+    }
+
+    getAllGameSessions(): GameSession[] {
+        return Array.from(this.gameSessions.values());
+    }
+
+    deleteGameSession(roomId: string): void {
         this.gameSessions.delete(roomId);
     }
 }

@@ -1,0 +1,29 @@
+.game-sessions {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(15px, 2vmin, 30px);
+    padding: clamp(20px, 3vmin, 50px);
+}
+
+.title {
+    font-size: 30px;
+    margin-top: 0.25rem;
+    margin-bottom: 0.5rem;
+    padding: 15px 10px;
+}
+
+.join-button {
+    display: flex;
+    padding: 33px;
+    font-size: 25px;
+    text-align: center;
+    align-items: center;
+}
+
+.footer {
+    position: fixed;
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+    bottom: 10px;
+}
