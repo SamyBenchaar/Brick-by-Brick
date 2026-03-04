@@ -29,6 +29,23 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
     }
 
     handleDisconnect(socket: Socket) {
+        const sessions = this.gameSessionService.getAllGameSessions();
+
+        for (const session of sessions) {
+            const player = session.players.find(p => p.socketId === socket.id);
+
+            if (player) {
+                session.removePlayer(socket.id);
+
+                if (session.players.length === 0) {
+                    this.gameSessionService.deleteGameSession(session.roomId);
+                    this.notifyGameSessionDeleted(session.roomId);
+                } else {
+                    this.notifyGameSessionUpdated(session);
+                }
+                break;
+            }
+        }
         this.logger.log(`Client déconnecté du GameSessionGateway: ${socket.id}`);
     }
 
@@ -42,7 +59,8 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
     async handleCreateGameSession(socket: Socket, payload: { gameId: string, hostPlayer: Character }) {
         const { gameId, hostPlayer } = payload;
 
-        const gameSession = this.gameSessionService.createGameSession(hostPlayer, gameId);
+        hostPlayer.id = socket.id;
+        const gameSession = this.gameSessionService.createGameSession(socket.id, hostPlayer, gameId);
 
         socket.emit(GameSessionEvents.GameSessionCreated, gameSession);
         this.notifyGameSessionCreated(gameSession);
@@ -66,8 +84,24 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
             socket.emit(GameSessionEvents.GameSessionJoinError, 'La session de jeu est pleine');
             return;
         }
-        gameSession.addPlayer(player);
+        player.id = socket.id;  
+        gameSession.addPlayer(socket.id, player);
         this.notifyGameSessionUpdated(gameSession);
+    }
+
+    @SubscribeMessage(GameSessionEvents.LeaveGameSession)
+    handleLeaveGameSession(socket: Socket, payload: { roomId: string }) {
+        const gameSession = this.gameSessionService.getGameSession(payload.roomId);
+        if (!gameSession) return;
+
+        gameSession.removePlayer(socket.id);
+
+        if (gameSession.players.length === 0) {
+            this.gameSessionService.deleteGameSession(gameSession.roomId);
+            this.notifyGameSessionDeleted(gameSession.roomId);
+        } else {
+            this.notifyGameSessionUpdated(gameSession);
+        }
     }
 
     notifyGameSessionCreated(gameSession: GameSession): void {

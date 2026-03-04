@@ -14,7 +14,6 @@ import { Dice } from '@common/dice';
 import { Character } from '@common/character';
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket.service';
 import { ActivatedRoute } from '@angular/router';
-import { GameSession } from '@common/gameSession';
 
 interface AvatarOption {
     id: number;
@@ -48,7 +47,7 @@ export class CharacterCreationPageComponent {
         this.roomId = params['roomId'] || null;
 
         if (this.gameId) {
-            this.fromGameCreation = true;  // vient de créer une partie
+            this.fromGameCreation = true;
         }});
     }
 
@@ -106,15 +105,10 @@ export class CharacterCreationPageComponent {
         //todo: verifier quil reste de la place dans la session de jeu avant de rejoindre
         if(this.fromGameCreation && this.gameId) {
             this.gameSessionSocketService.createGameSession(this.gameId, this.character)
-
-            this.gameSessionSocketService.onGameSessionCreated((gameSession: GameSession) => {
-                this.roomId = gameSession.roomId; 
-                this.router.navigate(['/waiting-room'], { queryParams: { roomId: this.roomId } });
-            });
-
+            this.router.navigate(['/waiting-room']);
         } else if (this.roomId) {
             this.gameSessionSocketService.joinGameSession(this.roomId, this.character);
-            this.router.navigate(['/waiting-room'], { queryParams: { roomId: this.roomId } });
+            this.router.navigate(['/waiting-room']);
         }
     }
     submitHover = false;

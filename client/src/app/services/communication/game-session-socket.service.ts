@@ -9,6 +9,7 @@ import { Character } from '@common/character';
 })
 export class GameSessionSocketService {
     gameSessions: WritableSignal<GameSession[]> = signal<GameSession[]>([]);
+    currentSession: WritableSignal<GameSession | null> = signal<GameSession | null>(null);
 
     constructor(private socketService: SocketService) {}
 
@@ -36,18 +37,31 @@ export class GameSessionSocketService {
 
         this.socketService.on<GameSession>(GameSessionEvents.GameSessionCreated, (gameSession) => {
             this.gameSessions.update(current => [...current, gameSession]);
+            if(!this.currentSession()) {
+                this.currentSession.set(gameSession);
+            }
         });
 
         this.socketService.on<GameSession>(GameSessionEvents.GameSessionUpdated, (updatedSession) => {
             this.gameSessions.update(current =>
                 current.map(gameSession => gameSession.roomId === updatedSession.roomId ? updatedSession : gameSession)
             );
+            if (this.currentSession()?.roomId === updatedSession.roomId) {
+                this.currentSession.set(updatedSession);
+            }
         });
 
         this.socketService.on<string>(GameSessionEvents.GameSessionDeleted, (deletedRoomId) => {
             this.gameSessions.update(current =>
-                current.filter(gs => gs.roomId !== deletedRoomId)
+                current.filter(gameSession => gameSession.roomId !== deletedRoomId)
             );
+            if (this.currentSession()?.roomId === deletedRoomId) {
+                this.currentSession.set(null);
+            }
+        });
+
+        this.socketService.on<string>(GameSessionEvents.GameSessionJoinError, (message) => {
+            alert(message);
         });
     }
 
@@ -59,17 +73,15 @@ export class GameSessionSocketService {
         this.socketService.emit(GameSessionEvents.CreateGameSession, { gameId, hostPlayer });
     }
 
-    onGameSessionCreated(callback: (gameSession: GameSession) => void) {
-        this.socketService.on<GameSession>(GameSessionEvents.GameSessionCreated, (gameSession) => {
-            callback(gameSession);
-        });
-    }
-
     joinGameSession(roomId: string, player: Character): void {
         this.socketService.emit(GameSessionEvents.JoinGameSession, { roomId, player });
     }
 
-    leaveGameSession(roomId: string, playerId: string): void {
-        this.socketService.emit(GameSessionEvents.LeaveGameSession, { roomId, playerId });
+    leaveGameSession(): void {
+        const currentRoomId = this.currentSession()?.roomId;
+        if (currentRoomId) {
+            this.socketService.emit(GameSessionEvents.LeaveGameSession, { roomId: currentRoomId });
+            this.currentSession.set(null);
+        }
     }
 }
