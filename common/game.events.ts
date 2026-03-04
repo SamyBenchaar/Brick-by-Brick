@@ -5,6 +5,24 @@ export enum GameEvents {
     GameUpdated = 'gameUpdated',
     GameDeleted = 'gameDeleted',
     GameList = 'gameList',
+
+    CreateRoom = 'createRoom',
+    JoinRoom = 'joinRoom',
+    LeaveRoom = 'leaveRoom',
+    KickPlayer = 'kickPlayer',
+    SendMessage = 'sendMessage',
+    StartGame = 'startGame',
+
+    RoomCreated = 'roomCreated',
+    RoomJoined = 'roomJoined',
+    RoomLeft = 'roomLeft',
+    PlayerKicked = 'playerKicked',
+    RoomLocked = 'roomLocked',
+    RoomUnlocked = 'roomUnlocked',
+    RoomCancelled = 'roomCancelled',
+    ChatMessage = 'chatMessage',
+    GameStarted = 'gameStarted',
+    RoomError = 'roomError',
 }
 
 export enum ChatEvents {
