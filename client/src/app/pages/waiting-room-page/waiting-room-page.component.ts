@@ -2,10 +2,11 @@ import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { inject } from '@angular/core';
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket.service';
+import { ChatComponent } from '@app/components/chat/chat.component';
 
 @Component({
     selector: 'app-waiting-room-page',
-    imports: [],
+    imports: [ChatComponent],
     templateUrl: './waiting-room-page.component.html',
     styleUrls: ['./waiting-room-page.component.scss'],
 })

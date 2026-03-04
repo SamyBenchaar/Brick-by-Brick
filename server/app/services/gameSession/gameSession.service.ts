@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
-import { GameSession } from '@common/gameSession';
 import { Character } from '@common/character';
+import { GameSession } from '@common/gameSession';
+import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class GameSessionService {

@@ -1,0 +1,40 @@
+<div class="chat-container">
+    <div class="messages-container">
+        @if (isLoading()) {
+            <div class="loading">Chargement des messages...</div>
+        }
+        @for (message of messages; track message._id) {
+            <div class="message" [class.own]="message.username === username">
+                <div class="message-header">
+                    <span class="username">{{ message.username }}</span>
+                    <span class="timestamp">{{ message.timestamp | date: 'HH:mm:ss' }}</span>
+                </div>
+                <div class="message-content">{{ message.content }}</div>
+            </div>
+        }
+    </div>
+
+    <div class="input-container">
+        <textarea
+            [(ngModel)]="messageInput"
+            (keypress)="onKeyPress($event)"
+            placeholder="Tapez votre message..."
+            class="message-input"
+            [disabled]="isLoading()"
+            maxlength="200">
+        </textarea>
+        <button 
+            (click)="sendMessage()"
+            [disabled]="!messageInput().trim() || isLoading()"
+            class="send-button">
+            Envoyer
+        </button>
+        <!--a effacer le clear chat-->
+        <button 
+            (click)="clearChat()"
+            class="clear-button"
+            title="Effacer tous les messages">
+            Effacer
+        </button>
+    </div>
+</div>

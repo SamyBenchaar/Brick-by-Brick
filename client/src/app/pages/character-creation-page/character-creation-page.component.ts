@@ -102,7 +102,6 @@ export class CharacterCreationPageComponent {
         this.character.defenseDice = this.character.attackDice === 'D6' ? 'D4' : 'D6';
     }
     submitCharacter() {
-        //todo: verifier quil reste de la place dans la session de jeu avant de rejoindre
         if(this.fromGameCreation && this.gameId) {
             this.gameSessionSocketService.createGameSession(this.gameId, this.character)
             this.router.navigate(['/waiting-room']);

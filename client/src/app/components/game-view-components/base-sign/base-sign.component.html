@@ -1,0 +1,11 @@
+
+<div class="sign-label" (click)="toggleSign()">{{name}}</div>
+@if(isExpanded()){
+    <div class="sign-container">
+        @if (iconUrl) {
+            <div class="sign-icon-wrapper">
+                <img class="sign-icon" [src]="iconUrl" [alt]="name" />
+            </div>
+        }
+    </div>
+}

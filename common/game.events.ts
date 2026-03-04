@@ -25,3 +25,11 @@ export enum GameSessionEvents {
     LockGameSession = 'lockGameSession',
     UnlockGameSession = 'unlockGameSession',
 }
+
+export enum ChatEvents {
+    SendMessage = 'sendMessage',
+    ReceiveMessage = 'receiveMessage',
+    LoadChatHistory = 'loadChatHistory',
+    ChatHistory = 'chatHistory',
+    ClearChatHistory = 'clearChatHistory',
+}
