@@ -63,6 +63,10 @@ export class GameSessionSocketService {
         this.socketService.on<string>(GameSessionEvents.GameSessionJoinError, (message) => {
             alert(message);
         });
+
+        this.socketService.on<string>(GameSessionEvents.GameSessionFull, (message) => {
+            alert(message);
+        });
     }
 
     requestGameSessionList(): void {

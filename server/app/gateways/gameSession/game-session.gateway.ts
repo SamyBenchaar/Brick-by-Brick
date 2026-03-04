@@ -81,7 +81,7 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
             return;
         }
         else if (gameSession.players.length >= gameSession.maxPlayers) {
-            socket.emit(GameSessionEvents.GameSessionJoinError, 'La session de jeu est pleine');
+            socket.emit(GameSessionEvents.GameSessionFull, 'La session de jeu est pleine');
             return;
         }
         player.id = socket.id;  
