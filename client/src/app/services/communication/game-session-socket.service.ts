@@ -1,4 +1,5 @@
 import { Injectable, signal, WritableSignal } from '@angular/core';
+import { Router } from '@angular/router';
 import { Character } from '@common/character';
 import { GameSessionEvents } from '@common/game.events';
 import { GameSession } from '@common/gameSession';
@@ -10,21 +11,17 @@ import { SocketService } from './socket.service';
 export class GameSessionSocketService {
     gameSessions: WritableSignal<GameSession[]> = signal<GameSession[]>([]);
     currentSession: WritableSignal<GameSession | null> = signal<GameSession | null>(null);
-    playerSocketId: WritableSignal<string | null> = signal<string | null>(null);
-    roomId: WritableSignal<string> = signal<string>('');
-    hostSocketId: WritableSignal<string> = signal<string>('');
+    kickedMessage: WritableSignal<string | null> = signal<string | null>(null);
+    cancelledMessage: WritableSignal<string | null> = signal<string | null>(null);
 
-    constructor(private socketService: SocketService) {}
+    constructor(
+        private socketService: SocketService,
+        private router: Router,
+    ) {}
 
     connect(): void {
         if (!this.socketService.isConnected()) {
             this.socketService.connect();
-        }
-
-        // Get the player's socket ID after connection
-        const socketId = this.socketService.getSocketId();
-        if (socketId) {
-            this.playerSocketId.set(socketId);
         }
 
         this.setupEventListeners();
@@ -36,6 +33,9 @@ export class GameSessionSocketService {
         this.socketService.off(GameSessionEvents.GameSessionCreated);
         this.socketService.off(GameSessionEvents.GameSessionUpdated);
         this.socketService.off(GameSessionEvents.GameSessionDeleted);
+        this.socketService.off(GameSessionEvents.PlayerKicked);
+        this.socketService.off(GameSessionEvents.RoomCancelled);
+        this.socketService.off(GameSessionEvents.GameStarted);
         this.socketService.disconnect();
     }
 
@@ -48,8 +48,6 @@ export class GameSessionSocketService {
             this.gameSessions.update(current => [...current, gameSession]);
             if (!this.currentSession()) {
                 this.currentSession.set(gameSession);
-                this.roomId.set(gameSession.roomId);
-                this.hostSocketId.set(gameSession.getHostSocketId());
             }
         });
 
@@ -58,11 +56,7 @@ export class GameSessionSocketService {
                 current.map(gameSession => gameSession.roomId === updatedSession.roomId ? updatedSession : gameSession));
             if (this.currentSession()?.roomId === updatedSession.roomId) {
                 this.currentSession.set(updatedSession);
-                this.roomId.set(updatedSession.roomId);
-                this.hostSocketId.set(updatedSession.getHostSocketId());
             }
-            // Re-demander la liste complète pour être sûr que c'est à jour
-            this.requestGameSessionList();
         });
 
         this.socketService.on<string>(GameSessionEvents.GameSessionDeleted, (deletedRoomId) => {
@@ -70,8 +64,6 @@ export class GameSessionSocketService {
                 current.filter(gameSession => gameSession.roomId !== deletedRoomId));
             if (this.currentSession()?.roomId === deletedRoomId) {
                 this.currentSession.set(null);
-                this.roomId.set('');
-                this.hostSocketId.set('');
             }
         });
 
@@ -79,8 +71,20 @@ export class GameSessionSocketService {
             alert(message);
         });
 
-        this.socketService.on<string>(GameSessionEvents.GameSessionFull, (message) => {
-            alert(message);
+        this.socketService.on<{ message: string }>(GameSessionEvents.PlayerKicked, (data) => {
+            this.kickedMessage.set(data.message);
+            this.currentSession.set(null);
+            this.router.navigate(['/']);
+        });
+
+        this.socketService.on<{ message: string }>(GameSessionEvents.RoomCancelled, (data) => {
+            this.cancelledMessage.set(data.message);
+            this.currentSession.set(null);
+            this.router.navigate(['/']);
+        });
+
+        this.socketService.on(GameSessionEvents.GameStarted, () => {
+            this.router.navigate(['/game']);
         });
     }
 
@@ -96,25 +100,26 @@ export class GameSessionSocketService {
         this.socketService.emit(GameSessionEvents.JoinGameSession, { roomId, player });
     }
 
+    kickPlayer(targetId: string): void {
+        const currentRoomId = this.currentSession()?.roomId;
+        if (currentRoomId) {
+            this.socketService.emit(GameSessionEvents.KickPlayer, { roomId: currentRoomId, targetId });
+        }
+    }
+
     leaveGameSession(): void {
         const currentRoomId = this.currentSession()?.roomId;
         if (currentRoomId) {
             this.socketService.emit(GameSessionEvents.LeaveGameSession, { roomId: currentRoomId });
             this.currentSession.set(null);
-            this.roomId.set('');
-            this.hostSocketId.set('');
         }
     }
 
-    getRoomId(): string {
-        return this.currentSession()?.roomId || '';
-    }
-
-    getHostSocketId(): string {
-        return this.currentSession()?.getHostSocketId() || '';
-    }
-
-    getPlayerSocketId(): string | null {
-        return this.playerSocketId();
+    startGame(): void {
+        const currentRoomId = this.currentSession()?.roomId;
+        if (currentRoomId) {
+            this.socketService.emit(GameSessionEvents.StartGame, { roomId: currentRoomId });
+        }
     }
 }
+

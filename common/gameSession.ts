@@ -4,25 +4,24 @@ import { Character } from './character';
 export type SessionStatus = 'waiting' | 'playing';
 
 export class GameSession {
-
-    players: {
-        socketId: string;
-        character: Character;
-    }[] = [];
-    status: string = 'waiting';
+    players: { socketId: string; character: Character }[] = [];
+    status: SessionStatus = 'waiting';
     roomId: string;
     maxPlayers: number;
     mapCopy: null;
     host: Character;
+    mapId: string;
+    // to do: roomId, maxplayers et mapcopy, la cest des valeurs temporaires
+    // if (!mapId) {}
+    // this.roomId = 4 + Math.random().toString(16).slice(2, 6);
 
     constructor(socketId: string, hostPlayer: Character, mapId: string) {
         this.host = hostPlayer;
-        this.addPlayer(socketId, hostPlayer);
-        // to do: roomId, maxplayers et mapcopy, la cest des valeurs temporaires
-        if (!mapId) {}
-        this.roomId = 4 + Math.random().toString(16).slice(2, 6);
+        this.roomId = crypto.randomUUID().substring(0, 8).toUpperCase();
         this.maxPlayers = 4;
-    };
+        this.mapId = mapId;
+        this.addPlayer(socketId, hostPlayer);
+    }
 
 
     addPlayer(socketId: string, character: Character): void {
@@ -33,6 +32,34 @@ export class GameSession {
         this.players = nouvelleListe.sort((a, b) => b.character.speed - a.character.speed);
     }
 
+    removePlayer(socketId: string): void {
+        this.players = this.players.filter(p => p.socketId !== socketId);
+    }
+
+    isHost(characterId: string): boolean {
+        return this.host.id === characterId;
+    }
+
+    isFull(): boolean {
+        return this.players.length >= this.maxPlayers;
+    }
+
+    getPlayers(): { socketId: string; character: Character }[] {
+        return [...this.players];
+    }
+
+    getStatus(): SessionStatus {
+        return this.status;
+    }
+
+    getMaxPlayers(): number {
+        return this.maxPlayers;
+    }
+
+    getMapId(): string {
+        return this.mapId;
+    }
+
     getRoomId(): string {
         return this.roomId;
     }
@@ -41,9 +68,7 @@ export class GameSession {
         return this.players[0]?.socketId || '';
     }
 
-    removePlayer(socketId: string): void {
-        this.players = this.players.filter(player => player.socketId !== socketId);
-    }
+
 
     // getPlayers(): Character[] {
     //     return [...this.players];
@@ -68,14 +93,6 @@ export class GameSession {
     // getLocked(): boolean {
     //     return this.isLocked;
     // }
-
-    isHost(characterId: string): boolean {
-        return this.host.id === characterId;
-    }
-
-    isFull(): boolean {
-        return this.players.length >= this.maxPlayers;
-    }
 
     // addPlayer(character: Character): void {
     //     this.players.push(character);

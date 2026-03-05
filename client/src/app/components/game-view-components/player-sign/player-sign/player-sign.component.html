@@ -1,0 +1,38 @@
+<app-base-sign [name]="name" [iconUrl]="iconUrl">
+    <div class="player-sign-container">
+
+        <div class="player-header">
+            <img class="player-avatar" [src]="avatar?.image" [alt]="player?.name" />
+            <span class="player-name">{{ player?.name }}</span>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-row">
+                <span class="stat-label">❤️ Vie</span>
+                <span class="stat-value">{{ player?.life }} / {{ player?.maxLife }}</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">⚡ Rapidité</span>
+                <span class="stat-value">{{ player?.speed }}</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">⚔️ Attaque</span>
+                <span class="stat-value">{{ player?.attack }} ({{ player?.attackDice }})</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">🛡️ Défense</span>
+                <span class="stat-value">{{ player?.defense }} ({{ player?.defenseDice }})</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">🎯 Actions</span>
+                <span class="stat-value">{{ player?.actions }}</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">🚶 Mouvements</span>
+                <span class="stat-value">{{ player?.movements }}</span>
+            </div>
+        </div>
+
+    </div>
+</app-base-sign>
+

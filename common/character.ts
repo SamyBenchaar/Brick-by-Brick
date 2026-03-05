@@ -9,10 +9,13 @@ export class Character {
     private _name: string,
     private _avatarId: number,
 
+    private _maxLife: number,
     private _life: number,
     private _speed: number,
     private _attack: number,
     private _defense: number,
+    private _movements: number,
+    private _actions: number,
 
     private _attackDice: Dice,
     private _defenseDice: Dice,
@@ -33,6 +36,9 @@ export class Character {
   get avatarId(): number {
     return this._avatarId;
   }
+  get maxLife(): number {
+    return this._maxLife;
+  }
   get life(): number {
     return this._life;
   }
@@ -44,6 +50,12 @@ export class Character {
   }
   get defense(): number {
     return this._defense;
+  }
+  get movements(): number{
+    return this._movements;
+  }
+  get actions(): number{
+    return this._actions;
   }
   get attackDice(): Dice {
     return this._attackDice;
@@ -61,6 +73,9 @@ export class Character {
   set avatarId(value: number) {
     this._avatarId = value;
   }
+  set maxLife(value: number){
+    this._maxLife = value;
+  }
   set life(value: number) {
     this._life = value;
   }
@@ -72,6 +87,12 @@ export class Character {
   }
   set defense(value: number) {
     this._defense = value;
+  }
+  set movements(value: number) {
+    this._movements = value;
+  }
+  set actions(value: number) {
+    this._actions = value;
   }
   set attackDice(value: Dice) {
     this._attackDice = value;
