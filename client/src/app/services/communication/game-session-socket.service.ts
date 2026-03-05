@@ -15,6 +15,9 @@ export class GameSessionSocketService {
     currentSession: WritableSignal<GameSession | null> = signal<GameSession | null>(null);
 
     private listenersInitialized = false;
+    kickedMessage: WritableSignal<string | null> = signal<string | null>(null);
+    cancelledMessage: WritableSignal<string | null> = signal<string | null>(null);
+    takenAvatars: WritableSignal<number[]> = signal<number[]>([]);
 
     constructor(
         private socketService: SocketService,
@@ -106,6 +109,10 @@ export class GameSessionSocketService {
         this.socketService.on(GameSessionEvents.GameStarted, () => {
             this.router.navigate(['/game']);
         });
+
+        this.socketService.on<number[]>(GameSessionEvents.AvatarTakenUpdated, (avatarIds) => {
+            this.takenAvatars.set(avatarIds);
+        });
     }
 
     requestGameSessionList(): void {
@@ -133,6 +140,11 @@ export class GameSessionSocketService {
             this.socketService.emit(GameSessionEvents.LeaveGameSession, { roomId: currentRoomId });
             this.currentSession.set(null);
         }
+    }
+
+    updateTakenAvatars(roomId: string | null, newAvatarId: number, previousAvatarId: number | null): void {
+        if (!roomId) return;
+        this.socketService.emit(GameSessionEvents.AvatarTakenUpdated, { roomId, newAvatarId, previousAvatarId });
     }
 
     startGame(): void {

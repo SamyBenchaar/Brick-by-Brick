@@ -139,6 +139,19 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
         this.logger.log(`Joueur ${payload.targetId} exclu de la salle ${payload.roomId}`);
     }
 
+    @SubscribeMessage(GameSessionEvents.AvatarTakenUpdated)
+    handleAvatarTakenUpdated(socket: Socket, payload: { roomId: string; newAvatarId: number; previousAvatarId: number | null }) {
+        const gameSession = this.gameSessionService.getGameSession(payload.roomId);
+
+        if(payload.previousAvatarId !== null) {
+            gameSession.takenAvatars = gameSession.takenAvatars.filter(id => id !== payload.previousAvatarId);
+        }
+        gameSession.takenAvatars.push(payload.newAvatarId);
+
+        this.notifyAvatarTakenUpdated(payload.roomId, gameSession.takenAvatars);
+    }
+
+
     private handleLeaveLogic(socket: Socket, roomId: string) {
         const gameSession = this.gameSessionService.getGameSession(roomId);
         if (!gameSession) return;
@@ -171,6 +184,10 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
 
     notifyGameSessionDeleted(gameSessionId: string): void {
         this.server.emit(GameSessionEvents.GameSessionDeleted, gameSessionId);
+    }
+
+    notifyAvatarTakenUpdated(roomId: string, takenAvatars: number[]): void {
+        this.server.to(roomId).emit(GameSessionEvents.AvatarTakenUpdated, takenAvatars);
     }
 }
 

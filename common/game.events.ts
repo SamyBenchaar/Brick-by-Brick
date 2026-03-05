@@ -22,6 +22,8 @@ export enum GameSessionEvents {
     GameSessionFull = 'gameSessionFull',
     LeaveGameSession = 'leaveGameSession',
 
+    AvatarTakenUpdated = 'avatarTakenUpdated',
+
     KickPlayer = 'kickPlayer',
     PlayerKicked = 'playerKicked',
     RoomCancelled = 'roomCancelled',

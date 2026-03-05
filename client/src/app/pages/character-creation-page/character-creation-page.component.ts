@@ -1,4 +1,4 @@
-import { Component, effect, inject, Injector, OnDestroy, OnInit } from '@angular/core';
+import { Component, effect, inject, Injector, OnDestroy, OnInit, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
@@ -41,6 +41,10 @@ export class CharacterCreationPageComponent implements OnInit, OnDestroy {
     gameId: string | null = null;
     fromGameCreation = false;
 
+    availableAvatars = computed(() => 
+        this.avatars.filter(avatar => !this.gameSessionSocketService.takenAvatars().includes(avatar.id))
+    );
+
     ngOnInit(): void {
         this.gameSessionSocketService.connect();
         this.route.queryParams.subscribe(params => {
@@ -58,11 +62,25 @@ export class CharacterCreationPageComponent implements OnInit, OnDestroy {
     }
 
     createBaseCharacter(): Character {
-        return new Character('', 1, BASE_LIFE, BASE_LIFE, BASE_SPEED, BASE_ATTACK, BASE_DEFENSE, BASE_SPEED, BASE_ACTIONS, 'D4', 'D6');
+        const baseAvatarId: number = 1
+        if (this.roomId) {
+            this.gameSessionSocketService.updateTakenAvatars(this.roomId, baseAvatarId, null);
+        }
+        return new Character('', baseAvatarId, BASE_LIFE, BASE_LIFE, BASE_SPEED, BASE_ATTACK, BASE_DEFENSE, BASE_SPEED, BASE_ACTIONS, 'D4', 'D6');
     }
 
     selectAvatar(avatar: AvatarOption): void {
+        if(this.isAvatarTaken(avatar.id) || this.character.avatarId === avatar.id) {
+            return;
+        }
+        const previousAvatarId = this.character.avatarId;
         this.character.avatarId = avatar.id;
+
+        this.gameSessionSocketService.updateTakenAvatars(this.roomId, avatar.id, previousAvatarId); 
+    }
+
+    isAvatarTaken(avatarId: number): boolean {
+        return !this.availableAvatars().some(a => a.id === avatarId);
     }
 
     getSelectedAvatarImage(): string {
@@ -95,12 +113,14 @@ export class CharacterCreationPageComponent implements OnInit, OnDestroy {
     }
     createRandomCharacter() {
         const randomName = 'Hero' + Math.floor(Math.random() * RANDOM_NAME_MAX);
-        const randomAvatarId = Math.floor(Math.random() * this.avatars.length) + 1;
+
+        const randomAvatar = this.availableAvatars()[Math.floor(Math.random() * this.availableAvatars().length) + 1];
+        this.selectAvatar(randomAvatar);
+
         const attributes = ['life', 'speed'] as const;
         const randomAttribute = attributes[Math.floor(Math.random() * BONUS_ATTRIBUTES.length)];
 
         this.character.name = randomName;
-        this.character.avatarId = randomAvatarId;
 
         this.applyBonus(randomAttribute as 'life' | 'speed');
 

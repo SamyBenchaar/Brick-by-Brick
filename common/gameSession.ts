@@ -8,6 +8,7 @@ export class GameSession {
     roomId: string;
     maxPlayers: number;
     mapId: string;
+    takenAvatars: number[] = [];
 
     constructor(socketId: string, hostPlayer: Character, mapId: string) {
         this.roomId = crypto.randomUUID().substring(0, 8).toUpperCase();
@@ -18,9 +19,12 @@ export class GameSession {
 
     addPlayer(socketId: string, character: Character): void {
         this.players.push({ socketId, character });
+        this.takenAvatars.push(character.avatarId);
     }
 
     removePlayer(socketId: string): void {
+        const player = this.players.find(player => player.socketId === socketId);
+        this.takenAvatars = this.takenAvatars.filter(id => id !== player?.character.avatarId);
         this.players = this.players.filter(p => p.socketId !== socketId);
     }
 

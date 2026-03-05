@@ -7,7 +7,9 @@
                 @for (avatar of avatars; track avatar.id) {
                     <button 
                         class="avatar-item" 
+                        [class.taken]="isAvatarTaken(avatar.id)"
                         [class.selected]="character.avatarId === avatar.id"
+                        [disabled]="isAvatarTaken(avatar.id)"
                         (click)="selectAvatar(avatar)">
                         <img [src]="avatar.image" [alt]="avatar.name" />
                     </button>
