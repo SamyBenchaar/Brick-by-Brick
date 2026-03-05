@@ -1,0 +1,47 @@
+<div class="player-list">
+    <div class="list-header">
+        <span class="player-count">{{ (gameSessionSocketService.currentSession()?.players ?? []).length }} / {{ gameSessionSocketService.currentSession()?.maxPlayers ?? 0 }} joueurs</span>
+        @if (canStartGame()) {
+            <button class="btn-start" (click)="startGame()">
+                <span class="material-icons">play_arrow</span>
+                Démarrer la partie
+            </button>
+        }
+        @if (isCurrentUserHost() && (gameSessionSocketService.currentSession()?.players ?? []).length < 2) {
+            <span class="hint-start">En attente d'au moins un autre joueur...</span>
+        }
+    </div>
+
+    <div class="players">
+        @for (player of gameSessionSocketService.currentSession()?.players ?? []; track player.socketId) {
+            <div class="player-item" [class.is-host]="isPlayerHost(player.socketId)" [class.is-self]="isSelf(player.socketId)">
+                <div class="player-avatar-wrap">
+                    <img class="player-avatar" [src]="getAvatarImage(player.character)" [alt]="getCharacterName(player.character)" />
+                    @if (isPlayerHost(player.socketId)) {
+                        <span class="host-badge" title="Organisateur">
+                            <span class="material-icons">star</span>
+                        </span>
+                    }
+                </div>
+
+                <div class="player-info">
+                    <span class="player-name">{{ getCharacterName(player.character) }}</span>
+                    @if (isPlayerHost(player.socketId)) {
+                        <span class="player-role">Organisateur</span>
+                    } @else {
+                        <span class="player-role">Joueur</span>
+                    }
+                    @if (isSelf(player.socketId)) {
+                        <span class="you-tag">(vous)</span>
+                    }
+                </div>
+
+                @if (isCurrentUserHost() && !isPlayerHost(player.socketId)) {
+                    <button class="btn-kick" title="Exclure ce joueur" (click)="onKick(player.socketId)">
+                        <span class="material-icons">person_remove</span>
+                    </button>
+                }
+            </div>
+        }
+    </div>
+</div>
