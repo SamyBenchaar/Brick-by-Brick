@@ -2,11 +2,12 @@ import { CommonModule } from '@angular/common';
 import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ChatComponent } from '@app/components/chat/chat.component';
+import { WaitingRoomListComponent } from '@app/components/waiting-room-list/waiting-room-list.component';
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket.service';
 
 @Component({
     selector: 'app-waiting-room-page',
-    imports: [ChatComponent, CommonModule],
+    imports: [ChatComponent, CommonModule, WaitingRoomListComponent],
     templateUrl: './waiting-room-page.component.html',
     styleUrls: ['./waiting-room-page.component.scss'],
 })

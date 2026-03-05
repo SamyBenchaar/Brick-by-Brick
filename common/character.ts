@@ -51,10 +51,10 @@ export class Character {
   get defense(): number {
     return this._defense;
   }
-  get movements(): number{
+  get movements(): number {
     return this._movements;
   }
-  get actions(): number{
+  get actions(): number {
     return this._actions;
   }
   get attackDice(): Dice {
@@ -73,7 +73,7 @@ export class Character {
   set avatarId(value: number) {
     this._avatarId = value;
   }
-  set maxLife(value: number){
+  set maxLife(value: number) {
     this._maxLife = value;
   }
   set life(value: number) {
@@ -110,3 +110,4 @@ export class Character {
   }
 
 }
+
