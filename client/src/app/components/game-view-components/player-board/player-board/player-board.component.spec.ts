@@ -8,7 +8,7 @@ describe('PlayerBoardComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [PlayerBoardComponent]
+      imports: [PlayerBoardComponent],
     })
     .compileComponents();
 

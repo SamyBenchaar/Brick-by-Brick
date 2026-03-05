@@ -3,19 +3,19 @@
         @if (host) {
         <div class="player-row host-row">
             <span class="player-badge">👑</span>
-            <span class="player-name">{{ host.name }}</span>
-            <span class="player-wins">{{ host.battleWon }} victoires</span>
+            <span class="player-name">{{ host.character.name }}</span>
+            <span class="player-wins">{{ host.character.battleWon }} victoires</span>
         </div>
-        } @if (actifPlayer && actifPlayer.id !== host?.id) {
+        } @if (actifPlayer && actifPlayer.character.id !== host?.character?.id) {
         <div class="player-row actif-row">
             <span class="player-badge">⚔️</span>
-            <span class="player-name">{{ actifPlayer.name }}</span>
-            <span class="player-wins">{{ actifPlayer.battleWon }} victoires</span>
+            <span class="player-name" [class.player-hasleft]="actifPlayer.hasleft">{{ actifPlayer.character.name }}</span>
+            <span class="player-wins">{{ actifPlayer.character.battleWon }} victoires</span>
         </div>
-        } @for (player of players; track player.character.id) { @if (!player.character.isActif && player.character.id !== host?.id) {
-        <div class="player-row">
-            <span class="player-badge">🧙</span>
-            <span class="player-name">{{ player.character.name }}</span>
+        } @for (player of players; track player.character.id) { @if (!player.character.isActif && player.character.id !== host?.character?.id) {
+        <div class="player-row" [class.left-row]="player.hasleft">
+            <span class="player-badge">🧍🏽‍♂️</span>
+            <span class="player-name" [class.player-hasleft]="player.hasleft">{{ player.character.name }}</span>
             <span class="player-wins">{{ player.character.battleWon }} victoires</span>
         </div>
         } }
