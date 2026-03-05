@@ -23,7 +23,7 @@ export class WaitingRoomPage implements OnInit, OnDestroy {
     }
 
     get hostId(): string {
-        return this.gameSessionSocketService.currentSession()?.getHostSocketId() || '';
+        return this.gameSessionSocketService.currentSession()?.players[0]?.socketId || '';
     }
 
     ngOnInit(): void {

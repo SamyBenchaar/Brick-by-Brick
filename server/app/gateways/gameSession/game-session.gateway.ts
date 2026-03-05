@@ -75,7 +75,8 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
         socket.join(roomId);
         this.socketToRoom.set(socket.id, roomId);
 
-        this.server.to(roomId).emit(GameSessionEvents.GameSessionUpdated, gameSession);
+
+        this.server.emit(GameSessionEvents.GameSessionUpdated, gameSession);
 
         this.logger.log(`Joueur ${socket.id} a rejoint la salle ${roomId}`);
     }
@@ -133,7 +134,7 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
         const updatedSession = this.gameSessionService.getGameSession(payload.roomId);
         if (!updatedSession) return;
 
-        this.server.to(payload.roomId).emit(GameSessionEvents.GameSessionUpdated, updatedSession);
+        this.server.emit(GameSessionEvents.GameSessionUpdated, updatedSession);
 
         this.logger.log(`Joueur ${payload.targetId} exclu de la salle ${payload.roomId}`);
     }
@@ -154,7 +155,7 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
             this.logger.log(`Salle ${roomId} annulée (orga déconnecté)`);
         } else {
             gameSession.removePlayer(socket.id);
-            this.server.to(roomId).emit(GameSessionEvents.GameSessionUpdated, gameSession);
+            this.server.emit(GameSessionEvents.GameSessionUpdated, gameSession);
 
             this.logger.log(`Joueur ${socket.id} a quitté la salle ${roomId}`);
         }

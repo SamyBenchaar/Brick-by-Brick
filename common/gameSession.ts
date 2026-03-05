@@ -8,7 +8,6 @@ export class GameSession {
     roomId: string;
     maxPlayers: number;
     mapId: string;
-    isLocked: boolean = false;
 
     constructor(socketId: string, hostPlayer: Character, mapId: string) {
         this.roomId = crypto.randomUUID().substring(0, 8).toUpperCase();
@@ -19,12 +18,10 @@ export class GameSession {
 
     addPlayer(socketId: string, character: Character): void {
         this.players.push({ socketId, character });
-        if (this.isFull()) this.lock();
     }
 
     removePlayer(socketId: string): void {
         this.players = this.players.filter(p => p.socketId !== socketId);
-        if (!this.isFull() && this.isLocked) this.unlock();
     }
 
     isHost(socketId: string): boolean {
@@ -33,14 +30,6 @@ export class GameSession {
 
     isFull(): boolean {
         return this.players.length >= this.maxPlayers;
-    }
-
-    lock(): void {
-        this.isLocked = true;
-    }
-
-    unlock(): void {
-        this.isLocked = false;
     }
 
     getPlayers(): { socketId: string; character: Character }[] {
@@ -57,10 +46,6 @@ export class GameSession {
 
     getMapId(): string {
         return this.mapId;
-    }
-
-    getLocked(): boolean {
-        return this.isLocked;
     }
 
     getRoomId(): string {

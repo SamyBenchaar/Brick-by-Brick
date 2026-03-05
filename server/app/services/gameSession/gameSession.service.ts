@@ -18,7 +18,6 @@ export class GameSessionService {
         const session = this.gameSessions.get(roomId);
         if (!session) return 'Session de jeu introuvable';
         if (session.status !== 'waiting') return 'La session de jeu a déjà commencé';
-        if (session.isLocked) return 'La session de jeu est verrouillée';
         if (session.isFull()) return 'La session de jeu est pleine';
         session.addPlayer(socketId, player);
         return null;
