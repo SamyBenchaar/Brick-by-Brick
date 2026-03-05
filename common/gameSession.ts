@@ -67,6 +67,10 @@ export class GameSession {
         return this.roomId;
     }
 
+    getHostSocketId(): string {
+        return this.players[0]?.socketId || '';
+    }
+
     startGame(): void {
         this.status = 'playing';
     }
