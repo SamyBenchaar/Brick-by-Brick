@@ -11,7 +11,7 @@ export class GameSession {
     status: string = 'waiting';
     roomId: string;
     maxPlayers: number;
-    mapCopy: null;
+    mapCopy: any;
 
     constructor(socketId: string, hostPlayer: Character, mapId: string) {
         this.addPlayer(socketId, hostPlayer);

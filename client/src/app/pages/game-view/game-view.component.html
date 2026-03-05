@@ -1,0 +1,53 @@
+<div class="container">
+    <!-- HEADER avec titre et bouton retour -->
+    <div class="header">
+        <span class="header-title">Vue de jeu</span>
+        <button 
+            class="button" 
+            style="background-image: url('/assets/images/red_large_brick.png');"
+            [routerLink]="['/home']">
+            retour
+        </button>
+    </div>
+
+    <!-- CONTENU principal -->
+    <div class="content">
+        
+        <!-- LOADER - Affiché pendant le chargement -->
+        @if (!mapCopy()) {
+            <div class="loading">
+                <p>Chargement de la map...</p>
+                <p>Room ID: {{ roomId }}</p>
+            </div>
+        }
+
+        <!-- MAP INFO - Affiché une fois la map chargée -->
+        @if (mapCopy()) {
+            <section class="map-info">
+                <h3 class="title brick-orange">{{ mapCopy()!.name }}</h3>
+                
+                <div class="map-details">
+                    <p><strong>Description:</strong> {{ mapCopy()!.description }}</p>
+                    <p><strong>Mode de jeu:</strong> {{ mapCopy()!.gameMode }}</p>
+                    <p><strong>Taille:</strong> {{ mapCopy()!.mapConfig.size }}</p>
+                    <p><strong>Nombre de joueurs:</strong> {{ mapCopy()!.numberOfPlayers }}</p>
+                </div>
+
+                <!-- GRILLE DE JEU -->
+                <div class="game-grid-container">
+                    <h4>Grille de jeu</h4>
+                    <app-game-grid [gameData]="mapCopy()"></app-game-grid>
+                </div>
+
+                <!-- Debug: Voir toutes les données brutes (optionnel) -->
+                <details class="debug-section">
+                    <summary>Voir les données brutes (debug)</summary>
+                    <pre>{{ mapCopy() | json }}</pre>
+                </details>
+            </section>
+        }
+
+        <!-- Votre composant base-sign -->
+        <app-base-sign></app-base-sign>
+    </div>
+</div>

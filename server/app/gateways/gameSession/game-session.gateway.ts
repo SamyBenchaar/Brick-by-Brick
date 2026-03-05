@@ -61,7 +61,7 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
         const { gameId, hostPlayer } = payload;
 
         hostPlayer.id = socket.id;
-        const gameSession = this.gameSessionService.createGameSession(socket.id, hostPlayer, gameId);
+        const gameSession =await this.gameSessionService.createGameSession(socket.id, hostPlayer, gameId);
 
         socket.emit(GameSessionEvents.GameSessionCreated, gameSession);
         this.notifyGameSessionCreated(gameSession);
@@ -108,6 +108,12 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
         } else {
             this.notifyGameSessionUpdated(gameSession);
         }
+    }
+
+    @SubscribeMessage(GameSessionEvents.RequestMapCopy)
+    async handleRequestMapCopy(socket: Socket, payload: { roomId: string }) {
+        const mapCopy = this.gameSessionService.getMapCopy(payload.roomId);
+        socket.emit(GameSessionEvents.MapCopy, mapCopy);
     }
 
     notifyGameSessionCreated(gameSession: GameSession): void {

@@ -12,6 +12,7 @@ import { GameCreationPageComponent } from '@app/pages/game-creation-page/game-cr
 import { JoinGamePageComponent } from '@app/pages/join-game-page/join-game-page.component';
 import { MainPageComponent } from '@app/pages/main-page/main-page.component';
 import { WaitingRoomPage } from '@app/pages/waiting-room-page/waiting-room-page.component';
+import { GameViewComponent } from '@app/pages/game-view/game-view.component';
 import { environment } from './environments/environment';
 
 registerLocaleData(localeFr);
@@ -32,6 +33,7 @@ const routes: Routes = [
     { path: 'admin', component: AdminPageComponent },
     { path: 'character-creation', component: CharacterCreationPageComponent },
     { path: 'join-game', component: JoinGamePageComponent },
+    { path: 'game-view', component: GameViewComponent },
     { path: '**', redirectTo: '/home' },
 ];
 

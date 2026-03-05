@@ -3,6 +3,7 @@ import { Character } from '@common/character';
 import { GameSessionEvents } from '@common/game.events';
 import { GameSession } from '@common/gameSession';
 import { SocketService } from './socket.service';
+import { Game } from '@app/interfaces/game';
 
 @Injectable({
     providedIn: 'root',
@@ -13,6 +14,7 @@ export class GameSessionSocketService {
     playerSocketId: WritableSignal<string | null> = signal<string | null>(null);
     roomId: WritableSignal<string> = signal<string>('');
     hostSocketId: WritableSignal<string> = signal<string>('');
+    mapCopy: WritableSignal<Game|null> = signal<Game|null>(null);
 
     constructor(private socketService: SocketService) {}
 
@@ -82,10 +84,18 @@ export class GameSessionSocketService {
         this.socketService.on<string>(GameSessionEvents.GameSessionFull, (message) => {
             alert(message);
         });
+
+        this.socketService.on<Game | null>(GameSessionEvents.MapCopy, (mapCopy) => {
+            this.mapCopy.set(mapCopy);
+        });
     }
 
     requestGameSessionList(): void {
         this.socketService.emit(GameSessionEvents.RequestGameSessionList);
+    }
+
+    requestMapCopy(roomId: string): void {
+        this.socketService.emit(GameSessionEvents.RequestMapCopy, { roomId });
     }
 
     createGameSession(gameId: string, hostPlayer: Character): void {

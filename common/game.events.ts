@@ -24,6 +24,9 @@ export enum GameSessionEvents {
 
     LockGameSession = 'lockGameSession',
     UnlockGameSession = 'unlockGameSession',
+
+    RequestMapCopy = 'requestMapCopy',
+    MapCopy = 'mapCopy',
 }
 
 export enum ChatEvents {
