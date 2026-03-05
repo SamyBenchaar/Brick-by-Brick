@@ -17,16 +17,13 @@ export class WaitingRoomPage implements OnInit, OnDestroy {
 
     username: string = 'Player';
     roomIdFromRoute: string = '';
-    gameId = this.gameSessionSocketService.roomId;
-    hostPlayerId = this.gameSessionSocketService.hostSocketId;
 
     get roomId(): string {
-        // Use route param if available, otherwise use the signal
-        return this.roomIdFromRoute || this.gameId();
+        return this.roomIdFromRoute || this.gameSessionSocketService.currentSession()?.roomId || '';
     }
 
     get hostId(): string {
-        return this.hostPlayerId();
+        return this.gameSessionSocketService.currentSession()?.players[0]?.socketId || '';
     }
 
     ngOnInit(): void {
