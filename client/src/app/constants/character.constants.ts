@@ -4,6 +4,7 @@ export const BASE_LIFE = 6;
 export const BASE_SPEED = 6;
 export const BASE_ATTACK = 4;
 export const BASE_DEFENSE = 4;
+export const BASE_ACTIONS = 1;  
 export const BONUS_AMOUNT = 2;
 export const RANDOM_NAME_MAX = 1000;
 export const DICE_PROBABILITY = 0.5;

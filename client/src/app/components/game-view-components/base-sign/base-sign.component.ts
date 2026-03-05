@@ -1,4 +1,4 @@
-import { Component, Input, signal } from '@angular/core';
+import { Component, Input, signal} from '@angular/core';
 
 @Component({
   selector: 'app-base-sign',
@@ -7,8 +7,8 @@ import { Component, Input, signal } from '@angular/core';
   styleUrl: './base-sign.component.scss',
 })
 export class BaseSignComponent {
-  @Input() name: string = '';
-  @Input() iconUrl: string = '';
+  @Input() name: string | null = '';
+  @Input() iconUrl: string | null = '';
   isExpanded = signal(true);
 
   toggleSign(): void{

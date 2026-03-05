@@ -1,18 +1,18 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, effect, inject, Injector, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import {
     AVATARS,
     BASE_ATTACK, BASE_DEFENSE,
-    BASE_LIFE, BASE_SPEED,
+    BASE_LIFE, BASE_SPEED, BASE_ACTIONS,
     BONUS_AMOUNT,
     BONUS_ATTRIBUTES,
     DICE_PROBABILITY,
     RANDOM_NAME_MAX,
 } from '@app/constants/character.constants';
-import { Dice } from '@common/dice';
-import { Character } from '@common/character';
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket.service';
+import { Character } from '@common/character';
+import { Dice } from '@common/dice';
 
 interface AvatarOption {
     id: number;
@@ -27,18 +27,19 @@ interface AvatarOption {
     imports: [FormsModule],
 })
 
-export class CharacterCreationPageComponent implements OnInit {
+export class CharacterCreationPageComponent implements OnInit, OnDestroy {
     private router = inject(Router);
     private gameSessionSocketService = inject(GameSessionSocketService);
+    private injector = inject(Injector);
     character: Character = this.createBaseCharacter();
     bonusTarget: 'life' | 'speed' | null = null;
     avatars = AVATARS;
-    
+
     private route = inject(ActivatedRoute);
     roomId: string | null = null;
     gameId: string | null = null;
     fromGameCreation = false;
-    
+
     ngOnInit(): void {
         this.gameSessionSocketService.connect();
         this.route.queryParams.subscribe(params => {
@@ -51,8 +52,12 @@ export class CharacterCreationPageComponent implements OnInit {
         });
     }
 
+    ngOnDestroy(): void {
+        // cleanup if needed
+    }
+
     createBaseCharacter(): Character {
-        return new Character('', 1, BASE_LIFE, BASE_SPEED, BASE_ATTACK, BASE_DEFENSE, 'D4', 'D6');
+        return new Character('', 1, BASE_LIFE, BASE_LIFE, BASE_SPEED, BASE_ATTACK, BASE_DEFENSE, BASE_SPEED, BASE_ACTIONS, 'D4', 'D6');
     }
 
     selectAvatar(avatar: AvatarOption): void {
@@ -102,12 +107,31 @@ export class CharacterCreationPageComponent implements OnInit {
         this.character.defenseDice = this.character.attackDice === 'D6' ? 'D4' : 'D6';
     }
     submitCharacter() {
-        if(this.fromGameCreation && this.gameId) {
+        // Vérifie qu'on a soit un gameId soit un roomId
+        if (!this.gameId && !this.roomId) {
+            alert('Erreur: Identifiant de session manquant. Veuillez revenir à la page précédente.');
+            return;
+        }
+
+        // Store player info in sessionStorage
+        sessionStorage.setItem('playerUsername', this.character.name);
+
+        if (this.fromGameCreation && this.gameId) {
+            // Le créateur: créer la session et attendre que le roomId soit reçu du serveur
             this.gameSessionSocketService.createGameSession(this.gameId, this.character);
-            this.router.navigate(['/waiting-room']);
+
+            // Créer un effect dans le contexte injecteur pour écouter les changements
+            effect(() => {
+                const roomId = this.gameSessionSocketService.roomId();
+                if (roomId && roomId !== '') {
+                    // Naviguer avec le vrai roomId de la session
+                    this.router.navigate(['/waiting-room', roomId]);
+                }
+            }, { injector: this.injector });
         } else if (this.roomId) {
+            // Le rejoindeur: joindre la session et naviguer immédiatement
             this.gameSessionSocketService.joinGameSession(this.roomId, this.character);
-            this.router.navigate(['/waiting-room']);
+            this.router.navigate(['/waiting-room', this.roomId]);
         }
     }
     submitHover = false;

@@ -34,7 +34,8 @@ export class GameSessionService {
     }
 
     getAvailableGameSessions(): GameSession[] {
-        return Array.from(this.gameSessions.values()).filter(session => session.status === 'waiting');
+        return Array.from(this.gameSessions.values()).filter(session =>
+            session.status === 'waiting' && session.players.length < session.maxPlayers);
     }
 
     getAllGameSessions(): GameSession[] {

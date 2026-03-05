@@ -1,11 +1,15 @@
 
-<div class="sign-label" (click)="toggleSign()">{{name}}</div>
-@if(isExpanded()){
-    <div class="sign-container">
+<div class="sign-wrapper">
+    <div class="sign-label" (click)="toggleSign()">
         @if (iconUrl) {
-            <div class="sign-icon-wrapper">
-                <img class="sign-icon" [src]="iconUrl" [alt]="name" />
-            </div>
+            <img class="sign-icon" [src]="iconUrl" [alt]="name" />
         }
+        <span class="sign-title">{{ name }}</span>
+        <span class="sign-arrow">{{ isExpanded() ? '▲' : '▼' }}</span>
     </div>
-}
+    @if (isExpanded()) {
+        <div class="sign-body">
+            <ng-content></ng-content>
+        </div>
+    }
+</div>
