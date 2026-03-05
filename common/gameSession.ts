@@ -2,21 +2,26 @@ import { Character } from './character';
 // import { OnInit } from '@angular/core';
 
 export type SessionStatus = 'waiting' | 'playing';
+export type Player = {
+    socketId: string;
+    character: Character;
+    hasleft: boolean;
+};
 
 export class GameSession {
-    players: { socketId: string; character: Character }[] = [];
+    players: Player[] = [];
     status: SessionStatus = 'waiting';
     roomId: string;
     maxPlayers: number;
     mapCopy: null;
-    host: Character;
+    host: Player;
     mapId: string;
     // to do: roomId, maxplayers et mapcopy, la cest des valeurs temporaires
     // if (!mapId) {}
     // this.roomId = 4 + Math.random().toString(16).slice(2, 6);
 
     constructor(socketId: string, hostPlayer: Character, mapId: string) {
-        this.host = hostPlayer;
+        this.host = { socketId, character: hostPlayer, hasleft: false };
         this.roomId = crypto.randomUUID().substring(0, 8).toUpperCase();
         this.maxPlayers = 4;
         this.mapId = mapId;
@@ -28,16 +33,19 @@ export class GameSession {
         // if (this.players.length >= this.maxPlayers) {
         //     throw new Error('Game session is full');
         // }
-        const nouvelleListe = [...this.players, { socketId, character }];
+        const nouvelleListe = [...this.players, { socketId, character, hasleft: false }];
         this.players = nouvelleListe.sort((a, b) => b.character.speed - a.character.speed);
     }
 
     removePlayer(socketId: string): void {
-        this.players = this.players.filter(p => p.socketId !== socketId);
+        const player = this.players.find(p => p.socketId === socketId);
+        if (!player) return;
+        player.hasleft = true;
+        this.players = [...this.players];
     }
 
-    isHost(characterId: string): boolean {
-        return this.host.id === characterId;
+    isHost(socketId: string): boolean {
+        return this.host.socketId === socketId;
     }
 
     isFull(): boolean {
@@ -65,7 +73,7 @@ export class GameSession {
     }
 
     getHostSocketId(): string {
-        return this.players[0]?.socketId || '';
+        return this.host?.socketId || '';
     }
 
 
