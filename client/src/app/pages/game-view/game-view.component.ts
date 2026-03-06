@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, effect, Injector, OnDestroy, OnInit, inject } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { GameGridComponent } from '@app/components/game-edition-components/game-grid/game-grid.component';
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket.service';
 import { MapSize } from '@common/map';
@@ -15,7 +15,6 @@ import { Game } from '@app/interfaces/game';
   styleUrl: './game-view.component.scss',
 })
 export class GameViewComponent implements OnInit, OnDestroy {
-  private route = inject(ActivatedRoute);
   private gameSessionSocketService = inject(GameSessionSocketService);
   private injector = inject(Injector);
   private routeSubscription?: Subscription;
@@ -24,20 +23,10 @@ export class GameViewComponent implements OnInit, OnDestroy {
   gameData: Game | null = null;
 
   ngOnInit(): void {
-    
     effect(() => {
       const map = this.gameSessionSocketService.mapCopy();
-      this.gameData = map;
+      this.gameData = map ? JSON.parse(JSON.stringify(map)) : null;
     }, { injector: this.injector });
-
-    this.routeSubscription = this.route.queryParamMap.subscribe(params => {
-      this.roomId = params.get('roomId') || '';
-
-      if (this.roomId) {
-        this.gameSessionSocketService.connect();
-        this.gameSessionSocketService.requestMapCopy(this.roomId);
-      }
-    });
   }
 
   getMapSize(): MapSize {

@@ -1,8 +1,8 @@
 import { Injectable, signal, WritableSignal } from '@angular/core';
-import { Game } from '@app/interfaces/game';
 import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { AppDialogComponent } from '@app/components/game-edition-components/app-dialog/app-dialog.component';
+import { Game } from '@app/interfaces/game';
 import { Character } from '@common/character';
 import { GameSessionEvents } from '@common/game.events';
 import { GameSession } from '@common/gameSession';
@@ -18,7 +18,7 @@ export class GameSessionSocketService {
     roomId: WritableSignal<string> = signal<string>('');
     hostSocketId: WritableSignal<string> = signal<string>('');
     mapCopy: WritableSignal<Game | null> = signal<Game | null>(null);
-    
+
     private listenersInitialized = false;
 
     constructor(
@@ -54,7 +54,6 @@ export class GameSessionSocketService {
         this.socketService.off(GameSessionEvents.PlayerKicked);
         this.socketService.off(GameSessionEvents.RoomCancelled);
         this.socketService.off(GameSessionEvents.GameStarted);
-        this.socketService.off(GameSessionEvents.MapCopy);
 
         this.socketService.disconnect();
     }
@@ -115,23 +114,18 @@ export class GameSessionSocketService {
             });
         });
 
-        this.socketService.on(GameSessionEvents.GameStarted, () => {
-            this.router.navigate(['/game']);
+        this.socketService.on<{ roomId: string; mapData: Game }>(GameSessionEvents.GameStarted, (payload) => {
+            const { roomId, mapData } = payload;
+            this.mapCopy.set(mapData);
+            this.router.navigate(['/game-view'], { queryParams: { roomId } });
         });
 
-        this.socketService.on<Game | null>(GameSessionEvents.MapCopy, (mapCopy) => {
-            this.mapCopy.set(mapCopy);
-        });
     }
 
     requestGameSessionList(): void {
         this.socketService.emit(GameSessionEvents.RequestGameSessionList);
     }
 
-    requestMapCopy(roomId: string): void {
-        this.mapCopy.set(null);
-        this.socketService.emit(GameSessionEvents.RequestMapCopy, { roomId });
-    }
 
     createGameSession(gameId: string, hostPlayer: Character): void {
         this.socketService.emit(GameSessionEvents.CreateGameSession, { gameId, hostPlayer });

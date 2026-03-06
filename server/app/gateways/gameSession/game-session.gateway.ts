@@ -98,7 +98,7 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
         }
 
         gameSession.startGame();
-        this.server.to(payload.roomId).emit(GameSessionEvents.GameStarted);
+        this.server.to(payload.roomId).emit(GameSessionEvents.GameStarted, { roomId: payload.roomId , mapData: gameSession.mapCopy});
         this.logger.log(`Partie démarrée dans la salle ${payload.roomId}`);
     }
 
@@ -160,11 +160,6 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
         }
     }
 
-    @SubscribeMessage(GameSessionEvents.RequestMapCopy)
-    async handleRequestMapCopy(socket: Socket, payload: { roomId: string }) {
-        const mapCopy = this.gameSessionService.getMapCopy(payload.roomId);
-        socket.emit(GameSessionEvents.MapCopy, mapCopy);
-    }
 
     notifyGameSessionCreated(gameSession: GameSession): void {
         this.server.emit(GameSessionEvents.GameSessionCreated, gameSession);

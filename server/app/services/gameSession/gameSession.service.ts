@@ -45,10 +45,6 @@ export class GameSessionService {
             session.status === 'waiting' && session.players.length < session.maxPlayers);
     }
 
-    getMapCopy(roomId: string): Game | null {
-        const session = this.getGameSession(roomId);
-        return session?.mapCopy || null;
-    }
     
     getAllGameSessions(): GameSession[] {
         return Array.from(this.gameSessions.values());

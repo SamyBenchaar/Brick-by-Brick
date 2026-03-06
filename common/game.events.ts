@@ -28,8 +28,6 @@ export enum GameSessionEvents {
 
     StartGame = 'startGame',
     GameStarted = 'gameStarted',
-    RequestMapCopy = 'requestMapCopy',
-    MapCopy = 'mapCopy',
 }
 
 export enum ChatEvents {
