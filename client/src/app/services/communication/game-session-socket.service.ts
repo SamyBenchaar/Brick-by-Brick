@@ -72,9 +72,8 @@ export class GameSessionSocketService {
 
             if (isCurrentPlayerInSession) {
                 this.currentSession.set(updatedSession);
-
+                this.takenAvatars.set(updatedSession.takenAvatars);
             }
-            this.takenAvatars.set(updatedSession.takenAvatars);
         });
 
         this.socketService.on<string>(GameSessionEvents.GameSessionDeleted, (deletedRoomId) => {

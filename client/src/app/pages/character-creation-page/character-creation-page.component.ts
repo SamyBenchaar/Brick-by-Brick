@@ -1,4 +1,4 @@
-import { Component, effect, inject, Injector, OnDestroy, OnInit, computed } from '@angular/core';
+import { Component, computed, effect, inject, Injector, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
@@ -10,6 +10,7 @@ import {
     BONUS_ATTRIBUTES,
     DICE_PROBABILITY,
     RANDOM_NAME_MAX,
+    AVATAR_SYNC_DELAY_MS,
 } from '@app/constants/character.constants';
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket.service';
 import { Character } from '@common/character';
@@ -32,7 +33,7 @@ export class CharacterCreationPageComponent implements OnInit, OnDestroy {
     private router = inject(Router);
     private gameSessionSocketService = inject(GameSessionSocketService);
     private injector = inject(Injector);
-    character: Character = this.createBaseCharacter();
+    character!: Character;
     bonusTarget: 'life' | 'speed' | null = null;
     avatars = AVATARS;
 
@@ -41,8 +42,8 @@ export class CharacterCreationPageComponent implements OnInit, OnDestroy {
     gameId: string | null = null;
     fromGameCreation = false;
 
-    availableAvatars = computed(() => 
-        this.avatars.filter(avatar => !this.gameSessionSocketService.takenAvatars().includes(avatar.id))
+    availableAvatars = computed(() =>
+        this.avatars.filter(avatar => !this.gameSessionSocketService.takenAvatars().includes(avatar.id)),
     );
 
     ngOnInit(): void {
@@ -54,6 +55,20 @@ export class CharacterCreationPageComponent implements OnInit, OnDestroy {
             if (this.gameId) {
                 this.fromGameCreation = true;
             }
+
+            this.character = this.createBaseCharacter();
+
+            if (this.roomId) {
+                this.gameSessionSocketService.requestGameSessionList();
+                setTimeout(() => {
+                    const session = this.gameSessionSocketService.gameSessions().find(
+                        s => s.roomId === this.roomId,
+                    );
+                    if (session) {
+                        this.gameSessionSocketService.takenAvatars.set(session.takenAvatars);
+                    }
+                }, AVATAR_SYNC_DELAY_MS);
+            }
         });
     }
 
@@ -62,21 +77,18 @@ export class CharacterCreationPageComponent implements OnInit, OnDestroy {
     }
 
     createBaseCharacter(): Character {
-        const baseAvatarId: number = 1
-        if (this.roomId) {
-            this.gameSessionSocketService.updateTakenAvatars(this.roomId, baseAvatarId, null);
-        }
+        const baseAvatarId = 1;
         return new Character('', baseAvatarId, BASE_LIFE, BASE_LIFE, BASE_SPEED, BASE_ATTACK, BASE_DEFENSE, BASE_SPEED, BASE_ACTIONS, 'D4', 'D6');
     }
 
     selectAvatar(avatar: AvatarOption): void {
-        if(this.isAvatarTaken(avatar.id) || this.character.avatarId === avatar.id) {
+        if (this.isAvatarTaken(avatar.id) || this.character.avatarId === avatar.id) {
             return;
         }
         const previousAvatarId = this.character.avatarId;
         this.character.avatarId = avatar.id;
         if (this.roomId) {
-        this.gameSessionSocketService.updateTakenAvatars(this.roomId, avatar.id, previousAvatarId); 
+            this.gameSessionSocketService.updateTakenAvatars(this.roomId, avatar.id, previousAvatarId);
         }
     }
 
@@ -85,12 +97,6 @@ export class CharacterCreationPageComponent implements OnInit, OnDestroy {
     }
 
     isAvatarTakenByOther(avatarId: number): boolean {
-        console.log('Taken avatars:', this.gameSessionSocketService.takenAvatars());
-        console.log('character avatarId:', this.character.avatarId);
-        console.log('checking this avatarId:', avatarId);
-        console.log(this.isAvatarTaken(avatarId), this.character.avatarId !== avatarId);
-        console.log('isAvatarTakenByOther result:', this.isAvatarTaken(avatarId) && this.character.avatarId !== avatarId);
-        
         return this.isAvatarTaken(avatarId) && this.character.avatarId !== avatarId;
     }
 

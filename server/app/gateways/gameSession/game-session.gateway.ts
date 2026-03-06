@@ -75,7 +75,6 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
         socket.join(roomId);
         this.socketToRoom.set(socket.id, roomId);
 
-
         this.server.emit(GameSessionEvents.GameSessionUpdated, gameSession);
 
         this.logger.log(`Joueur ${socket.id} a rejoint la salle ${roomId}`);
@@ -143,12 +142,20 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
     handleAvatarTakenUpdated(socket: Socket, payload: { roomId: string; newAvatarId: number; previousAvatarId: number | null }) {
         const gameSession = this.gameSessionService.getGameSession(payload.roomId);
 
-        if(payload.previousAvatarId !== null) {
+        if (!gameSession) {
+            this.logger.warn(`Session ${payload.roomId} introuvable pour AvatarTakenUpdated`);
+            return;
+        }
+
+        if (payload.previousAvatarId !== null) {
             gameSession.takenAvatars = gameSession.takenAvatars.filter(id => id !== payload.previousAvatarId);
         }
-        gameSession.takenAvatars.push(payload.newAvatarId);
+        if (!gameSession.takenAvatars.includes(payload.newAvatarId)) {
+            gameSession.takenAvatars.push(payload.newAvatarId);
+        }
 
-        this.notifyAvatarTakenUpdated(payload.roomId, gameSession.takenAvatars);
+        this.server.emit(GameSessionEvents.GameSessionUpdated, gameSession);
+        this.logger.log(`Avatar ${payload.newAvatarId} marqué comme pris dans la salle ${payload.roomId}`);
     }
 
 
