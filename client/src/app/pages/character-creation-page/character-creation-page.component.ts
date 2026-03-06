@@ -75,12 +75,23 @@ export class CharacterCreationPageComponent implements OnInit, OnDestroy {
         }
         const previousAvatarId = this.character.avatarId;
         this.character.avatarId = avatar.id;
-
+        if (this.roomId) {
         this.gameSessionSocketService.updateTakenAvatars(this.roomId, avatar.id, previousAvatarId); 
+        }
     }
 
     isAvatarTaken(avatarId: number): boolean {
         return !this.availableAvatars().some(a => a.id === avatarId);
+    }
+
+    isAvatarTakenByOther(avatarId: number): boolean {
+        console.log('Taken avatars:', this.gameSessionSocketService.takenAvatars());
+        console.log('character avatarId:', this.character.avatarId);
+        console.log('checking this avatarId:', avatarId);
+        console.log(this.isAvatarTaken(avatarId), this.character.avatarId !== avatarId);
+        console.log('isAvatarTakenByOther result:', this.isAvatarTaken(avatarId) && this.character.avatarId !== avatarId);
+        
+        return this.isAvatarTaken(avatarId) && this.character.avatarId !== avatarId;
     }
 
     getSelectedAvatarImage(): string {

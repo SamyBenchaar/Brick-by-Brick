@@ -60,6 +60,7 @@ export class GameSessionSocketService {
             this.gameSessions.update(current => [...current, gameSession]);
             if (!this.currentSession()) {
                 this.currentSession.set(gameSession);
+                this.takenAvatars.set(gameSession.takenAvatars);
             }
         });
 
@@ -71,7 +72,9 @@ export class GameSessionSocketService {
 
             if (isCurrentPlayerInSession) {
                 this.currentSession.set(updatedSession);
+
             }
+            this.takenAvatars.set(updatedSession.takenAvatars);
         });
 
         this.socketService.on<string>(GameSessionEvents.GameSessionDeleted, (deletedRoomId) => {
@@ -79,6 +82,7 @@ export class GameSessionSocketService {
                 current.filter(gameSession => gameSession.roomId !== deletedRoomId));
             if (this.currentSession()?.roomId === deletedRoomId) {
                 this.currentSession.set(null);
+                this.takenAvatars.set([]);
             }
         });
 
@@ -142,9 +146,16 @@ export class GameSessionSocketService {
         }
     }
 
-    updateTakenAvatars(roomId: string | null, newAvatarId: number, previousAvatarId: number | null): void {
-        if (!roomId) return;
+    updateTakenAvatars(roomId: string, newAvatarId: number, previousAvatarId: number | null): void {
         this.socketService.emit(GameSessionEvents.AvatarTakenUpdated, { roomId, newAvatarId, previousAvatarId });
+        this.takenAvatars.update(current => {
+            let updated = [...current];
+            if (previousAvatarId !== null) {
+                updated = updated.filter(id => id !== previousAvatarId);
+            }
+            updated.push(newAvatarId);
+            return updated;
+        });
     }
 
     startGame(): void {
