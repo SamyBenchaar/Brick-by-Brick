@@ -61,7 +61,7 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
         const { gameId, hostPlayer } = payload;
 
         hostPlayer.id = socket.id;
-        const gameSession =await this.gameSessionService.createGameSession(socket.id, hostPlayer, gameId);
+        const gameSession = await this.gameSessionService.createGameSession(socket.id, hostPlayer, gameId);
 
         socket.emit(GameSessionEvents.GameSessionCreated, gameSession);
         this.notifyGameSessionCreated(gameSession);

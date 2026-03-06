@@ -1,9 +1,9 @@
 import { Injectable, signal, WritableSignal } from '@angular/core';
+import { Game } from '@app/interfaces/game';
 import { Character } from '@common/character';
 import { GameSessionEvents } from '@common/game.events';
 import { GameSession } from '@common/gameSession';
 import { SocketService } from './socket.service';
-import { Game } from '@app/interfaces/game';
 
 @Injectable({
     providedIn: 'root',
@@ -14,7 +14,8 @@ export class GameSessionSocketService {
     playerSocketId: WritableSignal<string | null> = signal<string | null>(null);
     roomId: WritableSignal<string> = signal<string>('');
     hostSocketId: WritableSignal<string> = signal<string>('');
-    mapCopy: WritableSignal<Game|null> = signal<Game|null>(null);
+    mapCopy: WritableSignal<Game | null> = signal<Game | null>(null);
+    private listenersSetup = false;
 
     constructor(private socketService: SocketService) {}
 
@@ -29,7 +30,10 @@ export class GameSessionSocketService {
             this.playerSocketId.set(socketId);
         }
 
-        this.setupEventListeners();
+        if (!this.listenersSetup) {
+            this.setupEventListeners();
+            this.listenersSetup = true;
+        }
         this.requestGameSessionList();
     }
 
@@ -38,7 +42,7 @@ export class GameSessionSocketService {
         this.socketService.off(GameSessionEvents.GameSessionCreated);
         this.socketService.off(GameSessionEvents.GameSessionUpdated);
         this.socketService.off(GameSessionEvents.GameSessionDeleted);
-        this.socketService.disconnect();
+        this.socketService.off(GameSessionEvents.MapCopy);
     }
 
     private setupEventListeners(): void {
@@ -63,7 +67,6 @@ export class GameSessionSocketService {
                 this.roomId.set(updatedSession.roomId);
                 this.hostSocketId.set(updatedSession.getHostSocketId());
             }
-            // Re-demander la liste complète pour être sûr que c'est à jour
             this.requestGameSessionList();
         });
 
@@ -95,6 +98,7 @@ export class GameSessionSocketService {
     }
 
     requestMapCopy(roomId: string): void {
+        this.mapCopy.set(null);
         this.socketService.emit(GameSessionEvents.RequestMapCopy, { roomId });
     }
 

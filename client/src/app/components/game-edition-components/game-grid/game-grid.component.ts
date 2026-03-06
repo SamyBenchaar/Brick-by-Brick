@@ -1,16 +1,16 @@
 import { CommonModule } from '@angular/common';
 import { Component, HostListener, inject, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { GameMap } from '@app/classes/game-map';
 import { Tile } from '@app/classes/tile';
 import { ClickEvent } from '@app/constants/click-event-constants';
+import { OBJECT_DESCRIPTIONS } from '@app/constants/object-descriptions';
 import { Game } from '@app/interfaces/game';
+import { Position } from '@app/interfaces/position';
 import { MapEditorServiceService } from '@app/services/map-editor-service.service';
 import { ObjectCounterService } from '@app/services/object-counter/object-counter.service';
 import { GRID_SIZE, MapSize, ObjectType, TileType } from '@common/map';
 import html2canvas from 'html2canvas';
-import { Position } from '@app/interfaces/position';
-import { OBJECT_DESCRIPTIONS } from '@app/constants/object-descriptions';
-import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
   selector: 'app-game-grid',
@@ -25,6 +25,7 @@ export class GameGridComponent implements OnInit, OnChanges {
   @Input() mapSize: MapSize = MapSize.Small; // Taille par défaut
 
   @Input() gameData: Game | null = null;
+  @Input() isViewMode: boolean = false; // true pour game-view, false pour edition
   readonly gridSize = GRID_SIZE;
   readonly objectDescriptions = OBJECT_DESCRIPTIONS;
 
@@ -41,8 +42,9 @@ export class GameGridComponent implements OnInit, OnChanges {
   }
 
   ngOnInit(): void {
-    // Initialiser la grille avec la taille reçue en input
-    this.gameMap = new GameMap(this.mapSize);
+    if (!this.isViewMode) {
+      this.gameMap = new GameMap(this.mapSize);
+    }
     this.objectCounterService.reset();
   }
   ngOnChanges(changes: SimpleChanges): void {

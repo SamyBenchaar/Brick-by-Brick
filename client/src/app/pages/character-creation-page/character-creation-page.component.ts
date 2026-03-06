@@ -124,10 +124,8 @@ export class CharacterCreationPageComponent implements OnInit, OnDestroy {
             effect(() => {
                 const roomId = this.gameSessionSocketService.roomId();
                 if (roomId && roomId !== '') {
-                    // Naviguer avec le vrai roomId de la session
-                    // this.router.navigate(['/waiting-room', roomId]);
-                    // temporairement naviguer vers la page de vue de jeu
-                    this.router.navigate(['/game-view'], { queryParams: { roomId } });
+                    // Naviguer vers la page d'attente avec le vrai roomId de la session
+                    this.router.navigate(['/waiting-room', roomId]);
                 }
             }, { injector: this.injector });
         } else if (this.roomId) {
