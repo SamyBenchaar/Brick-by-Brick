@@ -22,9 +22,12 @@ export enum GameSessionEvents {
     GameSessionFull = 'gameSessionFull',
     LeaveGameSession = 'leaveGameSession',
 
-    LockGameSession = 'lockGameSession',
-    UnlockGameSession = 'unlockGameSession',
+    KickPlayer = 'kickPlayer',
+    PlayerKicked = 'playerKicked',
+    RoomCancelled = 'roomCancelled',
 
+    StartGame = 'startGame',
+    GameStarted = 'gameStarted',
     RequestMapCopy = 'requestMapCopy',
     MapCopy = 'mapCopy',
 }

@@ -1,75 +1,20 @@
 import { Dice } from '@common/dice';
 
 export class Character {
-  private _id: string;
+  id: string;
 
-  constructor (
-    private _name: string,
-    private _avatarId: number,
-
-    private _life: number,
-    private _speed: number,
-    private _attack: number,
-    private _defense: number,
-
-    private _attackDice: Dice,
-    private _defenseDice: Dice,
-  ){};
-
-  get id(): string {
-    return this._id;
-  }
-  get name(): string {
-    return this._name;
-  }
-  get avatarId(): number {
-    return this._avatarId;
-  }
-  get life(): number {
-    return this._life;
-  }
-  get speed(): number {
-    return this._speed;
-  }
-  get attack(): number {
-    return this._attack;
-  }
-  get defense(): number {
-    return this._defense;
-  }
-  get attackDice(): Dice {
-    return this._attackDice;
-  }
-  get defenseDice(): Dice {
-    return this._defenseDice;
-  }
-
-  set id(value: string) {
-    this._id = value;
-  }
-  set name(value: string) {
-    this._name = value;
-  }
-  set avatarId(value: number) {
-    this._avatarId = value;
-  }
-  set life(value: number) {
-    this._life = value;
-  }
-  set speed(value: number) {
-    this._speed = value;
-  }
-  set attack(value: number) {
-    this._attack = value;
-  }
-  set defense(value: number) {
-    this._defense = value;
-  }
-  set attackDice(value: Dice) {
-    this._attackDice = value;
-  }
-  set defenseDice(value: Dice) {
-    this._defenseDice = value;
-  }
-  
+  constructor(
+    public name: string,
+    public avatarId: number,
+    public maxLife: number,
+    public life: number,
+    public speed: number,
+    public attack: number,
+    public defense: number,
+    public movements: number,
+    public actions: number,
+    public attackDice: Dice,
+    public defenseDice: Dice,
+  ) {}
 }
+

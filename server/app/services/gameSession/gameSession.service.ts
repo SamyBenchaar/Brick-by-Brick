@@ -19,8 +19,21 @@ export class GameSessionService {
 
         hostPlayer.id = socketId;
         this.gameSessions.set(newGameSession.roomId, newGameSession);
-
         return newGameSession;
+    }
+
+    joinSession(roomId: string, socketId: string, player: Character): string | null {
+        const session = this.gameSessions.get(roomId);
+        if (!session) return 'Session de jeu introuvable';
+        if (session.status !== 'waiting') return 'La session de jeu a déjà commencé';
+        if (session.isFull()) return 'La session de jeu est pleine';
+        session.addPlayer(socketId, player);
+        return null;
+    }
+
+    kickPlayer(roomId: string, targetSocketId: string): void {
+        const session = this.gameSessions.get(roomId);
+        if (session) session.removePlayer(targetSocketId);
     }
 
     getGameSession(roomId: string): GameSession {

@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
     AVATARS,
+    BASE_ACTIONS,
     BASE_ATTACK, BASE_DEFENSE,
     BASE_LIFE, BASE_SPEED,
     BONUS_AMOUNT,
@@ -57,7 +58,7 @@ export class CharacterCreationPageComponent implements OnInit, OnDestroy {
     }
 
     createBaseCharacter(): Character {
-        return new Character('', 1, BASE_LIFE, BASE_SPEED, BASE_ATTACK, BASE_DEFENSE, 'D4', 'D6');
+        return new Character('', 1, BASE_LIFE, BASE_LIFE, BASE_SPEED, BASE_ATTACK, BASE_DEFENSE, BASE_SPEED, BASE_ACTIONS, 'D4', 'D6');
     }
 
     selectAvatar(avatar: AvatarOption): void {
@@ -122,7 +123,7 @@ export class CharacterCreationPageComponent implements OnInit, OnDestroy {
 
             // Créer un effect dans le contexte injecteur pour écouter les changements
             effect(() => {
-                const roomId = this.gameSessionSocketService.roomId();
+                const roomId = this.gameSessionSocketService.currentSession()?.roomId;
                 if (roomId && roomId !== '') {
                     // Naviguer vers la page d'attente avec le vrai roomId de la session
                     this.router.navigate(['/waiting-room', roomId]);

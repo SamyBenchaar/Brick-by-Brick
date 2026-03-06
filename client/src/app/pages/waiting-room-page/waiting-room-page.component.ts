@@ -2,11 +2,12 @@ import { CommonModule } from '@angular/common';
 import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ChatComponent } from '@app/components/chat/chat.component';
+import { WaitingRoomListComponent } from '@app/components/waiting-room-list/waiting-room-list.component';
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket.service';
 
 @Component({
     selector: 'app-waiting-room-page',
-    imports: [ChatComponent, CommonModule],
+    imports: [ChatComponent, CommonModule, WaitingRoomListComponent],
     templateUrl: './waiting-room-page.component.html',
     styleUrls: ['./waiting-room-page.component.scss'],
 })
@@ -17,16 +18,13 @@ export class WaitingRoomPage implements OnInit, OnDestroy {
 
     username: string = 'Player';
     roomIdFromRoute: string = '';
-    gameId = this.gameSessionSocketService.roomId;
-    hostPlayerId = this.gameSessionSocketService.hostSocketId;
 
     get roomId(): string {
-        // Use route param if available, otherwise use the signal
-        return this.roomIdFromRoute || this.gameId();
+        return this.roomIdFromRoute || this.gameSessionSocketService.currentSession()?.roomId || '';
     }
 
     get hostId(): string {
-        return this.hostPlayerId();
+        return this.gameSessionSocketService.currentSession()?.players[0]?.socketId || '';
     }
 
     ngOnInit(): void {
