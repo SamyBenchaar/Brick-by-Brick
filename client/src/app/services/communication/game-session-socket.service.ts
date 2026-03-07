@@ -48,6 +48,7 @@ export class GameSessionSocketService {
         this.socketService.off(GameSessionEvents.PlayerKicked);
         this.socketService.off(GameSessionEvents.RoomCancelled);
         this.socketService.off(GameSessionEvents.GameStarted);
+        this.socketService.off(GameSessionEvents.AvatarTakenUpdated);
         this.socketService.disconnect();
     }
 
@@ -147,14 +148,6 @@ export class GameSessionSocketService {
 
     updateTakenAvatars(roomId: string, newAvatarId: number, previousAvatarId: number | null): void {
         this.socketService.emit(GameSessionEvents.AvatarTakenUpdated, { roomId, newAvatarId, previousAvatarId });
-        this.takenAvatars.update(current => {
-            let updated = [...current];
-            if (previousAvatarId !== null) {
-                updated = updated.filter(id => id !== previousAvatarId);
-            }
-            updated.push(newAvatarId);
-            return updated;
-        });
     }
 
     startGame(): void {

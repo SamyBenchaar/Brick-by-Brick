@@ -62,6 +62,14 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
         const { roomId, player } = payload;
         player.id = socket.id;
 
+        const gameSession = this.gameSessionService.getGameSession(roomId);
+        if (!gameSession) {
+            socket.emit(GameSessionEvents.GameSessionJoinError, 'Session de jeu introuvable');
+            return;
+        }
+        
+        player.name = gameSession.verifyUniqueName(player.name);
+
         const error = this.gameSessionService.joinSession(roomId, socket.id, player);
 
         if (error) {
@@ -69,7 +77,6 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
             return;
         }
 
-        const gameSession = this.gameSessionService.getGameSession(roomId);
         if (!gameSession) return;
 
         socket.join(roomId);

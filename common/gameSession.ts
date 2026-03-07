@@ -28,6 +28,25 @@ export class GameSession {
         this.players = this.players.filter(p => p.socketId !== socketId);
     }
 
+    verifyUniqueName(name: string): string {
+        let nameToVerify = name;
+        let counter = 2;
+
+        while(!this.isNameUnique(nameToVerify)) {
+            if (nameToVerify.includes('-')) {
+                    nameToVerify = nameToVerify.replace(/-\d+$/, `-${counter}`);
+            } else {
+                    nameToVerify = `${name}-${counter}`;
+            }
+            counter++;
+        }
+        return nameToVerify;
+    }
+
+    isNameUnique(name: string): boolean {
+        return !this.players.some(player => player.character.name === name);
+    }
+
     isHost(socketId: string): boolean {
         return this.players[0]?.socketId === socketId;
     }

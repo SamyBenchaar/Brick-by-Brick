@@ -42,9 +42,16 @@ export class CharacterCreationPageComponent implements OnInit, OnDestroy {
     gameId: string | null = null;
     fromGameCreation = false;
 
-    availableAvatars = computed(() =>
-        this.avatars.filter(avatar => !this.gameSessionSocketService.takenAvatars().includes(avatar.id)),
-    );
+    takenAvatars = computed(() => new Set(this.gameSessionSocketService.takenAvatars()));
+
+    avatarState = computed(() => {
+        const taken = this.takenAvatars();
+
+        return this.avatars.map(avatar => ({
+            ...avatar,
+            taken: taken.has(avatar.id),
+        }));
+    });
 
     ngOnInit(): void {
         this.gameSessionSocketService.connect();
@@ -82,7 +89,7 @@ export class CharacterCreationPageComponent implements OnInit, OnDestroy {
     }
 
     selectAvatar(avatar: AvatarOption): void {
-        if (this.isAvatarTaken(avatar.id) || this.character.avatarId === avatar.id) {
+        if (this.takenAvatars().has(avatar.id) || this.character.avatarId === avatar.id) {
             return;
         }
         const previousAvatarId = this.character.avatarId;
@@ -90,14 +97,6 @@ export class CharacterCreationPageComponent implements OnInit, OnDestroy {
         if (this.roomId) {
             this.gameSessionSocketService.updateTakenAvatars(this.roomId, avatar.id, previousAvatarId);
         }
-    }
-
-    isAvatarTaken(avatarId: number): boolean {
-        return !this.availableAvatars().some(a => a.id === avatarId);
-    }
-
-    isAvatarTakenByOther(avatarId: number): boolean {
-        return this.isAvatarTaken(avatarId) && this.character.avatarId !== avatarId;
     }
 
     getSelectedAvatarImage(): string {
@@ -131,7 +130,9 @@ export class CharacterCreationPageComponent implements OnInit, OnDestroy {
     createRandomCharacter() {
         const randomName = 'Hero' + Math.floor(Math.random() * RANDOM_NAME_MAX);
 
-        const randomAvatar = this.availableAvatars()[Math.floor(Math.random() * this.availableAvatars().length) + 1];
+        const availableAvatars = this.avatarState().filter(avatar => !avatar.taken);
+
+        const randomAvatar = availableAvatars[Math.floor(Math.random() * availableAvatars.length) + 1];
         this.selectAvatar(randomAvatar);
 
         const attributes = ['life', 'speed'] as const;
