@@ -42,6 +42,7 @@ export class GameSessionService {
     }
 
     deleteGameSession(roomId: string): void {
+        this.gameSessions.get(roomId).removeAllPlayers();
         this.gameSessions.delete(roomId);
     }
 }

@@ -131,6 +131,10 @@ export class GameSessionSocketService {
         this.socketService.emit(GameSessionEvents.JoinGameSession, { roomId, player });
     }
 
+    observeGameSession(roomId: string) {
+        this.socketService.emit(GameSessionEvents.ObserveGameSession, { roomId });
+    }
+
     kickPlayer(targetId: string): void {
         const currentRoomId = this.currentSession()?.roomId;
         if (currentRoomId) {

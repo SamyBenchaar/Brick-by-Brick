@@ -67,6 +67,7 @@ export class CharacterCreationPageComponent implements OnInit, OnDestroy {
 
             if (this.roomId) {
                 this.gameSessionSocketService.requestGameSessionList();
+                this.gameSessionSocketService.observeGameSession(this.roomId);
                 setTimeout(() => {
                     const session = this.gameSessionSocketService.gameSessions().find(
                         s => s.roomId === this.roomId,

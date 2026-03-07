@@ -81,10 +81,20 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
 
         socket.join(roomId);
         this.socketToRoom.set(socket.id, roomId);
-
-        this.server.emit(GameSessionEvents.GameSessionUpdated, gameSession);
+        this.notifyGameSessionUpdated(gameSession);
 
         this.logger.log(`Joueur ${socket.id} a rejoint la salle ${roomId}`);
+    }
+
+    @SubscribeMessage(GameSessionEvents.ObserveGameSession)
+    handleObserveGameSession(socket: Socket, payload: { roomId: string }) {
+        const session = this.gameSessionService.getGameSession(payload.roomId);
+        if (!session) {
+            socket.emit(GameSessionEvents.GameSessionJoinError, 'Session introuvable');
+            return;
+        }
+        socket.join(payload.roomId);
+        socket.emit(GameSessionEvents.AvatarTakenUpdated, session.takenAvatars);
     }
 
     @SubscribeMessage(GameSessionEvents.StartGame)
@@ -140,7 +150,7 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
         const updatedSession = this.gameSessionService.getGameSession(payload.roomId);
         if (!updatedSession) return;
 
-        this.server.emit(GameSessionEvents.GameSessionUpdated, updatedSession);
+        this.notifyGameSessionUpdated(updatedSession);
 
         this.logger.log(`Joueur ${payload.targetId} exclu de la salle ${payload.roomId}`);
     }
@@ -161,7 +171,7 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
             gameSession.takenAvatars.push(payload.newAvatarId);
         }
 
-        this.server.emit(GameSessionEvents.GameSessionUpdated, gameSession);
+        this.notifyAvatarTakenUpdated(payload.roomId, gameSession.takenAvatars);
         this.logger.log(`Avatar ${payload.newAvatarId} marqué comme pris dans la salle ${payload.roomId}`);
     }
 
@@ -172,17 +182,18 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
 
         this.socketToRoom.delete(socket.id);
         socket.leave(roomId);
-
+        
         if (gameSession.isHost(socket.id)) {
             this.server.to(roomId).emit(GameSessionEvents.RoomCancelled, {
                 message: "L'organisateur a quitté la salle. La partie est annulée.",
             });
+            this.notifyAvatarTakenUpdated(roomId, []);
             this.gameSessionService.deleteGameSession(roomId);
             this.notifyGameSessionDeleted(roomId);
             this.logger.log(`Salle ${roomId} annulée (orga déconnecté)`);
         } else {
             gameSession.removePlayer(socket.id);
-            this.server.emit(GameSessionEvents.GameSessionUpdated, gameSession);
+            this.notifyGameSessionUpdated(gameSession);
 
             this.logger.log(`Joueur ${socket.id} a quitté la salle ${roomId}`);
         }
@@ -193,6 +204,7 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
     }
 
     notifyGameSessionUpdated(gameSession: GameSession): void {
+        this.notifyAvatarTakenUpdated(gameSession.roomId, gameSession.takenAvatars);
         this.server.emit(GameSessionEvents.GameSessionUpdated, gameSession);
     }
 
