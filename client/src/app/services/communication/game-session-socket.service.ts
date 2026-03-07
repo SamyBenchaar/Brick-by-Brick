@@ -36,17 +36,13 @@ export class GameSessionSocketService {
             this.setupEventListeners();
             this.listenersInitialized = true;
         }
-
-        if (!this.listenersInitialized) {
-            this.setupEventListeners();
-            this.listenersInitialized = true;
-        }
         this.requestGameSessionList();
     }
 
     disconnect(): void {
         this.listenersInitialized = false;
         this.socketService.off(GameSessionEvents.GameSessionList);
+        this.socketService.off(GameSessionEvents.GameSessionListUpdated);
         this.socketService.off(GameSessionEvents.GameSessionCreated);
         this.socketService.off(GameSessionEvents.GameSessionUpdated);
         this.socketService.off(GameSessionEvents.GameSessionDeleted);
@@ -60,6 +56,10 @@ export class GameSessionSocketService {
 
     private setupEventListeners(): void {
         this.socketService.on<GameSession[]>(GameSessionEvents.GameSessionList, (gameSessions) => {
+            this.gameSessions.set(gameSessions);
+        });
+
+        this.socketService.on<GameSession[]>(GameSessionEvents.GameSessionListUpdated, (gameSessions) => {
             this.gameSessions.set(gameSessions);
         });
 
@@ -116,6 +116,7 @@ export class GameSessionSocketService {
 
         this.socketService.on<{ roomId: string; mapData: Game }>(GameSessionEvents.GameStarted, (payload) => {
             const { roomId, mapData } = payload;
+            this.currentSession.set(null);
             this.mapCopy.set(mapData);
             this.router.navigate(['/game-view'], { queryParams: { roomId } });
         });
