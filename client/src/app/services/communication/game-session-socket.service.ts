@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { AppDialogComponent } from '@app/components/game-edition-components/app-dialog/app-dialog.component';
 import { Character } from '@common/character';
 import { GameSessionEvents } from '@common/game.events';
-import { GameSession } from '@common/gameSession';
+import { GameSession } from '@common/game-session/gameSession';
 import { SocketService } from './socket.service';
 
 @Injectable({
