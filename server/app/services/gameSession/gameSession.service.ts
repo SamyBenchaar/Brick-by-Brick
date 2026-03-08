@@ -1,5 +1,5 @@
 import { Character } from '@common/character';
-import { GameSession } from '@common/gameSession';
+import { GameSession } from '@common/game-session/gameSession';
 import { Injectable } from '@nestjs/common';
 
 @Injectable()
@@ -42,7 +42,6 @@ export class GameSessionService {
     }
 
     deleteGameSession(roomId: string): void {
-        this.gameSessions.get(roomId).removeAllPlayers();
         this.gameSessions.delete(roomId);
     }
 }

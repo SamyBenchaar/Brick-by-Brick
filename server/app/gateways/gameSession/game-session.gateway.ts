@@ -1,7 +1,7 @@
 import { GameSessionService } from '@app/services/gameSession/gameSession.service';
 import { Character } from '@common/character';
 import { GameSessionEvents } from '@common/game.events';
-import { GameSession } from '@common/gameSession';
+import { GameSession } from '@common/game-session/gameSession';
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import {
     OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, SubscribeMessage,
