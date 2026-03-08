@@ -1,15 +1,17 @@
 import { GameController } from '@app/controllers/game/game.controller';
 import { Game, gameSchema } from '@app/model/game';
 import { GameService } from '@app/services/game/game.service';
+import { CombatService } from '@app/services/gameSession/combat.service';
+import { MovementService } from '@app/services/gameSession/movement.service';
+import { StartingPointService } from '@app/services/gameSession/starting-point.service';
+import { TurnManagementService } from '@app/services/gameSession/turn-management.service';
 import { GameMetadataValidationService } from '@app/services/validations/gameMetadataValidation.service';
 import { MapValidationService } from '@app/services/validations/mapValidation.service';
 import { Logger, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { GameGateway } from './gateways/game/game.gateway';
-import { GameSessionGateway } from './gateways/gameSession/game-session.gateway';
 import { GameSessionService } from './services/gameSession/gameSession.service';
-import { ChatGateway } from './gateways/chat/chat.gateway';
 
 @Module({
     imports: [
@@ -23,11 +25,21 @@ import { ChatGateway } from './gateways/chat/chat.gateway';
         }),
         MongooseModule.forFeature([
             { name: Game.name, schema: gameSchema },
-        ]), 
+        ]),
     ],
     controllers: [GameController],
-    providers: [GameGateway, ChatGateway, GameSessionGateway, GameService, 
-        GameSessionService, Logger, MapValidationService, GameMetadataValidationService],
+    providers: [
+        GameGateway,
+        GameService,
+        GameSessionService,
+        StartingPointService,
+        TurnManagementService,
+        MovementService,
+        CombatService,
+        Logger,
+        MapValidationService,
+        GameMetadataValidationService,
+    ],
 })
 export class AppModule {
     constructor(
@@ -36,4 +48,5 @@ export class AppModule {
 
     ) {}
 }
+
 
