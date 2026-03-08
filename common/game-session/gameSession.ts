@@ -7,6 +7,7 @@ export class GameSession {
     status: SessionStatus = 'waiting';
     roomId: string;
     maxPlayers: number;
+    mapCopy: any;
     mapId: string;
     takenAvatars: number[] = [];
 

@@ -29,6 +29,7 @@ describe('GameSessionSocketService', () => {
         roomId: 'room1',
         maxPlayers: 4,
         mapId: 'map1',
+        mapCopy: null,
         takenAvatars: [],
 
         addPlayer: () => {},
@@ -52,6 +53,7 @@ describe('GameSessionSocketService', () => {
         roomId: 'room2',
         maxPlayers: 4,
         mapId: 'map1',
+        mapCopy: null,
         takenAvatars: [],
         
         addPlayer: () => {},
