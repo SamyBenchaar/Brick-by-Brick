@@ -20,7 +20,11 @@ export class WaitingRoomPage implements OnInit, OnDestroy {
     roomIdFromRoute: string = '';
 
     get roomId(): string {
-        return this.roomIdFromRoute || this.gameSessionSocketService.currentSession()?.roomId || '';
+        // Toujours utiliser le roomId de la route en priorité
+        if (this.roomIdFromRoute) {
+            return this.roomIdFromRoute;
+        }
+        return this.gameSessionSocketService.currentSession()?.roomId || '';
     }
 
     get hostId(): string {
@@ -31,18 +35,17 @@ export class WaitingRoomPage implements OnInit, OnDestroy {
         // Get username from sessionStorage
         this.username = sessionStorage.getItem('playerUsername') || 'Player';
 
-        // Get gameId from route params
-        this.activatedRoute.params.subscribe(params => {
-            if (params.gameId) {
-                this.roomIdFromRoute = params.gameId;
-            }
-        });
+        // Get roomId from route params SYNCHRONOUSLY (the route param is called 'gameId' but it contains the roomId)
+        const params = this.activatedRoute.snapshot.params;
+        if (params.gameId) {
+            this.roomIdFromRoute = params.gameId;
+        }
 
         this.gameSessionSocketService.connect();
     }
 
     ngOnDestroy(): void {
-        this.gameSessionSocketService.disconnect();
+        // this.gameSessionSocketService.disconnect();
     }
 
     leave(): void {

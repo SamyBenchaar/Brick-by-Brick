@@ -2,6 +2,7 @@ import { Injectable, signal, WritableSignal } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { AppDialogComponent } from '@app/components/game-edition-components/app-dialog/app-dialog.component';
+import { Game } from '@app/interfaces/game';
 import { Character } from '@common/character';
 import { GameSessionEvents } from '@common/game.events';
 import { GameSession } from '@common/gameSession';
@@ -13,6 +14,10 @@ import { SocketService } from './socket.service';
 export class GameSessionSocketService {
     gameSessions: WritableSignal<GameSession[]> = signal<GameSession[]>([]);
     currentSession: WritableSignal<GameSession | null> = signal<GameSession | null>(null);
+    playerSocketId: WritableSignal<string | null> = signal<string | null>(null);
+    roomId: WritableSignal<string> = signal<string>('');
+    hostSocketId: WritableSignal<string> = signal<string>('');
+    mapCopy: WritableSignal<Game | null> = signal<Game | null>(null);
 
     private listenersInitialized = false;
 
@@ -31,13 +36,13 @@ export class GameSessionSocketService {
             this.setupEventListeners();
             this.listenersInitialized = true;
         }
-
         this.requestGameSessionList();
     }
 
     disconnect(): void {
         this.listenersInitialized = false;
         this.socketService.off(GameSessionEvents.GameSessionList);
+        this.socketService.off(GameSessionEvents.GameSessionListUpdated);
         this.socketService.off(GameSessionEvents.GameSessionCreated);
         this.socketService.off(GameSessionEvents.GameSessionUpdated);
         this.socketService.off(GameSessionEvents.GameSessionDeleted);
@@ -45,11 +50,16 @@ export class GameSessionSocketService {
         this.socketService.off(GameSessionEvents.PlayerKicked);
         this.socketService.off(GameSessionEvents.RoomCancelled);
         this.socketService.off(GameSessionEvents.GameStarted);
+
         this.socketService.disconnect();
     }
 
     private setupEventListeners(): void {
         this.socketService.on<GameSession[]>(GameSessionEvents.GameSessionList, (gameSessions) => {
+            this.gameSessions.set(gameSessions);
+        });
+
+        this.socketService.on<GameSession[]>(GameSessionEvents.GameSessionListUpdated, (gameSessions) => {
             this.gameSessions.set(gameSessions);
         });
 
@@ -69,6 +79,7 @@ export class GameSessionSocketService {
             if (isCurrentPlayerInSession) {
                 this.currentSession.set(updatedSession);
             }
+            this.requestGameSessionList();
         });
 
         this.socketService.on<string>(GameSessionEvents.GameSessionDeleted, (deletedRoomId) => {
@@ -103,14 +114,19 @@ export class GameSessionSocketService {
             });
         });
 
-        this.socketService.on(GameSessionEvents.GameStarted, () => {
-            this.router.navigate(['/game']);
+        this.socketService.on<{ roomId: string; mapData: Game; gameSession: GameSession }>(GameSessionEvents.GameStarted, (payload) => {
+            const { roomId, mapData, gameSession } = payload;
+            this.currentSession.set(gameSession);
+            this.mapCopy.set(mapData);
+            this.router.navigate(['/game-view'], { queryParams: { roomId } });
         });
+
     }
 
     requestGameSessionList(): void {
         this.socketService.emit(GameSessionEvents.RequestGameSessionList);
     }
+
 
     createGameSession(gameId: string, hostPlayer: Character): void {
         this.socketService.emit(GameSessionEvents.CreateGameSession, { gameId, hostPlayer });
@@ -144,6 +160,10 @@ export class GameSessionSocketService {
 
     getSocketId(): string {
         return this.socketService.getSocketId() ?? '';
+    }
+
+    isConnected(): boolean {
+        return this.socketService.isConnected();
     }
 
     isCurrentUserHost(): boolean {
