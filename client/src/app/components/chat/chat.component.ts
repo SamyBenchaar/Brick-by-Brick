@@ -17,6 +17,7 @@ export class ChatComponent implements OnInit, OnChanges, OnDestroy {
     @Input() hostPlayerId?: string;
 
     private chatService = inject(ChatService);
+    
 
     messages: ChatMessage[] = [];
     messageInput = signal('');

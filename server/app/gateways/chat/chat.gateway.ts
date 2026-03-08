@@ -73,8 +73,12 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
     @SubscribeMessage(ChatEvents.ClearChatHistory)
     handleClearChatHistory(socket: Socket, payload: { gameId?: string }) {
         const roomId = payload.gameId || 'waiting-room';
-        this.chatHistoryByGame.delete(roomId);
+        this.clearChatHistoryForRoom(roomId);
         this.server.to(`game-${roomId}`).emit(ChatEvents.ChatHistory, []);
+    }
+
+    clearChatHistoryForRoom(roomId: string): void {
+        this.chatHistoryByGame.delete(roomId);
     }
 
     private generateMessageId(): string {

@@ -19,7 +19,7 @@ export class GameSessionListComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.gameSessionSocketService.disconnect();
+    // this.gameSessionSocketService.disconnect();
   }
 
   selectGameSession(gameSessionId: string): void {
