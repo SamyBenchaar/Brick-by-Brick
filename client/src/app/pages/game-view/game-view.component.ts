@@ -7,6 +7,7 @@ import { MapSize } from '@common/map';
 import { getGameSizeConfig } from '@app/constants/game-config-constants';
 import { Subscription } from 'rxjs';
 import { Game } from '@app/interfaces/game';
+import { Character } from '@common/character';
 
 @Component({
   selector: 'app-game-view',
@@ -15,7 +16,7 @@ import { Game } from '@app/interfaces/game';
   styleUrl: './game-view.component.scss',
 })
 export class GameViewComponent implements OnInit, OnDestroy {
-  private gameSessionSocketService = inject(GameSessionSocketService);
+  gameSessionSocketService = inject(GameSessionSocketService);
   private injector = inject(Injector);
   private routeSubscription?: Subscription;
 
@@ -37,6 +38,15 @@ export class GameViewComponent implements OnInit, OnDestroy {
     return config.gridSize;
   }
 
+  getPlayerCount():number{
+    return this.gameSessionSocketService.currentSession()?.players.length ?? 0;
+  }
+
+  getCurrentPlayer(): Character | null {
+    const socketId = this.gameSessionSocketService.getSocketId();
+    const player = this.gameSessionSocketService.currentSession()?.players.find(p => p.socketId === socketId);
+    return player?.character ?? null;
+  }
   ngOnDestroy(): void {
     this.routeSubscription?.unsubscribe();
   }

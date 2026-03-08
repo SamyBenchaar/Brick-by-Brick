@@ -38,7 +38,7 @@ export class GameListComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy(): void {
-        this.gameSocketService.disconnect();
+        // this.gameSocketService.disconnect();
     }
 
     getGameModeLabel(mode: string): string {

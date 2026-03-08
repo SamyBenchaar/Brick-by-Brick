@@ -103,7 +103,11 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
         }
 
         gameSession.startGame();
-        this.server.to(payload.roomId).emit(GameSessionEvents.GameStarted, { roomId: payload.roomId, mapData: gameSession.mapCopy });
+        this.server.to(payload.roomId).emit(GameSessionEvents.GameStarted, {
+             roomId: payload.roomId,
+             mapData: gameSession.mapCopy,
+            gameSession,
+         });
         this.logger.log(`Partie démarrée dans la salle ${payload.roomId}`);
     }
 

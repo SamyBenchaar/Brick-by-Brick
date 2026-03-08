@@ -45,7 +45,7 @@ export class WaitingRoomPage implements OnInit, OnDestroy {
     }
 
     ngOnDestroy(): void {
-        this.gameSessionSocketService.disconnect();
+        // this.gameSessionSocketService.disconnect();
     }
 
     leave(): void {

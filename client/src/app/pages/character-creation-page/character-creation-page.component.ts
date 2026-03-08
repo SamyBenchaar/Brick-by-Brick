@@ -118,6 +118,11 @@ export class CharacterCreationPageComponent implements OnInit, OnDestroy {
         sessionStorage.setItem('playerUsername', this.character.name);
 
         if (this.fromGameCreation && this.gameId) {
+
+            this.gameSessionSocketService.currentSession.set(null);
+            this.gameSessionSocketService.roomId.set('');
+            this.gameSessionSocketService.mapCopy.set(null);
+            
             // Le créateur: créer la session et attendre que le roomId soit reçu du serveur
             this.gameSessionSocketService.createGameSession(this.gameId, this.character);
 

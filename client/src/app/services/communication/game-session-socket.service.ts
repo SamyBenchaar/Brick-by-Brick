@@ -114,9 +114,9 @@ export class GameSessionSocketService {
             });
         });
 
-        this.socketService.on<{ roomId: string; mapData: Game }>(GameSessionEvents.GameStarted, (payload) => {
-            const { roomId, mapData } = payload;
-            this.currentSession.set(null);
+        this.socketService.on<{ roomId: string; mapData: Game; gameSession: GameSession }>(GameSessionEvents.GameStarted, (payload) => {
+            const { roomId, mapData, gameSession } = payload;
+            this.currentSession.set(gameSession);
             this.mapCopy.set(mapData);
             this.router.navigate(['/game-view'], { queryParams: { roomId } });
         });
@@ -160,6 +160,10 @@ export class GameSessionSocketService {
 
     getSocketId(): string {
         return this.socketService.getSocketId() ?? '';
+    }
+
+    isConnected(): boolean {
+        return this.socketService.isConnected();
     }
 
     isCurrentUserHost(): boolean {

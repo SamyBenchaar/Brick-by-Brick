@@ -1,17 +1,33 @@
 <div class="container">
-    <div class="header">
-        <span class="header-title">Vue de jeu</span>
         <button 
             class="button" 
             style="background-image: url('/assets/images/red_large_brick.png');"
             [routerLink]="['/home']">
             retour
         </button>
-    </div>
+
+
+    @if (gameData) {
+        <div class="info-container">
+            <div class="info-item">
+                <span class="info-label">Taille de la carte: </span>
+                <span class="info-value">{{ gameData.mapConfig.size }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Nombre de joueurs: </span>
+                <span class="info-value">{{ getPlayerCount() }}</span>
+            </div>
+
+            <div class="info-item">
+                <span class="info-label">Joueur actuel:</span>
+                <span class="info-value">{{ getCurrentPlayer()?.name ?? 'Joueur' }}</span>
+            </div>
+        </div>
+    }    
 
     <div class="content">
         @if (gameData) {     
-                <div class="game-grid-container">
+                <div class="game-grid">
                     <app-game-grid [mapSize]="getMapSize()" [gameData]="gameData" [isViewMode]="true"> </app-game-grid>
                 </div>
         }
