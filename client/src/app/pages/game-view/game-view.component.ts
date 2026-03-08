@@ -8,10 +8,11 @@ import { getGameSizeConfig } from '@app/constants/game-config-constants';
 import { Subscription } from 'rxjs';
 import { Game } from '@app/interfaces/game';
 import { Character } from '@common/character';
+import { ChatComponent } from '@app/components/chat/chat.component';
 
 @Component({
   selector: 'app-game-view',
-  imports: [RouterLink, CommonModule, GameGridComponent],
+  imports: [RouterLink, CommonModule, GameGridComponent, ChatComponent],
   templateUrl: './game-view.component.html',
   styleUrl: './game-view.component.scss',
 })
@@ -20,7 +21,6 @@ export class GameViewComponent implements OnInit, OnDestroy {
   private injector = inject(Injector);
   private routeSubscription?: Subscription;
 
-  roomId: string = '';
   gameData: Game | null = null;
 
   ngOnInit(): void {
@@ -42,6 +42,13 @@ export class GameViewComponent implements OnInit, OnDestroy {
     return this.gameSessionSocketService.currentSession()?.players.length ?? 0;
   }
 
+  get hostId(): string {
+    return this.gameSessionSocketService.hostSocketId() ?? '';
+  }
+
+  get roomId():string {
+    return this.gameSessionSocketService.currentSession()?.roomId || '';
+  }
   getCurrentPlayer(): Character | null {
     const socketId = this.gameSessionSocketService.getSocketId();
     const player = this.gameSessionSocketService.currentSession()?.players.find(p => p.socketId === socketId);

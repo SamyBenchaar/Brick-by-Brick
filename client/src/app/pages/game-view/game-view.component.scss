@@ -1,12 +1,64 @@
-
-.button {
-    position: absolute;
-    top: 0.5rem;
-    left: 1rem;
-    z-index: 10;
+.page-container {
+    display: flex;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    font-family: 'MyFont', sans-serif;
+    background-image: url('/assets/plate_background.jpg');
+    background-repeat: repeat;
+    background-size: cover;
 }
 
-.info-container {
+// Chat sidebar gauche
+.chat-sidebar {
+    width: 350px;
+    min-width: 350px;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    border-right: 2px solid #ffa500;
+
+    app-chat {
+        display: block;
+        width: 100%;
+        height: 100%;
+    }
+}
+
+// Zone principale
+.main-area {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+// Bouton retour - style global
+.btn-back {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    z-index: 20;
+    height: 60px;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-color: transparent;
+    background-size: contain;
+    padding: 20px;
+    cursor: pointer;
+    color: #000000;
+    font-family: 'MyFont', sans-serif;
+    font-size: 20px;
+    text-transform: uppercase;
+    border: none;
+
+    &:hover {
+        filter: brightness(1.2);
+    }
+}
+
+// Panneau info
+.info-panel {
     position: absolute;
     top: 1rem;
     right: 1rem;
@@ -15,34 +67,37 @@
     border-radius: 8px;
     border: 2px solid #ffa500;
     z-index: 10;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
 }
 
 .info-item {
     display: flex;
-    justify-content: space-between;
     gap: 1rem;
+    margin-bottom: 0.5rem;
+
+    &:last-child {
+        margin-bottom: 0;
+    }
 }
 
 .info-label {
     color: #ffa500;
     font-weight: bold;
+    font-family: 'MyFont', sans-serif;
 }
 
 .info-value {
     color: white;
-    font-weight: normal;
+    font-family: 'MyFont', sans-serif;
 }
 
-.game-grid {
+// Grille centrée
+.grid-container {
     display: flex;
-    justify-content: center;
     align-items: center;
+    justify-content: center;
     max-width: 95%;
     max-height: 95%;
-    
+
     app-game-grid {
         display: block;
         max-width: 100%;

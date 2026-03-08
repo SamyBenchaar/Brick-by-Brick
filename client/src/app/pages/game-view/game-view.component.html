@@ -1,35 +1,52 @@
-<div class="container">
+<div class="page-container">
+    <!-- Chat sidebar gauche -->
+    <aside class="chat-sidebar">
+        @if (gameData) {
+            <app-chat 
+                [username]="getCurrentPlayer()?.name ?? 'Joueur'" 
+                [gameId]="roomId" 
+                [hostPlayerId]="hostId">
+            </app-chat>
+        }
+    </aside>
+
+    <!-- Zone principale droite -->
+    <div class="main-area">
+        <!-- Bouton retour -->
         <button 
-            class="button" 
+            class="btn-back" 
             style="background-image: url('/assets/images/red_large_brick.png');"
             [routerLink]="['/home']">
             retour
         </button>
 
-
-    @if (gameData) {
-        <div class="info-container">
-            <div class="info-item">
-                <span class="info-label">Taille de la carte: </span>
-                <span class="info-value">{{ gameData.mapConfig.size }}</span>
-            </div>
-            <div class="info-item">
-                <span class="info-label">Nombre de joueurs: </span>
-                <span class="info-value">{{ getPlayerCount() }}</span>
-            </div>
-
-            <div class="info-item">
-                <span class="info-label">Joueur actuel:</span>
-                <span class="info-value">{{ getCurrentPlayer()?.name ?? 'Joueur' }}</span>
-            </div>
-        </div>
-    }    
-
-    <div class="content">
-        @if (gameData) {     
-                <div class="game-grid">
-                    <app-game-grid [mapSize]="getMapSize()" [gameData]="gameData" [isViewMode]="true"> </app-game-grid>
+        <!-- Panneau info -->
+        @if (gameData) {
+            <div class="info-panel">
+                <div class="info-item">
+                    <span class="info-label">Taille:</span>
+                    <span class="info-value">{{ gameData.mapConfig.size }}</span>
                 </div>
+                <div class="info-item">
+                    <span class="info-label">Joueurs:</span>
+                    <span class="info-value">{{ getPlayerCount() }}/{{ gameData.numberOfPlayers }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Personnage:</span>
+                    <span class="info-value">{{ getCurrentPlayer()?.name ?? 'Joueur' }}</span>
+                </div>
+            </div>
         }
+
+        <!-- Grille -->
+        <div class="grid-container">
+            @if (gameData) {
+                <app-game-grid 
+                    [mapSize]="getMapSize()" 
+                    [gameData]="gameData" 
+                    [isViewMode]="true">
+                </app-game-grid>
+            }
+        </div>
     </div>
 </div>
