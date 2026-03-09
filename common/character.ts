@@ -1,7 +1,9 @@
 import { Dice } from '@common/dice';
 
 export class Character {
-  id: string;
+  public id: string;
+  public isActif: boolean = false;
+  public battlesWon: number = 0;
 
   constructor(
     public name: string,
@@ -15,6 +17,15 @@ export class Character {
     public actions: number,
     public attackDice: Dice,
     public defenseDice: Dice,
-  ) {}
+  ) {};
+
+  toggleActif(): void {
+    this.isActif = !this.isActif;
+  }
+
+  addWin(): void {
+    this.battlesWon++;
+  }
+
 }
 

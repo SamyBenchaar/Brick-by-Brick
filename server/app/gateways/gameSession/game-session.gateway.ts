@@ -2,7 +2,7 @@ import { ChatGateway } from '@app/gateways/chat/chat.gateway';
 import { GameSessionService } from '@app/services/gameSession/gameSession.service';
 import { Character } from '@common/character';
 import { GameSessionEvents } from '@common/game.events';
-import { GameSession } from '@common/gameSession';
+import { GameSession, Player } from '@common/gameSession';
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import {
     OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, SubscribeMessage,
@@ -50,7 +50,8 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
     async handleCreateGameSession(socket: Socket, payload: { gameId: string; hostPlayer: Character }) {
         const { gameId, hostPlayer } = payload;
         hostPlayer.id = socket.id;
-        const gameSession = await this.gameSessionService.createGameSession(socket.id, hostPlayer, gameId);
+        const player: Player = { socketId: hostPlayer.id, character: hostPlayer };
+        const gameSession = await this.gameSessionService.createGameSession(player, gameId);
 
         socket.join(gameSession.roomId);
         this.socketToRoom.set(socket.id, gameSession.roomId);
@@ -61,10 +62,10 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
 
     @SubscribeMessage(GameSessionEvents.JoinGameSession)
     handleJoinGameSession(socket: Socket, payload: { roomId: string; player: Character }) {
-        const { roomId, player } = payload;
-        player.id = socket.id;
-
-        const error = this.gameSessionService.joinSession(roomId, socket.id, player);
+        const { roomId, player: character } = payload;
+        character.id = socket.id;
+        const player: Player = { socketId: socket.id, character };
+        const error = this.gameSessionService.joinSession(roomId, player);
 
         if (error) {
             socket.emit(GameSessionEvents.GameSessionJoinError, error);
@@ -104,10 +105,10 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
 
         gameSession.startGame();
         this.server.to(payload.roomId).emit(GameSessionEvents.GameStarted, {
-             roomId: payload.roomId,
-             mapData: gameSession.mapCopy,
+            roomId: payload.roomId,
+            mapData: gameSession.mapCopy,
             gameSession,
-         });
+        });
         this.logger.log(`Partie démarrée dans la salle ${payload.roomId}`);
     }
 
@@ -164,7 +165,7 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
             this.logger.log(`Salle ${roomId} annulée (orga déconnecté)`);
         } else {
             gameSession.removePlayer(socket.id);
-            
+
             // Si la salle est vide après le départ du joueur, la supprimer complètement
             if (gameSession.players.length === 0) {
                 this.gameSessionService.deleteGameSession(roomId);
