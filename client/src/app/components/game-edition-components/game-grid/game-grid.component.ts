@@ -208,11 +208,11 @@ export class GameGridComponent implements OnInit, OnChanges {
   }
 
   getObjectPath(object: ObjectType): string {
-    return `assets/images/${object}.png`;
+    return `./assets/images/${object}.png`;
   }
 
   getTilePath(tile: TileType): string {
-    return `assets/images/${tile}.jpg`;
+    return `./assets/images/${tile}.jpg`;
   }
 
   async captureMapPreview(maxWidth: number = GameGridComponent.defaultPreviewMaxWidth): Promise<string> {
