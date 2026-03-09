@@ -2,6 +2,7 @@ import { Character } from '@common/character';
 import { GameSession } from '@common/game-session/gameSession';
 import { Injectable } from '@nestjs/common';
 import { GameService } from '@app/services/game/game.service';
+import { getGameSizeConfig } from '@common/constants/game-config-constants';
 
 @Injectable()
 export class GameSessionService {
@@ -14,7 +15,9 @@ export class GameSessionService {
         const mapCopy = JSON.parse(JSON.stringify(originalGame));
 
         const newGameSession = new GameSession(socketId, hostPlayer, mapId);
+
         newGameSession.mapCopy = mapCopy;
+        newGameSession.maxPlayers = getGameSizeConfig(mapCopy.mapConfig.size).maxPlayers;
 
         hostPlayer.id = socketId;
         this.gameSessions.set(newGameSession.roomId, newGameSession);

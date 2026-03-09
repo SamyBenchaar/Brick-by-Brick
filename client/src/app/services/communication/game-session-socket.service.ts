@@ -23,6 +23,8 @@ export class GameSessionSocketService {
     kickedMessage: WritableSignal<string | null> = signal<string | null>(null);
     cancelledMessage: WritableSignal<string | null> = signal<string | null>(null);
     takenAvatars: WritableSignal<number[]> = signal<number[]>([]);
+    private lastJoinRoomId: string | null = null;
+    private lastJoinPlayer: Character | null = null;
 
     constructor(
         private socketService: SocketService,
@@ -97,7 +99,24 @@ export class GameSessionSocketService {
         });
 
         this.socketService.on<string>(GameSessionEvents.GameSessionJoinError, (message) => {
-            alert(message);
+            const dialogRef = this.dialog.open(AppDialogComponent, {
+                data: {
+                    title: 'Salle pleine',
+                    message,
+                    type: 'warning',
+                    confirmText: 'Réessayer',
+                    cancelText: "Retour a l'accueil",
+                },
+                disableClose: true,
+            });
+
+            dialogRef.afterClosed().subscribe((retry) => {
+                if (retry && this.lastJoinPlayer && this.lastJoinRoomId) {
+                    this.joinGameSession(this.lastJoinRoomId,this.lastJoinPlayer);
+                } else {
+                    this.router.navigate(['/']);
+                }
+            });
         });
 
         this.socketService.on<{ message: string }>(GameSessionEvents.PlayerKicked, (data) => {
@@ -142,6 +161,8 @@ export class GameSessionSocketService {
     }
 
     joinGameSession(roomId: string, player: Character): void {
+        this.lastJoinPlayer = player;
+        this.lastJoinRoomId = roomId;
         this.socketService.emit(GameSessionEvents.JoinGameSession, { roomId, player });
     }
 

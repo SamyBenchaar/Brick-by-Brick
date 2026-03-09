@@ -4,7 +4,7 @@ import { RouterLink } from '@angular/router';
 import { GameGridComponent } from '@app/components/game-edition-components/game-grid/game-grid.component';
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket.service';
 import { MapSize } from '@common/map';
-import { getGameSizeConfig } from '@app/constants/game-config-constants';
+import { getGameSizeConfig } from '@common/constants/game-config-constants';
 import { Subscription } from 'rxjs';
 import { Game } from '@app/interfaces/game';
 import { Character } from '@common/character';

@@ -6,7 +6,7 @@ import { AppDialogComponent } from '@app/components/game-edition-components/app-
 import { Game } from '@app/interfaces/game';
 import { CommunicationService } from '@app/services/communication/communication.service';
 import { GameSocketService } from '@app/services/communication/game-socket.service';
-import { getGameModeLabel, getGameSizeLabel } from '@app/constants/game-config-constants';
+import { getGameModeLabel, getGameSizeLabel } from '@common/constants/game-config-constants';
 @Component({
     selector: 'app-game-list',
     templateUrl: './game-list.component.html',
