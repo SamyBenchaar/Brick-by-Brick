@@ -19,56 +19,58 @@ import { GameSessionEvents } from '@common/game.events';
  * to DO
  */
 
+const MAX_PLAYERS = 4;
+
 describe('GameSessionSocketService', () => {
     let service: GameSessionSocketService;
     let socketServiceMock: jasmine.SpyObj<SocketService>;
 
     const mockGameSession: GameSession = {
-        players: [] as { socketId: string; character: any }[],
+        players: [],
         status: 'waiting',
         roomId: 'room1',
-        maxPlayers: 4,
+        maxPlayers: MAX_PLAYERS,
         mapId: 'map1',
         mapCopy: null,
         takenAvatars: [],
 
-        addPlayer: () => {},
-        removePlayer: () => {},
+        addPlayer: () => {/* mock */},
+        removePlayer: () => {/* mock */},
         verifyUniqueName: () => 'Player',
         isNameUnique: () => true,
         isHost: () => false,
         isFull: () => false,
         getPlayers: () => [],
         getStatus: () => 'waiting',
-        getMaxPlayers: () => 4,
+        getMaxPlayers: () => MAX_PLAYERS,
         getMapId: () => 'map1',
         getRoomId: () => 'room1',
         getHostSocketId: () => '',
-        startGame: () => {},
+        startGame: () => {/* mock */},
     };
 
     const mockGameSession2: GameSession = {
-        players: [] as { socketId: string; character: any }[],
+        players: [],
         status: 'waiting',
         roomId: 'room2',
-        maxPlayers: 4,
+        maxPlayers: MAX_PLAYERS,
         mapId: 'map1',
         mapCopy: null,
         takenAvatars: [],
         
-        addPlayer: () => {},
-        removePlayer: () => {},
+        addPlayer: () => {/* mock */},
+        removePlayer: () => {/* mock */},
         verifyUniqueName: () => 'Player',
         isNameUnique: () => true,
         isHost: () => false,
         isFull: () => false,
         getPlayers: () => [],
         getStatus: () => 'waiting',
-        getMaxPlayers: () => 4,
+        getMaxPlayers: () => MAX_PLAYERS,
         getMapId: () => 'map1',
         getRoomId: () => 'room2',
         getHostSocketId: () => '',
-        startGame: () => {},
+        startGame: () => {/* mock */},
     };
 
     beforeEach(() => {
@@ -296,33 +298,34 @@ describe('GameSessionSocketService', () => {
     });
 
     describe('Intégration complète', () => {
-    it('devrait gérer plusieurs événements socket successifs', () => {
-        service.connect();
+        it('devrait gérer plusieurs événements socket successifs', () => {
+            service.connect();
 
-        const callbackList = socketServiceMock.on.calls
-            .all()
-            .find(call => call.args[0] === GameSessionEvents.GameSessionList)
-            ?.args[1] as (sessions: GameSession[]) => void;
+            const callbackList = socketServiceMock.on.calls
+                .all()
+                .find(call => call.args[0] === GameSessionEvents.GameSessionList)
+                ?.args[1] as (sessions: GameSession[]) => void;
 
-        callbackList([mockGameSession]);
-        expect(service.gameSessions().length).toBe(1);
+            callbackList([mockGameSession]);
+            expect(service.gameSessions().length).toBe(1);
 
-        const callbackCreated = socketServiceMock.on.calls
-            .all()
-            .find(call => call.args[0] === GameSessionEvents.GameSessionCreated)
-            ?.args[1] as (session: GameSession) => void;
+            const callbackCreated = socketServiceMock.on.calls
+                .all()
+                .find(call => call.args[0] === GameSessionEvents.GameSessionCreated)
+                ?.args[1] as (session: GameSession) => void;
 
-        callbackCreated(mockGameSession2);
-        expect(service.gameSessions().length).toBe(2);
+            callbackCreated(mockGameSession2);
+            expect(service.gameSessions().length).toBe(2);
 
-        const callbackDeleted = socketServiceMock.on.calls
-            .all()
-            .find(call => call.args[0] === GameSessionEvents.GameSessionDeleted)
-            ?.args[1] as (roomId: string) => void;
+            const callbackDeleted = socketServiceMock.on.calls
+                .all()
+                .find(call => call.args[0] === GameSessionEvents.GameSessionDeleted)
+                ?.args[1] as (roomId: string) => void;
 
-        callbackDeleted('room1');
+            callbackDeleted('room1');
 
-        expect(service.gameSessions().length).toBe(1);
-        expect(service.gameSessions()[0].roomId).toBe('room2');
+            expect(service.gameSessions().length).toBe(1);
+            expect(service.gameSessions()[0].roomId).toBe('room2');
+        });
     });
-})});
+});

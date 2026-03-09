@@ -68,7 +68,7 @@ describe('JoinGamePageComponent', () => {
 
         expect(routerSpy.navigate).toHaveBeenCalledWith(
             ['/character-creation'],
-            { queryParams: { roomId: '123' } }
+            { queryParams: { roomId: '123' } },
         );
     });
 
