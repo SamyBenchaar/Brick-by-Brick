@@ -26,6 +26,8 @@ export class GameSessionService {
 
     joinSession(roomId: string, socketId: string, player: Character): string | null {
         const session = this.gameSessions.get(roomId);
+        player.name = session.verifyUniqueName(player.name);
+
         if (!session) return 'Session de jeu introuvable';
         if (session.status !== 'waiting') return 'La session de jeu a déjà commencé';
         if (session.isFull()) return 'La session de jeu est pleine';
