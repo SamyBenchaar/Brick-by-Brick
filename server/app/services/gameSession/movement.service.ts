@@ -126,7 +126,7 @@ export class MovementService {
     private getOccupiedPositions(gameSession: GameSession): Set<string> {
         const occupied = new Set<string>();
 
-        for (const player of gameSession.getPlayers()) {
+        for (const player of gameSession.players) {
             const posKey = `${player.character.position.x},${player.character.position.y}`;
             occupied.add(posKey);
         }
@@ -159,12 +159,12 @@ export class MovementService {
         const tile = mapData[newPos.y][newPos.x];
         const moveCost = this.getTileCost(tile.type);
 
-        if (moveCost > player.speed) {
+        if (moveCost > player.remainingMovement) {
             return false;
         }
 
         player.moveTo(newPos);
-        player.speed -= moveCost;
+        player.remainingMovement -= moveCost;
 
         return true;
     }
@@ -193,3 +193,5 @@ export class MovementService {
         );
     }
 }
+
+

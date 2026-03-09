@@ -64,7 +64,7 @@ export class CombatService {
             throw new Error(`No starting point found for player ${defender.id}`);
         }
 
-        const occupiedPositions: Position[] = gameSession.getPlayers()
+        const occupiedPositions: Position[] = gameSession.players
             .filter(p => p.character.id !== defender.id)
             .map(p => p.character.position);
 

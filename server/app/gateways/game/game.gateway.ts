@@ -18,9 +18,9 @@ import { Server, Socket } from 'socket.io';
 @Injectable()
 export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit {
     @WebSocketServer() private server: Server;
-    private playerSockets: Map<string, string> = new Map(); // playerId, socketId
-    private socketRooms: Map<string, string> = new Map(); // socketId, roomId
-    private static readonly turnTimerIntervalMs = 1000;
+    private playerSockets: Map<string, string> = new Map();
+    private socketRooms: Map<string, string> = new Map();
+    private roomTimers: Map<string, NodeJS.Timeout> = new Map();
     private static readonly gameSessionCleanupDelayMs = 5000;
 
     constructor(
@@ -61,40 +61,6 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
         socket.emit(GameEvents.GameList, games);
     }
 
-    @SubscribeMessage(GameSessionEvents.JoinGameSession)
-    async handleJoinGameSession(
-        socket: Socket,
-        data: { roomId: string; player: Character },
-    ) {
-        const { roomId, player } = data;
-        const gameSession = this.gameSessionService.getGameSession(roomId);
-
-        if (!gameSession) {
-            socket.emit('error', { message: 'Game session not found' });
-            return;
-        }
-
-        gameSession.addPlayer(player);
-        this.playerSockets.set(player.id, socket.id);
-        this.socketRooms.set(socket.id, roomId);
-
-        socket.join(roomId);
-
-        this.server.to(roomId).emit(GameSessionEvents.PlayerJoined, {
-            player,
-            playerCount: gameSession.getPlayers().length,
-            maxPlayers: gameSession.getMaxPlayers(),
-        });
-
-        socket.emit('gameState', {
-            session: {
-                roomId: gameSession.getRoomId(),
-                players: gameSession.getPlayers(),
-                status: gameSession.getStatus(),
-            },
-        });
-    }
-
     @SubscribeMessage(GameSessionEvents.StartGame)
     async handleStartGame(socket: Socket, data: { roomId: string }) {
         const { roomId } = data;
@@ -106,7 +72,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
         }
 
         try {
-            const game = await this.gameService.findOne(gameSession.getMapId());
+            const game = await this.gameService.findOne(gameSession.mapId);
             if (!game) {
                 socket.emit('error', { message: 'Game not found' });
                 return;
@@ -116,8 +82,8 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
 
             this.server.to(roomId).emit(GameSessionEvents.GameSessionStarted, {
                 players: gameSession.getActivePlayers(),
-                playerOrder: gameSession.getPlayerOrder(),
-                startingPoints: Array.from(gameSession.getStartingPoints().entries()),
+                playerOrder: gameSession.playerOrder,
+                startingPoints: Array.from(gameSession.startingPoints.entries()),
                 mapCopy: gameSession.getMapCopy(),
             });
 
@@ -180,6 +146,14 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
         }
 
         try {
+            const currentPlayer = gameSession.getCurrentPlayer();
+            const defender = gameSession.players.find(p => p.character.id === defenderId)?.character;
+
+            if (!currentPlayer || !defender) {
+                socket.emit('error', { message: 'Invalid combat participants' });
+                return;
+            }
+
             const result = this.gameSessionService.executeCombat(gameSession, defenderId);
 
             this.server.to(roomId).emit(GameSessionEvents.CombatResult, result);
@@ -190,11 +164,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
                 return;
             }
 
-            if (gameSession.getPlayers().find(p => p.character.id === defenderId)?.character.isActive) {
-                this.gameSessionService.endCurrentTurn(gameSession);
-            }
 
-            this.startNextTurn(roomId);
         } catch (error) {
             this.logger.error(`Combat error: ${error.message}`);
             socket.emit('error', { message: 'Combat failed' });
@@ -263,33 +233,31 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
         });
 
         try {
-            await this.gameSessionService.startCurrentTurn(gameSession, () => {
-                this.server.to(roomId).emit(GameSessionEvents.TurnStarted, {
-                    playerId: currentPlayer.id,
-                    timeRemaining: 30,
-                });
-
-                const reachableTiles = this.gameSessionService.getReachableTiles(gameSession);
-                const socketId = this.playerSockets.get(currentPlayer.id);
-                if (socketId) {
-                    this.server.to(socketId).emit(GameSessionEvents.ReachableTiles, {
-                        tiles: reachableTiles,
+            await this.gameSessionService.startCurrentTurn(
+                gameSession,
+                () => {
+                    this.server.to(roomId).emit(GameSessionEvents.TurnStarted, {
+                        playerId: currentPlayer.id,
+                        timeRemaining: 30,
                     });
-                }
-            });
 
-            const timerInterval = setInterval(() => {
-                const timeRemaining = gameSession.getCurrentTurnTime();
-                this.server.to(roomId).emit(GameSessionEvents.TurnTimeUpdate, {
-                    timeRemaining,
-                });
-
-                if (timeRemaining <= 0) {
-                    clearInterval(timerInterval);
-                    this.gameSessionService.endCurrentTurn(gameSession);
+                    const reachableTiles = this.gameSessionService.getReachableTiles(gameSession);
+                    const socketId = this.playerSockets.get(currentPlayer.id);
+                    if (socketId) {
+                        this.server.to(socketId).emit(GameSessionEvents.ReachableTiles, {
+                            tiles: reachableTiles,
+                        });
+                    }
+                },
+                (timeRemaining: number) => {
+                    this.server.to(roomId).emit(GameSessionEvents.TurnTimeUpdate, {
+                        timeRemaining,
+                    });
+                },
+                () => {
                     this.startNextTurn(roomId);
-                }
-            }, GameGateway.turnTimerIntervalMs);
+                },
+            );
         } catch (error) {
             this.logger.error(`Error starting turn: ${error.message}`);
         }
@@ -312,14 +280,22 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
 
         this.server.to(roomId).emit(GameSessionEvents.GameEnded, gameEndData);
 
-        setTimeout(() => {
+        if (this.roomTimers.has(roomId)) {
+            clearTimeout(this.roomTimers.get(roomId));
+            this.roomTimers.delete(roomId);
+        }
+
+        const cleanupTimer = setTimeout(() => {
             this.gameSessionService.deleteGameSession(roomId);
             this.socketRooms.forEach((room, socketId) => {
                 if (room === roomId) {
                     this.socketRooms.delete(socketId);
                 }
             });
+            this.roomTimers.delete(roomId);
         }, GameGateway.gameSessionCleanupDelayMs);
+
+        this.roomTimers.set(roomId, cleanupTimer);
     }
 
     notifyGameCreated(game: Game): void {

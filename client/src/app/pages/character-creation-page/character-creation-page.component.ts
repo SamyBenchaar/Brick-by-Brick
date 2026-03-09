@@ -66,13 +66,10 @@ export class CharacterCreationPageComponent implements OnInit, OnDestroy {
             BASE_DEFENSE,
             'D4',
             'D6',
-            0, // _victories
-            { x: 0, y: 0 }, // _position
-            { x: 0, y: 0 }, // _startPosition
-            true, // _isActive
-            () => undefined, // _resetMovement
-            () => undefined, // _moveTo
-            () => undefined, // _addVictory
+            0,
+            { x: 0, y: 0 },
+            { x: 0, y: 0 },
+            true,
         );
     }
 
@@ -131,10 +128,16 @@ export class CharacterCreationPageComponent implements OnInit, OnDestroy {
         sessionStorage.setItem('playerUsername', this.character.name);
 
         if (this.fromGameCreation && this.gameId) {
+
+            this.gameSessionSocketService.currentSession.set(null);
+            this.gameSessionSocketService.roomId.set('');
+            this.gameSessionSocketService.mapCopy.set(null);
+
+            // Le créateur: créer la session et attendre que le roomId soit reçu du serveur
             this.gameSessionSocketService.createGameSession(this.gameId, this.character);
 
             effect(() => {
-                const roomId = this.gameSessionSocketService.currentSession()?.getRoomId();
+                const roomId = this.gameSessionSocketService.currentSession()?.roomId;
                 if (roomId && roomId !== '') {
                     this.router.navigate(['/waiting-room', roomId]);
                 }

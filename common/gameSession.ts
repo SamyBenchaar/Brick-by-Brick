@@ -3,16 +3,16 @@ import { Character } from './character';
 export type GameStatus = 'waiting' | 'playing' | 'ended';
 export class GameSession {
 
-    private players: Array<{ socketId: string; character: Character }> = [];
-    private playerOrder: string[] = [];
-    private currentPlayerIndex: number = 0;
-    private currentTurnTime: number = 30;
-    private status: GameStatus = 'waiting';
-    private roomId: string;
-    private maxPlayers: number;
-    private mapId: string;
-    private mapCopy: any;
-    private startingPoints: Map<string, Position> = new Map();
+    public players: Array<{ socketId: string; character: Character }> = [];
+    public playerOrder: string[] = [];
+    public currentPlayerIndex: number = 0;
+    public currentTurnTime: number = 30;
+    public status: GameStatus = 'waiting';
+    public roomId: string;
+    public maxPlayers: number;
+    public mapId: string;
+    public mapCopy: any;
+    public startingPoints: Map<string, Position> = new Map();
 
     constructor(hostPlayer: Character, mapId: string, maxPlayers: number = 2) {
         this.roomId = this.generateRoomId();
@@ -42,12 +42,26 @@ export class GameSession {
     }
 
     addPlayer(character: Character): void {
+        const alreadyExists = this.players.some(p => p.socketId === character.socketId);
+        if (alreadyExists) {
+            return;
+        }
         this.players.push({ socketId: character.socketId, character });
     }
 
     removePlayer(character: Character): void {
+        const removedPlayerIndex = this.playerOrder.findIndex(id => id === character.id);
+
         this.players = this.players.filter(player => player.character.id !== character.id);
         this.playerOrder = this.playerOrder.filter(id => id !== character.id);
+
+        if (removedPlayerIndex !== -1 && removedPlayerIndex < this.currentPlayerIndex) {
+            this.currentPlayerIndex--;
+        }
+
+        if (this.currentPlayerIndex >= this.playerOrder.length && this.playerOrder.length > 0) {
+            this.currentPlayerIndex = 0;
+        }
     }
 
     getRoomId(): string {

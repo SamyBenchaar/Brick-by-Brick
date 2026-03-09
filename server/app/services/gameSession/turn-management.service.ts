@@ -14,12 +14,12 @@ export class TurnManagementService {
     establishTurnOrder(gameSession: GameSession): void {
         const players = gameSession.getActivePlayers();
 
-        //plus rapide commence
+        // Sort players by speed (descending - fastest first)
         const sortedPlayers = [...players].sort((a, b) => {
             if (a.speed === b.speed) {
                 return Math.random() - this.randomOffset;
             }
-            return a.speed - b.speed;
+            return b.speed - a.speed; // Higher speed goes first
         });
 
         const playerOrder = sortedPlayers.map(p => p.id);
@@ -37,12 +37,12 @@ export class TurnManagementService {
                 resolve();
             }, this.delayBeforeTurnStartInMilliseconds);
 
-            this.turnTimers.set(gameSession.getRoomId(), delayTimer);
+            this.turnTimers.set(gameSession.roomId, delayTimer);
         });
     }
 
-    startTurnTimer(gameSession: GameSession, onTimeoutCallback: () => void): void {
-        const roomId = gameSession.getRoomId();
+    startTurnTimer(gameSession: GameSession, onTimeoutCallback: () => void, onTickCallback?: (timeRemaining: number) => void): void {
+        const roomId = gameSession.roomId;
 
         if (this.turnTimers.has(roomId)) {
             clearInterval(this.turnTimers.get(roomId));
@@ -50,8 +50,14 @@ export class TurnManagementService {
 
         const timerInterval = setInterval(() => {
             gameSession.decrementTurnTime();
+            const timeRemaining = gameSession.getCurrentTurnTime();
 
-            if (gameSession.getCurrentTurnTime() <= 0) {
+            // Call the tick callback with the current time
+            if (onTickCallback) {
+                onTickCallback(timeRemaining);
+            }
+
+            if (timeRemaining <= 0) {
                 clearInterval(timerInterval);
                 this.turnTimers.delete(roomId);
                 onTimeoutCallback();
@@ -62,10 +68,10 @@ export class TurnManagementService {
     }
 
     endTurn(gameSession: GameSession): void {
-        const roomId = gameSession.getRoomId();
+        const roomId = gameSession.roomId;
 
         if (this.turnTimers.has(roomId)) {
-            clearTimeout(this.turnTimers.get(roomId));
+            clearInterval(this.turnTimers.get(roomId));
             this.turnTimers.delete(roomId);
         }
 
@@ -92,7 +98,7 @@ export class TurnManagementService {
 
     cleanupTimers(roomId: string): void {
         if (this.turnTimers.has(roomId)) {
-            clearTimeout(this.turnTimers.get(roomId));
+            clearInterval(this.turnTimers.get(roomId));
             this.turnTimers.delete(roomId);
         }
     }

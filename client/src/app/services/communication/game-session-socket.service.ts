@@ -2,6 +2,7 @@ import { Injectable, signal, WritableSignal } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { AppDialogComponent } from '@app/components/game-edition-components/app-dialog/app-dialog.component';
+import { Game } from '@app/interfaces/game';
 import { Character } from '@common/character';
 import { GameSessionEvents } from '@common/game.events';
 import { GameSession } from '@common/gameSession';
@@ -13,6 +14,10 @@ import { SocketService } from './socket.service';
 export class GameSessionSocketService {
     gameSessions: WritableSignal<GameSession[]> = signal<GameSession[]>([]);
     currentSession: WritableSignal<GameSession | null> = signal<GameSession | null>(null);
+    playerSocketId: WritableSignal<string | null> = signal<string | null>(null);
+    roomId: WritableSignal<string> = signal<string>('');
+    hostSocketId: WritableSignal<string> = signal<string>('');
+    mapCopy: WritableSignal<Game | null> = signal<Game | null>(null);
 
     private listenersInitialized = false;
 
@@ -31,13 +36,13 @@ export class GameSessionSocketService {
             this.setupEventListeners();
             this.listenersInitialized = true;
         }
-
         this.requestGameSessionList();
     }
 
     disconnect(): void {
         this.listenersInitialized = false;
         this.socketService.off(GameSessionEvents.GameSessionList);
+        this.socketService.off(GameSessionEvents.GameSessionListUpdated);
         this.socketService.off(GameSessionEvents.GameSessionCreated);
         this.socketService.off(GameSessionEvents.GameSessionUpdated);
         this.socketService.off(GameSessionEvents.GameSessionDeleted);
@@ -45,11 +50,16 @@ export class GameSessionSocketService {
         this.socketService.off(GameSessionEvents.PlayerKicked);
         this.socketService.off(GameSessionEvents.RoomCancelled);
         this.socketService.off(GameSessionEvents.GameStarted);
+
         this.socketService.disconnect();
     }
 
     private setupEventListeners(): void {
         this.socketService.on<GameSession[]>(GameSessionEvents.GameSessionList, (gameSessions) => {
+            this.gameSessions.set(gameSessions);
+        });
+
+        this.socketService.on<GameSession[]>(GameSessionEvents.GameSessionListUpdated, (gameSessions) => {
             this.gameSessions.set(gameSessions);
         });
 
@@ -62,19 +72,20 @@ export class GameSessionSocketService {
 
         this.socketService.on<GameSession>(GameSessionEvents.GameSessionUpdated, (updatedSession) => {
             this.gameSessions.update(current =>
-                current.map(gameSession => gameSession.getRoomId() === updatedSession.getRoomId() ? updatedSession : gameSession));
+                current.map(gameSession => gameSession.roomId === updatedSession.roomId ? updatedSession : gameSession));
             const mySocketId = this.socketService.getSocketId();
-            const isCurrentPlayerInSession = updatedSession.getPlayers().find(p => p.socketId === mySocketId);
+            const isCurrentPlayerInSession = updatedSession.players.find(p => p.socketId === mySocketId);
 
             if (isCurrentPlayerInSession) {
                 this.currentSession.set(updatedSession);
             }
+            this.requestGameSessionList();
         });
 
         this.socketService.on<string>(GameSessionEvents.GameSessionDeleted, (deletedRoomId) => {
             this.gameSessions.update(current =>
-                current.filter(gameSession => gameSession.getRoomId() !== deletedRoomId));
-            if (this.currentSession()?.getRoomId() === deletedRoomId) {
+                current.filter(gameSession => gameSession.roomId !== deletedRoomId));
+            if (this.currentSession()?.roomId === deletedRoomId) {
                 this.currentSession.set(null);
             }
         });
@@ -103,14 +114,19 @@ export class GameSessionSocketService {
             });
         });
 
-        this.socketService.on(GameSessionEvents.GameStarted, () => {
-            this.router.navigate(['/game']);
+        this.socketService.on<{ roomId: string; mapData: Game; gameSession: GameSession }>(GameSessionEvents.GameStarted, (payload) => {
+            const { roomId, mapData, gameSession } = payload;
+            this.currentSession.set(gameSession);
+            this.mapCopy.set(mapData);
+            this.router.navigate(['/game-view'], { queryParams: { roomId } });
         });
+
     }
 
     requestGameSessionList(): void {
         this.socketService.emit(GameSessionEvents.RequestGameSessionList);
     }
+
 
     createGameSession(gameId: string, hostPlayer: Character): void {
         this.socketService.emit(GameSessionEvents.CreateGameSession, { gameId, hostPlayer });
@@ -121,14 +137,14 @@ export class GameSessionSocketService {
     }
 
     kickPlayer(targetId: string): void {
-        const currentRoomId = this.currentSession()?.getRoomId();
+        const currentRoomId = this.currentSession()?.roomId;
         if (currentRoomId) {
             this.socketService.emit(GameSessionEvents.KickPlayer, { roomId: currentRoomId, targetId });
         }
     }
 
     leaveGameSession(): void {
-        const currentRoomId = this.currentSession()?.getRoomId();
+        const currentRoomId = this.currentSession()?.roomId;
         if (currentRoomId) {
             this.socketService.emit(GameSessionEvents.LeaveGameSession, { roomId: currentRoomId });
             this.currentSession.set(null);
@@ -136,7 +152,7 @@ export class GameSessionSocketService {
     }
 
     startGame(): void {
-        const currentRoomId = this.currentSession()?.getRoomId();
+        const currentRoomId = this.currentSession()?.roomId;
         if (currentRoomId) {
             this.socketService.emit(GameSessionEvents.StartGame, { roomId: currentRoomId });
         }
@@ -146,18 +162,22 @@ export class GameSessionSocketService {
         return this.socketService.getSocketId() ?? '';
     }
 
+    isConnected(): boolean {
+        return this.socketService.isConnected();
+    }
+
     isCurrentUserHost(): boolean {
         const session = this.currentSession();
-        return session?.getPlayers()[0]?.socketId === this.getSocketId();
+        return session?.players[0]?.socketId === this.getSocketId();
     }
 
     isPlayerHost(socketId: string): boolean {
-        return this.currentSession()?.getPlayers()[0]?.socketId === socketId;
+        return this.currentSession()?.players[0]?.socketId === socketId;
     }
 
     canStartGame(): boolean {
         const session = this.currentSession();
-        return this.isCurrentUserHost() && (session?.getPlayers().length ?? 0) >= 2;
+        return this.isCurrentUserHost() && (session?.players.length ?? 0) >= 2;
     }
 }
 

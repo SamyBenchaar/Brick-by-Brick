@@ -91,7 +91,7 @@ export class StartingPointService {
 
     cleanupUnusedStartingPoints(gameSession: GameSession, mapData: MapTile[][]): void {
         const activePlayerPositions = new Set<string>();
-        const startingPoints = gameSession.getStartingPoints();
+        const startingPoints = gameSession.startingPoints;
 
         startingPoints.forEach((position) => {
             activePlayerPositions.add(`${position.x},${position.y}`);
