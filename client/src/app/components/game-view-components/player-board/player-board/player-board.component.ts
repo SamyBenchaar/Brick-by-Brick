@@ -1,0 +1,22 @@
+import { Component, Input, OnInit } from '@angular/core';
+import { BaseSignComponent } from '@app/components/game-view-components/base-sign/base-sign.component';
+import { Player } from '@common/gameSession';
+
+@Component({
+  selector: 'app-player-board',
+  imports: [BaseSignComponent],
+  templateUrl: './player-board.component.html',
+  styleUrl: './player-board.component.scss',
+})
+export class PlayerBoardComponent implements OnInit {
+  @Input() players: Player[] = [];
+  @Input() leftPlayers: Player[] = [];
+  @Input() host: Player | undefined = undefined;
+  actifPlayer: Player | undefined = undefined;
+  name: string = 'Players board';
+  iconUrl: string = 'blabla';
+
+  ngOnInit(): void {
+    this.actifPlayer = this.players.find(p => p.character.isActif === true);
+  }
+}

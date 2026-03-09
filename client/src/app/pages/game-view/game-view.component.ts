@@ -1,14 +1,14 @@
 import { CommonModule } from '@angular/common';
-import { Component, effect, Injector, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, effect, inject, Injector, OnDestroy, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { GameGridComponent } from '@app/components/game-edition-components/game-grid/game-grid.component';
-import { GameSessionSocketService } from '@app/services/communication/game-session-socket.service';
-import { MapSize } from '@common/map';
-import { getGameSizeConfig } from '@app/constants/game-config-constants';
-import { Subscription } from 'rxjs';
-import { Game } from '@app/interfaces/game';
-import { Character } from '@common/character';
 import { ChatComponent } from '@app/components/chat/chat.component';
+import { GameGridComponent } from '@app/components/game-edition-components/game-grid/game-grid.component';
+import { getGameSizeConfig } from '@app/constants/game-config-constants';
+import { Game } from '@app/interfaces/game';
+import { GameSessionSocketService } from '@app/services/communication/game-session-socket.service';
+import { Character } from '@common/character';
+import { MapSize } from '@common/map';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-game-view',
@@ -38,15 +38,15 @@ export class GameViewComponent implements OnInit, OnDestroy {
     return config.gridSize;
   }
 
-  getPlayerCount():number{
-    return this.gameSessionSocketService.currentSession()?.players.length ?? 0;
+  getPlayerCount(): number {
+    return this.gameSessionSocketService.currentSession()?.players?.length ?? 0;
   }
 
   get hostId(): string {
     return this.gameSessionSocketService.hostSocketId() ?? '';
   }
 
-  get roomId():string {
+  get roomId(): string {
     return this.gameSessionSocketService.currentSession()?.roomId || '';
   }
   getCurrentPlayer(): Character | null {
