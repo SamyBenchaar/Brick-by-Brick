@@ -10,6 +10,7 @@ import { Player } from '@common/gameSession';
 })
 export class PlayerBoardComponent implements OnInit {
   @Input() players: Player[] = [];
+  @Input() leftPlayers: Player[] = [];
   @Input() host: Player | undefined = undefined;
   actifPlayer: Player | undefined = undefined;
   name: string = 'Players board';

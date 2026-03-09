@@ -5,11 +5,11 @@ export type SessionStatus = 'waiting' | 'playing';
 export type Player = {
     socketId: string;
     character: Character;
-    hasleft: boolean;
 };
 
 export class GameSession {
     players: Player[] = [];
+    leftPlayers: Player[] = [];
     status: SessionStatus = 'waiting';
     roomId: string;
     maxPlayers: number;
@@ -21,7 +21,7 @@ export class GameSession {
     // this.roomId = 4 + Math.random().toString(16).slice(2, 6);
 
     constructor(socketId: string, hostPlayer: Character, mapId: string) {
-        this.host = { socketId, character: hostPlayer, hasleft: false };
+        this.host = { socketId, character: hostPlayer };
         this.roomId = crypto.randomUUID().substring(0, 8).toUpperCase();
         this.maxPlayers = 4;
         this.mapId = mapId;
@@ -33,15 +33,22 @@ export class GameSession {
         // if (this.players.length >= this.maxPlayers) {
         //     throw new Error('Game session is full');
         // }
-        const nouvelleListe = [...this.players, { socketId, character, hasleft: false }];
+        const nouvelleListe = [...this.players, { socketId, character }];
         this.players = nouvelleListe.sort((a, b) => b.character.speed - a.character.speed);
     }
 
     removePlayer(socketId: string): void {
-        const player = this.players.find(p => p.socketId === socketId);
-        if (!player) return;
-        player.hasleft = true;
-        this.players = [...this.players];
+        if (this.status === 'waiting') {
+            // Salle d'attente : suppression définitive
+            this.players = this.players.filter(p => p.socketId !== socketId);
+        } else {
+            // En partie : déplacer dans leftPlayers pour l'affichage grisé sur le board
+            const index = this.players.findIndex(p => p.socketId === socketId);
+            if (index !== -1) {
+                const [player] = this.players.splice(index, 1);
+                this.leftPlayers.push(player);
+            }
+        }
     }
 
     isHost(socketId: string): boolean {
@@ -50,6 +57,10 @@ export class GameSession {
 
     isFull(): boolean {
         return this.players.length >= this.maxPlayers;
+    }
+
+    get activePlayers(): Player[] {
+        return this.players;
     }
 
     getPlayers(): { socketId: string; character: Character }[] {

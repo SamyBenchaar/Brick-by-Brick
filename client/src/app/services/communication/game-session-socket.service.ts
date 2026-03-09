@@ -168,16 +168,16 @@ export class GameSessionSocketService {
 
     isCurrentUserHost(): boolean {
         const session = this.currentSession();
-        return session?.players[0]?.socketId === this.getSocketId();
+        return session?.host?.socketId === this.getSocketId();
     }
 
     isPlayerHost(socketId: string): boolean {
-        return this.currentSession()?.players[0]?.socketId === socketId;
+        return this.currentSession()?.host?.socketId === socketId;
     }
 
     canStartGame(): boolean {
         const session = this.currentSession();
-        return this.isCurrentUserHost() && (session?.players.length ?? 0) >= 2;
+        return this.isCurrentUserHost() && (session?.players?.length ?? 0) >= 2;
     }
 }
 

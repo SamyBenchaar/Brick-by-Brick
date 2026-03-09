@@ -4,20 +4,26 @@
         <div class="player-row host-row">
             <span class="player-badge">👑</span>
             <span class="player-name">{{ host.character.name }}</span>
-            <span class="player-wins">{{ host.character.battleWon }} victoires</span>
+            <span class="player-wins">{{ host.character.battlesWon }} victoires</span>
         </div>
         } @if (actifPlayer && actifPlayer.character.id !== host?.character?.id) {
         <div class="player-row actif-row">
             <span class="player-badge">⚔️</span>
-            <span class="player-name" [class.player-hasleft]="actifPlayer.hasleft">{{ actifPlayer.character.name }}</span>
-            <span class="player-wins">{{ actifPlayer.character.battleWon }} victoires</span>
+            <span class="player-name">{{ actifPlayer.character.name }}</span>
+            <span class="player-wins">{{ actifPlayer.character.battlesWon }} victoires</span>
         </div>
         } @for (player of players; track player.character.id) { @if (!player.character.isActif && player.character.id !== host?.character?.id) {
-        <div class="player-row" [class.left-row]="player.hasleft">
+        <div class="player-row">
             <span class="player-badge">🧍🏽‍♂️</span>
-            <span class="player-name" [class.player-hasleft]="player.hasleft">{{ player.character.name }}</span>
-            <span class="player-wins">{{ player.character.battleWon }} victoires</span>
+            <span class="player-name">{{ player.character.name }}</span>
+            <span class="player-wins">{{ player.character.battlesWon }} victoires</span>
         </div>
-        } }
+        } } @for (player of leftPlayers; track player.character.id) {
+        <div class="player-row left-row">
+            <span class="player-badge">🚪</span>
+            <span class="player-name player-hasleft">{{ player.character.name }}</span>
+            <span class="player-wins">{{ player.character.battlesWon }} victoires</span>
+        </div>
+        }
     </div>
 </app-base-sign>
