@@ -1,38 +1,35 @@
 <app-base-sign [name]="name" [iconUrl]="iconUrl">
     <div class="player-sign-container">
-
         <div class="player-header">
-            <img class="player-avatar" [src]="avatar?.image" [alt]="player?.name" />
-            <span class="player-name">{{ player?.name }}</span>
+            <img class="player-avatar" [src]="avatar?.image" [alt]="player?.character?.name" />
+            <span class="player-name">{{ player?.character?.name }}</span>
         </div>
 
         <div class="stats-grid">
             <div class="stat-row">
                 <span class="stat-label">❤️ Vie</span>
-                <span class="stat-value">{{ player?.life }} / {{ player?.maxLife }}</span>
+                <span class="stat-value">{{ player?.character?.life }} / {{ player?.character?.maxLife }}</span>
             </div>
             <div class="stat-row">
                 <span class="stat-label">⚡ Rapidité</span>
-                <span class="stat-value">{{ player?.speed }}</span>
+                <span class="stat-value">{{ player?.character?.speed }}</span>
             </div>
             <div class="stat-row">
                 <span class="stat-label">⚔️ Attaque</span>
-                <span class="stat-value">{{ player?.attack }} ({{ player?.attackDice }})</span>
+                <span class="stat-value">{{ player?.character?.attack }} ({{ player?.character?.attackDice }})</span>
             </div>
             <div class="stat-row">
                 <span class="stat-label">🛡️ Défense</span>
-                <span class="stat-value">{{ player?.defense }} ({{ player?.defenseDice }})</span>
+                <span class="stat-value">{{ player?.character?.defense }} ({{ player?.character?.defenseDice }})</span>
             </div>
             <div class="stat-row">
                 <span class="stat-label">🎯 Actions</span>
-                <span class="stat-value">{{ player?.actions }}</span>
+                <span class="stat-value">{{ player?.character?.actions }}</span>
             </div>
             <div class="stat-row">
                 <span class="stat-label">🚶 Mouvements</span>
-                <span class="stat-value">{{ player?.movements }}</span>
+                <span class="stat-value">{{ player?.character?.movements }}</span>
             </div>
         </div>
-
     </div>
 </app-base-sign>
-

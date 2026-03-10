@@ -1,4 +1,4 @@
-import { Component, Input, signal} from '@angular/core';
+import { Component, Input, signal } from '@angular/core';
 
 @Component({
   selector: 'app-base-sign',
@@ -11,7 +11,7 @@ export class BaseSignComponent {
   @Input() iconUrl: string | null = '';
   isExpanded = signal(true);
 
-  toggleSign(): void{
+  toggleSign(): void {
     this.isExpanded.update(v => !v);
   }
 }

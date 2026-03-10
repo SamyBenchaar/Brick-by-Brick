@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { GameSessionSocketService } from './game-session-socket.service';
 import { SocketService } from './socket.service';
-import { GameSession } from '@common/game-session/gameSession';
+import { GameSession } from '@common/game-session';
 import { GameSessionEvents } from '@common/game.events';
 
 /**

@@ -5,7 +5,7 @@ import { AppDialogComponent } from '@app/components/game-edition-components/app-
 import { Game } from '@app/interfaces/game';
 import { Character } from '@common/character';
 import { GameSessionEvents } from '@common/game.events';
-import { GameSession } from '@common/game-session/gameSession';
+import { GameSession } from '@common/game-session';
 import { SocketService } from './socket.service';
 
 @Injectable({
@@ -206,16 +206,16 @@ export class GameSessionSocketService {
 
     isCurrentUserHost(): boolean {
         const session = this.currentSession();
-        return session?.players[0]?.socketId === this.getSocketId();
+        return session?.host?.socketId === this.getSocketId();
     }
 
     isPlayerHost(socketId: string): boolean {
-        return this.currentSession()?.players[0]?.socketId === socketId;
+        return this.currentSession()?.host?.socketId === socketId;
     }
 
     canStartGame(): boolean {
         const session = this.currentSession();
-        return this.isCurrentUserHost() && (session?.players.length ?? 0) >= 2;
+        return this.isCurrentUserHost() && (session?.players?.length ?? 0) >= 2;
     }
 }
 

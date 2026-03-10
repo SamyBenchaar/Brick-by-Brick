@@ -1,7 +1,7 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { BaseSignComponent } from '@app/components/game-view-components/base-sign/base-sign.component';
-import { Character } from '@common/character';
 import { AvatarOption, AVATARS } from '@app/constants/character.constants';
+import { Player } from '@common/game-session';
 
 @Component({
   selector: 'app-player-sign',
@@ -9,18 +9,13 @@ import { AvatarOption, AVATARS } from '@app/constants/character.constants';
   templateUrl: './player-sign.component.html',
   styleUrl: './player-sign.component.scss',
 })
-export class PlayerSignComponent implements OnInit {
-    @Input() player: Character | null = null;
-    name: string | null;
-    iconUrl: string | null;
+export class PlayerSignComponent {
+  @Input() player: Player | null = null;
+  readonly name = 'statistiques';
+  readonly iconUrl = '';
 
-    ngOnInit() {
-      this.name = 'statistiques';
-      this.iconUrl = '';
-    }
-
-    get avatar(): AvatarOption | undefined {
-        if (!this.player) return undefined;
-        return AVATARS.find(a => a.id === this.player?.avatarId);
-    }
+  get avatar(): AvatarOption | undefined {
+    if (!this.player) return undefined;
+    return AVATARS.find(a => a.id === this.player?.character.avatarId);
+  }
 }

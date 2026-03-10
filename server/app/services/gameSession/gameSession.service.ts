@@ -1,5 +1,4 @@
-import { Character } from '@common/character';
-import { GameSession } from '@common/game-session/gameSession';
+import { GameSession, Player } from '@common/game-session';
 import { Injectable } from '@nestjs/common';
 import { GameService } from '@app/services/game/game.service';
 import { getGameSizeConfig } from '@common/constants/game-config-constants';
@@ -10,28 +9,26 @@ export class GameSessionService {
     private gameSessions: Map<string, GameSession> = new Map();
 
     constructor(private gameService: GameService) {}
-    async createGameSession(socketId: string, hostPlayer: Character, mapId: string): Promise<GameSession> {
+    async createGameSession(hostPlayer: Player, mapId: string): Promise<GameSession> {
         const originalGame = await this.gameService.findOne(mapId);
         const mapCopy = JSON.parse(JSON.stringify(originalGame));
 
-        const newGameSession = new GameSession(socketId, hostPlayer, mapId);
-
+        const newGameSession = new GameSession(hostPlayer, mapId);
         newGameSession.mapCopy = mapCopy;
         newGameSession.maxPlayers = getGameSizeConfig(mapCopy.mapConfig.size).maxPlayers;
 
-        hostPlayer.id = socketId;
         this.gameSessions.set(newGameSession.roomId, newGameSession);
         return newGameSession;
     }
 
-    joinSession(roomId: string, socketId: string, player: Character): string | null {
+    joinSession(roomId: string, player: Player): string | null {
         const session = this.gameSessions.get(roomId);
-        player.name = session.verifyUniqueName(player.name);
+        player.character.name = session.verifyUniqueName(player.character.name);
 
         if (!session) return 'Session de jeu introuvable';
         if (session.status !== 'waiting') return 'La session de jeu a déjà commencé';
         if (session.isFull()) return 'La session de jeu est pleine';
-        session.addPlayer(socketId, player);
+        session.addPlayer(player);
         return null;
     }
 
@@ -49,7 +46,7 @@ export class GameSessionService {
             session.status === 'waiting' && session.players.length < session.maxPlayers);
     }
 
-    
+
     getAllGameSessions(): GameSession[] {
         return Array.from(this.gameSessions.values());
     }
