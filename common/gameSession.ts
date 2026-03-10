@@ -2,6 +2,7 @@ import { Character } from './character';
 // import { OnInit } from '@angular/core';
 
 export type SessionStatus = 'waiting' | 'playing';
+
 export type Player = {
     socketId: string;
     character: Character;
@@ -20,20 +21,20 @@ export class GameSession {
     // if (!mapId) {}
     // this.roomId = 4 + Math.random().toString(16).slice(2, 6);
 
-    constructor(socketId: string, hostPlayer: Character, mapId: string) {
-        this.host = { socketId, character: hostPlayer };
+    constructor(hostplayer: Player, mapId: string) {
+        this.host = hostplayer;
         this.roomId = crypto.randomUUID().substring(0, 8).toUpperCase();
         this.maxPlayers = 4;
         this.mapId = mapId;
-        this.addPlayer(socketId, hostPlayer);
+        this.addPlayer(hostplayer);
     }
 
 
-    addPlayer(socketId: string, character: Character): void {
+    addPlayer(player: Player): void {
         // if (this.players.length >= this.maxPlayers) {
         //     throw new Error('Game session is full');
         // }
-        const nouvelleListe = [...this.players, { socketId, character }];
+        const nouvelleListe = [...this.players, player];
         this.players = nouvelleListe.sort((a, b) => b.character.speed - a.character.speed);
     }
 
