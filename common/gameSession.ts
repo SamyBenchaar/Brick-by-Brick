@@ -59,12 +59,20 @@ export class GameSession {
         return this.players.length >= this.maxPlayers;
     }
 
+    gethost(): Player {
+        return this.host;
+    }
+
     get activePlayers(): Player[] {
         return this.players;
     }
 
-    getPlayers(): { socketId: string; character: Character }[] {
+    getPlayers(): Player[] {
         return [...this.players];
+    }
+
+    getLeftPlayers(): Player[] {
+        return [...this.leftPlayers];
     }
 
     getStatus(): SessionStatus {
