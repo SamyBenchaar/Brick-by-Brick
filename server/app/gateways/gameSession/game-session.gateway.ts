@@ -17,8 +17,6 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
     @WebSocketServer() private server: Server;
 
     private socketToRoom: Map<string, string> = new Map();
-    private readonly turnStartDelay = 3000;
-    private readonly gameEndCleanupDelay = 5000; // suit quelle socket est dans quelle salle, évite de faire une for loop
 
     constructor(
         private readonly logger: Logger,
@@ -40,7 +38,12 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
         this.logger.log(`Client déconnecté du GameSessionGateway: ${socket.id}`);
         const roomId = this.socketToRoom.get(socket.id);
         if (roomId) {
-            this.handleLeaveLogic(socket, roomId);
+            const gameSession = this.gameSessionService.getGameSession(roomId);
+            if (gameSession?.status === 'playing') {
+                this.handlePlayingDisconnect(socket, roomId);
+            } else {
+                this.handleLeaveLogic(socket, roomId);
+            }
         }
     }
 
@@ -91,248 +94,6 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
         this.logger.log(`Joueur ${socket.id} a rejoint la salle ${roomId}`);
     }
 
-    @SubscribeMessage(GameSessionEvents.StartGame)
-    async handleStartGame(socket: Socket, payload: { roomId: string }) {
-        const gameSession = this.gameSessionService.getGameSession(payload.roomId);
-
-        if (!gameSession) {
-            socket.emit(GameSessionEvents.GameSessionJoinError, 'Session introuvable');
-            return;
-        }
-        if (!gameSession.isHost(socket.id)) {
-            socket.emit(GameSessionEvents.GameSessionJoinError, "Seul l'organisateur peut démarrer la partie");
-            return;
-        }
-        if (gameSession.players.length < 2) {
-            socket.emit(GameSessionEvents.GameSessionJoinError, 'Il faut au moins 2 joueurs pour démarrer');
-            return;
-        }
-
-        const fullMapData = await this.gameSessionService.getFullMapData(gameSession.mapId);
-        this.gameSessionService.initializeGameSession(gameSession, fullMapData);
-
-        this.server.to(payload.roomId).emit(GameSessionEvents.GameStarted, {
-            roomId: payload.roomId,
-            mapData: fullMapData,
-            gameSession,
-        });
-        this.logger.log(`Partie démarrée dans la salle ${payload.roomId}`);
-
-        this.startGameTurn(gameSession);
-    }
-
-    private startGameTurn(gameSession: GameSession): void {
-        this.gameSessionService.startCurrentTurn(
-            gameSession,
-            () => {
-                const currentPlayer = gameSession.getCurrentPlayer();
-                this.server.to(gameSession.roomId).emit(GameSessionEvents.TurnStarting, {
-                    playerId: currentPlayer?.id,
-                    playerName: currentPlayer?.name,
-                    delay: 3000,
-                });
-
-                setTimeout(() => {
-                    this.server.to(gameSession.roomId).emit(GameSessionEvents.TurnStarted, {
-                        playerId: currentPlayer?.id,
-                        playerName: currentPlayer?.name,
-                        turnTime: gameSession.getCurrentTurnTime(),
-                    });
-                    this.emitReachableTiles(gameSession);
-
-                    if (!this.gameSessionService.canPlayerTakeAction(gameSession)) {
-                        this.gameSessionService.endCurrentTurn(gameSession);
-                        this.handleTurnEnd(gameSession);
-                    }
-                }, this.turnStartDelay);
-            },
-            (timeRemaining: number) => {
-                this.server.to(gameSession.roomId).emit(GameSessionEvents.TurnTimeUpdate, {
-                    timeRemaining,
-                });
-            },
-            () => {
-                this.handleTurnEnd(gameSession);
-            },
-        );
-    }
-
-    private handleTurnEnd(gameSession: GameSession): void {
-        const currentPlayer = gameSession.getCurrentPlayer();
-        this.server.to(gameSession.roomId).emit(GameSessionEvents.TurnEnded, {
-            playerId: currentPlayer?.id,
-        });
-
-        const winner = this.gameSessionService.checkGameWinner(gameSession);
-        if (winner) {
-            this.handleGameEnd(gameSession, winner);
-            return;
-        }
-
-        if (gameSession.playerOrder.length === 1) {
-            this.handleGameEnd(gameSession, null);
-            return;
-        }
-
-        if (gameSession.playerOrder.length === 0) {
-            this.handleGameEnd(gameSession, null);
-            return;
-        }
-
-        this.startGameTurn(gameSession);
-    }
-
-    private handleGameEnd(gameSession: GameSession, winner: Character | null): void {
-        this.gameSessionService.cleanupTurnTimers(gameSession.roomId);
-
-        this.server.to(gameSession.roomId).emit(GameSessionEvents.GameEnded, {
-            winner: winner ? { id: winner.id, name: winner.name, avatarId: winner.avatarId } : null,
-            reason: winner ? 'victory' : 'noPlayers',
-        });
-
-        setTimeout(() => {
-            this.gameSessionService.deleteGameSession(gameSession.roomId);
-            this.chatGateway.clearChatHistoryForRoom(gameSession.roomId);
-        }, this.gameEndCleanupDelay);
-    }
-
-    @SubscribeMessage(GameSessionEvents.EndTurnRequest)
-    handleEndTurnRequest(socket: Socket, payload: { roomId: string }) {
-        const gameSession = this.gameSessionService.getGameSession(payload.roomId);
-        if (!gameSession) {
-            return;
-        }
-
-        const currentPlayer = gameSession.getCurrentPlayer();
-        if (!currentPlayer || currentPlayer.id !== socket.id) {
-            return;
-        }
-
-        this.gameSessionService.endCurrentTurn(gameSession);
-        this.handleTurnEnd(gameSession);
-    }
-
-    @SubscribeMessage(GameSessionEvents.RequestMove)
-    handleRequestMove(socket: Socket, payload: { roomId: string; direction: string }) {
-        const gameSession = this.gameSessionService.getGameSession(payload.roomId);
-        if (!gameSession) {
-            return;
-        }
-
-        const currentPlayer = gameSession.getCurrentPlayer();
-        if (!currentPlayer || currentPlayer.id !== socket.id) {
-            return;
-        }
-
-        const direction = payload.direction as 'arrowUp' | 'arrowDown' | 'arrowLeft' | 'arrowRight';
-        const success = this.gameSessionService.executeMove(gameSession, direction);
-
-        if (success) {
-            this.server.to(payload.roomId).emit(GameSessionEvents.MoveExecuted, {
-                playerId: socket.id,
-                position: currentPlayer.position,
-                remainingMovement: currentPlayer.remainingMovement,
-            });
-
-            this.emitReachableTiles(gameSession);
-
-            if (!this.gameSessionService.canPlayerTakeAction(gameSession)) {
-                this.gameSessionService.endCurrentTurn(gameSession);
-                this.handleTurnEnd(gameSession);
-            }
-        }
-    }
-
-    @SubscribeMessage(GameSessionEvents.RequestCombat)
-    handleRequestCombat(socket: Socket, payload: { roomId: string; defenderId: string }) {
-        const gameSession = this.gameSessionService.getGameSession(payload.roomId);
-        if (!gameSession) {
-            return;
-        }
-
-        const currentPlayer = gameSession.getCurrentPlayer();
-        if (!currentPlayer || currentPlayer.id !== socket.id) {
-            return;
-        }
-
-        try {
-            const result = this.gameSessionService.executeCombat(gameSession, payload.defenderId);
-
-            this.server.to(payload.roomId).emit(GameSessionEvents.CombatResult, {
-                winner: result.winner,
-                loser: result.loser,
-                attackerVictories: result.attackerVictories,
-                defenderNewPosition: gameSession.players.find(p => p.character.id === payload.defenderId)?.character.position,
-            });
-
-            const winner = this.gameSessionService.checkGameWinner(gameSession);
-            if (winner) {
-                this.handleGameEnd(gameSession, winner);
-                return;
-            }
-
-            if (result.loser === currentPlayer.id) {
-                this.gameSessionService.endCurrentTurn(gameSession);
-                this.handleTurnEnd(gameSession);
-            }
-        } catch (error) {
-            this.logger.error(`Combat error: ${error.message}`);
-        }
-    }
-
-    @SubscribeMessage(GameSessionEvents.PlayerAbandoned)
-    handlePlayerAbandoned(socket: Socket, payload: { roomId: string }) {
-        const gameSession = this.gameSessionService.getGameSession(payload.roomId);
-        if (!gameSession) {
-            return;
-        }
-
-        if (gameSession.status !== 'playing') {
-            return;
-        }
-
-        const wasCurrentPlayer = gameSession.getCurrentPlayer()?.id === socket.id;
-
-        this.gameSessionService.removePlayer(payload.roomId, socket.id);
-
-        this.server.to(payload.roomId).emit(GameSessionEvents.PlayerAbandoned, {
-            playerId: socket.id,
-        });
-
-        const winner = this.gameSessionService.checkGameWinner(gameSession);
-        if (winner) {
-            this.handleGameEnd(gameSession, winner);
-            return;
-        }
-
-        if (gameSession.playerOrder.length === 1) {
-            this.handleGameEnd(gameSession, null);
-            return;
-        }
-
-        if (gameSession.playerOrder.length === 0) {
-            this.handleGameEnd(gameSession, null);
-            return;
-        }
-
-        if (wasCurrentPlayer) {
-            this.handleTurnEnd(gameSession);
-        }
-    }
-
-    private emitReachableTiles(gameSession: GameSession): void {
-        const currentPlayer = gameSession.getCurrentPlayer();
-        if (!currentPlayer) {
-            return;
-        }
-
-        const reachableTiles = this.gameSessionService.getReachableTiles(gameSession);
-        this.server.to(gameSession.roomId).emit(GameSessionEvents.ReachableTiles, {
-            playerId: currentPlayer.id,
-            tiles: reachableTiles,
-        });
-    }
-
     @SubscribeMessage(GameSessionEvents.LeaveGameSession)
     handleLeaveGameSession(socket: Socket, payload: { roomId: string }) {
         this.handleLeaveLogic(socket, payload.roomId);
@@ -369,6 +130,19 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
         this.logger.log(`Joueur ${payload.targetId} exclu de la salle ${payload.roomId}`);
     }
 
+    private handlePlayingDisconnect(socket: Socket, roomId: string) {
+        this.socketToRoom.delete(socket.id);
+        socket.leave(roomId);
+
+        this.gameSessionService.removePlayer(roomId, socket.id);
+
+        this.server.to(roomId).emit(GameSessionEvents.PlayerAbandoned, {
+            playerId: socket.id,
+        });
+
+        this.logger.log(`Joueur ${socket.id} abandonné pendant la partie ${roomId}`);
+    }
+
     private handleLeaveLogic(socket: Socket, roomId: string) {
         const gameSession = this.gameSessionService.getGameSession(roomId);
         if (!gameSession) return;
@@ -380,8 +154,7 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
             this.server.to(roomId).emit(GameSessionEvents.RoomCancelled, {
                 message: "L'organisateur a quitté la salle. La partie est annulée.",
             });
-            this.gameSessionService.deleteGameSession(roomId);
-            this.chatGateway.clearChatHistoryForRoom(roomId);
+            this.cleanupGameSession(roomId);
             this.notifyGameSessionDeleted(roomId);
             this.logger.log(`Salle ${roomId} annulée (orga déconnecté)`);
         } else {
@@ -391,8 +164,7 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
             }
 
             if (gameSession.players.length === 0) {
-                this.gameSessionService.deleteGameSession(roomId);
-                this.chatGateway.clearChatHistoryForRoom(roomId);
+                this.cleanupGameSession(roomId);
                 this.notifyGameSessionDeleted(roomId);
                 this.logger.log(`Salle ${roomId} supprimée (vide)`);
             } else {
@@ -402,6 +174,11 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
                 this.logger.log(`Joueur ${socket.id} a quitté la salle ${roomId}`);
             }
         }
+    }
+
+    cleanupGameSession(roomId: string): void {
+        this.gameSessionService.deleteGameSession(roomId);
+        this.chatGateway.clearChatHistoryForRoom(roomId);
     }
 
 

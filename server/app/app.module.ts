@@ -1,5 +1,6 @@
 import { GameController } from '@app/controllers/game/game.controller';
 import { ChatGateway } from '@app/gateways/chat/chat.gateway';
+import { GamePlayGateway } from '@app/gateways/gameSession/game-play.gateway';
 import { GameSessionGateway } from '@app/gateways/gameSession/game-session.gateway';
 import { Game, gameSchema } from '@app/model/game';
 import { GameService } from '@app/services/game/game.service';
@@ -33,6 +34,7 @@ import { GameSessionService } from './services/gameSession/gameSession.service';
     providers: [
         GameGateway,
         GameSessionGateway,
+        GamePlayGateway,
         ChatGateway,
         GameService,
         GameSessionService,
