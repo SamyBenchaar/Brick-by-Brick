@@ -1,6 +1,6 @@
 @font-face {
   font-family: 'MyFont';
-  src: url('/assets/fonts/ByteBounce.ttf') format('truetype');
+  src: url('./assets/fonts/ByteBounce.ttf') format('truetype');
   font-style: normal;
 }
 
@@ -16,7 +16,7 @@ body {
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    background-image: url('/assets/plate_background.jpg');
+    background-image: url('./assets/plate_background.jpg');
     background-repeat: repeat;
     background-size: cover; 
 }
@@ -30,7 +30,7 @@ body {
     font-size: 35px;
     padding: 20px;
     margin: 0;
-    background-image: url('/assets/images/4x1_yellow.png');
+    background-image: url('./assets/images/4x1_yellow.png');
     background-size: contain;
 }
 
@@ -62,12 +62,12 @@ button:disabled {
 }
 
 .return-button {
-    background-image: url('/assets/images/red_large_brick.png');
+    background-image: url('./assets/images/red_large_brick.png');
     background-repeat: no-repeat;
 }
 
 .brick-orange {
-    background-image: url('/assets/images/3x1_orange.png');
+    background-image: url('./assets/images/3x1_orange.png');
     background-size: contain;
 }
 

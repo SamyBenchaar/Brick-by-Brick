@@ -143,7 +143,7 @@ deploy:server:
         - mkdir -p ~/.ssh
         - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
         - |
-            timeout 600 ssh -t -oStrictHostKeyChecking=no -o ServerAliveInterval=15 -o ServerAliveCountMax=5 "${EC2_USER}@${EC2_HOST}" "
+            ssh -t -oStrictHostKeyChecking=no -o ServerAliveInterval=15 -o ServerAliveCountMax=5 "${EC2_USER}@${EC2_HOST}" "
                 set -e
 
                 echo 'Update repository cache'

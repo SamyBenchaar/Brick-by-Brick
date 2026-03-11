@@ -18,7 +18,7 @@
         
             <div class="character-container">
                 <button class="close-btn" (click)="close()">
-                    <img src="assets/images/red_small_brick.png" alt="Close" />
+                    <img src="./assets/images/red_small_brick.png" alt="Close" />
                     <span class="material-icons close-icon">close</span>
                 </button>
 
@@ -36,14 +36,14 @@
                             [class.inactive]="bonusTarget && bonusTarget !== 'life'">
                                 
                                 <div class="brick-wrapper">
-                                    <img src="assets/images/red_medium_brick.png" alt="brick" />
+                                    <img src="./assets/images/red_medium_brick.png" alt="brick" />
                                     <span class="life-bonus">+2 Vie</span>
                                 </div>
                             </button>
                             <button (click)="applyBonus('speed')" [class.active]="bonusTarget === 'speed'"
                             [class.inactive]="bonusTarget && bonusTarget !== 'speed'">
                                 <div class="brick-wrapper">
-                                    <img src="assets/images/orange_medium_brick.png" alt="brick" />
+                                    <img src="./assets/images/orange_medium_brick.png" alt="brick" />
                                     <span class="speed-bonus">+2 Rapidité</span>
                                 </div>
                             </button>
@@ -56,13 +56,13 @@
                             <div class="dice-row">
                                 <button (click)="setDice('attackDice', 'D4')" [class.active]="character.attackDice === 'D4'">
                                     <div class="dice-wrapper">
-                                        <img src="assets/images/dice_four.png" alt="D4" />
+                                        <img src="./assets/images/dice_four.png" alt="D4" />
                                     </div>
                                 </button>
 
                                 <button (click)="setDice('attackDice', 'D6')" [class.active]="character.attackDice === 'D6'">
                                     <div class="dice-wrapper">
-                                        <img src="assets/images/dice_six.png" alt="D6" />
+                                        <img src="./assets/images/dice_six.png" alt="D6" />
                                     </div>
                                 </button>
                             </div>
@@ -73,13 +73,13 @@
                             <div class="dice-row">
                                 <button (click)="setDice('defenseDice', 'D4')" [class.active]="character.defenseDice === 'D4'">
                                     <div class="dice-wrapper">
-                                        <img src="assets/images/dice_four.png" alt="D4" />
+                                        <img src="./assets/images/dice_four.png" alt="D4" />
                                     </div>
                                 </button>
 
                                 <button (click)="setDice('defenseDice', 'D6')" [class.active]="character.defenseDice === 'D6'">
                                     <div class="dice-wrapper">
-                                        <img src="assets/images/dice_six.png" alt="D6" />
+                                        <img src="./assets/images/dice_six.png" alt="D6" />
                                     </div>
                                 </button>
                             </div>
@@ -95,7 +95,7 @@
                         <div class="attributes">
                             <div class="stat-vie">
                                 <div class="brick-wrapper">
-                                    <img src="assets/images/red_small_brick.png" alt="Vie" />
+                                    <img src="./assets/images/red_small_brick.png" alt="Vie" />
                                     <span class="brick-value">{{ character.life }}</span>
                                 </div>
                                 <div class="stat-text">
@@ -106,7 +106,7 @@
 
                             <div class="stat-rapidite">
                                 <div class="brick-wrapper">
-                                    <img src="assets/images/orange_small_brick.png" alt="Rapidité" />
+                                    <img src="./assets/images/orange_small_brick.png" alt="Rapidité" />
                                     <span class="brick-value">{{ character.speed }}</span>
                                 </div>
                                 <div class="stat-text">
@@ -117,7 +117,7 @@
 
                             <div class="stat-attaque">
                                 <div class="brick-wrapper">
-                                    <img src="assets/images/green_small_brick.png" alt="Attaque" />
+                                    <img src="./assets/images/green_small_brick.png" alt="Attaque" />
                                     <span class="brick-value">{{ character.attack }}</span>
                                 </div>
                                 <div class="stat-text">
@@ -128,7 +128,7 @@
 
                             <div class="stat-defense">
                                 <div class="brick-wrapper">
-                                    <img src="assets/images/blue_small_brick.png" alt="Défense" />
+                                    <img src="./assets/images/blue_small_brick.png" alt="Défense" />
                                     <span class="brick-value">{{ character.defense }}</span>
                                 </div>
                                 <div class="stat-text">
