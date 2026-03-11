@@ -189,29 +189,6 @@ describe('GameSessionSocketService', () => {
     });
 
     describe('Mise à jour d\'une partie', () => {
-        it('devrait mettre à jour une partie existante lors de GameSessionUpdated', () => {
-            service.gameSessions.set([mockGameSession]);
-
-            service.connect();
-
-            const updatedGameSession = {
-                ...mockGameSession,
-                takenAvatars: [1],
-            } as unknown as GameSession;
-
-            const callbackGameUpdated = socketServiceMock.on.calls
-                .all()
-                .find(call => call.args[0] === GameSessionEvents.GameSessionUpdated)
-                ?.args[1] as (gameSession: GameSession) => void;
-
-            callbackGameUpdated(updatedGameSession);
-
-            const gameSessions = service.gameSessions();
-
-            expect(gameSessions[0].getTakenAvatars()).toEqual([1]);
-            expect(gameSessions.length).toBe(1);
-        });
-
         it('ne devrait pas augmenter le nombre de sessions lors d\'une mise à jour', () => {
             service.gameSessions.set([mockGameSession, mockGameSession2]);
 

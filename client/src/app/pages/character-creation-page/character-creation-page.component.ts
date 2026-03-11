@@ -75,7 +75,9 @@ export class CharacterCreationPageComponent implements OnInit, OnDestroy {
                             return;
                         }
                         this.character = this.createBaseCharacter(freeAvatar.id);
-                        this.gameSessionSocketService.updateTakenAvatars(this.roomId!, this.character.avatarId);
+                        if(this.roomId){
+                            this.gameSessionSocketService.updateTakenAvatars(this.roomId, this.character.avatarId);
+                        }
                     }
                 }, { injector: this.injector });
             } else {
