@@ -1,6 +1,7 @@
 <div class="page-container">
-    <!-- Chat sidebar gauche -->
-    <aside class="chat-sidebar">
+    <!-- Header bar -->
+    <header class="top-bar">
+        <button class="btn-back" style="background-image: url('/assets/images/red_large_brick.png')" (click)="leaveGameSession()">retour</button>
         @if (gameData) {
             <app-chat 
                 [username]="getCurrentPlayer()?.name ?? 'Joueur'" 
@@ -36,17 +37,47 @@
                     <span class="info-value">{{ getCurrentPlayer()?.name ?? 'Joueur' }}</span>
                 </div>
             </div>
+            <div class="info-item">
+                <span class="info-label">Joueurs:</span>
+                <span class="info-value">{{ playerCount }}/{{ gameData.numberOfPlayers }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Personnage:</span>
+                <span class="info-value">{{ currentPlayer?.character?.name ?? 'Joueur' }}</span>
+            </div>
+        </div>
         }
+    </header>
 
-        <!-- Grille -->
-        <div class="grid-container">
-            @if (gameData) {
-                <app-game-grid 
-                    [mapSize]="getMapSize()" 
-                    [gameData]="gameData" 
-                    [isViewMode]="true">
-                </app-game-grid>
+    <!-- Main content area -->
+    <div class="content-area">
+        <!-- Chat sidebar left -->
+        <div class="chat-sidebar" [class.chat-collapsed]="isChatCollapsed">
+            <div class="chat-toggle" (click)="isChatCollapsed = !isChatCollapsed">
+                <span class="chat-toggle-icon">💬</span>
+                <span class="chat-toggle-label">{{ isChatCollapsed ? 'Chat' : 'Réduire' }}</span>
+                <span class="chat-toggle-arrow">{{ isChatCollapsed ? '▶' : '◀' }}</span>
+            </div>
+            @if (!isChatCollapsed && gameData) {
+            <div class="chat-body">
+                <app-chat [username]="currentPlayer?.character?.name ?? ''" [gameId]="roomId" [hostPlayerId]="hostId"></app-chat>
+            </div>
             }
         </div>
+
+        <!-- Map zone (centre) -->
+        <div class="map-zone">
+            <div class="grid-container">
+                @if (gameData) {
+                <app-game-grid [mapSize]="getMapSize()" [gameData]="gameData" [isViewMode]="true"></app-game-grid>
+                }
+            </div>
+        </div>
+
+        <!-- Right sidebar: player board + stats -->
+        <aside class="right-sidebar">
+            <app-player-board [players]="playerList" [leftPlayers]="leftPlayerList" [host]="hostPlayer"></app-player-board>
+            <app-player-sign [player]="currentPlayer"></app-player-sign>
+        </aside>
     </div>
 </div>

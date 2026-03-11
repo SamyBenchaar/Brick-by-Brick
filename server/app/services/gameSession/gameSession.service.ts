@@ -12,7 +12,7 @@ export class GameSessionService {
         const originalGame = await this.gameService.findOne(mapId);
         const mapCopy = JSON.parse(JSON.stringify(originalGame));
 
-        const newGameSession = new GameSession(hostPlayer.socketId, hostPlayer.character, mapId);
+        const newGameSession = new GameSession(hostPlayer, mapId);
         newGameSession.mapCopy = mapCopy;
 
         this.gameSessions.set(newGameSession.roomId, newGameSession);
@@ -24,7 +24,7 @@ export class GameSessionService {
         if (!session) return 'Session de jeu introuvable';
         if (session.status !== 'waiting') return 'La session de jeu a déjà commencé';
         if (session.isFull()) return 'La session de jeu est pleine';
-        session.addPlayer(player.socketId, player.character);
+        session.addPlayer(player);
         return null;
     }
 
