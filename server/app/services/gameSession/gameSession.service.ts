@@ -6,13 +6,16 @@ import { CombatResult, CombatService } from './combat.service';
 import { MovementService } from './movement.service';
 import { StartingPointService } from './starting-point.service';
 import { TurnManagementService } from './turn-management.service';
+
 interface MapTile {
     type: string;
     object?: { type: string };
 }
 
-interface GameMap {
-    tiles: MapTile[][];
+interface GameDataForInit {
+    mapConfig: {
+        tiles: MapTile[][];
+    };
 }
 
 @Injectable()
@@ -32,12 +35,9 @@ export class GameSessionService {
 
     async createGameSession(socketId: string, hostPlayer: Character, mapId: string): Promise<GameSession> {
         const originalGame = await this.gameService.findOne(mapId);
-        const mapCopy = JSON.parse(JSON.stringify(originalGame));
-
         hostPlayer.id = socketId;
         hostPlayer.socketId = socketId;
         const newGameSession = new GameSession(hostPlayer, mapId, originalGame.numberOfPlayers);
-        newGameSession.setMapCopy(mapCopy);
         this.gameSessions.set(newGameSession.roomId, newGameSession);
         return newGameSession;
     }
@@ -76,11 +76,17 @@ export class GameSessionService {
         this.gameSessions.delete(roomId);
     }
 
-    initializeGameSession(gameSession: GameSession, mapConfig: GameMap): void {
+    async getFullMapData(mapId: string): Promise<GameDataForInit> {
+        const originalGame = await this.gameService.findOne(mapId);
+        return JSON.parse(JSON.stringify(originalGame));
+    }
+
+    initializeGameSession(gameSession: GameSession, mapData: GameDataForInit): void {
         this.turnManagementService.establishTurnOrder(gameSession);
+        const mapConfig = { tiles: mapData.mapConfig.tiles };
+        gameSession.setMapCopy(mapConfig);
         this.startingPointService.assignStartingPoints(gameSession, mapConfig);
         this.startingPointService.cleanupUnusedStartingPoints(gameSession, mapConfig.tiles);
-        gameSession.setMapCopy(mapConfig);
         gameSession.setStatus('playing');
         this.logger.log(`Game session ${gameSession.roomId} initialized`);
     }
@@ -203,5 +209,9 @@ export class GameSessionService {
 
     getAllGameSessions(): GameSession[] {
         return Array.from(this.gameSessions.values());
+    }
+
+    cleanupTurnTimers(roomId: string): void {
+        this.turnManagementService.cleanupTimers(roomId);
     }
 }

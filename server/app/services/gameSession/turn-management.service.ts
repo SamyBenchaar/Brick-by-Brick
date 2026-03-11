@@ -12,14 +12,13 @@ export class TurnManagementService {
 
 
     establishTurnOrder(gameSession: GameSession): void {
-        const players = gameSession.getActivePlayers();
+        const players = gameSession.getCharacters();
 
-        // Sort players by speed (descending - fastest first)
         const sortedPlayers = [...players].sort((a, b) => {
             if (a.speed === b.speed) {
                 return Math.random() - this.randomOffset;
             }
-            return b.speed - a.speed; // Higher speed goes first
+            return b.speed - a.speed;
         });
 
         const playerOrder = sortedPlayers.map(p => p.id);
@@ -77,7 +76,7 @@ export class TurnManagementService {
 
         const currentPlayer = gameSession.getCurrentPlayer();
         if (currentPlayer) {
-            currentPlayer.resetMovement();
+            currentPlayer.remainingMovement = currentPlayer.speed;
         }
 
         gameSession.advanceToNextPlayer();

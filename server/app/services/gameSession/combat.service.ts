@@ -31,7 +31,7 @@ export class CombatService {
         defender: Character,
         mapConfig: GameMap,
     ): CombatResult {
-        attacker.addVictory();
+        attacker.victories++;
 
         const isGameWon = attacker.victories >= this.victoriesToWin;
 
@@ -41,13 +41,12 @@ export class CombatService {
             mapConfig,
         );
 
-        defender.moveTo(newPosition);
         defender.position = newPosition;
 
         return {
             winner: attacker.id,
             loser: defender.id,
-            attainerVictories: attacker.victories,
+            attackerVictories: attacker.victories,
             defenderKnockedDown: true,
             gameWon: isGameWon,
         };
@@ -113,7 +112,7 @@ export class CombatService {
 export interface CombatResult {
     winner: string;
     loser: string;
-    attainerVictories: number;
+    attackerVictories: number;
     defenderKnockedDown: boolean;
     gameWon: boolean;
 }

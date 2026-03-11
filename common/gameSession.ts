@@ -1,5 +1,14 @@
 import { Character } from './character';
 
+export interface MapTile {
+    type: string;
+    object?: { type: string };
+}
+
+export interface MapConfig {
+    tiles: MapTile[][];
+}
+
 export type GameStatus = 'waiting' | 'playing' | 'ended';
 export class GameSession {
 
@@ -11,7 +20,7 @@ export class GameSession {
     public roomId: string;
     public maxPlayers: number;
     public mapId: string;
-    public mapCopy: any;
+    public mapCopy: MapConfig | null = null;
     public startingPoints: Map<string, Position> = new Map();
 
     constructor(hostPlayer: Character, mapId: string, maxPlayers: number = 2) {
@@ -92,12 +101,12 @@ export class GameSession {
         return this.mapId;
     }
 
-    setMapCopy(mapData: any): void {
+    setMapCopy(mapData: MapConfig): void {
         this.mapCopy = mapData;
     }
 
-    getMapCopy(): any {
-        return this.mapCopy;
+    getMapCopy(): MapConfig {
+        return this.mapCopy!;
     }
 
     getPlayerOrder(): string[] {

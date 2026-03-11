@@ -163,14 +163,14 @@ export class MovementService {
             return false;
         }
 
-        player.moveTo(newPos);
+        player.position = newPos;
         player.remainingMovement -= moveCost;
 
         return true;
     }
 
     resetMovementPoints(player: Character): void {
-        player.resetMovement();
+        player.remainingMovement = player.speed;
     }
 
     isAdjacentToPlayer(
