@@ -10,7 +10,7 @@ import {
     BONUS_ATTRIBUTES,
     DICE_PROBABILITY,
     RANDOM_NAME_MAX,
-    AVATAR_SYNC_DELAY_MS,
+    // AVATAR_SYNC_DELAY_MS,
 } from '@app/constants/character.constants';
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket.service';
 import { Character } from '@common/character';
@@ -58,23 +58,28 @@ export class CharacterCreationPageComponent implements OnInit, OnDestroy {
         this.route.queryParams.subscribe(params => {
             this.gameId = params.gameId || null;
             this.roomId = params.roomId || null;
-
             if (this.gameId) {
                 this.fromGameCreation = true;
             }
 
-            this.character = this.createBaseCharacter();
-
             if (this.roomId) {
-                this.gameSessionSocketService.requestGameSessionList();
                 this.gameSessionSocketService.observeGameSession(this.roomId);
-                setTimeout(() => {
-                    const session = this.gameSessionSocketService.gameSessions().find(
-                        s => s.roomId === this.roomId,
-                    );
-                    if (session) {
+
+                effect(() => {
+                    const taken = this.gameSessionSocketService.takenAvatars();
+
+                    if (!this.character && taken.length > 0) {
+                        const freeAvatar = AVATARS.find(a => !taken.includes(a.id));
+                        if (!freeAvatar) {
+                            alert('Toutes les places sont déjà prises ! Trop de joueurs en même temps.');
+                            return;
+                        }
+                        this.character = this.createBaseCharacter(freeAvatar.id);
+                        this.gameSessionSocketService.updateTakenAvatars(this.roomId!, this.character.avatarId);
                     }
-                }, AVATAR_SYNC_DELAY_MS);
+                }, { injector: this.injector });
+            } else {
+                this.character = this.createBaseCharacter(AVATARS[0].id);
             }
         });
     }
@@ -83,9 +88,8 @@ export class CharacterCreationPageComponent implements OnInit, OnDestroy {
         // cleanup if needed
     }
 
-    createBaseCharacter(): Character {
-        const baseAvatarId = 1;
-        return new Character('', baseAvatarId, BASE_LIFE, BASE_LIFE, BASE_SPEED, BASE_ATTACK, BASE_DEFENSE, BASE_SPEED, BASE_ACTIONS, 'D4', 'D6');
+    createBaseCharacter(freeAvatarId: number): Character {
+        return new Character('', freeAvatarId, BASE_LIFE, BASE_LIFE, BASE_SPEED, BASE_ATTACK, BASE_DEFENSE, BASE_SPEED, BASE_ACTIONS, 'D4', 'D6');
     }
 
     selectAvatar(avatar: AvatarOption): void {
