@@ -269,7 +269,7 @@ export class GamePlayGateway implements OnGatewayInit {
         }
 
         const reachableTiles = this.gameSessionService.getReachableTiles(gameSession);
-        this.server.to(gameSession.roomId).emit(GameSessionEvents.ReachableTiles, {
+        this.server.to(currentPlayer.socketId).emit(GameSessionEvents.ReachableTiles, {
             playerId: currentPlayer.id,
             tiles: reachableTiles,
         });
