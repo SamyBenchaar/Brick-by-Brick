@@ -75,7 +75,7 @@ export class CharacterCreationPageComponent implements OnInit, OnDestroy {
                             return;
                         }
                         this.character = this.createBaseCharacter(freeAvatar.id);
-                        if(this.roomId){
+                        if (this.roomId) {
                             this.gameSessionSocketService.updateTakenAvatars(this.roomId, this.character.avatarId);
                         }
                     }
@@ -91,7 +91,22 @@ export class CharacterCreationPageComponent implements OnInit, OnDestroy {
     }
 
     createBaseCharacter(freeAvatarId: number): Character {
-        return new Character('', freeAvatarId, BASE_LIFE, BASE_LIFE, BASE_SPEED, BASE_ATTACK, BASE_DEFENSE, BASE_SPEED, BASE_ACTIONS, 'D4', 'D6');
+        return {
+            id: '',
+            name: '',
+            avatarId: freeAvatarId,
+            maxLife: BASE_LIFE,
+            life: BASE_LIFE,
+            speed: BASE_SPEED,
+            attack: BASE_ATTACK,
+            defense: BASE_DEFENSE,
+            movements: BASE_SPEED,
+            actions: BASE_ACTIONS,
+            attackDice: 'D4',
+            defenseDice: 'D6',
+            isActif: false,
+            battlesWon: 0,
+        };
     }
 
     selectAvatar(avatar: AvatarOption): void {
@@ -165,7 +180,7 @@ export class CharacterCreationPageComponent implements OnInit, OnDestroy {
             this.gameSessionSocketService.currentSession.set(null);
             this.gameSessionSocketService.roomId.set('');
             this.gameSessionSocketService.mapCopy.set(null);
-            
+
             // Le créateur: créer la session et attendre que le roomId soit reçu du serveur
             this.gameSessionSocketService.createGameSession(this.gameId, this.character);
 
