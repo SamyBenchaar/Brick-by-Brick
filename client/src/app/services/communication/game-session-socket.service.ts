@@ -72,7 +72,6 @@ export class GameSessionSocketService {
             this.gameSessions.update(current => [...current, gameSession]);
             if (!this.currentSession()) {
                 this.currentSession.set(gameSession);
-                this.takenAvatars.set(gameSession.takenAvatars);
             }
         });
 
@@ -84,7 +83,6 @@ export class GameSessionSocketService {
 
             if (isCurrentPlayerInSession) {
                 this.currentSession.set(updatedSession);
-                this.takenAvatars.set(updatedSession.takenAvatars);
             }
             this.requestGameSessionList();
         });
@@ -186,8 +184,8 @@ export class GameSessionSocketService {
         }
     }
 
-    updateTakenAvatars(roomId: string, newAvatarId: number, previousAvatarId: number | null): void {
-        this.socketService.emit(GameSessionEvents.AvatarTakenUpdated, { roomId, newAvatarId, previousAvatarId });
+    updateTakenAvatars(roomId: string, newAvatarId: number): void {
+        this.socketService.emit(GameSessionEvents.AvatarTakenUpdated, { roomId, newAvatarId });
     }
 
     startGame(): void {

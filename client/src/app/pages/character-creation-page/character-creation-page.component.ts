@@ -73,7 +73,6 @@ export class CharacterCreationPageComponent implements OnInit, OnDestroy {
                         s => s.roomId === this.roomId,
                     );
                     if (session) {
-                        this.gameSessionSocketService.takenAvatars.set(session.takenAvatars);
                     }
                 }, AVATAR_SYNC_DELAY_MS);
             }
@@ -93,10 +92,9 @@ export class CharacterCreationPageComponent implements OnInit, OnDestroy {
         if (this.takenAvatars().has(avatar.id) || this.character.avatarId === avatar.id) {
             return;
         }
-        const previousAvatarId = this.character.avatarId;
         this.character.avatarId = avatar.id;
         if (this.roomId) {
-            this.gameSessionSocketService.updateTakenAvatars(this.roomId, avatar.id, previousAvatarId);
+            this.gameSessionSocketService.updateTakenAvatars(this.roomId, avatar.id);
         }
     }
 

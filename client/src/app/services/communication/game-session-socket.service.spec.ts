@@ -208,7 +208,7 @@ describe('GameSessionSocketService', () => {
 
             const gameSessions = service.gameSessions();
 
-            expect(gameSessions[0].takenAvatars).toEqual([1]);
+            expect(gameSessions[0].getTakenAvatars()).toEqual([1]);
             expect(gameSessions.length).toBe(1);
         });
 

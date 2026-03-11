@@ -85,7 +85,8 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
         const gameSession = this.getSessionOrFail(socket, payload.roomId);
         if (!gameSession) return;
         socket.join(payload.roomId);
-        socket.emit(GameSessionEvents.AvatarTakenUpdated, gameSession.takenAvatars);
+        this.socketToRoom.set(socket.id, payload.roomId);
+        socket.emit(GameSessionEvents.AvatarTakenUpdated, gameSession.getTakenAvatars());
     }
 
     @SubscribeMessage(GameSessionEvents.StartGame)
@@ -144,7 +145,7 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
     }
 
     @SubscribeMessage(GameSessionEvents.AvatarTakenUpdated)
-    handleAvatarTakenUpdated(socket: Socket, payload: { roomId: string; newAvatarId: number; previousAvatarId: number | null }) {
+    handleAvatarTakenUpdated(socket: Socket, payload: { roomId: string; newAvatarId: number; }) {
         const gameSession = this.gameSessionService.getGameSession(payload.roomId);
 
         if (!gameSession) {
@@ -152,14 +153,9 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
             return;
         }
 
-        if (payload.previousAvatarId !== null) {
-            gameSession.takenAvatars = gameSession.takenAvatars.filter(id => id !== payload.previousAvatarId);
-        }
-        if (!gameSession.takenAvatars.includes(payload.newAvatarId)) {
-            gameSession.takenAvatars.push(payload.newAvatarId);
-        }
+        gameSession.socketToAvatar.set(socket.id, payload.newAvatarId);
 
-        this.notifyAvatarTakenUpdated(payload.roomId, gameSession.takenAvatars);
+        this.notifyAvatarTakenUpdated(payload.roomId, gameSession.getTakenAvatars());
         this.logger.log(`Avatar ${payload.newAvatarId} marqué comme pris dans la salle ${payload.roomId}`);
     }
 
@@ -169,6 +165,8 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
 
         this.socketToRoom.delete(socket.id);
         socket.leave(roomId);
+        gameSession.socketToAvatar.delete(socket.id);
+        this.notifyAvatarTakenUpdated(roomId, gameSession.getTakenAvatars());
         
         if (gameSession.isHost(socket.id)) {
             this.handleHostLeave(gameSession);
@@ -220,7 +218,7 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
     }
 
     notifyGameSessionUpdated(gameSession: GameSession): void {
-        this.notifyAvatarTakenUpdated(gameSession.roomId, gameSession.takenAvatars);
+        this.notifyAvatarTakenUpdated(gameSession.roomId, gameSession.getTakenAvatars());
         this.server.emit(GameSessionEvents.GameSessionUpdated, gameSession);
     }
 

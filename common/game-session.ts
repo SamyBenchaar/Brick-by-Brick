@@ -16,7 +16,7 @@ export class GameSession {
     mapCopy: null;
     host: Player;
     mapId: string;
-    takenAvatars: number[] = [];
+    socketToAvatar: Map<string, number> = new Map();
 
     constructor(hostplayer: Player, mapId: string) {
         this.host = hostplayer;
@@ -28,26 +28,21 @@ export class GameSession {
 
 
     addPlayer(player: Player): void {
-        // if (this.players.length >= this.maxPlayers) {
-        //     throw new Error('Game session is full');
-        // }
         const nouvelleListe = [...this.players, player];
         this.players = nouvelleListe.sort((a, b) => b.character.speed - a.character.speed);
-        this.takenAvatars.push(player.character.avatarId);
+        this.socketToAvatar.set(player.socketId, player.character.avatarId);
     }
 
     removePlayer(socketId: string): void {
+        const player = this.players.find(player => player.socketId === socketId);
+        if(!player) return;
+        this.socketToAvatar.delete(socketId);
+
         if (this.status === 'waiting') {
             // Salle d'attente : suppression définitive
             this.players = this.players.filter(p => p.socketId !== socketId);
         } else {
             // En partie : déplacer dans leftPlayers pour l'affichage grisé sur le board
-            const player = this.players.find(player => player.socketId === socketId);
-            if(!player) return;
-            this.takenAvatars = this.takenAvatars.filter(
-                avatarId => avatarId !== player.character.avatarId
-            );
-            
             const index = this.players.findIndex(p => p.socketId === socketId);
             if (index !== -1) {
                 const [player] = this.players.splice(index, 1);
@@ -81,6 +76,10 @@ export class GameSession {
 
     isFull(): boolean {
         return this.players.length >= this.maxPlayers;
+    }
+
+    getTakenAvatars(): number[] {
+        return Array.from(this.socketToAvatar.values());
     }
 
     gethost(): Player {
