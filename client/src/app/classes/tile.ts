@@ -12,25 +12,11 @@ export class Tile {
         [
             ObjectType.Startpoint,
         ];
-    private _type: TileType;
-    private _object: ObjectType | undefined;
+    type: TileType;
+    object: ObjectType | undefined;
 
     constructor(type: TileType = TileType.Base) {
-        this._type = type;
-    }
-
-    get type(): TileType {
-        return this._type;
-    }
-    set type(type: TileType) {
-        this._type = type;
-    }
-
-    get object(): ObjectType | undefined {
-        return this._object;
-    }
-    set object(type: ObjectType | undefined) {
-        this._object = type;
+        this.type = type;
     }
 
     static getCssClass(type: TileType | ObjectType): string {

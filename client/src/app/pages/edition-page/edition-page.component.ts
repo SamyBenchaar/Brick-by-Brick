@@ -35,8 +35,8 @@ export class EditionPageComponent implements OnInit {
 
   private route = inject(ActivatedRoute);
   private communicationService = inject(CommunicationService);
-  private mapEditorService = inject(MapEditorServiceService);
-  private objectCounterService = inject(ObjectCounterService);
+  mapEditorService = inject(MapEditorServiceService);
+  objectCounterService = inject(ObjectCounterService);
   private router = inject(Router);
   private dialog = inject(MatDialog);
 
@@ -57,14 +57,6 @@ export class EditionPageComponent implements OnInit {
     }
   }
 
-  getMapEditorService(): MapEditorServiceService {
-    return this.mapEditorService;
-  }
-
-  getObjectCounterService(): ObjectCounterService {
-    return this.objectCounterService;
-  }
-
   getMapSize(): MapSize {
     const config = getGameSizeConfig(this.selectedSize);
     return config.gridSize;
@@ -76,8 +68,8 @@ export class EditionPageComponent implements OnInit {
       next: (game) => {
         if (game) {
           this.selectedSize = game.mapConfig.size as GameSizeId;
-          this.getObjectCounterService().startPoint = this.getMaxPlayers();
-          this.getMapEditorService().setCurrentGame(game);
+          this.objectCounterService.startPoint = this.getMaxPlayers();
+          this.mapEditorService.setCurrentGame(game);
           this.gameName = game.name;
           this.gameDescription = game.description;
         }
@@ -115,16 +107,16 @@ export class EditionPageComponent implements OnInit {
     // Forcer la mise à jour du DOM avant les opérations lourdes
     await new Promise(resolve => setTimeout(resolve, 0));
 
-    this.getMapEditorService().setTitle(this.gameName);
-    this.getMapEditorService().setDescription(this.gameDescription);
+    this.mapEditorService.setTitle(this.gameName);
+    this.mapEditorService.setDescription(this.gameDescription);
     if (this.gameId !== '') {
-      const currentGame = this.getMapEditorService().getCurrentGame();
+      const currentGame = this.mapEditorService.getCurrentGame();
       if (!currentGame) {
         this.isSaving = false;
         return;
       }
       const previewImage = await this.gameGridComponent.captureMapPreview();
-      this.getMapEditorService().setImagePreview(previewImage);
+      this.mapEditorService.setImagePreview(previewImage);
       this.communicationService.updateGame(this.gameId, currentGame).subscribe({
         next: (updatedGame) => {
           this.isSaving = false;
@@ -198,7 +190,7 @@ export class EditionPageComponent implements OnInit {
         },
       });
     } else {
-      const grid = this.gameGridComponent.gameMap.getGrid();
+      const grid = this.gameGridComponent.gameMap.grid;
       const tiles = grid.map(row =>
         row.map(tile => {
           const tileData: TileData = { type: tile.type };

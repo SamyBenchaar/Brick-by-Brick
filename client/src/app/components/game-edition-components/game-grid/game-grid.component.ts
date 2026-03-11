@@ -88,11 +88,11 @@ export class GameGridComponent implements OnInit, OnChanges {
   }
 
   getGrid(): Tile[][] {
-    return this.gameMap.getGrid();
+    return this.gameMap.grid;
   }
 
   getTileSize(): number {
-    return this.gridSize / this.gameMap.getSize();
+    return this.gridSize / this.gameMap.size;
   }
 
   getTile(position: Position): Tile | null {
