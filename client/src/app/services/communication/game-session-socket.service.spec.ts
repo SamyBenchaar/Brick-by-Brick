@@ -3,6 +3,7 @@ import { GameSessionSocketService } from './game-session-socket.service';
 import { SocketService } from './socket.service';
 import { GameSession } from '@common/game-session';
 import { GameSessionEvents } from '@common/game.events';
+import { Character } from '@common/character';
 
 /**
  * Stratégie de test pour GameSessionSocketService:
@@ -25,53 +26,47 @@ describe('GameSessionSocketService', () => {
     let service: GameSessionSocketService;
     let socketServiceMock: jasmine.SpyObj<SocketService>;
 
+    const mockPlayer = {
+        socketId: 'socket1',
+        character: {
+            name: 'Player',
+            avatarId: 1,
+            speed: 5,
+        } as unknown as Character,
+    };
+
+    const mockPlayer2 = {
+        socketId: 'socket2',
+        character: {
+            name: 'Player',
+            avatarId: 2,
+            speed: 4,
+        } as unknown as Character,
+    };
+
     const mockGameSession: GameSession = {
         players: [],
+        leftPlayers: [],
         status: 'waiting',
         roomId: 'room1',
         maxPlayers: MAX_PLAYERS,
         mapId: 'map1',
         mapCopy: null,
+        host: mockPlayer,
         takenAvatars: [],
-
-        addPlayer: () => {/* mock */},
-        removePlayer: () => {/* mock */},
-        verifyUniqueName: () => 'Player',
-        isNameUnique: () => true,
-        isHost: () => false,
-        isFull: () => false,
-        getPlayers: () => [],
-        getStatus: () => 'waiting',
-        getMaxPlayers: () => MAX_PLAYERS,
-        getMapId: () => 'map1',
-        getRoomId: () => 'room1',
-        getHostSocketId: () => '',
-        startGame: () => {/* mock */},
-    };
+    } as unknown as GameSession;
 
     const mockGameSession2: GameSession = {
         players: [],
+        leftPlayers: [],
         status: 'waiting',
         roomId: 'room2',
         maxPlayers: MAX_PLAYERS,
         mapId: 'map1',
         mapCopy: null,
+        host: mockPlayer2,
         takenAvatars: [],
-        
-        addPlayer: () => {/* mock */},
-        removePlayer: () => {/* mock */},
-        verifyUniqueName: () => 'Player',
-        isNameUnique: () => true,
-        isHost: () => false,
-        isFull: () => false,
-        getPlayers: () => [],
-        getStatus: () => 'waiting',
-        getMaxPlayers: () => MAX_PLAYERS,
-        getMapId: () => 'map1',
-        getRoomId: () => 'room2',
-        getHostSocketId: () => '',
-        startGame: () => {/* mock */},
-    };
+    } as unknown as GameSession;
 
     beforeEach(() => {
         socketServiceMock = jasmine.createSpyObj('SocketService', [

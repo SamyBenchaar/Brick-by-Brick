@@ -182,6 +182,7 @@ export class GameSessionSocketService {
         if (currentRoomId) {
             this.socketService.emit(GameSessionEvents.LeaveGameSession, { roomId: currentRoomId });
             this.currentSession.set(null);
+            this.takenAvatars.set([]);
         }
     }
 
