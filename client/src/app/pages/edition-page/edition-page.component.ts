@@ -6,10 +6,10 @@ import { GameGridComponent } from '@app/components/game-edition-components/game-
 import { ObjectSidebarComponent } from '@app/components/game-edition-components/object-sidebar/object-sidebar.component';
 import { TextInputComponent } from '@app/components/game-edition-components/text-input/text-input.component';
 import { TileTypeSidebarComponent } from '@app/components/game-edition-components/tile-type-sidebar/tile-type-sidebar.component';
-import { GameModeValue, GameSizeId, getGameSizeConfig } from '@common/constants/game-config-constants';
 import { CommunicationService } from '@app/services/communication/communication.service';
 import { MapEditorServiceService } from '@app/services/map-editor-service.service';
 import { ObjectCounterService } from '@app/services/object-counter/object-counter.service';
+import { GameModeValue, GameSizeId, getGameSizeConfig } from '@common/constants/game-config-constants';
 import { MapSize } from '@common/map';
 
 @Component({
@@ -33,8 +33,8 @@ export class EditionPageComponent implements OnInit {
 
   private route = inject(ActivatedRoute);
   private communicationService = inject(CommunicationService);
-  private mapEditorService = inject(MapEditorServiceService);
-  private objectCounterService = inject(ObjectCounterService);
+  mapEditorService = inject(MapEditorServiceService);
+  objectCounterService = inject(ObjectCounterService);
   private router = inject(Router);
   private dialog = inject(MatDialog);
 
@@ -55,14 +55,6 @@ export class EditionPageComponent implements OnInit {
     }
   }
 
-  getMapEditorService(): MapEditorServiceService {
-    return this.mapEditorService;
-  }
-
-  getObjectCounterService(): ObjectCounterService {
-    return this.objectCounterService;
-  }
-
   getMapSize(): MapSize {
     const config = getGameSizeConfig(this.selectedSize);
     return config.gridSize;
@@ -74,8 +66,8 @@ export class EditionPageComponent implements OnInit {
       next: (game) => {
         if (game) {
           this.selectedSize = game.mapConfig.size as GameSizeId;
-          this.getObjectCounterService().startPoint = this.getMaxPlayers();
-          this.getMapEditorService().setCurrentGame(game);
+          this.objectCounterService.startPoint = this.getMaxPlayers();
+          this.mapEditorService.setCurrentGame(game);
           this.gameName = game.name;
           this.gameDescription = game.description;
         }
@@ -112,20 +104,20 @@ export class EditionPageComponent implements OnInit {
     // Forcer la mise à jour du DOM avant les opérations lourdes
     await new Promise(resolve => setTimeout(resolve, 0));
 
-    this.getMapEditorService().setTitle(this.gameName);
-    this.getMapEditorService().setDescription(this.gameDescription);
+    this.mapEditorService.setTitle(this.gameName);
+    this.mapEditorService.setDescription(this.gameDescription);
     if (this.gameId !== '') {
-      const currentGame = this.getMapEditorService().getCurrentGame();
+      const currentGame = this.mapEditorService.getCurrentGame();
       if (!currentGame) {
         this.isSaving = false;
         return;
       }
       const previewImage = await this.gameGridComponent.captureMapPreview();
-      this.getMapEditorService().setImagePreview(previewImage);
+      this.mapEditorService.setImagePreview(previewImage);
       this.communicationService.updateGame(this.gameId, currentGame).subscribe({
         next: (updatedGame) => {
           this.isSaving = false;
-          this.getMapEditorService().setCurrentGame(updatedGame);
+          this.mapEditorService.setCurrentGame(updatedGame);
           const dialogRef = this.dialog.open(AppDialogComponent, {
             data: {
               title: 'Sauvegarde réussie',
@@ -190,7 +182,7 @@ export class EditionPageComponent implements OnInit {
         },
       });
     } else {
-      const grid = this.gameGridComponent.gameMap.getGrid();
+      const grid = this.gameGridComponent.gameMap.grid;
       const tiles = grid.map(row =>
         row.map(tile => {
           const tileData: { type: string; object?: { type: string } } = { type: tile.type };
