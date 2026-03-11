@@ -1,6 +1,5 @@
-import { Character } from "@common/character";
-import { Player } from "@common/player";
-import { SessionStatus } from "@common/session.status"
+import { Player } from '@common/player';
+import { SessionStatus } from '@common/session.status';
 
 
 export class GameSession {
@@ -25,14 +24,14 @@ export class GameSession {
 
 
     addPlayer(player: Player): void {
-        const nouvelleListe = [...this.players, player];
-        this.players = nouvelleListe.sort((a, b) => b.character.speed - a.character.speed);
+        const newPlayerList = [...this.players, player];
+        this.players = newPlayerList.sort((a, b) => b.character.speed - a.character.speed);
         this.socketToAvatar.set(player.socketId, player.character.avatarId);
     }
 
     removePlayer(socketId: string): void {
-        const player = this.players.find(player => player.socketId === socketId);
-        if (!player) return;
+        const existingPlayer = this.players.find(player => player.socketId === socketId);
+        if (!existingPlayer) return;
         this.socketToAvatar.delete(socketId);
 
         if (this.status === 'waiting') {

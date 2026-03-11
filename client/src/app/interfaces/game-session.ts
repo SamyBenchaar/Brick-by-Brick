@@ -1,5 +1,5 @@
-import { Player } from "@common/player"
-import { SessionStatus } from "@common/session.status"
+import { Player } from '@common/player';
+import { SessionStatus } from '@common/session.status';
 
 export interface GameSession {
     players: Player[];
