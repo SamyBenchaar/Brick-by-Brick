@@ -6,7 +6,7 @@ import { GameGridComponent } from '@app/components/game-edition-components/game-
 import { ObjectSidebarComponent } from '@app/components/game-edition-components/object-sidebar/object-sidebar.component';
 import { TextInputComponent } from '@app/components/game-edition-components/text-input/text-input.component';
 import { TileTypeSidebarComponent } from '@app/components/game-edition-components/tile-type-sidebar/tile-type-sidebar.component';
-import { GameModeValue, GameSizeId, getGameSizeConfig } from '@app/constants/game-config-constants';
+import { GameModeValue, GameSizeId, getGameSizeConfig } from '@common/constants/game-config-constants';
 import { CommunicationService } from '@app/services/communication/communication.service';
 import { MapEditorServiceService } from '@app/services/map-editor-service.service';
 import { ObjectCounterService } from '@app/services/object-counter/object-counter.service';

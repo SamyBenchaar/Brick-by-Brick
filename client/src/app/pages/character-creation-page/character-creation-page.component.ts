@@ -1,4 +1,4 @@
-import { Component, effect, inject, Injector, OnDestroy, OnInit } from '@angular/core';
+import { Component, computed, effect, inject, Injector, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
@@ -10,6 +10,7 @@ import {
     BONUS_ATTRIBUTES,
     DICE_PROBABILITY,
     RANDOM_NAME_MAX,
+    // AVATAR_SYNC_DELAY_MS,
 } from '@app/constants/character.constants';
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket.service';
 import { Character } from '@common/character';
@@ -32,7 +33,7 @@ export class CharacterCreationPageComponent implements OnInit, OnDestroy {
     private router = inject(Router);
     private gameSessionSocketService = inject(GameSessionSocketService);
     private injector = inject(Injector);
-    character: Character = this.createBaseCharacter();
+    character!: Character;
     bonusTarget: 'life' | 'speed' | null = null;
     avatars = AVATARS;
 
@@ -41,14 +42,46 @@ export class CharacterCreationPageComponent implements OnInit, OnDestroy {
     gameId: string | null = null;
     fromGameCreation = false;
 
+    takenAvatars = computed(() => new Set(this.gameSessionSocketService.takenAvatars()));
+
+    avatarState = computed(() => {
+        const taken = this.takenAvatars();
+
+        return this.avatars.map(avatar => ({
+            ...avatar,
+            taken: taken.has(avatar.id),
+        }));
+    });
+
     ngOnInit(): void {
         this.gameSessionSocketService.connect();
         this.route.queryParams.subscribe(params => {
             this.gameId = params.gameId || null;
             this.roomId = params.roomId || null;
-
             if (this.gameId) {
                 this.fromGameCreation = true;
+            }
+
+            if (this.roomId) {
+                this.gameSessionSocketService.observeGameSession(this.roomId);
+
+                effect(() => {
+                    const taken = this.gameSessionSocketService.takenAvatars();
+
+                    if (!this.character && taken.length > 0) {
+                        const freeAvatar = AVATARS.find(a => !taken.includes(a.id));
+                        if (!freeAvatar) {
+                            alert('Toutes les places sont déjà prises ! Trop de joueurs en même temps.');
+                            return;
+                        }
+                        this.character = this.createBaseCharacter(freeAvatar.id);
+                        if(this.roomId){
+                            this.gameSessionSocketService.updateTakenAvatars(this.roomId, this.character.avatarId);
+                        }
+                    }
+                }, { injector: this.injector });
+            } else {
+                this.character = this.createBaseCharacter(AVATARS[0].id);
             }
         });
     }
@@ -57,12 +90,18 @@ export class CharacterCreationPageComponent implements OnInit, OnDestroy {
         // cleanup if needed
     }
 
-    createBaseCharacter(): Character {
-        return new Character('', 1, BASE_LIFE, BASE_LIFE, BASE_SPEED, BASE_ATTACK, BASE_DEFENSE, BASE_SPEED, BASE_ACTIONS, 'D4', 'D6');
+    createBaseCharacter(freeAvatarId: number): Character {
+        return new Character('', freeAvatarId, BASE_LIFE, BASE_LIFE, BASE_SPEED, BASE_ATTACK, BASE_DEFENSE, BASE_SPEED, BASE_ACTIONS, 'D4', 'D6');
     }
 
     selectAvatar(avatar: AvatarOption): void {
+        if (this.takenAvatars().has(avatar.id) || this.character.avatarId === avatar.id) {
+            return;
+        }
         this.character.avatarId = avatar.id;
+        if (this.roomId) {
+            this.gameSessionSocketService.updateTakenAvatars(this.roomId, avatar.id);
+        }
     }
 
     getSelectedAvatarImage(): string {
@@ -95,12 +134,16 @@ export class CharacterCreationPageComponent implements OnInit, OnDestroy {
     }
     createRandomCharacter() {
         const randomName = 'Hero' + Math.floor(Math.random() * RANDOM_NAME_MAX);
-        const randomAvatarId = Math.floor(Math.random() * this.avatars.length) + 1;
+
+        const availableAvatars = this.avatarState().filter(avatar => !avatar.taken);
+
+        const randomAvatar = availableAvatars[Math.floor(Math.random() * availableAvatars.length) + 1];
+        this.selectAvatar(randomAvatar);
+
         const attributes = ['life', 'speed'] as const;
         const randomAttribute = attributes[Math.floor(Math.random() * BONUS_ATTRIBUTES.length)];
 
         this.character.name = randomName;
-        this.character.avatarId = randomAvatarId;
 
         this.applyBonus(randomAttribute as 'life' | 'speed');
 

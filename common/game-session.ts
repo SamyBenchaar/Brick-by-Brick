@@ -1,5 +1,4 @@
 import { Character } from './character';
-// import { OnInit } from '@angular/core';
 
 export type SessionStatus = 'waiting' | 'playing';
 
@@ -17,9 +16,7 @@ export class GameSession {
     mapCopy: null;
     host: Player;
     mapId: string;
-    // to do: roomId, maxplayers et mapcopy, la cest des valeurs temporaires
-    // if (!mapId) {}
-    // this.roomId = 4 + Math.random().toString(16).slice(2, 6);
+    socketToAvatar: Map<string, number> = new Map();
 
     constructor(hostplayer: Player, mapId: string) {
         this.host = hostplayer;
@@ -31,14 +28,16 @@ export class GameSession {
 
 
     addPlayer(player: Player): void {
-        // if (this.players.length >= this.maxPlayers) {
-        //     throw new Error('Game session is full');
-        // }
         const nouvelleListe = [...this.players, player];
         this.players = nouvelleListe.sort((a, b) => b.character.speed - a.character.speed);
+        this.socketToAvatar.set(player.socketId, player.character.avatarId);
     }
 
     removePlayer(socketId: string): void {
+        const player = this.players.find(player => player.socketId === socketId);
+        if(!player) return;
+        this.socketToAvatar.delete(socketId);
+
         if (this.status === 'waiting') {
             // Salle d'attente : suppression définitive
             this.players = this.players.filter(p => p.socketId !== socketId);
@@ -52,12 +51,35 @@ export class GameSession {
         }
     }
 
+    verifyUniqueName(name: string): string {
+        let nameToVerify = name;
+        let counter = 2;
+
+        while(!this.isNameUnique(nameToVerify)) {
+            if (nameToVerify.includes('-')) {
+                    nameToVerify = nameToVerify.replace(/-\d+$/, `-${counter}`);
+            } else {
+                    nameToVerify = `${name}-${counter}`;
+            }
+            counter++;
+        }
+        return nameToVerify;
+    }
+
+    isNameUnique(name: string): boolean {
+        return !this.players.some(player => player.character.name === name);
+    }
+
     isHost(socketId: string): boolean {
         return this.host.socketId === socketId;
     }
 
     isFull(): boolean {
         return this.players.length >= this.maxPlayers;
+    }
+
+    getTakenAvatars(): number[] {
+        return Array.from(this.socketToAvatar.values());
     }
 
     gethost(): Player {
@@ -95,50 +117,6 @@ export class GameSession {
     getHostSocketId(): string {
         return this.host?.socketId || '';
     }
-
-
-
-    // getPlayers(): Character[] {
-    //     return [...this.players];
-    // }
-
-    // getHostPlayer(): Character {
-    //     return this.hostPlayer;
-    // }
-
-    // getStatus(): SessionStatus {
-    //     return this.status;
-    // }
-
-    // getMaxPlayers(): number {
-    //     return this.maxPlayers;
-    // }
-
-    // getMapId(): string {
-    //     return this.mapId;
-    // }
-
-    // getLocked(): boolean {
-    //     return this.isLocked;
-    // }
-
-    // addPlayer(character: Character): void {
-    //     this.players.push(character);
-    //     if (this.isFull()) this.lock();
-    // }
-
-    // removePlayer(characterId: string): void {
-    //     this.players = this.players.filter(player => player.id !== characterId);
-    //     if (!this.isFull() && this.isLocked) this.unlock();
-    // }
-
-    // lock(): void {
-    //     this.isLocked = true;
-    // }
-
-    // unlock(): void {
-    //     this.isLocked = false;
-    // }
 
     startGame(): void {
         this.status = 'playing';

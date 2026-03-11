@@ -5,7 +5,7 @@ import { AppDialogComponent } from '@app/components/game-edition-components/app-
 import { Game } from '@app/interfaces/game';
 import { Character } from '@common/character';
 import { GameSessionEvents } from '@common/game.events';
-import { GameSession } from '@common/gameSession';
+import { GameSession } from '@common/game-session';
 import { SocketService } from './socket.service';
 
 @Injectable({
@@ -20,6 +20,11 @@ export class GameSessionSocketService {
     mapCopy: WritableSignal<Game | null> = signal<Game | null>(null);
 
     private listenersInitialized = false;
+    kickedMessage: WritableSignal<string | null> = signal<string | null>(null);
+    cancelledMessage: WritableSignal<string | null> = signal<string | null>(null);
+    takenAvatars: WritableSignal<number[]> = signal<number[]>([]);
+    private lastJoinRoomId: string | null = null;
+    private lastJoinPlayer: Character | null = null;
 
     constructor(
         private socketService: SocketService,
@@ -50,7 +55,7 @@ export class GameSessionSocketService {
         this.socketService.off(GameSessionEvents.PlayerKicked);
         this.socketService.off(GameSessionEvents.RoomCancelled);
         this.socketService.off(GameSessionEvents.GameStarted);
-
+        this.socketService.off(GameSessionEvents.AvatarTakenUpdated);
         this.socketService.disconnect();
     }
 
@@ -87,11 +92,29 @@ export class GameSessionSocketService {
                 current.filter(gameSession => gameSession.roomId !== deletedRoomId));
             if (this.currentSession()?.roomId === deletedRoomId) {
                 this.currentSession.set(null);
+                this.takenAvatars.set([]);
             }
         });
 
         this.socketService.on<string>(GameSessionEvents.GameSessionJoinError, (message) => {
-            alert(message);
+            const dialogRef = this.dialog.open(AppDialogComponent, {
+                data: {
+                    title: 'Salle pleine',
+                    message,
+                    type: 'warning',
+                    confirmText: 'Réessayer',
+                    cancelText: "Retour a l'accueil",
+                },
+                disableClose: true,
+            });
+
+            dialogRef.afterClosed().subscribe((retry) => {
+                if (retry && this.lastJoinPlayer && this.lastJoinRoomId) {
+                    this.joinGameSession(this.lastJoinRoomId,this.lastJoinPlayer);
+                } else {
+                    this.router.navigate(['/']);
+                }
+            });
         });
 
         this.socketService.on<{ message: string }>(GameSessionEvents.PlayerKicked, (data) => {
@@ -121,6 +144,9 @@ export class GameSessionSocketService {
             this.router.navigate(['/game-view'], { queryParams: { roomId } });
         });
 
+        this.socketService.on<number[]>(GameSessionEvents.AvatarTakenUpdated, (avatarIds) => {
+            this.takenAvatars.set(avatarIds);
+        });
     }
 
     requestGameSessionList(): void {
@@ -133,7 +159,13 @@ export class GameSessionSocketService {
     }
 
     joinGameSession(roomId: string, player: Character): void {
+        this.lastJoinPlayer = player;
+        this.lastJoinRoomId = roomId;
         this.socketService.emit(GameSessionEvents.JoinGameSession, { roomId, player });
+    }
+
+    observeGameSession(roomId: string) {
+        this.socketService.emit(GameSessionEvents.ObserveGameSession, { roomId });
     }
 
     kickPlayer(targetId: string): void {
@@ -148,7 +180,12 @@ export class GameSessionSocketService {
         if (currentRoomId) {
             this.socketService.emit(GameSessionEvents.LeaveGameSession, { roomId: currentRoomId });
             this.currentSession.set(null);
+            this.takenAvatars.set([]);
         }
+    }
+
+    updateTakenAvatars(roomId: string, newAvatarId: number): void {
+        this.socketService.emit(GameSessionEvents.AvatarTakenUpdated, { roomId, newAvatarId });
     }
 
     startGame(): void {

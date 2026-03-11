@@ -1,6 +1,7 @@
-import { GameSession, Player } from '@common/gameSession';
+import { GameSession, Player } from '@common/game-session';
 import { Injectable } from '@nestjs/common';
 import { GameService } from '@app/services/game/game.service';
+import { getGameSizeConfig } from '@common/constants/game-config-constants';
 
 @Injectable()
 export class GameSessionService {
@@ -14,6 +15,7 @@ export class GameSessionService {
 
         const newGameSession = new GameSession(hostPlayer, mapId);
         newGameSession.mapCopy = mapCopy;
+        newGameSession.maxPlayers = getGameSizeConfig(mapCopy.mapConfig.size).maxPlayers;
 
         this.gameSessions.set(newGameSession.roomId, newGameSession);
         return newGameSession;
@@ -21,6 +23,8 @@ export class GameSessionService {
 
     joinSession(roomId: string, player: Player): string | null {
         const session = this.gameSessions.get(roomId);
+        player.character.name = session.verifyUniqueName(player.character.name);
+
         if (!session) return 'Session de jeu introuvable';
         if (session.status !== 'waiting') return 'La session de jeu a déjà commencé';
         if (session.isFull()) return 'La session de jeu est pleine';

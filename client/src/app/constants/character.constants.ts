@@ -10,7 +10,7 @@ export const RANDOM_NAME_MAX = 1000;
 export const DICE_PROBABILITY = 0.5;
 export const DICE_VALUES: Dice[] = ['D4', 'D6'];
 export const BONUS_ATTRIBUTES = ['life', 'speed'] as const;
-
+export const AVATAR_SYNC_DELAY_MS = 100;
 
 export interface AvatarOption {
     id: number;

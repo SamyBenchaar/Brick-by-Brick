@@ -5,10 +5,10 @@ import { ChatComponent } from '@app/components/chat/chat.component';
 import { GameGridComponent } from '@app/components/game-edition-components/game-grid/game-grid.component';
 import { PlayerBoardComponent } from '@app/components/game-view-components/player-board/player-board/player-board.component';
 import { PlayerSignComponent } from '@app/components/game-view-components/player-sign/player-sign/player-sign.component';
-import { getGameSizeConfig } from '@app/constants/game-config-constants';
+import { getGameSizeConfig } from '@common/constants/game-config-constants';
 import { Game } from '@app/interfaces/game';
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket.service';
-import { Player } from '@common/gameSession';
+import { Player } from '@common/game-session';
 import { MapSize } from '@common/map';
 
 @Component({
