@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { BaseSignComponent } from '@app/components/game-view-components/base-sign/base-sign.component';
-import { Player } from '@common/game-session';
+import { Player } from '@common/player';
 
 @Component({
   selector: 'app-player-board',

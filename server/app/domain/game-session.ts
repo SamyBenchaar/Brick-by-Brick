@@ -1,11 +1,7 @@
-import { Character } from './character';
+import { Character } from "@common/character";
+import { Player } from "@common/player";
+import { SessionStatus } from "@common/session.status"
 
-export type SessionStatus = 'waiting' | 'playing';
-
-export type Player = {
-    socketId: string;
-    character: Character;
-};
 
 export class GameSession {
     players: Player[] = [];
@@ -21,6 +17,7 @@ export class GameSession {
     constructor(hostplayer: Player, mapId: string) {
         this.host = hostplayer;
         this.roomId = crypto.randomUUID().substring(0, 8).toUpperCase();
+        // revoir cette initialisation
         this.maxPlayers = 4;
         this.mapId = mapId;
         this.addPlayer(hostplayer);
@@ -35,7 +32,7 @@ export class GameSession {
 
     removePlayer(socketId: string): void {
         const player = this.players.find(player => player.socketId === socketId);
-        if(!player) return;
+        if (!player) return;
         this.socketToAvatar.delete(socketId);
 
         if (this.status === 'waiting') {
@@ -55,11 +52,11 @@ export class GameSession {
         let nameToVerify = name;
         let counter = 2;
 
-        while(!this.isNameUnique(nameToVerify)) {
+        while (!this.isNameUnique(nameToVerify)) {
             if (nameToVerify.includes('-')) {
-                    nameToVerify = nameToVerify.replace(/-\d+$/, `-${counter}`);
+                nameToVerify = nameToVerify.replace(/-\d+$/, `-${counter}`);
             } else {
-                    nameToVerify = `${name}-${counter}`;
+                nameToVerify = `${name}-${counter}`;
             }
             counter++;
         }

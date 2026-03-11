@@ -5,7 +5,7 @@ import { AppDialogComponent } from '@app/components/game-edition-components/app-
 import { Game } from '@app/interfaces/game';
 import { Character } from '@common/character';
 import { GameSessionEvents } from '@common/game.events';
-import { GameSession } from '@common/game-session';
+import { GameSession } from '@app/interfaces/game-session';
 import { SocketService } from './socket.service';
 
 @Injectable({
@@ -110,7 +110,7 @@ export class GameSessionSocketService {
 
             dialogRef.afterClosed().subscribe((retry) => {
                 if (retry && this.lastJoinPlayer && this.lastJoinRoomId) {
-                    this.joinGameSession(this.lastJoinRoomId,this.lastJoinPlayer);
+                    this.joinGameSession(this.lastJoinRoomId, this.lastJoinPlayer);
                 } else {
                     this.router.navigate(['/']);
                 }

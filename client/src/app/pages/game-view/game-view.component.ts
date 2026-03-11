@@ -8,7 +8,7 @@ import { PlayerSignComponent } from '@app/components/game-view-components/player
 import { getGameSizeConfig } from '@common/constants/game-config-constants';
 import { Game } from '@app/interfaces/game';
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket.service';
-import { Player } from '@common/game-session';
+import { Player } from '@common/player';
 import { MapSize } from '@common/map';
 
 @Component({
