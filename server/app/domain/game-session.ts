@@ -1,6 +1,8 @@
 import { Player } from '@common/player';
 import { SessionStatus } from '@common/session.status';
 
+const ROOM_ID_LENGTH = 8;
+const MAX_PLAYER = 6;
 
 export class GameSession {
     players: Player[] = [];
@@ -15,9 +17,9 @@ export class GameSession {
 
     constructor(hostplayer: Player, mapId: string) {
         this.host = hostplayer;
-        this.roomId = crypto.randomUUID().substring(0, 8).toUpperCase();
+        this.roomId = crypto.randomUUID().substring(0, ROOM_ID_LENGTH).toUpperCase();
         // revoir cette initialisation
-        this.maxPlayers = 4;
+        this.maxPlayers = MAX_PLAYER;
         this.mapId = mapId;
         this.addPlayer(hostplayer);
     }
