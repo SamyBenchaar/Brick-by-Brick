@@ -6,10 +6,12 @@ import { GameGridComponent } from '@app/components/game-edition-components/game-
 import { ObjectSidebarComponent } from '@app/components/game-edition-components/object-sidebar/object-sidebar.component';
 import { TextInputComponent } from '@app/components/game-edition-components/text-input/text-input.component';
 import { TileTypeSidebarComponent } from '@app/components/game-edition-components/tile-type-sidebar/tile-type-sidebar.component';
-import { GameModeValue, GameSizeId, getGameSizeConfig } from '@common/constants/game-config-constants';
+import { DialogType } from '@app/constants/dialog-type.enum';
+import { DialogData, GameCreationData, GridDimensions, TileData } from '@app/interfaces/edition-page';
 import { CommunicationService } from '@app/services/communication/communication.service';
 import { MapEditorServiceService } from '@app/services/map-editor-service.service';
 import { ObjectCounterService } from '@app/services/object-counter/object-counter.service';
+import { GameModeValue, GameSizeId, getGameSizeConfig } from '@common/constants/game-config-constants';
 import { MapSize } from '@common/map';
 
 @Component({
@@ -25,7 +27,7 @@ export class EditionPageComponent implements OnInit {
   selectedSize: GameSizeId = 'Small';
   gameMode: GameModeValue = 'classic';
 
-  gridDimensions = { width: MapSize.Small, height: MapSize.Small };
+  gridDimensions: GridDimensions = { width: MapSize.Small, height: MapSize.Small };
   gameName: string = '';
   gameDescription: string = '';
   gameId: string = '';
@@ -81,12 +83,13 @@ export class EditionPageComponent implements OnInit {
         }
       },
       error: () => {
+        const dialogData: DialogData = {
+          title: 'Jeu introuvable',
+          message: 'Le jeu demandé n\'existe pas ou a été supprimé.',
+          type: DialogType.ERROR,
+        };
         this.dialog.open(AppDialogComponent, {
-          data: {
-            title: 'Jeu introuvable',
-            message: 'Le jeu demandé n\'existe pas ou a été supprimé.',
-            type: 'error',
-          },
+          data: dialogData,
         }).afterClosed().subscribe(() => {
           this.router.navigate(['/admin']);
         });
@@ -126,12 +129,13 @@ export class EditionPageComponent implements OnInit {
         next: (updatedGame) => {
           this.isSaving = false;
           this.getMapEditorService().setCurrentGame(updatedGame);
+          const successDialogData: DialogData = {
+            title: 'Sauvegarde réussie',
+            message: 'La partie a été sauvegardée.',
+            type: DialogType.SUCCESS,
+          };
           const dialogRef = this.dialog.open(AppDialogComponent, {
-            data: {
-              title: 'Sauvegarde réussie',
-              message: 'La partie a été sauvegardée.',
-              type: 'success',
-            },
+            data: successDialogData,
           });
           dialogRef.afterClosed().subscribe(() => {
             this.router.navigate(['/admin']);
@@ -141,32 +145,35 @@ export class EditionPageComponent implements OnInit {
           this.isSaving = false;
 
           if (err.status === EditionPageComponent.httpNotFound) {
+            const gameDeletedDialogData: DialogData = {
+              title: 'Jeu supprimé',
+              message: 'Ce jeu a été supprimé. Voulez-vous le recréer avec vos modifications ?',
+              type: DialogType.ERROR,
+            };
             this.dialog.open(AppDialogComponent, {
-              data: {
-                title: 'Jeu supprimé',
-                message: 'Ce jeu a été supprimé. Voulez-vous le recréer avec vos modifications ?',
-                type: 'error',
-              },
+              data: gameDeletedDialogData,
             }).afterClosed().subscribe((result) => {
               if (result) {
                 this.communicationService.createGame(currentGame).subscribe({
                   next: () => {
+                    const recreateSuccessDialogData: DialogData = {
+                      title: 'Succès',
+                      message: 'Jeu recréé avec succès !',
+                      type: DialogType.SUCCESS,
+                    };
                     this.dialog.open(AppDialogComponent, {
-                      data: {
-                        title: 'Succès',
-                        message: 'Jeu recréé avec succès !',
-                        type: 'success',
-                      },
+                      data: recreateSuccessDialogData,
                     });
                     this.router.navigate(['/admin']);
                   },
                   error: (createErr) => {
+                    const recreateErrorDialogData: DialogData = {
+                      title: 'Erreur',
+                      message: `Impossible de recréer le jeu: ${createErr.error?.message || 'Erreur inconnue'}`,
+                      type: DialogType.ERROR,
+                    };
                     this.dialog.open(AppDialogComponent, {
-                      data: {
-                        title: 'Erreur',
-                        message: `Impossible de recréer le jeu: ${createErr.error?.message || 'Erreur inconnue'}`,
-                        type: 'error',
-                      },
+                      data: recreateErrorDialogData,
                     });
                   },
                 });
@@ -179,12 +186,13 @@ export class EditionPageComponent implements OnInit {
               ? err.error.message
               : err.error.message || err.error || 'Une erreur est survenue lors de la sauvegarde de la partie.';
 
+            const updateErrorDialogData: DialogData = {
+              title: 'Erreur',
+              message: errorMessage,
+              type: DialogType.ERROR,
+            };
             this.dialog.open(AppDialogComponent, {
-              data: {
-                title: 'Erreur',
-                message: errorMessage,
-                type: 'error',
-              },
+              data: updateErrorDialogData,
             });
           }
         },
@@ -193,14 +201,14 @@ export class EditionPageComponent implements OnInit {
       const grid = this.gameGridComponent.gameMap.getGrid();
       const tiles = grid.map(row =>
         row.map(tile => {
-          const tileData: { type: string; object?: { type: string } } = { type: tile.type };
+          const tileData: TileData = { type: tile.type };
           if (tile.object) {
             tileData.object = { type: tile.object };
           }
           return tileData;
         }),
       );
-      const gameData = {
+      const gameData: GameCreationData = {
         name: this.gameName,
         description: this.gameDescription,
         isVisible: false,
@@ -211,17 +219,17 @@ export class EditionPageComponent implements OnInit {
           size: this.selectedSize,
           tiles,
         },
-
       };
       this.communicationService.createGame(gameData).subscribe({
         next: () => {
           this.isSaving = false;
+          const createSuccessDialogData: DialogData = {
+            title: 'Succès',
+            message: 'Jeu créé avec succès !',
+            type: DialogType.SUCCESS,
+          };
           const dialogRef = this.dialog.open(AppDialogComponent, {
-            data: {
-              title: 'Succès',
-              message: 'Jeu créé avec succès !',
-              type: 'success',
-            },
+            data: createSuccessDialogData,
           });
           dialogRef.afterClosed().subscribe(() => {
             this.router.navigate(['/admin']);
@@ -233,12 +241,13 @@ export class EditionPageComponent implements OnInit {
             ? err.error.message
             : err.error.message || err.error || 'Une erreur est survenue lors de la création de la partie.';
 
+          const createErrorDialogData: DialogData = {
+            title: 'Erreur',
+            message: errorMessage,
+            type: DialogType.ERROR,
+          };
           this.dialog.open(AppDialogComponent, {
-            data: {
-              title: 'Erreur',
-              message: errorMessage,
-              type: 'error',
-            },
+            data: createErrorDialogData,
           });
         },
       });

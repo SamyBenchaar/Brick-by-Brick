@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, inject, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Tile } from '@app/classes/tile';
+import { GameSize } from '@app/constants/game-size.enum';
 import { OBJECT_DESCRIPTIONS } from '@app/constants/object-descriptions';
 import { MapEditorServiceService } from '@app/services/map-editor-service.service';
 import { ObjectCounterService } from '@app/services/object-counter/object-counter.service';
@@ -21,16 +22,16 @@ export class ObjectSidebarComponent implements OnInit {
   readonly tile = Tile;
 
   ngOnInit(): void {
-    const size = this.route.snapshot.queryParams.size?.toLowerCase();
+    const size = this.route.snapshot.queryParams.size;
 
     switch (size) {
-      case 'small':
+      case GameSize.SMALL:
         this.objectCounterService.startPoint = MinimumStartingPt.Small;
         break;
-      case 'medium':
+      case GameSize.MEDIUM:
         this.objectCounterService.startPoint = MinimumStartingPt.Medium;
         break;
-      case 'large':
+      case GameSize.LARGE:
         this.objectCounterService.startPoint = MinimumStartingPt.Large;
         break;
       default:
