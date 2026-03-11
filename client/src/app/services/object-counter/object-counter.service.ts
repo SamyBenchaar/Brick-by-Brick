@@ -18,7 +18,7 @@ export class ObjectCounterService {
     this.maxCounts[ObjectType.Startpoint] = number;
   }
 
-  canPlace(object: ObjectType) {
+  canPlace(object: ObjectType): boolean {
     if (this.counts[object] < this.maxCounts[object]) {
       return true;
     }

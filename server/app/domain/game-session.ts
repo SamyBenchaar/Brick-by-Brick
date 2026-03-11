@@ -80,42 +80,6 @@ export class GameSession {
         return Array.from(this.socketToAvatar.values());
     }
 
-    gethost(): Player {
-        return this.host;
-    }
-
-    get activePlayers(): Player[] {
-        return this.players;
-    }
-
-    getPlayers(): Player[] {
-        return [...this.players];
-    }
-
-    getLeftPlayers(): Player[] {
-        return [...this.leftPlayers];
-    }
-
-    getStatus(): SessionStatus {
-        return this.status;
-    }
-
-    getMaxPlayers(): number {
-        return this.maxPlayers;
-    }
-
-    getMapId(): string {
-        return this.mapId;
-    }
-
-    getRoomId(): string {
-        return this.roomId;
-    }
-
-    getHostSocketId(): string {
-        return this.host?.socketId || '';
-    }
-
     startGame(): void {
         this.status = 'playing';
     }
