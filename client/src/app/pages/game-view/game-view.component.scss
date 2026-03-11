@@ -100,3 +100,113 @@
         max-height: 100%;
     }
 }
+
+.turn-notification {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255, 165, 0, 0.95);
+    padding: 2rem 3rem;
+    border-radius: 12px;
+    border: 3px solid #fff;
+    z-index: 30;
+    text-align: center;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #fff;
+    animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); }
+    50% { transform: translate(-50%, -50%) scale(1.05); }
+}
+
+.turn-info {
+    position: absolute;
+    bottom: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    border: 2px solid #ffa500;
+    z-index: 10;
+    text-align: center;
+    color: white;
+
+    h3 {
+        margin: 0 0 0.5rem 0;
+        color: #ffa500;
+        font-size: 1.3rem;
+    }
+
+    p {
+        margin: 0.3rem 0;
+        font-size: 1rem;
+    }
+
+    .btn-end-turn {
+        margin-top: 0.5rem;
+        padding: 0.5rem 1.5rem;
+        background: #ffa500;
+        border: none;
+        border-radius: 4px;
+        color: #000;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.2s;
+
+        &:hover {
+            background: #ff8c00;
+            transform: scale(1.05);
+        }
+
+        &:active {
+            transform: scale(0.95);
+        }
+    }
+}
+
+.players-info {
+    position: absolute;
+    top: 6rem;
+    right: 1rem;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 1rem;
+    border-radius: 8px;
+    border: 2px solid #ffa500;
+    z-index: 10;
+    max-width: 250px;
+
+    h4 {
+        margin: 0 0 0.5rem 0;
+        color: #ffa500;
+    }
+
+    .player-card {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+        margin-bottom: 0.5rem;
+        color: white;
+
+        img {
+            width: 40px;
+            height: 40px;
+            object-fit: contain;
+        }
+
+        span {
+            font-size: 0.9rem;
+        }
+
+        &:last-child {
+            margin-bottom: 0;
+        }
+    }
+}
