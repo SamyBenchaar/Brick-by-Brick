@@ -1,4 +1,5 @@
-import { GameSession, Player } from '@common/game-session';
+import { Player } from '@common/player';
+import { GameSession } from '@app/domain/game-session';
 import { Injectable } from '@nestjs/common';
 import { GameService } from '@app/services/game/game.service';
 import { getGameSizeConfig } from '@common/constants/game-config-constants';

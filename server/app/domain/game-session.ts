@@ -1,11 +1,8 @@
-import { Character } from './character';
+import { Player } from '@common/player';
+import { SessionStatus } from '@common/session.status';
 
-export type SessionStatus = 'waiting' | 'playing';
-
-export type Player = {
-    socketId: string;
-    character: Character;
-};
+const ROOM_ID_LENGTH = 8;
+const MAX_PLAYER = 6;
 
 export class GameSession {
     players: Player[] = [];
@@ -20,22 +17,23 @@ export class GameSession {
 
     constructor(hostplayer: Player, mapId: string) {
         this.host = hostplayer;
-        this.roomId = crypto.randomUUID().substring(0, 8).toUpperCase();
-        this.maxPlayers = 4;
+        this.roomId = crypto.randomUUID().substring(0, ROOM_ID_LENGTH).toUpperCase();
+        // revoir cette initialisation
+        this.maxPlayers = MAX_PLAYER;
         this.mapId = mapId;
         this.addPlayer(hostplayer);
     }
 
 
     addPlayer(player: Player): void {
-        const nouvelleListe = [...this.players, player];
-        this.players = nouvelleListe.sort((a, b) => b.character.speed - a.character.speed);
+        const newPlayerList = [...this.players, player];
+        this.players = newPlayerList.sort((a, b) => b.character.speed - a.character.speed);
         this.socketToAvatar.set(player.socketId, player.character.avatarId);
     }
 
     removePlayer(socketId: string): void {
-        const player = this.players.find(player => player.socketId === socketId);
-        if(!player) return;
+        const existingPlayer = this.players.find(player => player.socketId === socketId);
+        if (!existingPlayer) return;
         this.socketToAvatar.delete(socketId);
 
         if (this.status === 'waiting') {
@@ -55,11 +53,11 @@ export class GameSession {
         let nameToVerify = name;
         let counter = 2;
 
-        while(!this.isNameUnique(nameToVerify)) {
+        while (!this.isNameUnique(nameToVerify)) {
             if (nameToVerify.includes('-')) {
-                    nameToVerify = nameToVerify.replace(/-\d+$/, `-${counter}`);
+                nameToVerify = nameToVerify.replace(/-\d+$/, `-${counter}`);
             } else {
-                    nameToVerify = `${name}-${counter}`;
+                nameToVerify = `${name}-${counter}`;
             }
             counter++;
         }

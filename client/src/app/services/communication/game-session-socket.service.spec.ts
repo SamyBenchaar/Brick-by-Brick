@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { GameSessionSocketService } from './game-session-socket.service';
 import { SocketService } from './socket.service';
-import { GameSession } from '@common/game-session';
+import { GameSession } from '@app/interfaces/game-session';
 import { GameSessionEvents } from '@common/game.events';
 import { Character } from '@common/character';
 
@@ -119,7 +119,7 @@ describe('GameSessionSocketService', () => {
             );
             expect(socketServiceMock.on).toHaveBeenCalledWith(
                 GameSessionEvents.GameSessionJoinError,
-                jasmine.any(Function),            
+                jasmine.any(Function),
             );
             expect(socketServiceMock.on).toHaveBeenCalledWith(
                 GameSessionEvents.PlayerKicked,

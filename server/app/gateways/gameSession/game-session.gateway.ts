@@ -1,8 +1,9 @@
+import { GameSession } from '@app/domain/game-session';
 import { ChatGateway } from '@app/gateways/chat/chat.gateway';
 import { GameSessionService } from '@app/services/gameSession/gameSession.service';
 import { Character } from '@common/character';
 import { GameSessionEvents } from '@common/game.events';
-import { GameSession, Player } from '@common/game-session';
+import { Player } from '@common/player';
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import {
     OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, SubscribeMessage,
@@ -48,8 +49,7 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
     @SubscribeMessage(GameSessionEvents.CreateGameSession)
     async handleCreateGameSession(socket: Socket, payload: { gameId: string; hostPlayer: Character }) {
         const { gameId, hostPlayer } = payload;
-        hostPlayer.id = socket.id;
-        const player: Player = { socketId: hostPlayer.id, character: hostPlayer };
+        const player = this.createPlayer(socket.id, hostPlayer);
         const gameSession = await this.gameSessionService.createGameSession(player, gameId);
 
         socket.join(gameSession.roomId);
@@ -62,8 +62,7 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
     @SubscribeMessage(GameSessionEvents.JoinGameSession)
     handleJoinGameSession(socket: Socket, payload: { roomId: string; player: Character }) {
         const { roomId, player: character } = payload;
-        character.id = socket.id;
-        const player: Player = { socketId: socket.id, character };
+        const player = this.createPlayer(socket.id, character);
         const gameSession = this.getSessionOrFail(socket, payload.roomId);
         if (!gameSession) return;
 
@@ -167,7 +166,7 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
         socket.leave(roomId);
         gameSession.socketToAvatar.delete(socket.id);
         this.notifyAvatarTakenUpdated(roomId, gameSession.getTakenAvatars());
-        
+
         if (gameSession.isHost(socket.id)) {
             this.handleHostLeave(gameSession);
         } else {
@@ -175,7 +174,7 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
         }
     }
 
-    private handleHostLeave(session: GameSession){
+    private handleHostLeave(session: GameSession) {
         const roomId = session.roomId;
 
         this.server.to(roomId).emit(GameSessionEvents.RoomCancelled, {
@@ -197,7 +196,7 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
         this.notifyGameSessionUpdated(session);
     }
 
-    private cleanUpRoom(roomId: string){
+    private cleanUpRoom(roomId: string) {
         this.notifyAvatarTakenUpdated(roomId, []);
         this.gameSessionService.deleteGameSession(roomId);
         this.chatGateway.clearChatHistoryForRoom(roomId);
@@ -211,6 +210,11 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
             return null;
         }
         return session;
+    }
+
+    private createPlayer(socketId: string, character: Character): Player {
+        character.id = socketId;
+        return { socketId, character };
     }
 
     notifyGameSessionCreated(gameSession: GameSession): void {
