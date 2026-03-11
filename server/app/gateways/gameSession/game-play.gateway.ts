@@ -188,17 +188,18 @@ export class GamePlayGateway implements OnGatewayInit {
     }
 
     private startGameTurn(gameSession: GameSession): void {
-        this.gameSessionService.startCurrentTurn(
-            gameSession,
-            () => {
-                const currentPlayer = gameSession.getCurrentPlayer();
-                this.server.to(gameSession.roomId).emit(GameSessionEvents.TurnStarting, {
-                    playerId: currentPlayer?.id,
-                    playerName: currentPlayer?.name,
-                    delay: 3000,
-                });
+        const currentPlayer = gameSession.getCurrentPlayer();
 
-                setTimeout(() => {
+        this.server.to(gameSession.roomId).emit(GameSessionEvents.TurnStarting, {
+            playerId: currentPlayer?.id,
+            playerName: currentPlayer?.name,
+            delay: this.turnStartDelay,
+        });
+
+        setTimeout(() => {
+            this.gameSessionService.startCurrentTurn(
+                gameSession,
+                () => {
                     this.server.to(gameSession.roomId).emit(GameSessionEvents.TurnStarted, {
                         playerId: currentPlayer?.id,
                         playerName: currentPlayer?.name,
@@ -210,17 +211,17 @@ export class GamePlayGateway implements OnGatewayInit {
                         this.gameSessionService.endCurrentTurn(gameSession);
                         this.handleTurnEnd(gameSession);
                     }
-                }, this.turnStartDelay);
-            },
-            (timeRemaining: number) => {
-                this.server.to(gameSession.roomId).emit(GameSessionEvents.TurnTimeUpdate, {
-                    timeRemaining,
-                });
-            },
-            () => {
-                this.handleTurnEnd(gameSession);
-            },
-        );
+                },
+                (timeRemaining: number) => {
+                    this.server.to(gameSession.roomId).emit(GameSessionEvents.TurnTimeUpdate, {
+                        timeRemaining,
+                    });
+                },
+                () => {
+                    this.handleTurnEnd(gameSession);
+                },
+            );
+        }, this.turnStartDelay);
     }
 
     private handleTurnEnd(gameSession: GameSession): void {

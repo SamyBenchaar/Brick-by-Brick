@@ -28,16 +28,8 @@ export class TurnManagementService {
         this.logger.log(`Turn order established: ${playerOrder.join(', ')}`);
     }
 
-    async startTurnWithDelay(gameSession: GameSession, onStartCallback: () => void): Promise<void> {
-        return new Promise((resolve) => {
-            const delayTimer = setTimeout(() => {
-                onStartCallback();
-                gameSession.setCurrentTurnTime(this.turnTimeInSeconds);
-                resolve();
-            }, this.delayBeforeTurnStartInMilliseconds);
-
-            this.turnTimers.set(gameSession.roomId, delayTimer);
-        });
+    getTurnTimeInSeconds(): number {
+        return this.turnTimeInSeconds;
     }
 
     startTurnTimer(gameSession: GameSession, onTimeoutCallback: () => void, onTickCallback?: (timeRemaining: number) => void): void {

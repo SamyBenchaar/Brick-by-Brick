@@ -102,7 +102,8 @@ export class GameSessionService {
             throw new Error('No current player found');
         }
         this.movementService.resetMovementPoints(currentPlayer);
-        await this.turnManagementService.startTurnWithDelay(gameSession, onStartCallback);
+        gameSession.setCurrentTurnTime(this.turnManagementService.getTurnTimeInSeconds());
+        onStartCallback();
         this.turnManagementService.startTurnTimer(
             gameSession,
             () => {

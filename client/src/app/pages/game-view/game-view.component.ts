@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, effect, HostListener, inject, Injector, OnDestroy, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { ChatComponent } from '@app/components/chat/chat.component';
 import { GameGridComponent } from '@app/components/game-edition-components/game-grid/game-grid.component';
 import { AVATARS } from '@app/constants/character.constants';
@@ -19,11 +20,17 @@ import { Subscription } from 'rxjs';
 export class GameViewComponent implements OnInit, OnDestroy {
   gameSessionSocketService = inject(GameSessionSocketService);
   private injector = inject(Injector);
+  private router = inject(Router);
   private routeSubscription?: Subscription;
 
   gameData: Game | null = null;
 
   ngOnInit(): void {
+    if (!this.gameSessionSocketService.currentSession() || !this.gameSessionSocketService.mapCopy()) {
+      this.router.navigate(['/']);
+      return;
+    }
+
     effect(() => {
       const map = this.gameSessionSocketService.mapCopy();
       this.gameData = map ? JSON.parse(JSON.stringify(map)) : null;

@@ -24,6 +24,7 @@ export class GameSessionSocketService {
     reachableTiles: WritableSignal<Position[]> = signal<Position[]>([]);
     gameEnded: WritableSignal<boolean> = signal<boolean>(false);
     turnStarting: WritableSignal<boolean> = signal<boolean>(false);
+    hasAbandoned: WritableSignal<boolean> = signal<boolean>(false);
 
     private listenersInitialized = false;
     private readonly endGameDelay = 3000;
@@ -216,12 +217,27 @@ export class GameSessionSocketService {
         this.socketService.on<{ winner: { id: string; name: string; avatarId: number } | null; reason: string }>(
             GameSessionEvents.GameEnded,
             (data) => {
+                if (this.hasAbandoned()) {
+                    this.hasAbandoned.set(false);
+                    this.currentSession.set(null);
+                    return;
+                }
+
                 this.gameEnded.set(true);
                 let message = '';
+                let title = 'Partie terminée';
+
                 if (data.reason === 'victory' && data.winner) {
-                    message = `${data.winner.name} a gagné la partie avec 3 victoires!`;
+                    const mySocketId = this.socketService.getSocketId();
+                    if (data.winner.id === mySocketId) {
+                        title = 'Victoire!';
+                        message = `Félicitations! Vous avez gagné la partie avec 3 victoires!`;
+                    } else {
+                        title = 'Partie terminée';
+                        message = `${data.winner.name} a gagné la partie avec 3 victoires!`;
+                    }
                 } else if (data.reason === 'noPlayers') {
-                    message = 'La partie est terminée. Tous les joueurs ont abandonné.';
+                    message = 'La partie est terminée car tous les autres joueurs ont abandonné.';
                 } else {
                     message = 'La partie est terminée.';
                 }
@@ -229,7 +245,7 @@ export class GameSessionSocketService {
                 setTimeout(() => {
                     this.router.navigate(['/']).then(() => {
                         this.dialog.open(AppDialogComponent, {
-                            data: { title: 'Partie terminée', message, type: 'info' },
+                            data: { title, message, type: data.reason === 'victory' ? 'info' : 'info' },
                             disableClose: true,
                         });
                         this.gameEnded.set(false);
@@ -298,7 +314,9 @@ export class GameSessionSocketService {
     abandonGame(): void {
         const currentRoomId = this.currentSession()?.roomId;
         if (currentRoomId) {
+            this.hasAbandoned.set(true);
             this.socketService.emit(GameSessionEvents.PlayerAbandoned, { roomId: currentRoomId });
+            this.currentSession.set(null);
             this.router.navigate(['/']);
         }
     }
