@@ -4,6 +4,7 @@ import { MapSize, MIN_TERRAIN_COVERAGE, PERCENTAGE_MULTIPLIER, PLAYABLE_TYPES, T
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { Direction, GridPosition } from '@app/interfaces/map-validation.interfaces';
 
 @Injectable()
 export class MapValidationService {
@@ -75,13 +76,13 @@ export class MapValidationService {
         const visited = Array(gridSize).fill(null).map(
             () => Array(gridSize).fill(false),
         );
-        const queue: { x: number; y: number }[] = [];
+        const queue: GridPosition[] = [];
 
         queue.push(startPoint);
         visited[startPoint.y][startPoint.x] = true;
         let accessibleTiles = 1;
 
-        const directions = [
+        const directions: Direction[] = [
             { dx: 0, dy: -1 },
             { dx: 0, dy: 1 },
             { dx: -1, dy: 0 },
@@ -146,7 +147,7 @@ export class MapValidationService {
         return count;
     }
 
-    private findStartingPoint(tiles: Tile[][]): { x: number; y: number } | null {
+    private findStartingPoint(tiles: Tile[][]): GridPosition | null {
         for (let y = 0; y < tiles.length; y++) {
             for (let x = 0; x < tiles[y].length; x++) {
                 if (tiles[y][x].object?.type === 'startingpoint') {

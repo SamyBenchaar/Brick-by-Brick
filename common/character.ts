@@ -1,5 +1,10 @@
 import { Dice } from '@common/dice';
 
+export interface Position {
+  x: number;
+  y: number;
+}
+
 export interface Character {
   id: string;
   isActif: boolean;
@@ -15,5 +20,10 @@ export interface Character {
   actions: number;
   attackDice: Dice;
   defenseDice: Dice;
+  position?: Position;
+  remainingMovement?: number;
+  remainingActions?: number;
+  victories?: number;
+  startPosition?: Position;
 }
 

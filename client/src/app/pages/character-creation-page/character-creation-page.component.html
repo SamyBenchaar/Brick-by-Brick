@@ -55,13 +55,13 @@
                             <div class="dice-section">
                                 <span class="dice-label">Attaque:</span>
                                 <div class="dice-row">
-                                    <button (click)="setDice('attackDice', 'D4')" [class.active]="character.attackDice === 'D4'">
+                                    <button (click)="setDice('attackDice', dice.D4)" [class.active]="character.attackDice === dice.D4">
                                         <div class="dice-wrapper">
                                             <img src="./assets/images/dice_four.png" alt="D4" />
                                         </div>
                                     </button>
 
-                                    <button (click)="setDice('attackDice', 'D6')" [class.active]="character.attackDice === 'D6'">
+                                    <button (click)="setDice('attackDice', dice.D6)" [class.active]="character.attackDice === dice.D6">
                                         <div class="dice-wrapper">
                                             <img src="./assets/images/dice_six.png" alt="D6" />
                                         </div>
@@ -72,13 +72,13 @@
                             <div class="dice-section">
                                 <span class="dice-label">Défense:</span>
                                 <div class="dice-row">
-                                    <button (click)="setDice('defenseDice', 'D4')" [class.active]="character.defenseDice === 'D4'">
+                                    <button (click)="setDice('defenseDice', dice.D4)" [class.active]="character.defenseDice === dice.D4">
                                         <div class="dice-wrapper">
                                             <img src="./assets/images/dice_four.png" alt="D4" />
                                         </div>
                                     </button>
 
-                                    <button (click)="setDice('defenseDice', 'D6')" [class.active]="character.defenseDice === 'D6'">
+                                    <button (click)="setDice('defenseDice', dice.D6)" [class.active]="character.defenseDice === dice.D6">
                                         <div class="dice-wrapper">
                                             <img src="./assets/images/dice_six.png" alt="D6" />
                                         </div>

@@ -16,7 +16,8 @@ import { Server, Socket } from 'socket.io';
 
 export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit {
     @WebSocketServer() private server: Server;
-    private socketToRoom: Map<string, string> = new Map(); // suit quelle socket est dans quelle salle, évite de faire une for loop
+
+    private socketToRoom: Map<string, string> = new Map();
 
     constructor(
         private readonly logger: Logger,
@@ -37,7 +38,14 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
     handleDisconnect(socket: Socket) {
         this.logger.log(`Client déconnecté du GameSessionGateway: ${socket.id}`);
         const roomId = this.socketToRoom.get(socket.id);
-        if (roomId) this.handleLeaveLogic(socket, roomId);
+        if (roomId) {
+            const gameSession = this.gameSessionService.getGameSession(roomId);
+            if (gameSession?.status === 'playing') {
+                this.handlePlayingDisconnect(socket, roomId);
+            } else {
+                this.handleLeaveLogic(socket, roomId);
+            }
+        }
     }
 
     @SubscribeMessage(GameSessionEvents.RequestGameSessionList)
@@ -143,6 +151,19 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
         this.logger.log(`Joueur ${payload.targetId} exclu de la salle ${payload.roomId}`);
     }
 
+    private handlePlayingDisconnect(socket: Socket, roomId: string) {
+        this.socketToRoom.delete(socket.id);
+        socket.leave(roomId);
+
+        this.gameSessionService.removePlayer(roomId, socket.id);
+
+        this.server.to(roomId).emit(GameSessionEvents.PlayerAbandoned, {
+            playerId: socket.id,
+        });
+
+        this.logger.log(`Joueur ${socket.id} abandonné pendant la partie ${roomId}`);
+    }
+
     @SubscribeMessage(GameSessionEvents.AvatarTakenUpdated)
     handleAvatarTakenUpdated(socket: Socket, payload: { roomId: string; newAvatarId: number; }) {
         const gameSession = this.gameSessionService.getGameSession(payload.roomId);
@@ -196,7 +217,7 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
         this.notifyGameSessionUpdated(session);
     }
 
-    private cleanUpRoom(roomId: string) {
+    cleanUpRoom(roomId: string) {
         this.notifyAvatarTakenUpdated(roomId, []);
         this.gameSessionService.deleteGameSession(roomId);
         this.chatGateway.clearChatHistoryForRoom(roomId);

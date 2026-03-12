@@ -20,11 +20,9 @@ export class GameService {
         private gameGateway: GameGateway,
     ) {}
 
-    async create(gameData: Partial<Game>): Promise<Game> {
-
+    private async validateGameData(gameData: Partial<Game>): Promise<string[]> {
         const errors: string[] = [];
 
-        // Validation du DTO
         const dtoInstance = plainToInstance(CreateGameDto, gameData);
         const validationErrors = await validate(dtoInstance);
         if (validationErrors.length > 0) {
@@ -35,17 +33,20 @@ export class GameService {
             });
         }
 
-        // Validation des métadonnées
         errors.push(...await this.gameMetadataValidationService.validateMetadata(gameData));
 
-        // Validation de la carte
         errors.push(...await this.mapValidationService.validateMap(gameData));
+
+        return errors;
+    }
+
+    async create(gameData: Partial<Game>): Promise<Game> {
+        const errors = await this.validateGameData(gameData);
         if (errors.length > 0) {
             throw new BadRequestException(errors);
         }
 
         const createdGame = new this.gameModel(gameData);
-
         const savedGame = await createdGame.save();
 
         if (this.gameGateway) {
@@ -53,7 +54,6 @@ export class GameService {
         }
 
         return savedGame;
-
     }
 
     async findAll(): Promise<Game[]> {
@@ -79,29 +79,16 @@ export class GameService {
     }
 
     async update(id: string, gameData: Partial<Game>): Promise<Game> {
-        const errors: string[] = [];
-
-        // Validation du DTO
-        const dtoInstance = plainToInstance(CreateGameDto, gameData);
-        const validationErrors = await validate(dtoInstance);
-        if (validationErrors.length > 0) {
-            validationErrors.forEach(error => {
-                if (error.constraints) {
-                    errors.push(...Object.values(error.constraints));
-                }
-            });
-        }
-
-        // Validation des métadonnées
-        errors.push(...await this.gameMetadataValidationService.validateMetadata(gameData));
-        errors.push(...await this.mapValidationService.validateMap(gameData));
+        const errors = await this.validateGameData(gameData);
         if (errors.length > 0) {
             throw new BadRequestException(errors);
         }
 
         const updatedGame = await this.gameModel.findByIdAndUpdate(id, gameData, { new: true }).exec();
-        if (!updatedGame)
+        if (!updatedGame) {
             throw new NotFoundException(`Jeu avec ID ${id} non trouvé`);
+        }
+
         if (this.gameGateway && updatedGame) {
             this.gameGateway.notifyGameUpdated(updatedGame);
         }

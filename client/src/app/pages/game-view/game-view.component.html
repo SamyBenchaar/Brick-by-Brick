@@ -1,7 +1,7 @@
 <div class="page-container">
     <!-- Header bar -->
     <header class="top-bar">
-        <button class="btn-back" style="background-image: url('/assets/images/red_large_brick.png')" (click)="leaveGameSession()">retour</button>
+        <button class="btn-back" style="background-image: url('/assets/images/red_large_brick.png')" (click)="abandonGame()">Abandonner</button>
         @if (gameData) {
         <div class="info-panel">
             <div class="info-item">
@@ -10,11 +10,11 @@
             </div>
             <div class="info-item">
                 <span class="info-label">Joueurs:</span>
-                <span class="info-value">{{ playerCount }}/{{ gameData.numberOfPlayers }}</span>
+                <span class="info-value">{{ playerCount() }}/{{ gameData.numberOfPlayers }}</span>
             </div>
             <div class="info-item">
                 <span class="info-label">Personnage:</span>
-                <span class="info-value">{{ currentPlayer?.character?.name ?? 'Joueur' }}</span>
+                <span class="info-value">{{ currentPlayer()?.character?.name ?? 'Joueur' }}</span>
             </div>
         </div>
         }
@@ -31,24 +31,48 @@
             </div>
             @if (!isChatCollapsed && gameData) {
             <div class="chat-body">
-                <app-chat [username]="currentPlayer?.character?.name ?? ''" [gameId]="roomId" [hostPlayerId]="hostId"></app-chat>
+                <app-chat [username]="currentPlayer()?.character?.name ?? ''" [gameId]="roomId()" [hostPlayerId]="hostId"></app-chat>
             </div>
             }
         </div>
 
         <!-- Map zone (centre) -->
         <div class="map-zone">
+            @if (isTurnStarting()) {
+                <div class="turn-notification">
+                    <p>Tour de {{ getCurrentTurnPlayerName() }} dans 3 secondes...</p>
+                </div>
+            }
+
+            <div class="turn-info">
+                @if (isMyTurn()) {
+                    <h3>C'est votre tour!</h3>
+                    <p>Temps restant: {{ getTurnTimeRemaining() }}s</p>
+                    <p>Utilisez WASD pour vous déplacer</p>
+                    <button class="btn-end-turn" (click)="endTurn()">Terminer le tour</button>
+                } @else {
+                    <h3>Tour de {{ getCurrentTurnPlayerName() }}</h3>
+                    <p>Temps restant: {{ getTurnTimeRemaining() }}s</p>
+                }
+            </div>
+
             <div class="grid-container">
                 @if (gameData) {
-                <app-game-grid [mapSize]="getMapSize()" [gameData]="gameData" [isViewMode]="true"></app-game-grid>
+                <app-game-grid 
+                    [mapSize]="getMapSize()" 
+                    [gameData]="gameData" 
+                    [isViewMode]="true"
+                    [players]="getPlayers()"
+                    [reachableTiles]="gameSessionSocketService.reachableTiles()">
+                </app-game-grid>
                 }
             </div>
         </div>
 
         <!-- Right sidebar: player board + stats -->
         <aside class="right-sidebar">
-            <app-player-board [players]="playerList" [leftPlayers]="leftPlayerList" [host]="hostPlayer"></app-player-board>
-            <app-player-sign [player]="currentPlayer"></app-player-sign>
+            <app-player-board [players]="playerList()" [leftPlayers]="leftPlayerList()" [host]="hostPlayer()"></app-player-board>
+            <app-player-sign [player]="currentPlayer()"></app-player-sign>
         </aside>
     </div>
 </div>
