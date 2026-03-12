@@ -1,9 +1,9 @@
 import { TestBed } from '@angular/core/testing';
+import { GameSession } from '@app/interfaces/game-session';
+import { Character } from '@common/character';
+import { GameSessionEvents } from '@common/game.events';
 import { GameSessionSocketService } from './game-session-socket.service';
 import { SocketService } from './socket.service';
-import { GameSession } from '@app/interfaces/game-session';
-import { GameSessionEvents } from '@common/game.events';
-import { Character } from '@common/character';
 
 /**
  * Stratégie de test pour GameSessionSocketService:
@@ -103,6 +103,10 @@ describe('GameSessionSocketService', () => {
 
             expect(socketServiceMock.on).toHaveBeenCalledWith(
                 GameSessionEvents.GameSessionList,
+                jasmine.any(Function),
+            );
+            expect(socketServiceMock.on).toHaveBeenCalledWith(
+                GameSessionEvents.GameSessionListUpdated,
                 jasmine.any(Function),
             );
             expect(socketServiceMock.on).toHaveBeenCalledWith(
@@ -250,8 +254,7 @@ describe('GameSessionSocketService', () => {
             service.connect();
             service.disconnect();
 
-            expect(socketServiceMock.off).toHaveBeenCalledWith(GameSessionEvents.GameSessionList);
-            expect(socketServiceMock.off).toHaveBeenCalledWith(GameSessionEvents.GameSessionCreated);
+            expect(socketServiceMock.off).toHaveBeenCalledWith(GameSessionEvents.GameSessionList); expect(socketServiceMock.off).toHaveBeenCalledWith(GameSessionEvents.GameSessionListUpdated); expect(socketServiceMock.off).toHaveBeenCalledWith(GameSessionEvents.GameSessionCreated);
             expect(socketServiceMock.off).toHaveBeenCalledWith(GameSessionEvents.GameSessionUpdated);
             expect(socketServiceMock.off).toHaveBeenCalledWith(GameSessionEvents.GameSessionDeleted);
             expect(socketServiceMock.off).toHaveBeenCalledWith(GameSessionEvents.GameSessionJoinError);
