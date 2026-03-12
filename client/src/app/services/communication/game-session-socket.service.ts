@@ -157,6 +157,22 @@ export class GameSessionSocketService {
 
         this.socketService.on<{ roomId: string; mapData: Game; gameSession: GameSession }>(GameSessionEvents.GameStarted, (payload) => {
             const { roomId, mapData, gameSession } = payload;
+
+            const mySocketId = this.socketService.getSocketId();
+            const isPlayer = gameSession.players.some(p => p.socketId === mySocketId);
+            if (!isPlayer) {
+                this.dialog.open(AppDialogComponent, {
+                    data: {
+                        title: 'La partie a commencé',
+                        message: "La partie a commencé avant que vous ne rejoigniez. Vous retournez à l'accueil",
+                        type: 'info',
+                        confirmText: 'OK',
+                    },
+                });
+                this.router.navigate(['/']);
+                return;
+            }
+
             this.currentSession.set(gameSession);
             this.mapCopy.set(mapData);
             this.router.navigate(['/game-view'], { queryParams: { roomId } });

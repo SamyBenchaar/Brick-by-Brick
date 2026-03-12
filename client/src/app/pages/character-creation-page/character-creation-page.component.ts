@@ -86,7 +86,7 @@ export class CharacterCreationPageComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy(): void {
-        // cleanup if needed
+        // nettoyage si necessaire
     }
 
     createBaseCharacter(freeAvatarId: number): Character {
