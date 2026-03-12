@@ -85,7 +85,7 @@ export class CharacterCreationPageComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy(): void {
-        // cleanup if needed
+        // nettoyage si necessaire
     }
 
     createBaseCharacter(freeAvatarId: number): Character {
@@ -170,7 +170,6 @@ export class CharacterCreationPageComponent implements OnInit, OnDestroy {
             return;
         }
 
-        // Store player info in sessionStorage
         sessionStorage.setItem('playerUsername', this.character.name);
 
         if (this.fromGameCreation && this.gameId) {
