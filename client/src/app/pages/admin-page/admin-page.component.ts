@@ -3,6 +3,7 @@ import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { GameListComponent } from '@app/components/game-list/game-list.component';
+import { GameListMode } from '@app/constants/game-list-mode.enum';
 import { GAME_MODES_DISPLAY, GAME_SIZES_DISPLAY, GameModeValue, GameSizeId } from '@common/constants/game-config-constants';
 
 @Component({
@@ -16,6 +17,7 @@ export class AdminPageComponent {
 
     readonly gameSizes = GAME_SIZES_DISPLAY;
     readonly gameModes = GAME_MODES_DISPLAY;
+    readonly gameListMode = GameListMode;
 
     showGameCreationModal = false;
     selectedSize: GameSizeId | null = null;

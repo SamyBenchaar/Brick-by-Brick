@@ -16,12 +16,8 @@ import {
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket.service';
 import { Character } from '@common/character';
 import { Dice } from '@common/dice';
+import { AvatarOption } from '@app/interfaces/avatar';
 
-interface AvatarOption {
-    id: number;
-    name: string;
-    image: string;
-}
 
 @Component({
     selector: 'app-character-creation-page',
@@ -36,7 +32,8 @@ export class CharacterCreationPageComponent implements OnInit, OnDestroy {
     private injector = inject(Injector);
     character!: Character;
     bonusTarget: 'life' | 'speed' | null = null;
-    avatars = AVATARS;
+    avatars: AvatarOption[] = AVATARS;
+    dice: typeof Dice = Dice;
 
     private route = inject(ActivatedRoute);
     roomId: string | null = null;
@@ -53,6 +50,7 @@ export class CharacterCreationPageComponent implements OnInit, OnDestroy {
             taken: taken.has(avatar.id),
         }));
     });
+
 
     ngOnInit(): void {
         this.gameSessionSocketService.connect();
@@ -103,8 +101,8 @@ export class CharacterCreationPageComponent implements OnInit, OnDestroy {
             defense: BASE_DEFENSE,
             movements: BASE_SPEED,
             actions: BASE_ACTIONS,
-            attackDice: 'D4',
-            defenseDice: 'D6',
+            attackDice: Dice.D4,
+            defenseDice: Dice.D6,
             isActif: false,
             battlesWon: 0,
         };
@@ -140,9 +138,9 @@ export class CharacterCreationPageComponent implements OnInit, OnDestroy {
         this.character[attribute] = dice;
 
         if (attribute === 'attackDice') {
-            this.character.defenseDice = dice === 'D6' ? 'D4' : 'D6';
+            this.character.defenseDice = dice === Dice.D6 ? Dice.D4 : Dice.D6;
         } else {
-            this.character.attackDice = dice === 'D6' ? 'D4' : 'D6';
+            this.character.attackDice = dice === Dice.D6 ? Dice.D4 : Dice.D6;
         }
     }
     close() {
@@ -163,8 +161,8 @@ export class CharacterCreationPageComponent implements OnInit, OnDestroy {
 
         this.applyBonus(randomAttribute as 'life' | 'speed');
 
-        this.character.attackDice = Math.random() < DICE_PROBABILITY ? 'D4' : 'D6';
-        this.character.defenseDice = this.character.attackDice === 'D6' ? 'D4' : 'D6';
+        this.character.attackDice = Math.random() < DICE_PROBABILITY ? Dice.D4 : Dice.D6;
+        this.character.defenseDice = this.character.attackDice === Dice.D6 ? Dice.D4 : Dice.D6;
     }
     submitCharacter() {
         if (!this.gameId && !this.roomId) {

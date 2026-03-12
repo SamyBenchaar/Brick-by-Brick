@@ -3,10 +3,12 @@ import { Component, computed, inject, Input, OnDestroy, OnInit, signal } from '@
 import { MatDialog } from '@angular/material/dialog';
 import { RouterLink } from '@angular/router';
 import { AppDialogComponent } from '@app/components/game-edition-components/app-dialog/app-dialog.component';
+import { GameListMode } from '@app/constants/game-list-mode.enum';
 import { Game } from '@app/interfaces/game';
 import { CommunicationService } from '@app/services/communication/communication.service';
 import { GameSocketService } from '@app/services/communication/game-socket.service';
 import { getGameModeLabel, getGameSizeLabel } from '@common/constants/game-config-constants';
+
 @Component({
     selector: 'app-game-list',
     templateUrl: './game-list.component.html',
@@ -14,7 +16,7 @@ import { getGameModeLabel, getGameSizeLabel } from '@common/constants/game-confi
     imports: [CommonModule, RouterLink],
 })
 export class GameListComponent implements OnInit, OnDestroy {
-    @Input() mode: 'creation' | 'admin' = 'creation';
+    @Input() mode: GameListMode = GameListMode.CREATION;
     @Input() showOnlyVisible = true;
 
     private communicationService = inject(CommunicationService);

@@ -5,6 +5,7 @@ import { GameMap } from '@app/classes/game-map';
 import { Tile } from '@app/classes/tile';
 import { AVATARS } from '@app/constants/character.constants';
 import { ClickEvent } from '@app/constants/click-event-constants';
+import { GameSize } from '@app/constants/game-size.enum';
 import { OBJECT_DESCRIPTIONS } from '@app/constants/object-descriptions';
 import { Game } from '@app/interfaces/game';
 import { Position } from '@app/interfaces/position';
@@ -66,8 +67,8 @@ export class GameGridComponent implements OnInit, OnChanges {
     const size = this.gameData.mapConfig.size;
 
     let mapSize = MapSize.Small;
-    if (size === 'Medium') mapSize = MapSize.Medium;
-    else if (size === 'Large') mapSize = MapSize.Large;
+    if (size === GameSize.MEDIUM) mapSize = MapSize.Medium;
+    else if (size === GameSize.LARGE) mapSize = MapSize.Large;
 
     this.gameMap = new GameMap(mapSize);
 
@@ -240,7 +241,7 @@ export class GameGridComponent implements OnInit, OnChanges {
     const selectedObject = this.mapEditorService.getSelectedObject();
     const tile = this.getTile(position);
     if (tile && selectedObject && this.objectCounterService.canPlace(selectedObject) && this.isTileObjectFree(tile)) {
-      if (tile.type === 'wall') {
+      if (tile.type === TileType.Wall) {
         return;
       }
       tile.object = selectedObject;

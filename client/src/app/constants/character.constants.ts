@@ -1,4 +1,5 @@
 import { Dice } from '@common/dice';
+import { AvatarOption } from '@app/interfaces/avatar';
 
 export const BASE_LIFE = 6;
 export const BASE_SPEED = 6;
@@ -8,15 +9,9 @@ export const BASE_ACTIONS = 1;
 export const BONUS_AMOUNT = 2;
 export const RANDOM_NAME_MAX = 1000;
 export const DICE_PROBABILITY = 0.5;
-export const DICE_VALUES: Dice[] = ['D4', 'D6'];
+export const DICE_VALUES: Dice[] = [Dice.D4, Dice.D6];
 export const BONUS_ATTRIBUTES = ['life', 'speed'] as const;
 export const AVATAR_SYNC_DELAY_MS = 100;
-
-export interface AvatarOption {
-    id: number;
-    name: string;
-    image: string;
-}
 
 export const AVATARS: AvatarOption[] = [
     { id: 1, name: 'lily', image: './assets/images/lily.jpg' },
