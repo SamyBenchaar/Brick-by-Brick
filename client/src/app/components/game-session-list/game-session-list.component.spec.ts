@@ -85,6 +85,16 @@ describe('GameSessionListComponent', () => {
         expect(component.isSelected('ROOM2')).toBeFalse();
     });
 
+    it('devrait afficher le nombre de joueurs dans chaque session disponible', () => {
+        const s1 = createMockSession('R1', 'waiting', 2);
+        const s2 = createMockSession('R2', 'waiting', 3);
+        (mockGameSessionSocketService.gameSessions as any).set([s1, s2]);
+
+        const available = component.availableGameSessions();
+        expect(available[0].players.length).toBe(2);
+        expect(available[1].players.length).toBe(3);
+    });
+
     it('devrait mettre à jour la liste quand les sessions changent', () => {
         const s1 = createMockSession('R1', 'waiting', 1);
         (mockGameSessionSocketService.gameSessions as any).set([s1]);

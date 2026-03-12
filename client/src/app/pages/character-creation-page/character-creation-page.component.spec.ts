@@ -209,6 +209,21 @@ describe('CharacterCreationPageComponent', () => {
         });
     });
 
+    describe('Avatar - filtrage des avatars pris', () => {
+        it('ne devrait pas changer l\'avatar si celui-ci est déjà pris', () => {
+            const originalAvatarId = component.character.avatarId;
+            (mockGameSessionSocketService as any).takenAvatars = jasmine.createSpy().and.returnValue(new Set([5]));
+            component.selectAvatar({ id: 5, name: 'taken', image: 'taken.png' });
+            expect(component.character.avatarId).toBe(originalAvatarId);
+        });
+
+        it('ne devrait pas changer si on sélectionne le même avatar', () => {
+            component.character.avatarId = 3;
+            component.selectAvatar({ id: 3, name: 'same', image: 'same.png' });
+            expect(component.character.avatarId).toBe(3);
+        });
+    });
+
     describe('Navigation', () => {
         it('devrait naviguer vers game-creation au close', () => {
             component.close();

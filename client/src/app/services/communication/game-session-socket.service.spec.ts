@@ -272,6 +272,35 @@ describe('GameSessionSocketService', () => {
         });
     });
 
+    describe('Réception des avatars pris', () => {
+        it('devrait mettre à jour takenAvatars lors de AvatarTakenUpdated', () => {
+            service.connect();
+
+            const callbackAvatarUpdated = socketServiceMock.on.calls
+                .all()
+                .find(call => call.args[0] === GameSessionEvents.AvatarTakenUpdated)
+                ?.args[1] as (avatarIds: number[]) => void;
+
+            callbackAvatarUpdated([1, 3, 5]);
+
+            expect(service.takenAvatars()).toEqual([1, 3, 5]);
+        });
+
+        it('devrait vider takenAvatars quand la liste est vide', () => {
+            service.takenAvatars.set([1, 2]);
+            service.connect();
+
+            const callbackAvatarUpdated = socketServiceMock.on.calls
+                .all()
+                .find(call => call.args[0] === GameSessionEvents.AvatarTakenUpdated)
+                ?.args[1] as (avatarIds: number[]) => void;
+
+            callbackAvatarUpdated([]);
+
+            expect(service.takenAvatars()).toEqual([]);
+        });
+    });
+
     describe('Intégration complète', () => {
         it('devrait gérer plusieurs événements socket successifs', () => {
             service.connect();

@@ -18,6 +18,7 @@ import { GameSessionService } from './gameSession.service';
  * - Rejoindre une session déjà commencée
  * - Expulser un joueur inexistant (pas de crash)
  * - Sessions disponibles avec mix de statuts
+ * - A RAJOUTER: Expulser un joueur sans etre l'hote
  */
 describe('GameSessionService', () => {
     let service: GameSessionService;
@@ -170,6 +171,58 @@ describe('GameSessionService', () => {
 
         it('ne devrait pas planter pour une session inexistante', () => {
             expect(() => service.kickPlayer('FAKE', 'p1')).not.toThrow();
+        });
+    });
+
+    describe('verifyUniqueName (suffixe -2)', () => {
+        it('devrait ajouter -2 si le nom est déjà pris', async () => {
+            const session = await service.createGameSession(createPlayer('h1', 'Hero'), 'map-1');
+            const joiner = createPlayer('p2', 'Hero');
+            service.joinSession(session.roomId, joiner);
+
+            expect(joiner.character.name).toBe('Hero-2');
+        });
+
+        it('devrait incrémenter le suffixe si -2 est déjà pris', async () => {
+            const session = await service.createGameSession(createPlayer('h1', 'Hero'), 'map-1');
+            service.joinSession(session.roomId, createPlayer('p2', 'Hero'));
+            const third = createPlayer('p3', 'Hero');
+            service.joinSession(session.roomId, third);
+
+            expect(third.character.name).toBe('Hero-3');
+        });
+
+        it('ne devrait pas modifier un nom unique', async () => {
+            const session = await service.createGameSession(createPlayer('h1', 'Host'), 'map-1');
+            const joiner = createPlayer('p2', 'UniqueHero');
+            service.joinSession(session.roomId, joiner);
+
+            expect(joiner.character.name).toBe('UniqueHero');
+        });
+
+        it('ne devrait pas changer le suffixe quand un joueur avec le même nom quitte', async () => {
+            const session = await service.createGameSession(createPlayer('h1', 'Hero'), 'map-1');
+            const p2 = createPlayer('p2', 'Hero');
+            service.joinSession(session.roomId, p2);
+            expect(p2.character.name).toBe('Hero-2');
+
+            // L'hôte "Hero" quitte
+            service.kickPlayer(session.roomId, 'h1');
+
+            // Le nom de p2 reste "Hero-2", il ne revient pas à "Hero"
+            const player = session.players.find(p => p.socketId === 'p2');
+            expect(player?.character.name).toBe('Hero-2');
+        });
+
+        it('devrait rendre le nom disponible après le départ d\'un joueur', async () => {
+            const session = await service.createGameSession(createPlayer('h1', 'Host'), 'map-1');
+            service.joinSession(session.roomId, createPlayer('p2', 'Mage'));
+            service.kickPlayer(session.roomId, 'p2');
+
+            // Le nom "Mage" devrait être à nouveau disponible
+            const newJoiner = createPlayer('p3', 'Mage');
+            service.joinSession(session.roomId, newJoiner);
+            expect(newJoiner.character.name).toBe('Mage');
         });
     });
 
