@@ -38,14 +38,12 @@ export class SocketService {
     }
 
     emit<T>(event: string, data?: T, callback?: (response: never) => void): void {
-        if (this.socket) {
-            if (callback) {
-                this.socket.emit(event, data, callback);
-            } else if (data !== undefined) {
-                this.socket.emit(event, data);
-            } else {
-                this.socket.emit(event);
-            }
+        if (!this.socket) return;
+
+        if (callback) {
+            this.socket.emit(event, data, callback);
+        } else {
+            this.socket.emit(event, data);
         }
     }
 
