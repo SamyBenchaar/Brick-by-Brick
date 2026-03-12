@@ -120,7 +120,7 @@ export class EditionPageComponent implements OnInit {
       this.communicationService.updateGame(this.gameId, currentGame).subscribe({
         next: (updatedGame) => {
           this.isSaving = false;
-          this.getMapEditorService().setCurrentGame(updatedGame);
+          this.mapEditorService.setCurrentGame(updatedGame);
           const successDialogData: DialogData = {
             title: 'Sauvegarde réussie',
             message: 'La partie a été sauvegardée.',
