@@ -152,6 +152,10 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
     }
 
     private handlePlayingDisconnect(socket: Socket, roomId: string) {
+        const gameSession = this.gameSessionService.getGameSession(roomId);
+        if(gameSession.isHost(socket.id)){
+            this.deactivateDebugMode(gameSession);
+        }
         this.socketToRoom.delete(socket.id);
         socket.leave(roomId);
 
@@ -197,6 +201,8 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
 
     private handleHostLeave(session: GameSession) {
         const roomId = session.roomId;
+        
+        this.deactivateDebugMode(session);
 
         this.server.to(roomId).emit(GameSessionEvents.RoomCancelled, {
             message: "L'organisateur a quitté la salle. La partie est annulée.",
@@ -236,6 +242,14 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
     private createPlayer(socketId: string, character: Character): Player {
         character.id = socketId;
         return { socketId, character };
+    }
+
+    private deactivateDebugMode(gameSession: GameSession):void {
+        if(gameSession.isDebugModeActivated){
+            this.server.to(gameSession.roomId).emit(GameSessionEvents.ToggleDebugMode, {
+                isDebugModeActivated: false,
+            })
+        }
     }
 
     notifyGameSessionCreated(gameSession: GameSession): void {

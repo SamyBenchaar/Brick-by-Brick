@@ -63,17 +63,17 @@ export class GamePlayGateway implements OnGatewayInit {
         this.startGameTurn(gameSession);
     }
 
-    @SubscribeMessage(GameSessionEvents.DebugModeActivated)
-    handleDebugActivated(socket: Socket, payload: { currentRoomId: string}) {
+    @SubscribeMessage(GameSessionEvents.ToggleDebugMode)
+    handleToggleDebugMode(socket: Socket, payload: { currentRoomId: string}) {
         const gameSession = this.gameSessionService.getGameSession(payload.currentRoomId);
         if (!gameSession) {
             return;
         }
-        gameSession.isDebugModeActivated = true;
+        const newIsDebugModeActivated = !gameSession.isDebugModeActivated
+        gameSession.isDebugModeActivated = newIsDebugModeActivated;
         
-        // Notifier tous les clients dans la salle que le debug est activé
-        this.server.to(payload.currentRoomId).emit(GameSessionEvents.DebugModeActivated, {
-            isDebugModeActivated: true,
+        this.server.to(payload.currentRoomId).emit(GameSessionEvents.ToggleDebugMode, {
+            isDebugModeActivated: newIsDebugModeActivated,
         });
     }
 

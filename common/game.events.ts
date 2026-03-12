@@ -37,7 +37,7 @@ export enum GameSessionEvents {
     StartGame = 'startGame',
     GameStarted = 'gameStarted',
 
-    DebugModeActivated = 'debugModeActivated',
+    ToggleDebugMode = 'toggleDebugMode',
 
     GameSessionStarted = 'gameSessionStarted',
     PlayerJoined = 'playerJoined',

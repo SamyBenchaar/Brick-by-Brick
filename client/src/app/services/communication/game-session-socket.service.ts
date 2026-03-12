@@ -308,7 +308,7 @@ export class GameSessionSocketService {
             this.takenAvatars.set(avatarIds);
         });
 
-        this.socketService.on<{ isDebugModeActivated: boolean }>(GameSessionEvents.DebugModeActivated, (data) => {
+        this.socketService.on<{ isDebugModeActivated: boolean }>(GameSessionEvents.ToggleDebugMode, (data) => {
             this.isDebugModeActivated.set(data.isDebugModeActivated);
         });
     }
@@ -331,9 +331,9 @@ export class GameSessionSocketService {
         this.socketService.emit(GameSessionEvents.ObserveGameSession, { roomId });
     }
 
-    activateDebug(){
+    toggleDebugMode(){
         const currentRoomId = this.getRoomId();
-        this.socketService.emit(GameSessionEvents.DebugModeActivated, { currentRoomId });
+        this.socketService.emit(GameSessionEvents.ToggleDebugMode, { currentRoomId });
     }
 
     kickPlayer(targetId: string): void {

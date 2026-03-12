@@ -58,7 +58,7 @@ export class GameViewComponent implements OnInit, OnDestroy {
     const key = event.key.toLowerCase();
 
     if (key === 'm' && this.gameSessionSocketService.isCurrentUserHost()) {
-      this.gameSessionSocketService.activateDebug();
+      this.gameSessionSocketService.toggleDebugMode();
       return;
     }
     if (!this.isMyTurn()) {
