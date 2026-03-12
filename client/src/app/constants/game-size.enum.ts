@@ -1,5 +1,5 @@
 export enum GameSize {
-    SMALL = 'small',
-    MEDIUM = 'medium',
-    LARGE = 'large',
+    SMALL = 'Small',
+    MEDIUM = 'Medium',
+    LARGE = 'Large',
 }
