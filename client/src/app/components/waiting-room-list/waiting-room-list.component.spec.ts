@@ -105,4 +105,35 @@ describe('WaitingRoomListComponent', () => {
         component.startGame();
         expect(mockService.startGame).toHaveBeenCalled();
     });
+
+    it('devrait retourner false pour isCurrentUserHost quand le joueur n\'est pas l\'hôte', () => {
+        (mockService.isCurrentUserHost as jasmine.Spy).and.returnValue(false);
+        expect(component.isCurrentUserHost()).toBeFalse();
+    });
+
+    it('devrait retourner false pour canStartGame quand il n\'y a pas assez de joueurs', () => {
+        (mockService.canStartGame as jasmine.Spy).and.returnValue(false);
+        expect(component.canStartGame()).toBeFalse();
+    });
+
+    it('devrait afficher le nombre correct de joueurs dans la session', () => {
+        const session = (mockService.currentSession as any)();
+        expect(session.players.length).toBe(2);
+        expect(session.maxPlayers).toBe(4);
+    });
+
+    it('devrait permettre d\'exclure un joueur non-hôte', () => {
+        component.onKick('p2');
+        expect(mockService.kickPlayer).toHaveBeenCalledWith('p2');
+    });
+
+    it('devrait retourner l\'image par défaut pour un personnage null', () => {
+        const image = component.getAvatarImage(null as unknown as Character);
+        expect(image).toContain('lily');
+    });
+
+    it('devrait retourner "Joueur" pour un personnage sans nom', () => {
+        const noNameChar = { name: undefined } as unknown as Character;
+        expect(component.getCharacterName(noNameChar)).toBe('Joueur');
+    });
 });

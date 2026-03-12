@@ -1,3 +1,4 @@
+import { CommonModule } from '@angular/common';
 import { Component, Input, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -62,8 +63,7 @@ describe('WaitingRoomPage', () => {
             ],
         })
             .overrideComponent(WaitingRoomPage, {
-                remove: { imports: [] },
-                add: { imports: [MockChatComponent, MockWaitingRoomListComponent] },
+                set: { imports: [MockChatComponent, MockWaitingRoomListComponent, CommonModule] },
             })
             .compileComponents();
 
@@ -106,6 +106,38 @@ describe('WaitingRoomPage', () => {
     });
 
     it('devrait quitter la salle et naviguer vers /home', () => {
+        component.leave();
+        expect(mockGameSessionSocketService.leaveGameSession).toHaveBeenCalled();
+        expect(routerMock.navigate).toHaveBeenCalledWith(['/home']);
+    });
+
+    it('devrait utiliser le username par défaut "Player" si sessionStorage est vide', () => {
+        sessionStorage.removeItem('playerUsername');
+        component.ngOnInit();
+        expect(component.username).toBe('Player');
+    });
+
+    it('devrait retourner une chaîne vide pour roomId si pas de route ni de session', () => {
+        component.roomIdFromRoute = '';
+        (mockGameSessionSocketService.currentSession as any).set(null);
+        expect(component.roomId).toBe('');
+    });
+
+    it('devrait retourner une chaîne vide pour hostId si pas de session', () => {
+        (mockGameSessionSocketService.currentSession as any).set(null);
+        expect(component.hostId).toBe('');
+    });
+
+    it('devrait retourner une chaîne vide pour hostId si la session n\'a pas de joueurs', () => {
+        const emptySession = {
+            ...mockSession,
+            players: [],
+        } as unknown as GameSession;
+        (mockGameSessionSocketService.currentSession as any).set(emptySession);
+        expect(component.hostId).toBe('');
+    });
+
+    it('devrait pouvoir quitter la vue d\'attente à tout moment vers la vue initiale', () => {
         component.leave();
         expect(mockGameSessionSocketService.leaveGameSession).toHaveBeenCalled();
         expect(routerMock.navigate).toHaveBeenCalledWith(['/home']);

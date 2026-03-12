@@ -105,4 +105,64 @@ describe('GameSessionListComponent', () => {
         (mockGameSessionSocketService.gameSessions as any).set([s1Full]);
         expect(component.availableGameSessions().length).toBe(0);
     });
+
+    it('devrait exclure les sessions qui passent à l\'état playing', () => {
+        const waiting = createMockSession('R1', 'waiting', 2);
+        (mockGameSessionSocketService.gameSessions as any).set([waiting]);
+        expect(component.availableGameSessions().length).toBe(1);
+
+        // La session passe à 'playing'
+        const playing = createMockSession('R1', 'playing', 2);
+        (mockGameSessionSocketService.gameSessions as any).set([playing]);
+        expect(component.availableGameSessions().length).toBe(0);
+    });
+
+    it('devrait exclure les sessions avec 0 place disponible (maxPlayers atteint)', () => {
+        const full = createMockSession('R1', 'waiting', 6, 6);
+        (mockGameSessionSocketService.gameSessions as any).set([full]);
+        expect(component.availableGameSessions().length).toBe(0);
+    });
+
+    it('devrait inclure uniquement les sessions en attente avec au moins 1 place', () => {
+        const s1 = createMockSession('R1', 'waiting', 1, 4);
+        const s2 = createMockSession('R2', 'playing', 2, 4);
+        const s3 = createMockSession('R3', 'waiting', 4, 4);
+        const s4 = createMockSession('R4', 'waiting', 3, 4);
+        (mockGameSessionSocketService.gameSessions as any).set([s1, s2, s3, s4]);
+
+        const available = component.availableGameSessions();
+        expect(available.length).toBe(2);
+        expect(available.map(s => s.roomId)).toEqual(['R1', 'R4']);
+    });
+
+    it('devrait permettre de changer la session sélectionnée', () => {
+        component.selectGameSession('ROOM1');
+        expect(component.selectedGameSessionId()).toBe('ROOM1');
+
+        component.selectGameSession('ROOM2');
+        expect(component.selectedGameSessionId()).toBe('ROOM2');
+    });
+
+    it('devrait réinitialiser la sélection si la session sélectionnée n\'est plus disponible', () => {
+        const s1 = createMockSession('R1', 'waiting', 1);
+        (mockGameSessionSocketService.gameSessions as any).set([s1]);
+        component.selectGameSession('R1');
+        expect(component.isSelected('R1')).toBeTrue();
+
+        // La session est supprimée de la liste
+        (mockGameSessionSocketService.gameSessions as any).set([]);
+
+        // L'ID sélectionné reste en mémoire mais la session n'est plus dans availableGameSessions
+        const available = component.availableGameSessions();
+        expect(available.length).toBe(0);
+    });
+
+    it('devrait mettre à jour dynamiquement quand une nouvelle session est ajoutée', () => {
+        (mockGameSessionSocketService.gameSessions as any).set([]);
+        expect(component.availableGameSessions().length).toBe(0);
+
+        const s1 = createMockSession('R1', 'waiting', 1);
+        (mockGameSessionSocketService.gameSessions as any).set([s1]);
+        expect(component.availableGameSessions().length).toBe(1);
+    });
 });

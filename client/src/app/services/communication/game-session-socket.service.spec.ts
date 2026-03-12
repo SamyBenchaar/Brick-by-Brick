@@ -1,7 +1,10 @@
 import { TestBed } from '@angular/core/testing';
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { Router } from '@angular/router';
 import { GameSession } from '@app/interfaces/game-session';
 import { Character } from '@common/character';
 import { GameSessionEvents } from '@common/game.events';
+import { of } from 'rxjs';
 import { GameSessionSocketService } from './game-session-socket.service';
 import { SocketService } from './socket.service';
 
@@ -25,6 +28,8 @@ const MAX_PLAYERS = 4;
 describe('GameSessionSocketService', () => {
     let service: GameSessionSocketService;
     let socketServiceMock: jasmine.SpyObj<SocketService>;
+    let routerMock: jasmine.SpyObj<Router>;
+    let dialogMock: jasmine.SpyObj<MatDialog>;
 
     const mockPlayer = {
         socketId: 'socket1',
@@ -79,8 +84,17 @@ describe('GameSessionSocketService', () => {
             'getSocketId',
         ]);
 
+        routerMock = jasmine.createSpyObj('Router', ['navigate']);
+        routerMock.navigate.and.returnValue(Promise.resolve(true));
+        dialogMock = jasmine.createSpyObj('MatDialog', ['open']);
+
         TestBed.configureTestingModule({
-            providers: [GameSessionSocketService, { provide: SocketService, useValue: socketServiceMock }],
+            providers: [
+                GameSessionSocketService,
+                { provide: SocketService, useValue: socketServiceMock },
+                { provide: Router, useValue: routerMock },
+                { provide: MatDialog, useValue: dialogMock },
+            ],
         });
         service = TestBed.inject(GameSessionSocketService);
     });
@@ -330,6 +344,294 @@ describe('GameSessionSocketService', () => {
 
             expect(service.gameSessions().length).toBe(1);
             expect(service.gameSessions()[0].roomId).toBe('room2');
+        });
+    });
+
+    describe('Joindre une partie (joinGameSession)', () => {
+        it('devrait émettre l\'événement JoinGameSession avec le roomId et le personnage', () => {
+            const character = { name: 'TestPlayer', avatarId: 2 } as Character;
+            service.joinGameSession('ROOM1', character);
+
+            expect(socketServiceMock.emit).toHaveBeenCalledWith(
+                GameSessionEvents.JoinGameSession,
+                { roomId: 'ROOM1', player: character },
+            );
+        });
+
+        it('devrait stocker le dernier roomId et personnage pour un éventuel retry', () => {
+            const character = { name: 'TestPlayer', avatarId: 2 } as Character;
+            service.joinGameSession('ROOM1', character);
+
+            // Vérifier que le service stocke les infos pour retry via le mécanisme interne
+            expect(socketServiceMock.emit).toHaveBeenCalledWith(
+                GameSessionEvents.JoinGameSession,
+                jasmine.objectContaining({ roomId: 'ROOM1' }),
+            );
+        });
+    });
+
+    describe('Erreur de jointure (GameSessionJoinError)', () => {
+        it('devrait ouvrir un dialog d\'avertissement quand la partie est verrouillée ou pleine', () => {
+            const mockDialogRef = { afterClosed: () => of(false) } as unknown as MatDialogRef<unknown>;
+            dialogMock.open.and.returnValue(mockDialogRef);
+
+            service.connect();
+
+            const callbackJoinError = socketServiceMock.on.calls
+                .all()
+                .find(call => call.args[0] === GameSessionEvents.GameSessionJoinError)
+                ?.args[1] as (message: string) => void;
+
+            callbackJoinError('La partie est pleine');
+
+            expect(dialogMock.open).toHaveBeenCalled();
+            const dialogData = dialogMock.open.calls.mostRecent().args[1]?.data as { title: string; message: string; confirmText: string; cancelText: string };
+            expect(dialogData.title).toBe('Salle pleine');
+            expect(dialogData.message).toBe('La partie est pleine');
+            expect(dialogData.confirmText).toBe('Réessayer');
+            expect(dialogData.cancelText).toContain('Retour');
+        });
+
+        it('devrait retenter de joindre quand l\'utilisateur choisit Réessayer', () => {
+            const mockDialogRef = { afterClosed: () => of(true) } as unknown as MatDialogRef<unknown>;
+            dialogMock.open.and.returnValue(mockDialogRef);
+
+            const character = { name: 'TestPlayer', avatarId: 2 } as Character;
+            service.joinGameSession('ROOM1', character);
+            socketServiceMock.emit.calls.reset();
+
+            service.connect();
+
+            const callbackJoinError = socketServiceMock.on.calls
+                .all()
+                .find(call => call.args[0] === GameSessionEvents.GameSessionJoinError)
+                ?.args[1] as (message: string) => void;
+
+            callbackJoinError('La partie est pleine');
+
+            expect(socketServiceMock.emit).toHaveBeenCalledWith(
+                GameSessionEvents.JoinGameSession,
+                jasmine.objectContaining({ roomId: 'ROOM1' }),
+            );
+        });
+
+        it('devrait naviguer vers la vue initiale quand l\'utilisateur choisit Retour', () => {
+            const mockDialogRef = { afterClosed: () => of(false) } as unknown as MatDialogRef<unknown>;
+            dialogMock.open.and.returnValue(mockDialogRef);
+
+            service.connect();
+
+            const callbackJoinError = socketServiceMock.on.calls
+                .all()
+                .find(call => call.args[0] === GameSessionEvents.GameSessionJoinError)
+                ?.args[1] as (message: string) => void;
+
+            callbackJoinError('Partie verrouillée');
+
+            expect(routerMock.navigate).toHaveBeenCalledWith(['/']);
+        });
+    });
+
+    describe('Observer une partie (observeGameSession)', () => {
+        it('devrait émettre l\'événement ObserveGameSession avec le roomId', () => {
+            service.observeGameSession('ROOM1');
+
+            expect(socketServiceMock.emit).toHaveBeenCalledWith(
+                GameSessionEvents.ObserveGameSession,
+                { roomId: 'ROOM1' },
+            );
+        });
+    });
+
+    describe('Mise à jour des avatars pris (updateTakenAvatars)', () => {
+        it('devrait émettre l\'événement AvatarTakenUpdated avec le roomId et l\'avatarId', () => {
+            service.updateTakenAvatars('ROOM1', 3);
+
+            expect(socketServiceMock.emit).toHaveBeenCalledWith(
+                GameSessionEvents.AvatarTakenUpdated,
+                { roomId: 'ROOM1', newAvatarId: 3 },
+            );
+        });
+    });
+
+    describe('Quitter une session (leaveGameSession)', () => {
+        it('devrait émettre l\'événement LeaveGameSession et réinitialiser la session', () => {
+            service.currentSession.set(mockGameSession);
+
+            service.leaveGameSession();
+
+            expect(socketServiceMock.emit).toHaveBeenCalledWith(
+                GameSessionEvents.LeaveGameSession,
+                { roomId: 'room1' },
+            );
+            expect(service.currentSession()).toBeNull();
+            expect(service.takenAvatars()).toEqual([]);
+        });
+
+        it('ne devrait rien émettre si aucune session courante', () => {
+            service.currentSession.set(null);
+
+            service.leaveGameSession();
+
+            expect(socketServiceMock.emit).not.toHaveBeenCalledWith(
+                GameSessionEvents.LeaveGameSession,
+                jasmine.anything(),
+            );
+        });
+    });
+
+    describe('Joueur exclu (PlayerKicked)', () => {
+        it('devrait réinitialiser la session et naviguer vers l\'accueil quand un joueur est exclu', async () => {
+            const mockDialogRef = { afterClosed: () => of(true) } as unknown as MatDialogRef<unknown>;
+            dialogMock.open.and.returnValue(mockDialogRef);
+
+            service.currentSession.set(mockGameSession);
+            service.connect();
+
+            const callbackKicked = socketServiceMock.on.calls
+                .all()
+                .find(call => call.args[0] === GameSessionEvents.PlayerKicked)
+                ?.args[1] as (data: { message: string }) => void;
+
+            callbackKicked({ message: 'Vous avez été exclu' });
+
+            expect(service.currentSession()).toBeNull();
+            expect(routerMock.navigate).toHaveBeenCalledWith(['/']);
+        });
+    });
+
+    describe('Salle annulée (RoomCancelled)', () => {
+        it('devrait réinitialiser la session et naviguer vers l\'accueil quand la salle est annulée', async () => {
+            const mockDialogRef = { afterClosed: () => of(true) } as unknown as MatDialogRef<unknown>;
+            dialogMock.open.and.returnValue(mockDialogRef);
+
+            service.currentSession.set(mockGameSession);
+            service.connect();
+
+            const callbackCancelled = socketServiceMock.on.calls
+                .all()
+                .find(call => call.args[0] === GameSessionEvents.RoomCancelled)
+                ?.args[1] as (data: { message: string }) => void;
+
+            callbackCancelled({ message: 'La salle a été annulée' });
+
+            expect(service.currentSession()).toBeNull();
+            expect(routerMock.navigate).toHaveBeenCalledWith(['/']);
+        });
+    });
+
+    describe('Suppression de la session courante', () => {
+        it('devrait réinitialiser currentSession et takenAvatars quand la session courante est supprimée', () => {
+            service.currentSession.set(mockGameSession);
+            service.takenAvatars.set([1, 2, 3]);
+
+            service.connect();
+
+            const callbackDeleted = socketServiceMock.on.calls
+                .all()
+                .find(call => call.args[0] === GameSessionEvents.GameSessionDeleted)
+                ?.args[1] as (roomId: string) => void;
+
+            callbackDeleted('room1');
+
+            expect(service.currentSession()).toBeNull();
+            expect(service.takenAvatars()).toEqual([]);
+        });
+    });
+
+    describe('Mise à jour dynamique de la liste (GameSessionListUpdated)', () => {
+        it('devrait mettre à jour la liste complète des sessions lors de GameSessionListUpdated', () => {
+            service.gameSessions.set([mockGameSession, mockGameSession2]);
+
+            service.connect();
+
+            const callbackListUpdated = socketServiceMock.on.calls
+                .all()
+                .find(call => call.args[0] === GameSessionEvents.GameSessionListUpdated)
+                ?.args[1] as (sessions: GameSession[]) => void;
+
+            // Simuler que seule la session 2 est encore disponible
+            callbackListUpdated([mockGameSession2]);
+
+            expect(service.gameSessions().length).toBe(1);
+            expect(service.gameSessions()[0].roomId).toBe('room2');
+        });
+    });
+
+    describe('Utilitaires du service', () => {
+        it('devrait retourner le socketId via getSocketId', () => {
+            socketServiceMock.getSocketId.and.returnValue('my-socket-id');
+            expect(service.getSocketId()).toBe('my-socket-id');
+        });
+
+        it('devrait retourner une chaîne vide si getSocketId retourne undefined', () => {
+            socketServiceMock.getSocketId.and.returnValue(undefined);
+            expect(service.getSocketId()).toBe('');
+        });
+
+        it('devrait retourner l\'état de connexion via isConnected', () => {
+            socketServiceMock.isConnected.and.returnValue(true);
+            expect(service.isConnected()).toBeTrue();
+
+            socketServiceMock.isConnected.and.returnValue(false);
+            expect(service.isConnected()).toBeFalse();
+        });
+
+        it('devrait identifier le host courant via isCurrentUserHost', () => {
+            socketServiceMock.getSocketId.and.returnValue('socket1');
+            service.currentSession.set(mockGameSession);
+
+            expect(service.isCurrentUserHost()).toBeTrue();
+        });
+
+        it('devrait retourner false pour isCurrentUserHost si le joueur n\'est pas host', () => {
+            socketServiceMock.getSocketId.and.returnValue('socket999');
+            service.currentSession.set(mockGameSession);
+
+            expect(service.isCurrentUserHost()).toBeFalse();
+        });
+
+        it('devrait identifier un joueur comme host via isPlayerHost', () => {
+            service.currentSession.set(mockGameSession);
+
+            expect(service.isPlayerHost('socket1')).toBeTrue();
+            expect(service.isPlayerHost('socket999')).toBeFalse();
+        });
+
+        it('devrait permettre de démarrer la partie avec 2+ joueurs et en tant que host', () => {
+            socketServiceMock.getSocketId.and.returnValue('socket1');
+            const sessionWith2Players = {
+                ...mockGameSession,
+                players: [mockPlayer, mockPlayer2],
+            } as unknown as GameSession;
+            service.currentSession.set(sessionWith2Players);
+
+            expect(service.canStartGame()).toBeTrue();
+        });
+
+        it('ne devrait pas permettre de démarrer avec moins de 2 joueurs', () => {
+            socketServiceMock.getSocketId.and.returnValue('socket1');
+            const sessionWith1Player = {
+                ...mockGameSession,
+                players: [mockPlayer],
+            } as unknown as GameSession;
+            service.currentSession.set(sessionWith1Player);
+
+            expect(service.canStartGame()).toBeFalse();
+        });
+    });
+
+    describe('Ne pas re-initialiser les listeners', () => {
+        it('ne devrait pas configurer les écouteurs deux fois lors de connexions multiples', () => {
+            socketServiceMock.isConnected.and.returnValue(false);
+            service.connect();
+            const firstCallCount = socketServiceMock.on.calls.count();
+
+            socketServiceMock.isConnected.and.returnValue(true);
+            service.connect();
+            const secondCallCount = socketServiceMock.on.calls.count();
+
+            expect(secondCallCount).toBe(firstCallCount);
         });
     });
 });

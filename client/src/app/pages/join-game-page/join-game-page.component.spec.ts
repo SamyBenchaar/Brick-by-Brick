@@ -72,4 +72,20 @@ describe('JoinGamePageComponent', () => {
         );
     });
 
+    it('devrait retourner false pour canJoinGameSession si le gameSessionListComponent n\'est pas initialisé', () => {
+        component.gameSessionListComponent = undefined as any;
+        expect(component.canJoinGameSession()).toBeFalse();
+    });
+
+    it('devrait permettre de rejoindre une partie avec un roomId différent', () => {
+        gameSessionListComponentSpy.selectedGameSessionId.and.returnValue('ABC123');
+
+        component.join();
+
+        expect(routerSpy.navigate).toHaveBeenCalledWith(
+            ['/character-creation'],
+            { queryParams: { roomId: 'ABC123' } },
+        );
+    });
+
 });
