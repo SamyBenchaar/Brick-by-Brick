@@ -28,6 +28,8 @@ export class GameViewComponent implements OnInit, OnDestroy {
   gameData: Game | null = null;
   isChatCollapsed = false;
 
+  isWriting: boolean = false;
+
   playerList = computed(() => this.gameSessionSocketService.currentSession()?.players ?? []);
   leftPlayerList = computed(() => this.gameSessionSocketService.currentSession()?.leftPlayers ?? []);
   hostPlayer = computed(() => this.gameSessionSocketService.currentSession()?.host);
@@ -54,7 +56,13 @@ export class GameViewComponent implements OnInit, OnDestroy {
 
   @HostListener('window:keyup', ['$event'])
   handleKeyUp(event: KeyboardEvent): void {
-    if (!this.isMyTurn()) {
+    
+    if (event.key === 'Enter' && this.isWriting) {
+      this.isWriting = false;
+      return;
+    }
+
+    if (!this.isMyTurn() || this.isWriting) {
       return;
     }
 
@@ -76,10 +84,21 @@ export class GameViewComponent implements OnInit, OnDestroy {
     }
   }
 
+  @HostListener('document:click', ['$event'])
+  handleClickOutside(event: MouseEvent): void {
+    const chatSidebar = document.querySelector('.chat-sidebar');
+    if (chatSidebar && !chatSidebar.contains(event.target as Node)) {
+      this.isWriting = false;
+    }
+  }
+
   handleBeforeUnload = (): void => {
     this.gameSessionSocketService.abandonGame();
   };
 
+ handleWritingChange(value: boolean): void {
+    this.isWriting = value;
+  }
   getMapSize(): MapSize {
     if (!this.gameData) {
       return MapSize.Small;

@@ -18,6 +18,7 @@ export class WaitingRoomPage implements OnInit, OnDestroy {
 
     username: string = 'Player';
     roomIdFromRoute: string = '';
+    isWriting: boolean = true;
 
     get roomId(): string {
         // Toujours utiliser le roomId de la route en priorité

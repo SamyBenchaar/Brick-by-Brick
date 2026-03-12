@@ -18,11 +18,15 @@
         <input
             [(ngModel)]="messageInput"
             (keypress)="onKeyPress($event)"
+            (click)="onFocus()"
+            (focus)="onFocus()"
             placeholder="Tapez votre message..."
             class="message-input"
             [disabled]="isLoading()"
+            [readonly]="!isWriting"
             maxlength="200"
             type="text">
+
         <button 
             (click)="sendMessage()"
             [disabled]="!messageInput().trim() || isLoading()"
