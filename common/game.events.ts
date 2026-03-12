@@ -50,6 +50,7 @@ export enum GameSessionEvents {
     EndTurnRequest = 'endTurnRequest',
 
     RequestMove = 'requestMove',
+    RequestAssignPosition = 'requestAssignPosition',
     MoveExecuted = 'moveExecuted',
     ReachableTiles = 'reachableTiles',
 

@@ -136,11 +136,26 @@ export class GameGridComponent implements OnInit, OnChanges {
     const tile = this.getTile(position);
     const playerAtPosition = this.getPlayerAtPosition(position);
 
-    if (playerAtPosition) {
-      alert(`Joueur: ${playerAtPosition.name}\nAvatar ID: ${playerAtPosition.avatarId}\nVictoires: ${playerAtPosition.victories}`);
-    } else if (tile) {
-      const cost = this.getTileCost(tile.type);
-      alert(`Type: ${tile.type}\nCoût de déplacement: ${cost}`);
+    if(this.gameSessionSocketService.isDebugModeActivated()){
+      if(!this.gameSessionSocketService.isMyTurn()) {
+        return;
+      }
+      const tile = this.getTile(position);
+      console.log(tile?.object);
+
+      if (playerAtPosition || tile?.object){
+        return;
+      } else {
+        console.log(position);
+        this.gameSessionSocketService.requestAssignPosition(position);
+      }
+    } else {
+      if (playerAtPosition) {
+        alert(`Joueur: ${playerAtPosition.name}\nAvatar ID: ${playerAtPosition.avatarId}\nVictoires: ${playerAtPosition.victories}`);
+      } else if (tile) {
+        const cost = this.getTileCost(tile.type);
+        alert(`Type: ${tile.type}\nCoût de déplacement: ${cost}`);
+      } 
     }
   }
 

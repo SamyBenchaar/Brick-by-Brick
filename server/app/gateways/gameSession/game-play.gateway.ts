@@ -10,6 +10,8 @@ import {
     WebSocketGateway, WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
+import { MovementService } from '@app/services/gameSession/movement.service';
+import { Position } from '@common/character';
 
 @WebSocketGateway({ cors: true })
 @Injectable()
@@ -27,6 +29,7 @@ export class GamePlayGateway implements OnGatewayInit {
         private chatGateway: ChatGateway,
         @Inject(forwardRef(() => GameSessionGateway))
         private gameSessionGateway: GameSessionGateway,
+        private movementService: MovementService,
     ) {}
 
     afterInit() {
@@ -135,6 +138,21 @@ export class GamePlayGateway implements OnGatewayInit {
                 this.handleTurnEnd(gameSession);
             }
         }
+    }
+
+    @SubscribeMessage(GameSessionEvents.RequestAssignPosition)
+    handleRequestAssignPosition(socket: Socket, payload: { roomId: string; position: Position }){
+        const gameSession = this.gameSessionService.getGameSession(payload.roomId);
+
+        const currentPlayer = gameSession.getCurrentPlayer();
+        this.movementService.assignPosition(currentPlayer, gameSession, payload.position);
+        this.server.to(payload.roomId).emit(GameSessionEvents.MoveExecuted, {
+                playerId: currentPlayer.id,
+                position: currentPlayer.position,
+                remainingMovement: currentPlayer.remainingMovement,
+                remainingActions: currentPlayer.remainingActions,
+            });
+        this.emitReachableTiles(gameSession);
     }
 
     @SubscribeMessage(GameSessionEvents.RequestCombat)

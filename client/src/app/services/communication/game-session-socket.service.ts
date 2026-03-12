@@ -370,6 +370,13 @@ export class GameSessionSocketService {
         }
     }
 
+    requestAssignPosition(position: Position): void {
+        const currentRoomId = this.getRoomId();
+        if (currentRoomId) {
+            this.socketService.emit(GameSessionEvents.RequestAssignPosition, { roomId: currentRoomId, position });
+        }
+    }
+
     requestCombat(defenderId: string): void {
         const currentRoomId = this.getRoomId();
         if (currentRoomId) {
