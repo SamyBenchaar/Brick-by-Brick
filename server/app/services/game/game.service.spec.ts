@@ -43,6 +43,7 @@ describe('GameService', () => {
       findById: jest.fn(),
       findByIdAndUpdate: jest.fn(),
       findByIdAndDelete: jest.fn(),
+      updateOne: jest.fn(),
     } as unknown as jest.Mocked<Model<GameDocument>>;
 
     mapValidation = {
@@ -158,8 +159,14 @@ describe('GameService', () => {
 
   describe('updateVisibility', () => {
     it('met à jour la visibilité', async () => {
+      model.findById.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(validGameData),
+      } as never);
       model.findByIdAndUpdate.mockReturnValue({
         exec: jest.fn().mockResolvedValue(validGameData),
+      } as never);
+      model.updateOne.mockReturnValue({
+        exec: jest.fn().mockResolvedValue({}),
       } as never);
 
       const result = await service.updateVisibility('123', true);
