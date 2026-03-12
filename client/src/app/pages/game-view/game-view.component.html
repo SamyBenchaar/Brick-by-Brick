@@ -33,8 +33,9 @@
                 <span class="chat-toggle-arrow">{{ isChatCollapsed ? '▶' : '◀' }}</span>
             </div>
             @if (!isChatCollapsed && gameData) {
-            <div class="chat-body">
-                <app-chat [username]="currentPlayer()?.character?.name ?? ''" [gameId]="roomId()" [hostPlayerId]="hostId"></app-chat>
+            <div class="chat-body" >
+                <app-chat [username]="currentPlayer()?.character?.name ?? ''" [gameId]="roomId()" [hostPlayerId]="hostId"
+                 [isWriting]="isWriting" (isWritingChange)="handleWritingChange($event)"></app-chat>
             </div>
             }
         </div>
