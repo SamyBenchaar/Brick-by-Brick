@@ -17,4 +17,5 @@ export interface GameSession {
     currentTurnTime: number;
     startingPoints: Map<string, Position>;
     isTurnStarting: boolean;
+    isDebugModeActivated: boolean;
 }

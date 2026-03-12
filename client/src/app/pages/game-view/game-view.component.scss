@@ -41,6 +41,12 @@
     }
 }
 
+.debug-mode {
+    color: white;
+    position: absolute;
+    left: 45%
+}
+
 .info-panel {
     display: flex;
     gap: 1.5rem;

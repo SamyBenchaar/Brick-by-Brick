@@ -37,6 +37,7 @@ export class GameViewComponent implements OnInit, OnDestroy {
     const socketId = this.gameSessionSocketService.getSocketId();
     return this.gameSessionSocketService.currentSession()?.players.find(p => p.socketId === socketId) ?? null;
   });
+  isDebugModeActivated = computed(() => this.gameSessionSocketService.isDebugModeActivated());
 
   ngOnInit(): void {
     if (!this.gameSessionSocketService.currentSession() || !this.gameSessionSocketService.mapCopy()) {
@@ -54,11 +55,16 @@ export class GameViewComponent implements OnInit, OnDestroy {
 
   @HostListener('window:keyup', ['$event'])
   handleKeyUp(event: KeyboardEvent): void {
+    const key = event.key.toLowerCase();
+
+    if (key === 'm' && this.gameSessionSocketService.isCurrentUserHost()) {
+      this.gameSessionSocketService.activateDebug();
+      return;
+    }
     if (!this.isMyTurn()) {
       return;
     }
 
-    const key = event.key.toLowerCase();
     let direction = '';
 
     if (key === 'w' || key === 'arrowup') {
@@ -70,7 +76,6 @@ export class GameViewComponent implements OnInit, OnDestroy {
     } else if (key === 'd' || key === 'arrowright') {
       direction = 'arrowRight';
     }
-
     if (direction) {
       this.gameSessionSocketService.requestMove(direction);
     }

@@ -31,6 +31,7 @@ export class GameSession {
     currentTurnTime: number = 30;
     startingPoints: Map<string, Position> = new Map();
     isTurnStarting: boolean = false;
+    isDebugModeActivated = true;
 
     constructor(hostplayer: Player, mapId: string) {
         this.host = hostplayer;
