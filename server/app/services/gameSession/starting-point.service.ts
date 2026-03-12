@@ -1,4 +1,5 @@
-import { GameSession, Position } from '@common/gameSession';
+import { GameSession } from '@app/domain/game-session';
+import { Position } from '@common/character';
 import { Injectable } from '@nestjs/common';
 
 interface MapTile {
@@ -37,6 +38,8 @@ export class StartingPointService {
             selectedStartingPoints.push(position);
             player.startPosition = position;
             player.position = position;
+            player.remainingMovement = player.speed;
+            player.victories = 0;
         }
     }
 

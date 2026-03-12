@@ -1,6 +1,6 @@
 @font-face {
   font-family: 'MyFont';
-  src: url('/assets/fonts/ByteBounce.ttf') format('truetype');
+  src: url('../../../assets/fonts/ByteBounce.ttf') format('truetype');
   font-style: normal;
 }
 
@@ -102,7 +102,7 @@
     margin: 0 0 0.3rem 0;
     padding: 5px 10px;
     background-size: contain;
-    background-image: url('/assets/images/3x1_orange.png');
+    background-image: url('../../../assets/images/3x1_orange.png');
     font-weight: bold;
     color: #333;
     word-break: break-word;

@@ -1,155 +1,157 @@
-<div class="whole-page">
-    <div class="layout">
-        <div class="scale-wrapper">
-        <div class="avatar-selection-panel">
-            <h3>Choisir un personnage</h3>
-            <div class="avatar-grid">
-                @for (avatar of avatars; track avatar.id) {
-                    <button 
-                        class="avatar-item" 
-                        [class.selected]="character.avatarId === avatar.id"
-                        (click)="selectAvatar(avatar)">
-                        <img [src]="avatar.image" [alt]="avatar.name" />
-                    </button>
-                }
+    <div class="whole-page">
+        <div class="layout">
+            <div class="scale-wrapper">
+            <div class="avatar-selection-panel">
+                <h3>Choisir un personnage</h3>
+                <div class="avatar-grid">
+                    @for (avatar of avatarState(); track avatar.id) {
+                        <button 
+                            class="avatar-item" 
+                            [class.taken]="avatar.taken && avatar.id !== character.avatarId"
+                            [class.selected]="character.avatarId === avatar.id"
+                            (click)="selectAvatar(avatar)">
+                            <img [src]="avatar.image" [alt]="avatar.name" />
+                        </button>
+                    }
+                </div>
             </div>
-        </div>
 
-        
-            <div class="character-container">
-                <button class="close-btn" (click)="close()">
-                    <img src="assets/images/red_small_brick.png" alt="Close" />
-                    <span class="material-icons close-icon">close</span>
-                </button>
+            
+                <div class="character-container">
+                    <button class="close-btn" (click)="close()">
+                        <img src="./assets/images/red_small_brick.png" alt="Close" />
+                        <span class="material-icons close-icon">close</span>
+                    </button>
 
-                <h2>Création personnage</h2>
+                    <h2>Création personnage</h2>
 
-                <div class="layout">
-                    <div class="left-column">
-                        <div class="avatars">
-                            <img [src]="getSelectedAvatarImage()" alt="Avatar" />
-                        </div>
+                    <div class="layout">
+                        <div class="left-column">
+                            <div class="avatars">
+                                <img [src]="getSelectedAvatarImage()" alt="Avatar" />
+                            </div>
 
-                        <h3>Bonus +2</h3>
-                        <div class="bonus-buttons">
-                            <button (click)="applyBonus('life')" [class.active]="bonusTarget === 'life'"
-                            [class.inactive]="bonusTarget && bonusTarget !== 'life'">
-                                
-                                <div class="brick-wrapper">
-                                    <img src="assets/images/red_medium_brick.png" alt="brick" />
-                                    <span class="life-bonus">+2 Vie</span>
-                                </div>
-                            </button>
-                            <button (click)="applyBonus('speed')" [class.active]="bonusTarget === 'speed'"
-                            [class.inactive]="bonusTarget && bonusTarget !== 'speed'">
-                                <div class="brick-wrapper">
-                                    <img src="assets/images/orange_medium_brick.png" alt="brick" />
-                                    <span class="speed-bonus">+2 Rapidité</span>
-                                </div>
-                            </button>
-                        </div>
-
-                        <h3>Dés</h3>
-
-                        <div class="dice-section">
-                            <span class="dice-label">Attaque:</span>
-                            <div class="dice-row">
-                                <button (click)="setDice('attackDice', 'D4')" [class.active]="character.attackDice === 'D4'">
-                                    <div class="dice-wrapper">
-                                        <img src="assets/images/dice_four.png" alt="D4" />
+                            <h3>Bonus +2</h3>
+                            <div class="bonus-buttons">
+                                <button (click)="applyBonus('life')" [class.active]="bonusTarget === 'life'"
+                                [class.inactive]="bonusTarget && bonusTarget !== 'life'">
+                                    
+                                    <div class="brick-wrapper">
+                                        <img src="./assets/images/red_medium_brick.png" alt="brick" />
+                                        <span class="life-bonus">+2 Vie</span>
                                     </div>
                                 </button>
-
-                                <button (click)="setDice('attackDice', 'D6')" [class.active]="character.attackDice === 'D6'">
-                                    <div class="dice-wrapper">
-                                        <img src="assets/images/dice_six.png" alt="D6" />
+                                <button (click)="applyBonus('speed')" [class.active]="bonusTarget === 'speed'"
+                                [class.inactive]="bonusTarget && bonusTarget !== 'speed'">
+                                    <div class="brick-wrapper">
+                                        <img src="./assets/images/orange_medium_brick.png" alt="brick" />
+                                        <span class="speed-bonus">+2 Rapidité</span>
                                     </div>
                                 </button>
                             </div>
-                        </div>
 
-                        <div class="dice-section">
-                            <span class="dice-label">Défense:</span>
-                            <div class="dice-row">
-                                <button (click)="setDice('defenseDice', 'D4')" [class.active]="character.defenseDice === 'D4'">
-                                    <div class="dice-wrapper">
-                                        <img src="assets/images/dice_four.png" alt="D4" />
+                            <h3>Dés</h3>
+
+                            <div class="dice-section">
+                                <span class="dice-label">Attaque:</span>
+                                <div class="dice-row">
+                                    <button (click)="setDice('attackDice', 'D4')" [class.active]="character.attackDice === 'D4'">
+                                        <div class="dice-wrapper">
+                                            <img src="./assets/images/dice_four.png" alt="D4" />
+                                        </div>
+                                    </button>
+
+                                    <button (click)="setDice('attackDice', 'D6')" [class.active]="character.attackDice === 'D6'">
+                                        <div class="dice-wrapper">
+                                            <img src="./assets/images/dice_six.png" alt="D6" />
+                                        </div>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="dice-section">
+                                <span class="dice-label">Défense:</span>
+                                <div class="dice-row">
+                                    <button (click)="setDice('defenseDice', 'D4')" [class.active]="character.defenseDice === 'D4'">
+                                        <div class="dice-wrapper">
+                                            <img src="./assets/images/dice_four.png" alt="D4" />
+                                        </div>
+                                    </button>
+
+                                    <button (click)="setDice('defenseDice', 'D6')" [class.active]="character.defenseDice === 'D6'">
+                                        <div class="dice-wrapper">
+                                            <img src="./assets/images/dice_six.png" alt="D6" />
+                                        </div>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="right-column">
+                            <label>
+                                Nom :
+                                <input placeholder="Entrer un nom..." maxlength="15" [(ngModel)]="character.name" />
+                            </label>
+
+                            <h3>Attributs</h3>
+                            <div class="attributes">
+                                <div class="stat-vie">
+                                    <div class="brick-wrapper">
+                                        <img src="./assets/images/red_small_brick.png" alt="Vie" />
+                                        <span class="brick-value">{{ character.life }}</span>
                                     </div>
-                                </button>
-
-                                <button (click)="setDice('defenseDice', 'D6')" [class.active]="character.defenseDice === 'D6'">
-                                    <div class="dice-wrapper">
-                                        <img src="assets/images/dice_six.png" alt="D6" />
+                                    <div class="stat-text">
+                                        <span class="stat-label">Vie</span>
+                                        <small>Détermine les points de vie</small>
                                     </div>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="right-column">
-                        <label>
-                            Nom :
-                            <input placeholder="Entrer un nom..." maxlength="15" [(ngModel)]="character.name" />
-                        </label>
+                                </div>
 
-                        <h3>Attributs</h3>
-                        <div class="attributes">
-                            <div class="stat-vie">
-                                <div class="brick-wrapper">
-                                    <img src="assets/images/red_small_brick.png" alt="Vie" />
-                                    <span class="brick-value">{{ character.life }}</span>
+                                <div class="stat-rapidite">
+                                    <div class="brick-wrapper">
+                                        <img src="./assets/images/orange_small_brick.png" alt="Rapidité" />
+                                        <span class="brick-value">{{ character.speed }}</span>
+                                    </div>
+                                    <div class="stat-text">
+                                        <span class="stat-label">Rapidité</span>
+                                        <small>Influence l'ordre des tours</small>
+                                    </div>
                                 </div>
-                                <div class="stat-text">
-                                    <span class="stat-label">Vie</span>
-                                    <small>Détermine les points de vie</small>
-                                </div>
-                            </div>
 
-                            <div class="stat-rapidite">
-                                <div class="brick-wrapper">
-                                    <img src="assets/images/orange_small_brick.png" alt="Rapidité" />
-                                    <span class="brick-value">{{ character.speed }}</span>
+                                <div class="stat-attaque">
+                                    <div class="brick-wrapper">
+                                        <img src="./assets/images/green_small_brick.png" alt="Attaque" />
+                                        <span class="brick-value">{{ character.attack }}</span>
+                                    </div>
+                                    <div class="stat-text">
+                                        <span class="stat-label">Attaque</span>
+                                        <small>Dégâts infligés</small>
+                                    </div>
                                 </div>
-                                <div class="stat-text">
-                                    <span class="stat-label">Rapidité</span>
-                                    <small>Influence l'ordre des tours</small>
-                                </div>
-                            </div>
 
-                            <div class="stat-attaque">
-                                <div class="brick-wrapper">
-                                    <img src="assets/images/green_small_brick.png" alt="Attaque" />
-                                    <span class="brick-value">{{ character.attack }}</span>
-                                </div>
-                                <div class="stat-text">
-                                    <span class="stat-label">Attaque</span>
-                                    <small>Dégâts infligés</small>
+                                <div class="stat-defense">
+                                    <div class="brick-wrapper">
+                                        <img src="./assets/images/blue_small_brick.png" alt="Défense" />
+                                        <span class="brick-value">{{ character.defense }}</span>
+                                    </div>
+                                    <div class="stat-text">
+                                        <span class="stat-label">Défense</span>
+                                        <small>Réduction des dégâts</small>
+                                    </div>
                                 </div>
                             </div>
 
-                            <div class="stat-defense">
-                                <div class="brick-wrapper">
-                                    <img src="assets/images/blue_small_brick.png" alt="Défense" />
-                                    <span class="brick-value">{{ character.defense }}</span>
+                            <div class="bottom-buttons">
+                                <button class="random" (click)="createRandomCharacter()">Personnage aléatoire</button>
+                                <div class="tooltip-wrapper" [class.show-tooltip]="isSubmitDisabled() && submitHover">
+                                    <button 
+                                        class="create" 
+                                        (click)="submitCharacter()" 
+                                        [disabled]="isSubmitDisabled() "
+                                        (mouseenter)="submitHover = true"
+                                        (mouseleave)="submitHover = false">
+                                        Soumettre
+                                    </button>
+                                    <div class="tooltip">{{getTooltipText()}}</div>
                                 </div>
-                                <div class="stat-text">
-                                    <span class="stat-label">Défense</span>
-                                    <small>Réduction des dégâts</small>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="bottom-buttons">
-                            <button class="random" (click)="createRandomCharacter()">Personnage aléatoire</button>
-                            <div class="tooltip-wrapper" [class.show-tooltip]="isSubmitDisabled() && submitHover">
-                                <button 
-                                    class="create" 
-                                    (click)="submitCharacter()" 
-                                    [disabled]="isSubmitDisabled() "
-                                    (mouseenter)="submitHover = true"
-                                    (mouseleave)="submitHover = false">
-                                    Soumettre
-                                </button>
-                                <div class="tooltip">{{getTooltipText()}}</div>
                             </div>
                         </div>
                     </div>
@@ -157,4 +159,3 @@
             </div>
         </div>
     </div>
-</div>

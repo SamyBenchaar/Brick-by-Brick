@@ -94,11 +94,11 @@ export class GameGridComponent implements OnInit, OnChanges {
   }
 
   getGrid(): Tile[][] {
-    return this.gameMap.getGrid();
+    return this.gameMap.grid;
   }
 
   getTileSize(): number {
-    return this.gridSize / this.gameMap.getSize();
+    return this.gridSize / this.gameMap.size;
   }
 
   getTile(position: Position): Tile | null {
@@ -155,7 +155,7 @@ export class GameGridComponent implements OnInit, OnChanges {
     const playerAtPosition = this.getPlayerAtPosition(position);
     if (playerAtPosition) {
       const currentPlayer = this.getCurrentPlayer();
-      if (currentPlayer && this.isAdjacent(currentPlayer.position, position)) {
+      if (currentPlayer && currentPlayer.position && this.isAdjacent(currentPlayer.position, position)) {
         if (confirm(`Attaquer ${playerAtPosition.name}?`)) {
           this.gameSessionSocketService.requestCombat(playerAtPosition.id);
         }
@@ -259,11 +259,11 @@ export class GameGridComponent implements OnInit, OnChanges {
   }
 
   getObjectPath(object: ObjectType): string {
-    return `assets/images/${object}.png`;
+    return `./assets/images/${object}.png`;
   }
 
   getTilePath(tile: TileType): string {
-    return `assets/images/${tile}.jpg`;
+    return `./assets/images/${tile}.jpg`;
   }
 
   async captureMapPreview(maxWidth: number = GameGridComponent.defaultPreviewMaxWidth): Promise<string> {
@@ -283,7 +283,7 @@ export class GameGridComponent implements OnInit, OnChanges {
   }
 
   getPlayerAtPosition(position: Position): Character | null {
-    return this.players.find(p => p.position.x === position.x && p.position.y === position.y) ?? null;
+    return this.players.find(p => p.position?.x === position.x && p.position?.y === position.y) ?? null;
   }
 
   isReachableTile(position: Position): boolean {
@@ -296,7 +296,11 @@ export class GameGridComponent implements OnInit, OnChanges {
 
   getCurrentPlayer(): Character | null {
     const socketId = this.gameSessionSocketService.getSocketId();
-    return this.players.find(p => p.socketId === socketId) ?? null;
+    const session = this.gameSessionSocketService.currentSession();
+    if (!session) return null;
+    
+    const playerData = session.players.find(p => p.socketId === socketId);
+    return playerData?.character ?? null;
   }
 
   private isAdjacent(pos1: Position, pos2: Position): boolean {

@@ -3,7 +3,7 @@ import { GameSessionGateway } from '@app/gateways/gameSession/game-session.gatew
 import { GameSessionService } from '@app/services/gameSession/gameSession.service';
 import { Character } from '@common/character';
 import { GameSessionEvents } from '@common/game.events';
-import { GameSession } from '@common/gameSession';
+import { GameSession } from '@app/domain/game-session';
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import {
     OnGatewayInit, SubscribeMessage,
@@ -71,7 +71,9 @@ export class GamePlayGateway implements OnGatewayInit {
         }
 
         const currentPlayer = gameSession.getCurrentPlayer();
-        if (!currentPlayer || currentPlayer.id !== socket.id) {
+        const requestingPlayer = gameSession.players.find(p => p.socketId === socket.id);
+        
+        if (!currentPlayer || !requestingPlayer || currentPlayer.id !== requestingPlayer.character.id) {
             return;
         }
 
@@ -87,7 +89,9 @@ export class GamePlayGateway implements OnGatewayInit {
         }
 
         const currentPlayer = gameSession.getCurrentPlayer();
-        if (!currentPlayer || currentPlayer.id !== socket.id) {
+        const requestingPlayer = gameSession.players.find(p => p.socketId === socket.id);
+        
+        if (!currentPlayer || !requestingPlayer || currentPlayer.id !== requestingPlayer.character.id) {
             return;
         }
 
@@ -96,7 +100,7 @@ export class GamePlayGateway implements OnGatewayInit {
 
         if (success) {
             this.server.to(payload.roomId).emit(GameSessionEvents.MoveExecuted, {
-                playerId: socket.id,
+                playerId: currentPlayer.id,
                 position: currentPlayer.position,
                 remainingMovement: currentPlayer.remainingMovement,
             });
@@ -118,7 +122,9 @@ export class GamePlayGateway implements OnGatewayInit {
         }
 
         const currentPlayer = gameSession.getCurrentPlayer();
-        if (!currentPlayer || currentPlayer.id !== socket.id) {
+        const requestingPlayer = gameSession.players.find(p => p.socketId === socket.id);
+        
+        if (!currentPlayer || !requestingPlayer || currentPlayer.id !== requestingPlayer.character.id) {
             return;
         }
 
@@ -158,12 +164,14 @@ export class GamePlayGateway implements OnGatewayInit {
             return;
         }
 
-        const wasCurrentPlayer = gameSession.getCurrentPlayer()?.id === socket.id;
+        const currentPlayer = gameSession.getCurrentPlayer();
+        const abandoningPlayer = gameSession.players.find(p => p.socketId === socket.id);
+        const wasCurrentPlayer = currentPlayer && abandoningPlayer && currentPlayer.id === abandoningPlayer.character.id;
 
         this.gameSessionService.removePlayer(payload.roomId, socket.id);
 
         this.server.to(payload.roomId).emit(GameSessionEvents.PlayerAbandoned, {
-            playerId: socket.id,
+            playerId: abandoningPlayer?.character.id,
         });
 
         const winner = this.gameSessionService.checkGameWinner(gameSession);
@@ -258,7 +266,7 @@ export class GamePlayGateway implements OnGatewayInit {
         });
 
         setTimeout(() => {
-            this.gameSessionGateway.cleanupGameSession(gameSession.roomId);
+            this.gameSessionGateway.cleanUpRoom(gameSession.roomId);
         }, this.gameEndCleanupDelay);
     }
 
@@ -268,8 +276,13 @@ export class GamePlayGateway implements OnGatewayInit {
             return;
         }
 
+        const playerData = gameSession.players.find(p => p.character.id === currentPlayer.id);
+        if (!playerData) {
+            return;
+        }
+
         const reachableTiles = this.gameSessionService.getReachableTiles(gameSession);
-        this.server.to(currentPlayer.socketId).emit(GameSessionEvents.ReachableTiles, {
+        this.server.to(playerData.socketId).emit(GameSessionEvents.ReachableTiles, {
             playerId: currentPlayer.id,
             tiles: reachableTiles,
         });

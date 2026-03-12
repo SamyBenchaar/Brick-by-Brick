@@ -230,6 +230,11 @@ $yellow-dark: #b38f00;
     border-color: yellow;
     background: rgba(255, 255, 0, 0.2);
     box-shadow: 0 0 10px rgba(255, 255, 0, 0.5);
+    cursor: not-allowed
+  }
+  &.taken {
+    filter: grayscale(100%) opacity(0.6);
+    cursor: not-allowed;
   }
 }
 
@@ -436,11 +441,11 @@ button {
 }
 
 .random {
-  background-image: url('/assets/images/blue_large_brick.png');
+  background-image: url('../../../assets/images/blue_large_brick.png');
 }
 
 .create {
-  background-image: url('/assets/images/green_large_brick.png');
+  background-image: url('../../../assets/images/green_large_brick.png');
 }
 
 .tooltip-wrapper {

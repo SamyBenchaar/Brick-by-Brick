@@ -1,5 +1,5 @@
 import { Character } from '@common/character';
-import { GameSession, Position } from '@common/gameSession';
+import { GameSession, Position } from '@app/domain/game-session';
 import { Injectable, Logger } from '@nestjs/common';
 import { StartingPointService } from './starting-point.service';
 

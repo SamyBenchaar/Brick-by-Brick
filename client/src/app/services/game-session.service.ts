@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
-import { Character } from '@common/character';
+import { Character, Position } from '@common/character';
 import { GameEvents } from '@common/game.events';
-import { Position } from '@common/gameSession';
 import { Subject } from 'rxjs';
 import { io, Socket } from 'socket.io-client';
 
@@ -146,7 +145,7 @@ export class GameSessionService {
 
     getPlayerAtPosition(position: Position): Character | null {
         for (const player of this.players.values()) {
-            if (player.position.x === position.x && player.position.y === position.y) {
+            if (player.position?.x === position.x && player.position?.y === position.y) {
                 return player;
             }
         }

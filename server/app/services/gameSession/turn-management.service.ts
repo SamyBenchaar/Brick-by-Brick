@@ -1,4 +1,4 @@
-import { GameSession } from '@common/gameSession';
+import { GameSession } from '@app/domain/game-session';
 import { Injectable, Logger } from '@nestjs/common';
 
 @Injectable()

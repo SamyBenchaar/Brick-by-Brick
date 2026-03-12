@@ -1,29 +1,42 @@
 import { CommonModule } from '@angular/common';
-import { Component, effect, HostListener, inject, Injector, OnDestroy, OnInit } from '@angular/core';
+import { Component, computed, effect, HostListener, inject, Injector, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { ChatComponent } from '@app/components/chat/chat.component';
 import { GameGridComponent } from '@app/components/game-edition-components/game-grid/game-grid.component';
+import { PlayerBoardComponent } from '@app/components/game-view-components/player-board/player-board/player-board.component';
+import { PlayerSignComponent } from '@app/components/game-view-components/player-sign/player-sign/player-sign.component';
 import { AVATARS } from '@app/constants/character.constants';
-import { getGameSizeConfig } from '@app/constants/game-config-constants';
 import { Game } from '@app/interfaces/game';
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket.service';
 import { Character } from '@common/character';
+import { getGameSizeConfig } from '@common/constants/game-config-constants';
 import { MapSize } from '@common/map';
 import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-game-view',
-  imports: [CommonModule, GameGridComponent, ChatComponent],
+  imports: [CommonModule, GameGridComponent, ChatComponent, PlayerBoardComponent, PlayerSignComponent],
   templateUrl: './game-view.component.html',
   styleUrl: './game-view.component.scss',
 })
 export class GameViewComponent implements OnInit, OnDestroy {
   gameSessionSocketService = inject(GameSessionSocketService);
-  private injector = inject(Injector);
   private router = inject(Router);
+  private injector = inject(Injector);
   private routeSubscription?: Subscription;
 
   gameData: Game | null = null;
+  isChatCollapsed = false;
+
+  playerList = computed(() => this.gameSessionSocketService.currentSession()?.players ?? []);
+  leftPlayerList = computed(() => this.gameSessionSocketService.currentSession()?.leftPlayers ?? []);
+  hostPlayer = computed(() => this.gameSessionSocketService.currentSession()?.host);
+  roomId = computed(() => this.gameSessionSocketService.currentSession()?.roomId || '');
+  playerCount = computed(() => this.gameSessionSocketService.currentSession()?.players?.length ?? 0);
+  currentPlayer = computed(() => {
+    const socketId = this.gameSessionSocketService.getSocketId();
+    return this.gameSessionSocketService.currentSession()?.players.find(p => p.socketId === socketId) ?? null;
+  });
 
   ngOnInit(): void {
     if (!this.gameSessionSocketService.currentSession() || !this.gameSessionSocketService.mapCopy()) {
@@ -75,22 +88,8 @@ export class GameViewComponent implements OnInit, OnDestroy {
     return config.gridSize;
   }
 
-  getPlayerCount(): number {
-    return this.gameSessionSocketService.currentSession()?.players.length ?? 0;
-  }
-
   get hostId(): string {
     return this.gameSessionSocketService.hostSocketId() ?? '';
-  }
-
-  get roomId(): string {
-    return this.gameSessionSocketService.currentSession()?.roomId || '';
-  }
-
-  getCurrentPlayer(): Character | null {
-    const socketId = this.gameSessionSocketService.getSocketId();
-    const player = this.gameSessionSocketService.currentSession()?.players.find(p => p.socketId === socketId);
-    return player?.character ?? null;
   }
 
   isMyTurn(): boolean {
@@ -132,5 +131,9 @@ export class GameViewComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.routeSubscription?.unsubscribe();
     window.removeEventListener('beforeunload', this.handleBeforeUnload);
+  }
+  leaveGameSession(): void {
+    this.gameSessionSocketService.leaveGameSession();
+    this.router.navigate(['/home']);
   }
 }

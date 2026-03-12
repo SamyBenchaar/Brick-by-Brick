@@ -1,12 +1,13 @@
+import { GameSession } from '@app/domain/game-session';
 import { GameService } from '@app/services/game/game.service';
-import { Character } from '@common/character';
-import { GameSession, Position } from '@common/gameSession';
+import { Character, Position } from '@common/character';
+import { getGameSizeConfig } from '@common/constants/game-config-constants';
+import { Player } from '@common/player';
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import { CombatResult, CombatService } from './combat.service';
 import { MovementService } from './movement.service';
 import { StartingPointService } from './starting-point.service';
 import { TurnManagementService } from './turn-management.service';
-
 interface MapTile {
     type: string;
     object?: { type: string };
@@ -17,7 +18,6 @@ interface GameDataForInit {
         tiles: MapTile[][];
     };
 }
-
 @Injectable()
 export class GameSessionService {
 
@@ -33,22 +33,26 @@ export class GameSessionService {
         private gameService: GameService,
     ) {}
 
-    async createGameSession(socketId: string, hostPlayer: Character, mapId: string): Promise<GameSession> {
+    async createGameSession(player: Player, mapId: string): Promise<GameSession> {
         const originalGame = await this.gameService.findOne(mapId);
-        hostPlayer.id = socketId;
-        hostPlayer.socketId = socketId;
-        const newGameSession = new GameSession(hostPlayer, mapId, originalGame.numberOfPlayers);
+        const mapCopy = JSON.parse(JSON.stringify(originalGame));
+
+        const newGameSession = new GameSession(player, mapId);
+        newGameSession.mapCopy = mapCopy;
+        newGameSession.maxPlayers = getGameSizeConfig(mapCopy.mapConfig.size).maxPlayers;
+
         this.gameSessions.set(newGameSession.roomId, newGameSession);
         return newGameSession;
     }
 
-    joinSession(roomId: string, socketId: string, player: Character): string | null {
+    joinSession(roomId: string, player: Player): string | null {
         const session = this.gameSessions.get(roomId);
+
         if (!session) return 'Session de jeu introuvable';
         if (session.status !== 'waiting') return 'La session de jeu a déjà commencé';
         if (session.isFull()) return 'La session de jeu est pleine';
-        player.id = socketId;
-        player.socketId = socketId;
+        
+        player.character.name = session.verifyUniqueName(player.character.name);
         session.addPlayer(player);
         return null;
     }
@@ -56,10 +60,7 @@ export class GameSessionService {
     kickPlayer(roomId: string, targetSocketId: string): void {
         const session = this.gameSessions.get(roomId);
         if (session) {
-            const playerToKick = session.players.find(p => p.socketId === targetSocketId);
-            if (playerToKick) {
-                session.removePlayer(playerToKick.character);
-            }
+            session.removePlayer(targetSocketId);
         }
     }
 
@@ -69,7 +70,7 @@ export class GameSessionService {
 
     getAvailableGameSessions(): GameSession[] {
         return Array.from(this.gameSessions.values()).filter(session =>
-            session.status === 'waiting' && !session.isFull());
+            session.status === 'waiting' && session.players.length < session.maxPlayers);
     }
 
     deleteGameSession(roomId: string): void {
@@ -122,10 +123,13 @@ export class GameSessionService {
 
     getReachableTiles(gameSession: GameSession): Position[] {
         const currentPlayer = gameSession.getCurrentPlayer();
-        if (!currentPlayer) {
+        if (!currentPlayer || !currentPlayer.position || currentPlayer.remainingMovement === undefined) {
             return [];
         }
-        const mapData = gameSession.getMapCopy().tiles;
+        const mapData = gameSession.getMapCopy()?.tiles;
+        if (!mapData) {
+            return [];
+        }
         return this.movementService.getReachableTiles(
             gameSession,
             currentPlayer.position,
@@ -139,10 +143,13 @@ export class GameSessionService {
         direction: 'arrowUp' | 'arrowDown' | 'arrowLeft' | 'arrowRight',
     ): boolean {
         const currentPlayer = gameSession.getCurrentPlayer();
-        if (!currentPlayer) {
+        if (!currentPlayer || !currentPlayer.position || currentPlayer.remainingMovement === undefined) {
             return false;
         }
-        const mapData = gameSession.getMapCopy().tiles;
+        const mapData = gameSession.getMapCopy()?.tiles;
+        if (!mapData) {
+            return false;
+        }
         const success = this.movementService.executeMove(
             gameSession,
             currentPlayer,
@@ -202,10 +209,7 @@ export class GameSessionService {
         if (!gameSession) {
             return;
         }
-        const playerData = gameSession.players.find(p => p.character.id === playerId);
-        if (playerData) {
-            gameSession.removePlayer(playerData.character);
-        }
+        gameSession.removePlayer(playerId);
     }
 
     getAllGameSessions(): GameSession[] {

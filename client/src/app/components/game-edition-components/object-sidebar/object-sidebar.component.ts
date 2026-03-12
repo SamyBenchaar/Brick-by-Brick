@@ -61,6 +61,6 @@ export class ObjectSidebarComponent implements OnInit {
   }
 
   getObjectPath(object: ObjectType): string {
-    return `assets/images/${object}.png`;
+    return `./assets/images/${object}.png`;
   }
 }

@@ -1,5 +1,5 @@
 import { Character } from '@common/character';
-import { GameSession, Position } from '@common/gameSession';
+import { GameSession, Position } from '@app/domain/game-session';
 import { TileType } from '@common/map';
 import { Injectable, Logger } from '@nestjs/common';
 
@@ -75,6 +75,9 @@ export class MovementService {
         const occupiedPositions = this.getOccupiedPositions(gameSession);
         occupiedPositions.delete(`${currentPosition.x},${currentPosition.y}`); // Exclude current position
 
+        const startPosKey = `${currentPosition.x},${currentPosition.y}`;
+        visited.add(startPosKey);
+
         // BFS 
         const queue: { pos: Position; cost: number }[] = [
             { pos: currentPosition, cost: 0 },
@@ -86,18 +89,18 @@ export class MovementService {
                 continue;
             }
             const { pos, cost } = current;
-            const posKey = `${pos.x},${pos.y}`;
-
-            if (visited.has(posKey)) {
-                continue;
-            }
-            visited.add(posKey);
 
             for (const direction of Object.values(this.directions)) {
                 const newPos: Position = {
                     x: pos.x + direction.x,
                     y: pos.y + direction.y,
                 };
+
+                const newPosKey = `${newPos.x},${newPos.y}`;
+
+                if (visited.has(newPosKey)) {
+                    continue;
+                }
 
                 if (!this.isValidTile(mapData, newPos, occupiedPositions)) {
                     continue;
@@ -108,7 +111,7 @@ export class MovementService {
                 const totalCost = cost + moveCost;
 
                 if (totalCost <= movementPoints) {
-                    const newPosKey = `${newPos.x},${newPos.y}`;
+                    visited.add(newPosKey);
                     reachable.add(newPosKey);
 
                     // Continuation BFS
@@ -142,6 +145,10 @@ export class MovementService {
     ): boolean {
         const directionDelta = this.directions[direction];
         if (!directionDelta) {
+            return false;
+        }
+
+        if (player.remainingMovement === undefined) {
             return false;
         }
 
