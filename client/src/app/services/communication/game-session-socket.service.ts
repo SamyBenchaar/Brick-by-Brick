@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import { Injectable, signal, WritableSignal } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
