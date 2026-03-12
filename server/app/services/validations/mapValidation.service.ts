@@ -1,16 +1,11 @@
-import { Game, GameDocument } from '@app/model/game';
+import { Game } from '@app/model/game';
 import { Tile } from '@app/model/tile';
 import { MapSize, MIN_TERRAIN_COVERAGE, PERCENTAGE_MULTIPLIER, PLAYABLE_TYPES, TileType } from '@common/map';
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
 import { Direction, GridPosition } from '@app/interfaces/map-validation.interfaces';
 
 @Injectable()
 export class MapValidationService {
-    constructor(
-        @InjectModel(Game.name) private gameModel: Model<GameDocument>,
-    ) {}
 
     async validateMap(gameData: Partial<Game>): Promise<string[]> {
         const errors: string[] = [];

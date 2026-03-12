@@ -1,9 +1,9 @@
 import { GameController } from '@app/controllers/game/game.controller';
 import { ChatGateway } from '@app/gateways/chat/chat.gateway';
+import { GameGateway } from '@app/gateways/game/game.gateway';
 import { GamePlayGateway } from '@app/gateways/gameSession/game-play.gateway';
 import { GameSessionGateway } from '@app/gateways/gameSession/game-session.gateway';
 import { Game, gameSchema } from '@app/model/game';
-import { GameService } from '@app/services/game/game.service';
 import { CombatService } from '@app/services/gameSession/combat.service';
 import { MovementService } from '@app/services/gameSession/movement.service';
 import { StartingPointService } from '@app/services/gameSession/starting-point.service';
@@ -13,7 +13,7 @@ import { MapValidationService } from '@app/services/validations/mapValidation.se
 import { Logger, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
-import { GameGateway } from './gateways/game/game.gateway';
+import { GameService } from './services/game/game.service';
 import { GameSessionService } from './services/gameSession/gameSession.service';
 
 @Module({
@@ -23,7 +23,7 @@ import { GameSessionService } from './services/gameSession/gameSession.service';
             imports: [ConfigModule],
             inject: [ConfigService],
             useFactory: async (config: ConfigService) => ({
-                uri: config.get<string>('DATABASE_CONNECTION_STRING'), // Loaded from .env
+                uri: config.get<string>('DATABASE_CONNECTION_STRING'), 
             }),
         }),
         MongooseModule.forFeature([
@@ -32,11 +32,11 @@ import { GameSessionService } from './services/gameSession/gameSession.service';
     ],
     controllers: [GameController],
     providers: [
+        GameService,
         GameGateway,
         GameSessionGateway,
         GamePlayGateway,
         ChatGateway,
-        GameService,
         GameSessionService,
         StartingPointService,
         TurnManagementService,
@@ -47,12 +47,6 @@ import { GameSessionService } from './services/gameSession/gameSession.service';
         GameMetadataValidationService,
     ],
 })
-export class AppModule {
-    constructor(
-        private readonly gameGateway: GameGateway,
-        private readonly gameService: GameService,
-
-    ) {}
-}
+export class AppModule {}
 
 
