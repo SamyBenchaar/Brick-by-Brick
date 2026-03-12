@@ -240,14 +240,15 @@ export class GameGridComponent implements OnInit, OnChanges {
   private addObject(position: Position): void {
     const selectedObject = this.mapEditorService.getSelectedObject();
     const tile = this.getTile(position);
-    if (tile && selectedObject && this.objectCounterService.canPlace(selectedObject) && this.isTileObjectFree(tile)) {
-      if (tile.type === TileType.Wall) {
-        return;
-      }
-      tile.object = selectedObject;
-      this.objectCounterService.place(selectedObject);
-      this.mapEditorService.setObject(position, selectedObject);
-    }
+
+    if (!tile || !selectedObject) return;
+    if (!this.objectCounterService.canPlace(selectedObject)) return;
+    if (!this.isTileObjectFree(tile)) return;
+    if (tile.type === TileType.Wall) return;
+
+    tile.object = selectedObject;
+    this.objectCounterService.place(selectedObject);
+    this.mapEditorService.setObject(position, selectedObject);
   }
 
   private removeObject(position: Position): void {

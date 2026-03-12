@@ -15,7 +15,7 @@
     </div>
 
     <div class="input-container">
-        <textarea
+        <input
             [(ngModel)]="messageInput"
             (keypress)="onKeyPress($event)"
             (click)="onFocus()"
@@ -24,8 +24,9 @@
             class="message-input"
             [disabled]="isLoading()"
             [readonly]="!isWriting"
-            maxlength="200">
-        </textarea>
+            maxlength="200"
+            type="text">
+
         <button 
             (click)="sendMessage()"
             [disabled]="!messageInput().trim() || isLoading()"
