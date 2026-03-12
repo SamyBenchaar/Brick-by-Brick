@@ -15,14 +15,14 @@
     </div>
 
     <div class="input-container">
-        <textarea
+        <input
             [(ngModel)]="messageInput"
             (keypress)="onKeyPress($event)"
             placeholder="Tapez votre message..."
             class="message-input"
             [disabled]="isLoading()"
-            maxlength="200">
-        </textarea>
+            maxlength="200"
+            type="text">
         <button 
             (click)="sendMessage()"
             [disabled]="!messageInput().trim() || isLoading()"
