@@ -1,7 +1,7 @@
 import { Component, inject, ViewChild } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { GameListComponent } from '@app/components/game-list/game-list.component';
-// import { GameSessionSocketService } from '@app/services/communication/game-session-socket.service';
+import { GameListMode } from '@app/constants/game-list-mode.enum';
 
 @Component({
     selector: 'app-game-creation-page',
@@ -12,14 +12,14 @@ import { GameListComponent } from '@app/components/game-list/game-list.component
 export class GameCreationPageComponent {
     @ViewChild(GameListComponent) gameListComponent!: GameListComponent;
 
-    // private gameSessionSocketService = inject(GameSessionSocketService);
     private router = inject(Router);
+    readonly gameListMode = GameListMode;
 
     createGameSession(): void {
         const selectedGameId = this.gameListComponent?.getSelectedGameId();
         if (selectedGameId) {
-                this.router.navigate(['/character-creation'], { queryParams: { gameId: selectedGameId } });
-            };
+            this.router.navigate(['/character-creation'], { queryParams: { gameId: selectedGameId } });
+        };
     }
 
     get canCreateSession(): boolean {

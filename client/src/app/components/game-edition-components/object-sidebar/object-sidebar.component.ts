@@ -5,7 +5,8 @@ import { Tile } from '@app/classes/tile';
 import { OBJECT_DESCRIPTIONS } from '@app/constants/object-descriptions';
 import { MapEditorServiceService } from '@app/services/map-editor-service.service';
 import { ObjectCounterService } from '@app/services/object-counter/object-counter.service';
-import { MinimumStartingPt, ObjectType } from '@common/map';
+import { getGameSizeConfig } from '@common/constants/game-config-constants';
+import { ObjectType } from '@common/map';
 
 @Component({
   selector: 'app-object-sidebar',
@@ -21,22 +22,9 @@ export class ObjectSidebarComponent implements OnInit {
   readonly tile = Tile;
 
   ngOnInit(): void {
-    const size = this.route.snapshot.queryParams.size?.toLowerCase();
-
-    switch (size) {
-      case 'small':
-        this.objectCounterService.startPoint = MinimumStartingPt.Small;
-        break;
-      case 'medium':
-        this.objectCounterService.startPoint = MinimumStartingPt.Medium;
-        break;
-      case 'large':
-        this.objectCounterService.startPoint = MinimumStartingPt.Large;
-        break;
-      default:
-        this.objectCounterService.startPoint = MinimumStartingPt.Small;
-        break;
-    }
+    const size = this.route.snapshot.queryParams.size;
+    const config = getGameSizeConfig(size);
+    this.objectCounterService.startPoint = config.maxPlayers;
   }
 
 
