@@ -69,6 +69,7 @@ export class TurnManagementService {
         const currentPlayer = gameSession.getCurrentPlayer();
         if (currentPlayer) {
             currentPlayer.remainingMovement = currentPlayer.speed;
+            currentPlayer.remainingActions = 1;
         }
 
         gameSession.advanceToNextPlayer();

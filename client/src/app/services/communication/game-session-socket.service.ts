@@ -189,7 +189,7 @@ export class GameSessionSocketService {
             this.reachableTiles.set([]);
         });
 
-        this.socketService.on<{ playerId: string; position: Position; remainingMovement: number }>(
+        this.socketService.on<{ playerId: string; position: Position; remainingMovement: number; remainingActions: number }>(
             GameSessionEvents.MoveExecuted,
             (data) => {
                 const session = this.currentSession();
@@ -198,6 +198,7 @@ export class GameSessionSocketService {
                     if (player) {
                         player.character.position = data.position;
                         player.character.remainingMovement = data.remainingMovement;
+                        player.character.remainingActions = data.remainingActions;
                         this.currentSession.set({...session});
                     }
                 }
@@ -213,6 +214,7 @@ export class GameSessionSocketService {
             loser: string;
             attackerVictories: number;
             defenderNewPosition: Position;
+            remainingActions: number;
         }>(GameSessionEvents.CombatResult, (data) => {
             const session = this.currentSession();
             if (session) {
@@ -221,6 +223,7 @@ export class GameSessionSocketService {
 
                 if (attacker) {
                     attacker.character.victories = data.attackerVictories;
+                    attacker.character.remainingActions = data.remainingActions;
                 }
                 if (defender) {
                     defender.character.position = data.defenderNewPosition;

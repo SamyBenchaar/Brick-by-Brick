@@ -24,12 +24,13 @@ export class GameSession {
     host: Player;
     mapId: string;
     socketToAvatar: Map<string, number> = new Map();
-    
+
     // Gameplay properties
     playerOrder: string[] = [];
     currentPlayerIndex: number = 0;
     currentTurnTime: number = 30;
     startingPoints: Map<string, Position> = new Map();
+    isTurnStarting: boolean = false;
 
     constructor(hostplayer: Player, mapId: string) {
         this.host = hostplayer;
@@ -60,6 +61,7 @@ export class GameSession {
                 const [player] = this.players.splice(index, 1);
                 this.leftPlayers.push(player);
                 this.playerOrder = this.playerOrder.filter(id => id !== player.character.id);
+                this.startingPoints.delete(player.character.id);
                 if (this.currentPlayerIndex >= this.playerOrder.length && this.playerOrder.length > 0) {
                     this.currentPlayerIndex = 0;
                 }

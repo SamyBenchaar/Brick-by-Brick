@@ -189,7 +189,7 @@ export class GameSessionService {
         }
 
         const reachableTiles = this.getReachableTiles(gameSession);
-        if (reachableTiles.length > 0) {
+        if (reachableTiles.length > 1) {
             return true;
         }
 
@@ -210,6 +210,10 @@ export class GameSessionService {
             return;
         }
         gameSession.removePlayer(playerId);
+        
+        if (gameSession.status === 'playing' && gameSession.mapCopy) {
+            this.startingPointService.cleanupUnusedStartingPoints(gameSession, gameSession.mapCopy.tiles);
+        }
     }
 
     getAllGameSessions(): GameSession[] {

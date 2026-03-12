@@ -22,7 +22,8 @@ export class CombatService {
     canFight(attacker: Character, defender: Character): boolean {
         const distance = Math.abs(attacker.position.x - defender.position.x) +
             Math.abs(attacker.position.y - defender.position.y);
-        return distance === 1;
+        const hasActions = attacker.remainingActions !== undefined && attacker.remainingActions > 0;
+        return distance === 1 && hasActions;
     }
 
     executeCombat(
@@ -31,6 +32,11 @@ export class CombatService {
         defender: Character,
         mapConfig: GameMap,
     ): CombatResult {
+        // Decrement attacker's remaining actions
+        if (attacker.remainingActions !== undefined && attacker.remainingActions > 0) {
+            attacker.remainingActions -= 1;
+        }
+
         attacker.victories++;
 
         const isGameWon = attacker.victories >= this.victoriesToWin;

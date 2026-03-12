@@ -77,6 +77,7 @@ export class MovementService {
 
         const startPosKey = `${currentPosition.x},${currentPosition.y}`;
         visited.add(startPosKey);
+        reachable.add(startPosKey);
 
         // BFS 
         const queue: { pos: Position; cost: number }[] = [
@@ -178,6 +179,7 @@ export class MovementService {
 
     resetMovementPoints(player: Character): void {
         player.remainingMovement = player.speed;
+        player.remainingActions = 1;
     }
 
     isAdjacentToPlayer(

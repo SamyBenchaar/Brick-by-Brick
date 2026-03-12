@@ -39,6 +39,7 @@ export class StartingPointService {
             player.startPosition = position;
             player.position = position;
             player.remainingMovement = player.speed;
+            player.remainingActions = 1;
             player.victories = 0;
         }
     }

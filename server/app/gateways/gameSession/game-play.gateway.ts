@@ -70,6 +70,10 @@ export class GamePlayGateway implements OnGatewayInit {
             return;
         }
 
+        if (gameSession.isTurnStarting) {
+            return;
+        }
+
         const currentPlayer = gameSession.getCurrentPlayer();
         const requestingPlayer = gameSession.players.find(p => p.socketId === socket.id);
         
@@ -88,6 +92,10 @@ export class GamePlayGateway implements OnGatewayInit {
             return;
         }
 
+        if (gameSession.isTurnStarting) {
+            return;
+        }
+
         const currentPlayer = gameSession.getCurrentPlayer();
         const requestingPlayer = gameSession.players.find(p => p.socketId === socket.id);
         
@@ -103,6 +111,7 @@ export class GamePlayGateway implements OnGatewayInit {
                 playerId: currentPlayer.id,
                 position: currentPlayer.position,
                 remainingMovement: currentPlayer.remainingMovement,
+                remainingActions: currentPlayer.remainingActions,
             });
 
             this.emitReachableTiles(gameSession);
@@ -121,6 +130,10 @@ export class GamePlayGateway implements OnGatewayInit {
             return;
         }
 
+        if (gameSession.isTurnStarting) {
+            return;
+        }
+
         const currentPlayer = gameSession.getCurrentPlayer();
         const requestingPlayer = gameSession.players.find(p => p.socketId === socket.id);
         
@@ -136,6 +149,7 @@ export class GamePlayGateway implements OnGatewayInit {
                 loser: result.loser,
                 attackerVictories: result.attackerVictories,
                 defenderNewPosition: gameSession.players.find(p => p.character.id === payload.defenderId)?.character.position,
+                remainingActions: currentPlayer.remainingActions,
             });
 
             const winner = this.gameSessionService.checkGameWinner(gameSession);
@@ -147,6 +161,12 @@ export class GamePlayGateway implements OnGatewayInit {
             if (result.loser === currentPlayer.id) {
                 this.gameSessionService.endCurrentTurn(gameSession);
                 this.handleTurnEnd(gameSession);
+            } else {
+                // If the attacker won but has no more actions, end turn
+                if (!this.gameSessionService.canPlayerTakeAction(gameSession)) {
+                    this.gameSessionService.endCurrentTurn(gameSession);
+                    this.handleTurnEnd(gameSession);
+                }
             }
         } catch (error) {
             this.logger.error(`Combat error: ${error.message}`);
@@ -198,6 +218,8 @@ export class GamePlayGateway implements OnGatewayInit {
     private startGameTurn(gameSession: GameSession): void {
         const currentPlayer = gameSession.getCurrentPlayer();
 
+        gameSession.isTurnStarting = true;
+
         this.server.to(gameSession.roomId).emit(GameSessionEvents.TurnStarting, {
             playerId: currentPlayer?.id,
             playerName: currentPlayer?.name,
@@ -205,6 +227,8 @@ export class GamePlayGateway implements OnGatewayInit {
         });
 
         setTimeout(() => {
+            gameSession.isTurnStarting = false;
+
             this.gameSessionService.startCurrentTurn(
                 gameSession,
                 () => {

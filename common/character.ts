@@ -22,6 +22,7 @@ export interface Character {
   defenseDice: Dice;
   position?: Position;
   remainingMovement?: number;
+  remainingActions?: number;
   victories?: number;
   startPosition?: Position;
 }
