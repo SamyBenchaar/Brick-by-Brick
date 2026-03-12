@@ -8,6 +8,7 @@ import { Logger } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Socket } from 'socket.io';
 import { GameSessionGateway } from './game-session.gateway';
+import { Dice } from '@common/dice';
 
 /**
  * Stratégie de test pour GameSessionGateway:
@@ -37,8 +38,8 @@ describe('GameSessionGateway', () => {
         defense: 4,
         movements: 6,
         actions: 1,
-        attackDice: 'D4',
-        defenseDice: 'D6',
+        attackDice: Dice.D4,
+        defenseDice: Dice.D6,
         isActif: false,
         battlesWon: 0,
     });

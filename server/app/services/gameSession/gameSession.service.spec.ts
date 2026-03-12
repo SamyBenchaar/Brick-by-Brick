@@ -3,6 +3,7 @@ import { Character } from '@common/character';
 import { Player } from '@common/player';
 import { Test, TestingModule } from '@nestjs/testing';
 import { GameSessionService } from './gameSession.service';
+import { Dice } from '@common/dice';
 
 /**
  * Stratégie de test pour GameSessionService:
@@ -35,8 +36,8 @@ describe('GameSessionService', () => {
         defense: 4,
         movements: 6,
         actions: 1,
-        attackDice: 'D4',
-        defenseDice: 'D6',
+        attackDice: Dice.D4,
+        defenseDice: Dice.D6,
         isActif: false,
         battlesWon: 0,
     });

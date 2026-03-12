@@ -5,6 +5,7 @@ import { BASE_ATTACK, BASE_DEFENSE, BASE_LIFE, BASE_SPEED, BONUS_AMOUNT } from '
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket.service';
 import { of } from 'rxjs';
 import { CharacterCreationPageComponent } from './character-creation-page.component';
+import { Dice } from '@common/dice';
 
 /**
  * Stratégie de test pour CharacterCreationPageComponent:
@@ -108,15 +109,15 @@ describe('CharacterCreationPageComponent', () => {
 
     describe('Dés', () => {
         it('devrait inverser le dé de défense quand on choisit attaque D6', () => {
-            component.setDice('attackDice', 'D6');
-            expect(component.character.attackDice).toBe('D6');
-            expect(component.character.defenseDice).toBe('D4');
+            component.setDice('attackDice', Dice.D6);
+            expect(component.character.attackDice).toBe(Dice.D6);
+            expect(component.character.defenseDice).toBe(Dice.D4);
         });
 
         it('devrait inverser le dé d\'attaque quand on choisit défense D6', () => {
-            component.setDice('defenseDice', 'D6');
-            expect(component.character.defenseDice).toBe('D6');
-            expect(component.character.attackDice).toBe('D4');
+            component.setDice('defenseDice', Dice.D6);
+            expect(component.character.defenseDice).toBe(Dice.D6);
+            expect(component.character.attackDice).toBe(Dice.D4);
         });
     });
 
@@ -172,8 +173,8 @@ describe('CharacterCreationPageComponent', () => {
 
             expect(component.character.name).toBeTruthy();
             expect(component.bonusTarget).toBeTruthy();
-            expect(['D4', 'D6']).toContain(component.character.attackDice);
-            expect(['D4', 'D6']).toContain(component.character.defenseDice);
+            expect([Dice.D4, Dice.D6]).toContain(component.character.attackDice);
+            expect([Dice.D4, Dice.D6]).toContain(component.character.defenseDice);
             expect(component.character.attackDice).not.toBe(component.character.defenseDice);
         });
     });
