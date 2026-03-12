@@ -1,1 +1,1 @@
-export type SessionStatus = 'waiting' | 'playing';
+export type SessionStatus = 'waiting' | 'playing' | 'ended';

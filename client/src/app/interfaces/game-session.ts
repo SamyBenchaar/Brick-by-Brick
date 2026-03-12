@@ -1,3 +1,4 @@
+import { Position } from '@common/character';
 import { Player } from '@common/player';
 import { SessionStatus } from '@common/session.status';
 
@@ -11,4 +12,9 @@ export interface GameSession {
     host: Player;
     mapId: string;
     socketToAvatar: Map<string, number>;
+    playerOrder: string[];
+    currentPlayerIndex: number;
+    currentTurnTime: number;
+    startingPoints: Map<string, Position>;
+    isTurnStarting: boolean;
 }
