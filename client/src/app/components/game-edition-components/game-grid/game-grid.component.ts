@@ -8,7 +8,7 @@ import { ClickEvent } from '@app/constants/click-event-constants';
 import { GameSize } from '@app/constants/game-size.enum';
 import { OBJECT_DESCRIPTIONS } from '@app/constants/object-descriptions';
 import { Game } from '@app/interfaces/game';
-import { Position } from '@app/interfaces/position';
+import { Position } from '@common/position';
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket.service';
 import { MapEditorServiceService } from '@app/services/map-editor-service.service';
 import { ObjectCounterService } from '@app/services/object-counter/object-counter.service';
@@ -136,11 +136,22 @@ export class GameGridComponent implements OnInit, OnChanges {
     const tile = this.getTile(position);
     const playerAtPosition = this.getPlayerAtPosition(position);
 
-    if (playerAtPosition) {
-      alert(`Joueur: ${playerAtPosition.name}\nAvatar ID: ${playerAtPosition.avatarId}\nVictoires: ${playerAtPosition.victories}`);
-    } else if (tile) {
-      const cost = this.getTileCost(tile.type);
-      alert(`Type: ${tile.type}\nCoût de déplacement: ${cost}`);
+    if(this.gameSessionSocketService.isDebugModeActivated()){
+      if(!this.gameSessionSocketService.isMyTurn()) {
+        return;
+      }
+      if (playerAtPosition || tile?.object || tile?.type === TileType.Wall){
+        return;
+      } else {
+        this.gameSessionSocketService.requestAssignPosition(position);
+      }
+    } else {
+      if (playerAtPosition) {
+        alert(`Joueur: ${playerAtPosition.name}\nAvatar ID: ${playerAtPosition.avatarId}\nVictoires: ${playerAtPosition.victories}`);
+      } else if (tile) {
+        const cost = this.getTileCost(tile.type);
+        alert(`Type: ${tile.type}\nCoût de déplacement: ${cost}`);
+      } 
     }
   }
 

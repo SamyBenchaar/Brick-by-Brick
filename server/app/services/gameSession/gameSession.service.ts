@@ -1,6 +1,7 @@
 import { GameSession } from '@app/domain/game-session';
 import { GameService } from '@app/services/game/game.service';
-import { Character, Position } from '@common/character';
+import { Character } from '@common/character';
+import { Position } from '@common/position';
 import { getGameSizeConfig } from '@common/constants/game-config-constants';
 import { Player } from '@common/player';
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';

@@ -1,4 +1,4 @@
-import { Position } from '@common/character';
+import { Position } from '@common/position';
 import { Player } from '@common/player';
 import { SessionStatus } from '@common/session.status';
 
@@ -17,4 +17,5 @@ export interface GameSession {
     currentTurnTime: number;
     startingPoints: Map<string, Position>;
     isTurnStarting: boolean;
+    isDebugModeActivated: boolean;
 }

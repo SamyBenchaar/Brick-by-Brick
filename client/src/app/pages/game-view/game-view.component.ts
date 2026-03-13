@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, effect, HostListener, inject, Injector, OnDestroy, OnInit } from '@angular/core';
+import { Component, computed, effect, HostListener, inject, Injector, OnDestroy, OnInit, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { ChatComponent } from '@app/components/chat/chat.component';
 import { GameGridComponent } from '@app/components/game-edition-components/game-grid/game-grid.component';
@@ -12,6 +12,7 @@ import { Character } from '@common/character';
 import { getGameSizeConfig } from '@common/constants/game-config-constants';
 import { MapSize } from '@common/map';
 import { Subscription } from 'rxjs';
+import { KEY_DIRECTION_MAP, KEY_DEBUG, KEY_ENTER } from '@app/constants/key-event.constants';
 
 @Component({
   selector: 'app-game-view',
@@ -28,7 +29,7 @@ export class GameViewComponent implements OnInit, OnDestroy {
   gameData: Game | null = null;
   isChatCollapsed = false;
 
-  isWriting: boolean = false;
+  isWriting = signal<boolean>(false);
 
   playerList = computed(() => this.gameSessionSocketService.currentSession()?.players ?? []);
   leftPlayerList = computed(() => this.gameSessionSocketService.currentSession()?.leftPlayers ?? []);
@@ -39,6 +40,7 @@ export class GameViewComponent implements OnInit, OnDestroy {
     const socketId = this.gameSessionSocketService.getSocketId();
     return this.gameSessionSocketService.currentSession()?.players.find(p => p.socketId === socketId) ?? null;
   });
+  isDebugModeActivated = computed(() => this.gameSessionSocketService.isDebugModeActivated());
 
   ngOnInit(): void {
     if (!this.gameSessionSocketService.currentSession() || !this.gameSessionSocketService.mapCopy()) {
@@ -56,39 +58,31 @@ export class GameViewComponent implements OnInit, OnDestroy {
 
   @HostListener('window:keyup', ['$event'])
   handleKeyUp(event: KeyboardEvent): void {
-    
-    if (event.key === 'Enter' && this.isWriting) {
-      this.isWriting = false;
-      return;
-    }
-
-    if (!this.isMyTurn() || this.isWriting) {
-      return;
-    }
-
     const key = event.key.toLowerCase();
-    let direction = '';
 
-    if (key === 'w' || key === 'arrowup') {
-      direction = 'arrowUp';
-    } else if (key === 'a' || key === 'arrowleft') {
-      direction = 'arrowLeft';
-    } else if (key === 's' || key === 'arrowdown') {
-      direction = 'arrowDown';
-    } else if (key === 'd' || key === 'arrowright') {
-      direction = 'arrowRight';
+    if (key === KEY_ENTER && this.isWriting()) {
+      this.isWriting.set(false);
+      return;
     }
+
+    if (key === KEY_DEBUG && this.gameSessionSocketService.isCurrentUserHost() && !this.isWriting()) {
+      this.gameSessionSocketService.toggleDebugMode();
+      return;
+    }
+
+    if (!this.isMyTurn() || this.isWriting()) return;
+      const direction = KEY_DIRECTION_MAP[key];
 
     if (direction) {
       this.gameSessionSocketService.requestMove(direction);
     }
-  }
+  } 
 
   @HostListener('document:click', ['$event'])
   handleClickOutside(event: MouseEvent): void {
     const chatSidebar = document.querySelector('.chat-sidebar');
     if (chatSidebar && !chatSidebar.contains(event.target as Node)) {
-      this.isWriting = false;
+      this.isWriting.set(false);
     }
   }
 
@@ -97,7 +91,7 @@ export class GameViewComponent implements OnInit, OnDestroy {
   };
 
  handleWritingChange(value: boolean): void {
-    this.isWriting = value;
+    this.isWriting.set(value);
   }
   getMapSize(): MapSize {
     if (!this.gameData) {
@@ -113,6 +107,10 @@ export class GameViewComponent implements OnInit, OnDestroy {
 
   isMyTurn(): boolean {
     return this.gameSessionSocketService.isMyTurn();
+  }
+
+  isHost(): boolean {
+    return this.gameSessionSocketService.isCurrentUserHost();
   }
 
   getCurrentTurnPlayerName(): string {
