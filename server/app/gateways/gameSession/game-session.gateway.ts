@@ -223,6 +223,7 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
 
     cleanUpRoom(roomId: string) {
         this.notifyAvatarTakenUpdated(roomId, []);
+        this.deactivateDebugMode(this.gameSessionService.getGameSession(roomId));
         this.gameSessionService.deleteGameSession(roomId);
         this.chatGateway.clearChatHistoryForRoom(roomId);
         this.notifyGameSessionDeleted(roomId);
