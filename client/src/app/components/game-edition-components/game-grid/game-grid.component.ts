@@ -140,7 +140,7 @@ export class GameGridComponent implements OnInit, OnChanges {
       if(!this.gameSessionSocketService.isMyTurn()) {
         return;
       }
-      if (playerAtPosition || tile?.object){
+      if (playerAtPosition || tile?.object || tile?.type === TileType.Wall){
         return;
       } else {
         this.gameSessionSocketService.requestAssignPosition(position);
