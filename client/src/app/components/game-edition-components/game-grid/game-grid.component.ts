@@ -8,7 +8,7 @@ import { ClickEvent } from '@app/constants/click-event-constants';
 import { GameSize } from '@app/constants/game-size.enum';
 import { OBJECT_DESCRIPTIONS } from '@app/constants/object-descriptions';
 import { Game } from '@app/interfaces/game';
-import { Position } from '@app/interfaces/position';
+import { Position } from '@common/position';
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket.service';
 import { MapEditorServiceService } from '@app/services/map-editor-service.service';
 import { ObjectCounterService } from '@app/services/object-counter/object-counter.service';
@@ -140,13 +140,9 @@ export class GameGridComponent implements OnInit, OnChanges {
       if(!this.gameSessionSocketService.isMyTurn()) {
         return;
       }
-      const tile = this.getTile(position);
-      console.log(tile?.object);
-
       if (playerAtPosition || tile?.object){
         return;
       } else {
-        console.log(position);
         this.gameSessionSocketService.requestAssignPosition(position);
       }
     } else {

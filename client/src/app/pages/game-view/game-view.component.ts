@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, effect, HostListener, inject, Injector, OnDestroy, OnInit } from '@angular/core';
+import { Component, computed, effect, HostListener, inject, Injector, OnDestroy, OnInit, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { ChatComponent } from '@app/components/chat/chat.component';
 import { GameGridComponent } from '@app/components/game-edition-components/game-grid/game-grid.component';
@@ -12,7 +12,7 @@ import { Character } from '@common/character';
 import { getGameSizeConfig } from '@common/constants/game-config-constants';
 import { MapSize } from '@common/map';
 import { Subscription } from 'rxjs';
-import { signal } from '@angular/core';
+import { KEY_DIRECTION_MAP, KEY_DEBUG, KEY_ENTER } from '@app/constants/key-event.constants';
 
 @Component({
   selector: 'app-game-view',
@@ -59,36 +59,24 @@ export class GameViewComponent implements OnInit, OnDestroy {
   @HostListener('window:keyup', ['$event'])
   handleKeyUp(event: KeyboardEvent): void {
     const key = event.key.toLowerCase();
-    
-    if (event.key === 'Enter' && this.isWriting()) {
+
+    if (key === KEY_ENTER && this.isWriting()) {
       this.isWriting.set(false);
       return;
     }
 
-    if (key === 'm' && this.gameSessionSocketService.isCurrentUserHost() && !this.isWriting()) {
+    if (key === KEY_DEBUG && this.gameSessionSocketService.isCurrentUserHost() && !this.isWriting()) {
       this.gameSessionSocketService.toggleDebugMode();
       return;
     }
 
-    if (!this.isMyTurn() || this.isWriting()) {
-      return;
-    }
+    if (!this.isMyTurn() || this.isWriting()) return;
+      const direction = KEY_DIRECTION_MAP[key];
 
-    let direction = '';
-
-    if (key === 'w' || key === 'arrowup') {
-      direction = 'arrowUp';
-    } else if (key === 'a' || key === 'arrowleft') {
-      direction = 'arrowLeft';
-    } else if (key === 's' || key === 'arrowdown') {
-      direction = 'arrowDown';
-    } else if (key === 'd' || key === 'arrowright') {
-      direction = 'arrowRight';
-    }
     if (direction) {
       this.gameSessionSocketService.requestMove(direction);
     }
-  }
+  } 
 
   @HostListener('document:click', ['$event'])
   handleClickOutside(event: MouseEvent): void {

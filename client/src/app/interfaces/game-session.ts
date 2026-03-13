@@ -1,4 +1,4 @@
-import { Position } from '@common/character';
+import { Position } from '@common/position';
 import { Player } from '@common/player';
 import { SessionStatus } from '@common/session.status';
 
