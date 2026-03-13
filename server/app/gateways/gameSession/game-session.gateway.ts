@@ -5,10 +5,8 @@ import { Character } from '@common/character';
 import { GameSessionEvents } from '@common/game.events';
 import { Player } from '@common/player';
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
-import {
-    OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, SubscribeMessage,
-    WebSocketGateway, WebSocketServer,
-} from '@nestjs/websockets';
+import { OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, SubscribeMessage,
+    WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 
 @WebSocketGateway({ cors: true })
@@ -248,7 +246,7 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
         if(gameSession.isDebugModeActivated){
             this.server.to(gameSession.roomId).emit(GameSessionEvents.ToggleDebugMode, {
                 isDebugModeActivated: false,
-            })
+            });
         }
     }
 

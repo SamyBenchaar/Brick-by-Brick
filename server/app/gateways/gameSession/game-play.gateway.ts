@@ -5,13 +5,11 @@ import { Character } from '@common/character';
 import { GameSessionEvents } from '@common/game.events';
 import { GameSession } from '@app/domain/game-session';
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
-import {
-    OnGatewayInit, SubscribeMessage,
-    WebSocketGateway, WebSocketServer,
-} from '@nestjs/websockets';
+import { OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer,
+    } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { MovementService } from '@app/services/gameSession/movement.service';
-import { Position } from '@common/character';
+import { Position } from '@common/position';
 
 @WebSocketGateway({ cors: true })
 @Injectable()
@@ -72,7 +70,7 @@ export class GamePlayGateway implements OnGatewayInit {
         if (!gameSession) {
             return;
         }
-        const newIsDebugModeActivated = !gameSession.isDebugModeActivated
+        const newIsDebugModeActivated = !gameSession.isDebugModeActivated;
         gameSession.isDebugModeActivated = newIsDebugModeActivated;
         
         this.server.to(payload.currentRoomId).emit(GameSessionEvents.ToggleDebugMode, {

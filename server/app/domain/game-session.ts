@@ -1,6 +1,7 @@
-import { Character, Position } from '@common/character';
+import { Character } from '@common/character';
 import { Player } from '@common/player';
 import { SessionStatus } from '@common/session.status';
+import { Position } from '@common/position';
 
 const ROOM_ID_LENGTH = 8;
 const MAX_PLAYER = 6;
@@ -31,7 +32,7 @@ export class GameSession {
     currentTurnTime: number = 30;
     startingPoints: Map<string, Position> = new Map();
     isTurnStarting: boolean = false;
-    isDebugModeActivated = true;
+    isDebugModeActivated = false;
 
     constructor(hostplayer: Player, mapId: string) {
         this.host = hostplayer;
