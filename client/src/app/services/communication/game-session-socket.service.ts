@@ -74,7 +74,7 @@ export class GameSessionSocketService {
         this.socketService.off(GameSessionEvents.CombatResult);
         this.socketService.off(GameSessionEvents.PlayerAbandoned);
         this.socketService.off(GameSessionEvents.GameEnded);
-
+        this.socketService.off(GameSessionEvents.ToggleDebugMode);
         this.socketService.off(GameSessionEvents.AvatarTakenUpdated);
         this.socketService.disconnect();
     }

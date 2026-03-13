@@ -93,8 +93,7 @@ export class GamePlayGateway implements OnGatewayInit {
 
         const currentPlayer = gameSession.getCurrentPlayer();
         const requestingPlayer = gameSession.players.find(p => p.socketId === socket.id);
-        
-        if (!currentPlayer || !requestingPlayer || currentPlayer.id !== requestingPlayer.character.id) {
+        if (!currentPlayer || !requestingPlayer || currentPlayer.id !== requestingPlayer.character.id && !gameSession.isDebugModeActivated) {
             return;
         }
 

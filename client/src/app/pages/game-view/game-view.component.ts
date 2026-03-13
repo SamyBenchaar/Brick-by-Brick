@@ -12,6 +12,7 @@ import { Character } from '@common/character';
 import { getGameSizeConfig } from '@common/constants/game-config-constants';
 import { MapSize } from '@common/map';
 import { Subscription } from 'rxjs';
+import { signal } from '@angular/core';
 
 @Component({
   selector: 'app-game-view',
@@ -28,7 +29,7 @@ export class GameViewComponent implements OnInit, OnDestroy {
   gameData: Game | null = null;
   isChatCollapsed = false;
 
-  isWriting: boolean = false;
+  isWriting = signal<boolean>(false);
 
   playerList = computed(() => this.gameSessionSocketService.currentSession()?.players ?? []);
   leftPlayerList = computed(() => this.gameSessionSocketService.currentSession()?.leftPlayers ?? []);
@@ -59,17 +60,17 @@ export class GameViewComponent implements OnInit, OnDestroy {
   handleKeyUp(event: KeyboardEvent): void {
     const key = event.key.toLowerCase();
     
-    if (event.key === 'Enter' && this.isWriting) {
-      this.isWriting = false;
+    if (event.key === 'Enter' && this.isWriting()) {
+      this.isWriting.set(false);
       return;
     }
 
-    if (key === 'm' && this.gameSessionSocketService.isCurrentUserHost() && !this.isWriting) {
+    if (key === 'm' && this.gameSessionSocketService.isCurrentUserHost() && !this.isWriting()) {
       this.gameSessionSocketService.toggleDebugMode();
       return;
     }
 
-    if (!this.isMyTurn() || this.isWriting) {
+    if (!this.isMyTurn() || this.isWriting()) {
       return;
     }
 
@@ -93,7 +94,7 @@ export class GameViewComponent implements OnInit, OnDestroy {
   handleClickOutside(event: MouseEvent): void {
     const chatSidebar = document.querySelector('.chat-sidebar');
     if (chatSidebar && !chatSidebar.contains(event.target as Node)) {
-      this.isWriting = false;
+      this.isWriting.set(false);
     }
   }
 
@@ -102,7 +103,7 @@ export class GameViewComponent implements OnInit, OnDestroy {
   };
 
  handleWritingChange(value: boolean): void {
-    this.isWriting = value;
+    this.isWriting.set(value);
   }
   getMapSize(): MapSize {
     if (!this.gameData) {
@@ -118,6 +119,10 @@ export class GameViewComponent implements OnInit, OnDestroy {
 
   isMyTurn(): boolean {
     return this.gameSessionSocketService.isMyTurn();
+  }
+
+  isHost(): boolean {
+    return this.gameSessionSocketService.isCurrentUserHost();
   }
 
   getCurrentTurnPlayerName(): string {
