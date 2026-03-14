@@ -24,11 +24,11 @@
             </div>
             <div class="stat-row">
                 <span class="stat-label">🎯 Actions</span>
-                <span class="stat-value">{{ player?.character?.actions }}</span>
+                <span class="stat-value">{{ player?.character?.remainingActions ?? player?.character?.actions }}</span>
             </div>
             <div class="stat-row">
                 <span class="stat-label">🚶 Mouvements</span>
-                <span class="stat-value">{{ player?.character?.movements }}</span>
+                <span class="stat-value">{{ player?.character?.remainingMovement ?? player?.character?.movements }}</span>
             </div>
         </div>
     </div>
