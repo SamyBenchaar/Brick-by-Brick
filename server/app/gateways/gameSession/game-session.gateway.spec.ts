@@ -22,6 +22,10 @@ import { GameSessionGateway } from './game-session.gateway';
  * 7. Quitter la salle d'attente : mise à jour de session et nettoyage de salle vide
  */
 describe('GameSessionGateway', () => {
+    const MAX_PLAYERS = 4;
+    const THREE_PLAYERS = 3;
+    const AVATAR_ID_THREE = 3;
+
     let gateway: GameSessionGateway;
     let mockGameSessionService: Record<string, jest.Mock>;
     let mockChatGateway: Record<string, jest.Mock>;
@@ -58,7 +62,7 @@ describe('GameSessionGateway', () => {
         const session = {
             roomId,
             status: 'waiting' as const,
-            maxPlayers: 4,
+            maxPlayers: MAX_PLAYERS,
             players: [] as Player[],
             host: { socketId: hostId, character: createCharacter('Host') },
             mapCopy: null,
@@ -70,7 +74,9 @@ describe('GameSessionGateway', () => {
             removePlayer: jest.fn((id: string) => {
                 session.players = session.players.filter((p: Player) => p.socketId !== id);
             }),
-            startGame: jest.fn(() => { session.status = 'playing'; }),
+            startGame: jest.fn(() => {
+                session.status = 'playing';
+            }),
         } as unknown as GameSession;
 
         for (let i = 0; i < playerCount; i++) {
@@ -140,7 +146,7 @@ describe('GameSessionGateway', () => {
 
         it('devrait inclure le nombre de joueurs via la liste players de chaque partie', () => {
             const socket = createSocket('s1');
-            const sessions = [createMockSession('R1', 'h1', 3)];
+            const sessions = [createMockSession('R1', 'h1', THREE_PLAYERS)];
             mockGameSessionService.getAvailableGameSessions.mockReturnValue(sessions);
 
             gateway.handleRequestAvailableGameSessionList(socket);
@@ -151,7 +157,7 @@ describe('GameSessionGateway', () => {
             const emittedSessions = gameSessionListCall?.[1] as GameSession[];
 
             expect(emittedSessions).toBeDefined();
-            expect(emittedSessions[0].players.length).toBe(3);
+            expect(emittedSessions[0].players.length).toBe(THREE_PLAYERS);
         });
     });
 
@@ -181,6 +187,7 @@ describe('GameSessionGateway', () => {
 
             expect(socket.join).toHaveBeenCalledWith('ROOM1');
             expect(mockServer.to).toHaveBeenCalledWith('ROOM1');
+            expect(mockServer.to('ROOM1').emit).toHaveBeenCalledWith(GameSessionEvents.GameSessionUpdated, session);
         });
 
         it('devrait émettre GameSessionListUpdated après un join valide', () => {
@@ -196,9 +203,22 @@ describe('GameSessionGateway', () => {
             expect(mockServer.emit).toHaveBeenCalledWith(GameSessionEvents.GameSessionListUpdated, updatedSessions);
         });
 
-        it('devrait émettre une erreur si la session est verrouillée ou pleine', () => {
+        it('devrait mémoriser la salle du socket après un join valide', () => {
             const socket = createSocket('p2');
-            const session = createMockSession('ROOM1', 'h1', 4);
+            const session = createMockSession('ROOM1', 'h1', 2);
+            mockGameSessionService.joinSession.mockReturnValue(null);
+            mockGameSessionService.getGameSession.mockReturnValue(session);
+            mockGameSessionService.getAvailableGameSessions.mockReturnValue([]);
+
+            gateway.handleJoinGameSession(socket, { roomId: 'ROOM1', player: createCharacter('P2') });
+
+            const socketToRoom = (gateway as unknown as { socketToRoom: Map<string, string> }).socketToRoom;
+            expect(socketToRoom.get('p2')).toBe('ROOM1');
+        });
+
+        it('devrait émettre une erreur si la session est pleine ou a déjà commencé', () => {
+            const socket = createSocket('p2');
+            const session = createMockSession('ROOM1', 'h1', MAX_PLAYERS);
             mockGameSessionService.getGameSession.mockReturnValue(session);
             mockGameSessionService.joinSession.mockReturnValue('La session de jeu est pleine');
 
@@ -348,7 +368,7 @@ describe('GameSessionGateway', () => {
             gateway.handleObserveGameSession(socket, { roomId: 'ROOM1' });
 
             expect(socket.join).toHaveBeenCalledWith('ROOM1');
-            expect(socket.emit).toHaveBeenCalledWith(GameSessionEvents.AvatarTakenUpdated, expect.any(Array));
+            expect(socket.emit).toHaveBeenCalledWith(GameSessionEvents.AvatarTakenUpdated, session.getTakenAvatars());
         });
 
         it('devrait émettre une erreur si la session est introuvable', () => {
@@ -367,9 +387,9 @@ describe('GameSessionGateway', () => {
             const session = createMockSession('ROOM1', 'host-1', 2);
             mockGameSessionService.getGameSession.mockReturnValue(session);
 
-            gateway.handleAvatarTakenUpdated(socket, { roomId: 'ROOM1', newAvatarId: 3 });
+            gateway.handleAvatarTakenUpdated(socket, { roomId: 'ROOM1', newAvatarId: AVATAR_ID_THREE });
 
-            expect(session.socketToAvatar.get('p1')).toBe(3);
+            expect(session.socketToAvatar.get('p1')).toBe(AVATAR_ID_THREE);
             expect(session.getTakenAvatars).toHaveBeenCalled();
             expect(mockServer.to).toHaveBeenCalledWith('ROOM1');
         });
@@ -378,7 +398,7 @@ describe('GameSessionGateway', () => {
             const socket = createSocket('p1');
             mockGameSessionService.getGameSession.mockReturnValue(undefined);
 
-            gateway.handleAvatarTakenUpdated(socket, { roomId: 'FAKE', newAvatarId: 3 });
+            gateway.handleAvatarTakenUpdated(socket, { roomId: 'FAKE', newAvatarId: AVATAR_ID_THREE });
 
             expect(mockServer.to).not.toHaveBeenCalled();
         });
@@ -388,7 +408,7 @@ describe('GameSessionGateway', () => {
         it('devrait gérer la déconnexion pendant une partie en cours', () => {
             const socket = createSocket('player-1');
             const session = createMockSession('ROOM1', 'host-1', 2);
-            session.status = 'playing' as any;
+            session.status = 'playing';
             mockGameSessionService.getGameSession.mockReturnValue(session);
             (gateway as unknown as { socketToRoom: Map<string, string> }).socketToRoom.set('player-1', 'ROOM1');
 
@@ -404,7 +424,9 @@ describe('GameSessionGateway', () => {
             const socket = createSocket('player-1');
             const session = createMockSession('ROOM1', 'host-1', 2);
             session.isHost = jest.fn().mockReturnValue(false);
-            session.removePlayer = jest.fn(() => { session.players = []; });
+            session.removePlayer = jest.fn(() => {
+                session.players = [];
+            });
             mockGameSessionService.getGameSession.mockReturnValue(session);
 
             gateway.handleLeaveGameSession(socket, { roomId: 'ROOM1' });

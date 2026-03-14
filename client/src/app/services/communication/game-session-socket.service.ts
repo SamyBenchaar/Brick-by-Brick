@@ -4,10 +4,10 @@ import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { AppDialogComponent } from '@app/components/game-edition-components/app-dialog/app-dialog.component';
 import { Game } from '@app/interfaces/game';
-import { Character } from '@common/character';
-import { Position } from '@common/position';
-import { GameSessionEvents } from '@common/game.events';
 import { GameSession } from '@app/interfaces/game-session';
+import { Character } from '@common/character';
+import { GameSessionEvents } from '@common/game.events';
+import { Position } from '@common/position';
 import { SocketService } from './socket.service';
 
 @Injectable({
@@ -120,7 +120,7 @@ export class GameSessionSocketService {
         this.socketService.on<string>(GameSessionEvents.GameSessionJoinError, (message) => {
             const dialogRef = this.dialog.open(AppDialogComponent, {
                 data: {
-                    title: 'Salle pleine',
+                    title: 'Erreur de jointure',
                     message,
                     type: 'warning',
                     confirmText: 'Réessayer',
@@ -218,7 +218,7 @@ export class GameSessionSocketService {
                         player.character.position = data.position;
                         player.character.remainingMovement = data.remainingMovement;
                         player.character.remainingActions = data.remainingActions;
-                        this.currentSession.set({...session});
+                        this.currentSession.set({ ...session });
                     }
                 }
             },
@@ -248,7 +248,7 @@ export class GameSessionSocketService {
                     defender.character.position = data.defenderNewPosition;
                 }
 
-                this.currentSession.set({...session});
+                this.currentSession.set({ ...session });
             }
         });
 
@@ -259,7 +259,7 @@ export class GameSessionSocketService {
                 if (session.playerOrder) {
                     session.playerOrder = session.playerOrder.filter(id => id !== data.playerId);
                 }
-                this.currentSession.set({...session});
+                this.currentSession.set({ ...session });
             }
         });
 
@@ -332,7 +332,7 @@ export class GameSessionSocketService {
         this.socketService.emit(GameSessionEvents.ObserveGameSession, { roomId });
     }
 
-    toggleDebugMode(){
+    toggleDebugMode() {
         const currentRoomId = this.getRoomId();
         this.socketService.emit(GameSessionEvents.ToggleDebugMode, { currentRoomId });
     }
@@ -431,7 +431,7 @@ export class GameSessionSocketService {
     isMyTurn(): boolean {
         const currentPlayerId = this.currentPlayerTurn();
         if (!currentPlayerId) return false;
-        
+
         const mySocketId = this.getSocketId();
         const myPlayer = this.currentSession()?.players.find(p => p.socketId === mySocketId);
         return myPlayer?.character.id === currentPlayerId;

@@ -23,6 +23,9 @@ import { TurnManagementService } from './turn-management.service';
  * - Sessions disponibles avec mix de statuts
  */
 describe('GameSessionService', () => {
+    const SESSION_MIN_JOINER_INDEX = 2;
+    const SESSION_MAX_PLAYERS = 4;
+
     let service: GameSessionService;
     let mockGameService: { findOne: jest.Mock };
 
@@ -129,7 +132,7 @@ describe('GameSessionService', () => {
             const session = await service.createGameSession(host, 'map-1');
 
             // Remplir la session (maxPlayers = 4)
-            for (let i = 2; i <= 4; i++) {
+            for (let i = SESSION_MIN_JOINER_INDEX; i <= SESSION_MAX_PLAYERS; i++) {
                 service.joinSession(session.roomId, createPlayer(`player-${i}`, `P${i}`));
             }
 
@@ -154,7 +157,7 @@ describe('GameSessionService', () => {
 
         it('devrait exclure les sessions pleines', async () => {
             const session = await service.createGameSession(createPlayer('h1', 'H1'), 'map-1');
-            for (let i = 2; i <= 4; i++) {
+            for (let i = SESSION_MIN_JOINER_INDEX; i <= SESSION_MAX_PLAYERS; i++) {
                 service.joinSession(session.roomId, createPlayer(`p${i}`, `P${i}`));
             }
 

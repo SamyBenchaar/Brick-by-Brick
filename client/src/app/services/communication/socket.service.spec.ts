@@ -65,7 +65,7 @@ describe('SocketService', () => {
             const callback = jasmine.createSpy('callback');
 
             // Simuler le comportement réel : quand on() est appelé, stocker le handler
-            mockSocket.on.and.callFake((event: string, handler: Function) => {
+            mockSocket.on.and.callFake((event: string, handler: (payload: { data: string }) => void) => {
                 // Simuler immédiatement la réception de l'événement
                 handler({ data: 'test-payload' });
             });
@@ -87,7 +87,7 @@ describe('SocketService', () => {
 
         it('devrait émettre un événement sans données via emit', () => {
             service.emit('testEvent');
-            expect(mockSocket.emit).toHaveBeenCalledWith('testEvent');
+            expect(mockSocket.emit).toHaveBeenCalledWith('testEvent', undefined);
         });
 
         it('devrait retourner true pour isConnected quand la socket est connectée', () => {

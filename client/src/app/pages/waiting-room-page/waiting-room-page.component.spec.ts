@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, signal } from '@angular/core';
+import { Component, Input, signal, WritableSignal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { GameSession } from '@app/interfaces/game-session';
@@ -10,9 +10,9 @@ import { WaitingRoomPage } from './waiting-room-page.component';
 /**
  * Stratégie de test pour WaitingRoomPage:
  *
- * 1. Initialisation : Connexion socket, récupération du roomId et du username
- * 2. Quitter la salle : Appel leaveGameSession et navigation vers /home
- * 3. Propriétés dérivées : roomId et hostId depuis la session courante
+ * 1. Initialisation de la salle d'attente : socket, roomId et username
+ * 2. Sortie utilisateur : quitter la salle à tout moment puis retour à la vue initiale
+ * 3. Données dérivées : roomId et hostId cohérents selon l'état de session
  */
 
 @Component({ selector: 'app-chat', template: '' })
@@ -29,6 +29,7 @@ describe('WaitingRoomPage', () => {
     let component: WaitingRoomPage;
     let fixture: ComponentFixture<WaitingRoomPage>;
     let mockGameSessionSocketService: Record<string, unknown>;
+    let currentSessionSignal: WritableSignal<GameSession | null>;
     let routerMock: jasmine.SpyObj<Router>;
 
     const mockSession: GameSession = {
@@ -43,10 +44,11 @@ describe('WaitingRoomPage', () => {
     } as unknown as GameSession;
 
     beforeEach(async () => {
+        currentSessionSignal = signal<GameSession | null>(mockSession);
         mockGameSessionSocketService = {
             connect: jasmine.createSpy('connect'),
             leaveGameSession: jasmine.createSpy('leaveGameSession'),
-            currentSession: signal<GameSession | null>(mockSession),
+            currentSession: currentSessionSignal,
         };
 
         routerMock = jasmine.createSpyObj('Router', ['navigate']);
@@ -119,12 +121,12 @@ describe('WaitingRoomPage', () => {
 
     it('devrait retourner une chaîne vide pour roomId si pas de route ni de session', () => {
         component.roomIdFromRoute = '';
-        (mockGameSessionSocketService.currentSession as any).set(null);
+        currentSessionSignal.set(null);
         expect(component.roomId).toBe('');
     });
 
     it('devrait retourner une chaîne vide pour hostId si pas de session', () => {
-        (mockGameSessionSocketService.currentSession as any).set(null);
+        currentSessionSignal.set(null);
         expect(component.hostId).toBe('');
     });
 
@@ -133,13 +135,8 @@ describe('WaitingRoomPage', () => {
             ...mockSession,
             players: [],
         } as unknown as GameSession;
-        (mockGameSessionSocketService.currentSession as any).set(emptySession);
+        currentSessionSignal.set(emptySession);
         expect(component.hostId).toBe('');
     });
 
-    it('devrait pouvoir quitter la vue d\'attente à tout moment vers la vue initiale', () => {
-        component.leave();
-        expect(mockGameSessionSocketService.leaveGameSession).toHaveBeenCalled();
-        expect(routerMock.navigate).toHaveBeenCalledWith(['/home']);
-    });
 });

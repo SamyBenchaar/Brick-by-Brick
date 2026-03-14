@@ -1,4 +1,4 @@
-import { signal } from '@angular/core';
+import { signal, WritableSignal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { GameSession } from '@app/interfaces/game-session';
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket.service';
@@ -8,16 +8,18 @@ import { WaitingRoomListComponent } from './waiting-room-list.component';
 /**
  * Stratégie de test pour WaitingRoomListComponent:
  *
- * 1. Affichage des joueurs : Vérifier les noms et avatars
- * 2. Détection de l'hôte : Identifier l'organisateur
- * 3. Démarrage : Le bouton est disponible seulement pour l'hôte avec 2+ joueurs
- * 4. Exclusion : Seul l'hôte peut exclure
- * 5. Identification du joueur courant
+ * 1. Affichage en salle d'attente : noms et avatars des joueurs
+ * 2. Identification : hôte et joueur courant correctement reconnus
+ * 3. Cohérence d'affichage : valeurs par défaut sûres (nom/avatar) en cas de données manquantes
  */
 describe('WaitingRoomListComponent', () => {
     let component: WaitingRoomListComponent;
     let fixture: ComponentFixture<WaitingRoomListComponent>;
     let mockService: Record<string, unknown>;
+    let currentSessionSignal: WritableSignal<GameSession | null>;
+
+    const PLAYER_COUNT = 2;
+    const MAX_PLAYERS = 4;
 
     const hostChar: Character = { name: 'Host', avatarId: 1 } as Character;
     const playerChar: Character = { name: 'Player2', avatarId: 3 } as Character;
@@ -34,8 +36,9 @@ describe('WaitingRoomListComponent', () => {
     } as unknown as GameSession;
 
     beforeEach(async () => {
+        currentSessionSignal = signal<GameSession | null>(mockSession);
         mockService = {
-            currentSession: signal<GameSession | null>(mockSession),
+            currentSession: currentSessionSignal,
             isCurrentUserHost: jasmine.createSpy('isCurrentUserHost').and.returnValue(true),
             canStartGame: jasmine.createSpy('canStartGame').and.returnValue(true),
             isPlayerHost: jasmine.createSpy('isPlayerHost').and.callFake((id: string) => id === 'host-1'),
@@ -117,9 +120,9 @@ describe('WaitingRoomListComponent', () => {
     });
 
     it('devrait afficher le nombre correct de joueurs dans la session', () => {
-        const session = (mockService.currentSession as any)();
-        expect(session.players.length).toBe(2);
-        expect(session.maxPlayers).toBe(4);
+        const session = currentSessionSignal();
+        expect(session?.players.length).toBe(PLAYER_COUNT);
+        expect(session?.maxPlayers).toBe(MAX_PLAYERS);
     });
 
     it('devrait permettre d\'exclure un joueur non-hôte', () => {

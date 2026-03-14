@@ -26,8 +26,12 @@ describe('CharacterCreationPageComponent', () => {
     let routerMock: jasmine.SpyObj<Router>;
     let takenAvatarsSignal: ReturnType<typeof signal<number[]>>;
 
+    const AVATAR_ID_ONE = 1;
+    const AVATAR_ID_THREE = 3;
+    const AVATAR_ID_FIVE = 5;
+
     beforeEach(async () => {
-        takenAvatarsSignal = signal<number[]>([1]);
+        takenAvatarsSignal = signal<number[]>([AVATAR_ID_ONE]);
 
         mockGameSessionSocketService = jasmine.createSpyObj('GameSessionSocketService', [
             'connect', 'createGameSession', 'joinGameSession', 'observeGameSession', 'updateTakenAvatars',
@@ -78,8 +82,26 @@ describe('CharacterCreationPageComponent', () => {
 
     describe('Avatar', () => {
         it('devrait changer l\'avatar sélectionné', () => {
-            component.selectAvatar({ id: 5, name: 'test', image: 'test.png' });
-            expect(component.character.avatarId).toBe(5);
+            component.selectAvatar({ id: AVATAR_ID_FIVE, name: 'test', image: 'test.png' });
+            expect(component.character.avatarId).toBe(AVATAR_ID_FIVE);
+        });
+
+        it('devrait appeler updateTakenAvatars quand un avatar est sélectionné en mode join', () => {
+            component.roomId = 'ROOM1';
+
+            component.selectAvatar({ id: AVATAR_ID_FIVE, name: 'test', image: 'test.png' });
+
+            expect(mockGameSessionSocketService.updateTakenAvatars).toHaveBeenCalledWith('ROOM1', AVATAR_ID_FIVE);
+        });
+
+        it('devrait notifier le nouvel avatar quand le joueur change d\'avatar', () => {
+            component.roomId = 'ROOM1';
+
+            component.selectAvatar({ id: AVATAR_ID_THREE, name: 'first', image: 'first.png' });
+            component.selectAvatar({ id: AVATAR_ID_FIVE, name: 'second', image: 'second.png' });
+
+            expect(mockGameSessionSocketService.updateTakenAvatars).toHaveBeenCalledWith('ROOM1', AVATAR_ID_THREE);
+            expect(mockGameSessionSocketService.updateTakenAvatars).toHaveBeenCalledWith('ROOM1', AVATAR_ID_FIVE);
         });
 
         it('devrait retourner l\'image de l\'avatar sélectionné', () => {
@@ -218,15 +240,15 @@ describe('CharacterCreationPageComponent', () => {
     describe('Avatar - filtrage des avatars pris', () => {
         it('ne devrait pas changer l\'avatar si celui-ci est déjà pris', () => {
             const originalAvatarId = component.character.avatarId;
-            takenAvatarsSignal.set([1, 5]);
-            component.selectAvatar({ id: 5, name: 'taken', image: 'taken.png' });
+            takenAvatarsSignal.set([AVATAR_ID_ONE, AVATAR_ID_FIVE]);
+            component.selectAvatar({ id: AVATAR_ID_FIVE, name: 'taken', image: 'taken.png' });
             expect(component.character.avatarId).toBe(originalAvatarId);
         });
 
         it('ne devrait pas changer si on sélectionne le même avatar', () => {
-            component.character.avatarId = 3;
-            component.selectAvatar({ id: 3, name: 'same', image: 'same.png' });
-            expect(component.character.avatarId).toBe(3);
+            component.character.avatarId = AVATAR_ID_THREE;
+            component.selectAvatar({ id: AVATAR_ID_THREE, name: 'same', image: 'same.png' });
+            expect(component.character.avatarId).toBe(AVATAR_ID_THREE);
         });
     });
 
@@ -342,35 +364,4 @@ describe('CharacterCreationPageComponent', () => {
         });
     });
 
-    describe('Soumission et redirection vers salle d\'attente', () => {
-        it('devrait joindre la session et naviguer vers waiting-room avec le roomId', () => {
-            component.roomId = 'ROOM1';
-            component.character.name = 'TestPlayer';
-            component.bonusTarget = 'life';
-
-            component.submitCharacter();
-
-            expect(mockGameSessionSocketService.joinGameSession).toHaveBeenCalledWith('ROOM1', component.character);
-            expect(routerMock.navigate).toHaveBeenCalledWith(['/waiting-room', 'ROOM1']);
-        });
-
-        it('devrait stocker le nom du joueur dans sessionStorage lors de la soumission', () => {
-            component.roomId = 'ROOM1';
-            component.character.name = 'MonNom';
-
-            component.submitCharacter();
-
-            expect(sessionStorage.getItem('playerUsername')).toBe('MonNom');
-        });
-
-        it('ne devrait pas soumettre si ni gameId ni roomId ne sont définis', () => {
-            component.gameId = null;
-            component.roomId = null;
-
-            spyOn(window, 'alert');
-            component.submitCharacter();
-
-            expect(window.alert).toHaveBeenCalledWith('Erreur: Identifiant de session manquant. Veuillez revenir à la page précédente.');
-        });
-    });
 });

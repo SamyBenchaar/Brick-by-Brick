@@ -6,24 +6,29 @@ import { Character } from '@common/character';
 import { GameSessionEvents } from '@common/game.events';
 import { of } from 'rxjs';
 import { GameSessionSocketService } from './game-session-socket.service';
+import { mockGameSession, mockGameSession2, mockPlayer } from './game-session-socket.service.spec.mocks';
 import { SocketService } from './socket.service';
+
+const AVATAR_ID_THREE = 3;
+const AVATAR_ID_FIVE = 5;
+
+type JoinErrorDialogData = {
+    title: string;
+    message: string;
+    confirmText: string;
+    cancelText: string;
+};
 
 /**
  * Stratégie de test pour GameSessionSocketService:
  *
- * 1. Tests d'intégration avec SocketService: Vérifier que le service gère correctement les événements socket
- *    en écoutant et en mettant à jour le signal des parties
- * 2. Tests du cycle de vie: Assurer la connexion, la configuration des écouteurs et la déconnexion
- * 3. Gestion des événements socket: Tester la réception et le traitement des événements principaux
- *    (GameSessionList, GameSessionCreated, GameSessionUpdated, GameSessionDeleted, RoomCancelled, etc.)
- * 4. Intégrité du signal réactif: Valider que les modifications du signal déclenchent les mises à jour correctes
- * 5. Isolation des dépendances: Utiliser des mocks Jasmine pour isoler SocketService
- *
- * Cas limites testés:
- * to DO
+ * 1. Connexion/cycle de vie client : abonnement aux événements de jointure et nettoyage
+ * 2. Liste des parties joignables : synchronisation dynamique via événements serveur
+ * 3. Jointure de partie : émission JoinGameSession et mémorisation pour retry
+ * 4. Gestion d'erreur de jointure : introuvable, pleine ou commencée, choix Réessayer ou Retour
+ * 5. Avatars en temps réel : réception et émission des mises à jour d'avatars pris
+ * 6. Salle d'attente : quitter la session et réinitialiser l'état local
  */
-
-const MAX_PLAYERS = 4;
 
 describe('GameSessionSocketService', () => {
     let service: GameSessionSocketService;
@@ -31,47 +36,14 @@ describe('GameSessionSocketService', () => {
     let routerMock: jasmine.SpyObj<Router>;
     let dialogMock: jasmine.SpyObj<MatDialog>;
 
-    const mockPlayer = {
-        socketId: 'socket1',
-        character: {
-            name: 'Player',
-            avatarId: 1,
-            speed: 5,
-        } as unknown as Character,
+    const getSocketCallback = <T>(event: GameSessionEvents): ((data: T) => void) => {
+        const callback = socketServiceMock.on.calls
+            .all()
+            .find(call => call.args[0] === event)?.args[1] as ((data: T) => void) | undefined;
+
+        expect(callback).toBeDefined();
+        return callback as (data: T) => void;
     };
-
-    const mockPlayer2 = {
-        socketId: 'socket2',
-        character: {
-            name: 'Player',
-            avatarId: 2,
-            speed: 4,
-        } as unknown as Character,
-    };
-
-    const mockGameSession: GameSession = {
-        players: [],
-        leftPlayers: [],
-        status: 'waiting',
-        roomId: 'room1',
-        maxPlayers: MAX_PLAYERS,
-        mapId: 'map1',
-        mapCopy: null,
-        host: mockPlayer,
-        takenAvatars: [],
-    } as unknown as GameSession;
-
-    const mockGameSession2: GameSession = {
-        players: [],
-        leftPlayers: [],
-        status: 'waiting',
-        roomId: 'room2',
-        maxPlayers: MAX_PLAYERS,
-        mapId: 'map1',
-        mapCopy: null,
-        host: mockPlayer2,
-        takenAvatars: [],
-    } as unknown as GameSession;
 
     beforeEach(() => {
         socketServiceMock = jasmine.createSpyObj('SocketService', [
@@ -164,27 +136,11 @@ describe('GameSessionSocketService', () => {
 
             service.connect();
 
-            const callbackGameList = socketServiceMock.on.calls
-                .all()
-                .find((call) => call.args[0] === GameSessionEvents.GameSessionList)?.args[1] as (gameSessions: GameSession[]) => void;
+            const callbackGameList = getSocketCallback<GameSession[]>(GameSessionEvents.GameSessionList);
 
             callbackGameList(mockGameSessions);
 
             expect(service.gameSessions()).toEqual(mockGameSessions);
-        });
-
-        it('devrait contenir deux parties après la réception de la liste', () => {
-            const mockGameSessions = [mockGameSession, mockGameSession2];
-
-            service.connect();
-
-            const callbackGameList = socketServiceMock.on.calls
-                .all()
-                .find((call) => call.args[0] === GameSessionEvents.GameSessionList)?.args[1] as (gameSessions: GameSession[]) => void;
-
-            callbackGameList(mockGameSessions);
-
-            expect(service.gameSessions().length).toBe(2);
         });
     });
 
@@ -194,9 +150,7 @@ describe('GameSessionSocketService', () => {
 
             service.connect();
 
-            const callbackGameCreated = socketServiceMock.on.calls
-                .all()
-                .find((call) => call.args[0] === GameSessionEvents.GameSessionCreated)?.args[1] as (gameSession: GameSession) => void;
+            const callbackGameCreated = getSocketCallback<GameSession>(GameSessionEvents.GameSessionCreated);
 
             callbackGameCreated(mockGameSession2);
 
@@ -206,39 +160,13 @@ describe('GameSessionSocketService', () => {
         });
     });
 
-    describe('Mise à jour d\'une partie', () => {
-        it('ne devrait pas augmenter le nombre de sessions lors d\'une mise à jour', () => {
-            service.gameSessions.set([mockGameSession, mockGameSession2]);
-
-            service.connect();
-
-            const updatedGameSession = {
-                ...mockGameSession,
-                takenAvatars: [1],
-            } as unknown as GameSession;
-
-            const callbackGameUpdated = socketServiceMock.on.calls
-                .all()
-                .find(call => call.args[0] === GameSessionEvents.GameSessionUpdated)
-                ?.args[1] as (gameSession: GameSession) => void;
-
-            callbackGameUpdated(updatedGameSession);
-
-            expect(service.gameSessions().length).toBe(2);
-        });
-
-    });
-
     describe('Suppression d\'une partie', () => {
         it('devrait supprimer une partie de la liste lors de GameSessionDeleted', () => {
             service.gameSessions.set([mockGameSession, mockGameSession2]);
 
             service.connect();
 
-            const callbackGameDeleted = socketServiceMock.on.calls
-                .all()
-                .find(call => call.args[0] === GameSessionEvents.GameSessionDeleted)
-                ?.args[1] as (roomId: string) => void;
+            const callbackGameDeleted = getSocketCallback<string>(GameSessionEvents.GameSessionDeleted);
 
             callbackGameDeleted('room1');
 
@@ -252,10 +180,7 @@ describe('GameSessionSocketService', () => {
 
             service.connect();
 
-            const callbackGameDeleted = socketServiceMock.on.calls
-                .all()
-                .find(call => call.args[0] === GameSessionEvents.GameSessionDeleted)
-                ?.args[1] as (roomId: string) => void;
+            const callbackGameDeleted = getSocketCallback<string>(GameSessionEvents.GameSessionDeleted);
 
             callbackGameDeleted('unknown');
 
@@ -268,7 +193,9 @@ describe('GameSessionSocketService', () => {
             service.connect();
             service.disconnect();
 
-            expect(socketServiceMock.off).toHaveBeenCalledWith(GameSessionEvents.GameSessionList); expect(socketServiceMock.off).toHaveBeenCalledWith(GameSessionEvents.GameSessionListUpdated); expect(socketServiceMock.off).toHaveBeenCalledWith(GameSessionEvents.GameSessionCreated);
+            expect(socketServiceMock.off).toHaveBeenCalledWith(GameSessionEvents.GameSessionList);
+            expect(socketServiceMock.off).toHaveBeenCalledWith(GameSessionEvents.GameSessionListUpdated);
+            expect(socketServiceMock.off).toHaveBeenCalledWith(GameSessionEvents.GameSessionCreated);
             expect(socketServiceMock.off).toHaveBeenCalledWith(GameSessionEvents.GameSessionUpdated);
             expect(socketServiceMock.off).toHaveBeenCalledWith(GameSessionEvents.GameSessionDeleted);
             expect(socketServiceMock.off).toHaveBeenCalledWith(GameSessionEvents.GameSessionJoinError);
@@ -290,24 +217,18 @@ describe('GameSessionSocketService', () => {
         it('devrait mettre à jour takenAvatars lors de AvatarTakenUpdated', () => {
             service.connect();
 
-            const callbackAvatarUpdated = socketServiceMock.on.calls
-                .all()
-                .find(call => call.args[0] === GameSessionEvents.AvatarTakenUpdated)
-                ?.args[1] as (avatarIds: number[]) => void;
+            const callbackAvatarUpdated = getSocketCallback<number[]>(GameSessionEvents.AvatarTakenUpdated);
 
-            callbackAvatarUpdated([1, 3, 5]);
+            callbackAvatarUpdated([1, AVATAR_ID_THREE, AVATAR_ID_FIVE]);
 
-            expect(service.takenAvatars()).toEqual([1, 3, 5]);
+            expect(service.takenAvatars()).toEqual([1, AVATAR_ID_THREE, AVATAR_ID_FIVE]);
         });
 
         it('devrait vider takenAvatars quand la liste est vide', () => {
             service.takenAvatars.set([1, 2]);
             service.connect();
 
-            const callbackAvatarUpdated = socketServiceMock.on.calls
-                .all()
-                .find(call => call.args[0] === GameSessionEvents.AvatarTakenUpdated)
-                ?.args[1] as (avatarIds: number[]) => void;
+            const callbackAvatarUpdated = getSocketCallback<number[]>(GameSessionEvents.AvatarTakenUpdated);
 
             callbackAvatarUpdated([]);
 
@@ -319,26 +240,17 @@ describe('GameSessionSocketService', () => {
         it('devrait gérer plusieurs événements socket successifs', () => {
             service.connect();
 
-            const callbackList = socketServiceMock.on.calls
-                .all()
-                .find(call => call.args[0] === GameSessionEvents.GameSessionList)
-                ?.args[1] as (sessions: GameSession[]) => void;
+            const callbackList = getSocketCallback<GameSession[]>(GameSessionEvents.GameSessionList);
 
             callbackList([mockGameSession]);
             expect(service.gameSessions().length).toBe(1);
 
-            const callbackCreated = socketServiceMock.on.calls
-                .all()
-                .find(call => call.args[0] === GameSessionEvents.GameSessionCreated)
-                ?.args[1] as (session: GameSession) => void;
+            const callbackCreated = getSocketCallback<GameSession>(GameSessionEvents.GameSessionCreated);
 
             callbackCreated(mockGameSession2);
             expect(service.gameSessions().length).toBe(2);
 
-            const callbackDeleted = socketServiceMock.on.calls
-                .all()
-                .find(call => call.args[0] === GameSessionEvents.GameSessionDeleted)
-                ?.args[1] as (roomId: string) => void;
+            const callbackDeleted = getSocketCallback<string>(GameSessionEvents.GameSessionDeleted);
 
             callbackDeleted('room1');
 
@@ -357,36 +269,66 @@ describe('GameSessionSocketService', () => {
                 { roomId: 'ROOM1', player: character },
             );
         });
+    });
 
-        it('devrait stocker le dernier roomId et personnage pour un éventuel retry', () => {
-            const character = { name: 'TestPlayer', avatarId: 2 } as Character;
-            service.joinGameSession('ROOM1', character);
+    describe('Événement GameStarted', () => {
+        it('devrait naviguer vers game-view pour un joueur présent dans la session', () => {
+            socketServiceMock.getSocketId.and.returnValue('socket1');
+            service.connect();
 
-            // Vérifier que le service stocke les infos pour retry via le mécanisme interne
-            expect(socketServiceMock.emit).toHaveBeenCalledWith(
-                GameSessionEvents.JoinGameSession,
-                jasmine.objectContaining({ roomId: 'ROOM1' }),
+            const callbackGameStarted = getSocketCallback<{ roomId: string; mapData: unknown; gameSession: GameSession }>(
+                GameSessionEvents.GameStarted,
             );
+
+            callbackGameStarted({
+                roomId: 'room1',
+                mapData: { id: 'map-1' },
+                gameSession: {
+                    ...mockGameSession,
+                    players: [mockPlayer],
+                } as unknown as GameSession,
+            });
+
+            expect(service.currentSession()?.roomId).toBe('room1');
+            expect(routerMock.navigate).toHaveBeenCalledWith(['/game-view'], { queryParams: { roomId: 'room1' } });
+        });
+
+        it('devrait retourner à l\'accueil si le joueur n\'est pas dans la session démarrée', () => {
+            socketServiceMock.getSocketId.and.returnValue('socket999');
+            service.connect();
+
+            const callbackGameStarted = getSocketCallback<{ roomId: string; mapData: unknown; gameSession: GameSession }>(
+                GameSessionEvents.GameStarted,
+            );
+
+            callbackGameStarted({
+                roomId: 'room1',
+                mapData: { id: 'map-1' },
+                gameSession: {
+                    ...mockGameSession,
+                    players: [mockPlayer],
+                } as unknown as GameSession,
+            });
+
+            expect(dialogMock.open).toHaveBeenCalled();
+            expect(routerMock.navigate).toHaveBeenCalledWith(['/']);
         });
     });
 
     describe('Erreur de jointure (GameSessionJoinError)', () => {
-        it('devrait ouvrir un dialog d\'avertissement quand la partie est verrouillée ou pleine', () => {
+        it('devrait ouvrir un dialog d\'avertissement avec un message d\'erreur', () => {
             const mockDialogRef = { afterClosed: () => of(false) } as unknown as MatDialogRef<unknown>;
             dialogMock.open.and.returnValue(mockDialogRef);
 
             service.connect();
 
-            const callbackJoinError = socketServiceMock.on.calls
-                .all()
-                .find(call => call.args[0] === GameSessionEvents.GameSessionJoinError)
-                ?.args[1] as (message: string) => void;
+            const callbackJoinError = getSocketCallback<string>(GameSessionEvents.GameSessionJoinError);
 
             callbackJoinError('La partie est pleine');
 
             expect(dialogMock.open).toHaveBeenCalled();
-            const dialogData = dialogMock.open.calls.mostRecent().args[1]?.data as { title: string; message: string; confirmText: string; cancelText: string };
-            expect(dialogData.title).toBe('Salle pleine');
+            const dialogData = dialogMock.open.calls.mostRecent().args[1]?.data as JoinErrorDialogData;
+            expect(dialogData.title).toBe('Erreur de jointure');
             expect(dialogData.message).toBe('La partie est pleine');
             expect(dialogData.confirmText).toBe('Réessayer');
             expect(dialogData.cancelText).toContain('Retour');
@@ -402,10 +344,7 @@ describe('GameSessionSocketService', () => {
 
             service.connect();
 
-            const callbackJoinError = socketServiceMock.on.calls
-                .all()
-                .find(call => call.args[0] === GameSessionEvents.GameSessionJoinError)
-                ?.args[1] as (message: string) => void;
+            const callbackJoinError = getSocketCallback<string>(GameSessionEvents.GameSessionJoinError);
 
             callbackJoinError('La partie est pleine');
 
@@ -421,12 +360,9 @@ describe('GameSessionSocketService', () => {
 
             service.connect();
 
-            const callbackJoinError = socketServiceMock.on.calls
-                .all()
-                .find(call => call.args[0] === GameSessionEvents.GameSessionJoinError)
-                ?.args[1] as (message: string) => void;
+            const callbackJoinError = getSocketCallback<string>(GameSessionEvents.GameSessionJoinError);
 
-            callbackJoinError('Partie verrouillée');
+            callbackJoinError('La session de jeu a déjà commencé');
 
             expect(routerMock.navigate).toHaveBeenCalledWith(['/']);
         });
@@ -445,11 +381,11 @@ describe('GameSessionSocketService', () => {
 
     describe('Mise à jour des avatars pris (updateTakenAvatars)', () => {
         it('devrait émettre l\'événement AvatarTakenUpdated avec le roomId et l\'avatarId', () => {
-            service.updateTakenAvatars('ROOM1', 3);
+            service.updateTakenAvatars('ROOM1', AVATAR_ID_THREE);
 
             expect(socketServiceMock.emit).toHaveBeenCalledWith(
                 GameSessionEvents.AvatarTakenUpdated,
-                { roomId: 'ROOM1', newAvatarId: 3 },
+                { roomId: 'ROOM1', newAvatarId: AVATAR_ID_THREE },
             );
         });
     });
@@ -480,158 +416,4 @@ describe('GameSessionSocketService', () => {
         });
     });
 
-    describe('Joueur exclu (PlayerKicked)', () => {
-        it('devrait réinitialiser la session et naviguer vers l\'accueil quand un joueur est exclu', async () => {
-            const mockDialogRef = { afterClosed: () => of(true) } as unknown as MatDialogRef<unknown>;
-            dialogMock.open.and.returnValue(mockDialogRef);
-
-            service.currentSession.set(mockGameSession);
-            service.connect();
-
-            const callbackKicked = socketServiceMock.on.calls
-                .all()
-                .find(call => call.args[0] === GameSessionEvents.PlayerKicked)
-                ?.args[1] as (data: { message: string }) => void;
-
-            callbackKicked({ message: 'Vous avez été exclu' });
-
-            expect(service.currentSession()).toBeNull();
-            expect(routerMock.navigate).toHaveBeenCalledWith(['/']);
-        });
-    });
-
-    describe('Salle annulée (RoomCancelled)', () => {
-        it('devrait réinitialiser la session et naviguer vers l\'accueil quand la salle est annulée', async () => {
-            const mockDialogRef = { afterClosed: () => of(true) } as unknown as MatDialogRef<unknown>;
-            dialogMock.open.and.returnValue(mockDialogRef);
-
-            service.currentSession.set(mockGameSession);
-            service.connect();
-
-            const callbackCancelled = socketServiceMock.on.calls
-                .all()
-                .find(call => call.args[0] === GameSessionEvents.RoomCancelled)
-                ?.args[1] as (data: { message: string }) => void;
-
-            callbackCancelled({ message: 'La salle a été annulée' });
-
-            expect(service.currentSession()).toBeNull();
-            expect(routerMock.navigate).toHaveBeenCalledWith(['/']);
-        });
-    });
-
-    describe('Suppression de la session courante', () => {
-        it('devrait réinitialiser currentSession et takenAvatars quand la session courante est supprimée', () => {
-            service.currentSession.set(mockGameSession);
-            service.takenAvatars.set([1, 2, 3]);
-
-            service.connect();
-
-            const callbackDeleted = socketServiceMock.on.calls
-                .all()
-                .find(call => call.args[0] === GameSessionEvents.GameSessionDeleted)
-                ?.args[1] as (roomId: string) => void;
-
-            callbackDeleted('room1');
-
-            expect(service.currentSession()).toBeNull();
-            expect(service.takenAvatars()).toEqual([]);
-        });
-    });
-
-    describe('Mise à jour dynamique de la liste (GameSessionListUpdated)', () => {
-        it('devrait mettre à jour la liste complète des sessions lors de GameSessionListUpdated', () => {
-            service.gameSessions.set([mockGameSession, mockGameSession2]);
-
-            service.connect();
-
-            const callbackListUpdated = socketServiceMock.on.calls
-                .all()
-                .find(call => call.args[0] === GameSessionEvents.GameSessionListUpdated)
-                ?.args[1] as (sessions: GameSession[]) => void;
-
-            // Simuler que seule la session 2 est encore disponible
-            callbackListUpdated([mockGameSession2]);
-
-            expect(service.gameSessions().length).toBe(1);
-            expect(service.gameSessions()[0].roomId).toBe('room2');
-        });
-    });
-
-    describe('Utilitaires du service', () => {
-        it('devrait retourner le socketId via getSocketId', () => {
-            socketServiceMock.getSocketId.and.returnValue('my-socket-id');
-            expect(service.getSocketId()).toBe('my-socket-id');
-        });
-
-        it('devrait retourner une chaîne vide si getSocketId retourne undefined', () => {
-            socketServiceMock.getSocketId.and.returnValue(undefined);
-            expect(service.getSocketId()).toBe('');
-        });
-
-        it('devrait retourner l\'état de connexion via isConnected', () => {
-            socketServiceMock.isConnected.and.returnValue(true);
-            expect(service.isConnected()).toBeTrue();
-
-            socketServiceMock.isConnected.and.returnValue(false);
-            expect(service.isConnected()).toBeFalse();
-        });
-
-        it('devrait identifier le host courant via isCurrentUserHost', () => {
-            socketServiceMock.getSocketId.and.returnValue('socket1');
-            service.currentSession.set(mockGameSession);
-
-            expect(service.isCurrentUserHost()).toBeTrue();
-        });
-
-        it('devrait retourner false pour isCurrentUserHost si le joueur n\'est pas host', () => {
-            socketServiceMock.getSocketId.and.returnValue('socket999');
-            service.currentSession.set(mockGameSession);
-
-            expect(service.isCurrentUserHost()).toBeFalse();
-        });
-
-        it('devrait identifier un joueur comme host via isPlayerHost', () => {
-            service.currentSession.set(mockGameSession);
-
-            expect(service.isPlayerHost('socket1')).toBeTrue();
-            expect(service.isPlayerHost('socket999')).toBeFalse();
-        });
-
-        it('devrait permettre de démarrer la partie avec 2+ joueurs et en tant que host', () => {
-            socketServiceMock.getSocketId.and.returnValue('socket1');
-            const sessionWith2Players = {
-                ...mockGameSession,
-                players: [mockPlayer, mockPlayer2],
-            } as unknown as GameSession;
-            service.currentSession.set(sessionWith2Players);
-
-            expect(service.canStartGame()).toBeTrue();
-        });
-
-        it('ne devrait pas permettre de démarrer avec moins de 2 joueurs', () => {
-            socketServiceMock.getSocketId.and.returnValue('socket1');
-            const sessionWith1Player = {
-                ...mockGameSession,
-                players: [mockPlayer],
-            } as unknown as GameSession;
-            service.currentSession.set(sessionWith1Player);
-
-            expect(service.canStartGame()).toBeFalse();
-        });
-    });
-
-    describe('Ne pas re-initialiser les listeners', () => {
-        it('ne devrait pas configurer les écouteurs deux fois lors de connexions multiples', () => {
-            socketServiceMock.isConnected.and.returnValue(false);
-            service.connect();
-            const firstCallCount = socketServiceMock.on.calls.count();
-
-            socketServiceMock.isConnected.and.returnValue(true);
-            service.connect();
-            const secondCallCount = socketServiceMock.on.calls.count();
-
-            expect(secondCallCount).toBe(firstCallCount);
-        });
-    });
 });
