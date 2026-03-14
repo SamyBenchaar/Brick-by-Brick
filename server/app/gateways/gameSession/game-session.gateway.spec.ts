@@ -2,24 +2,24 @@ import { GameSession } from '@app/domain/game-session';
 import { ChatGateway } from '@app/gateways/chat/chat.gateway';
 import { GameSessionService } from '@app/services/gameSession/gameSession.service';
 import { Character } from '@common/character';
+import { Dice } from '@common/dice';
 import { GameSessionEvents } from '@common/game.events';
 import { Player } from '@common/player';
 import { Logger } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Socket } from 'socket.io';
 import { GameSessionGateway } from './game-session.gateway';
-import { Dice } from '@common/dice';
 
 /**
- * Stratégie de test pour GameSessionGateway:
+ * Stratégie de test (portée: joindre une partie) pour GameSessionGateway:
  *
- * 1. Gestion des connexions : Connexion, déconnexion, nettoyage des salles
- * 2. Liste des sessions : Demande et envoi de la liste des sessions disponibles
- * 3. Création de session : Création de salle avec joueur hôte
- * 4. Rejoindre une session : Cas valides et erreurs (verrouillée, pleine)
- * 5. Quitter/Déconnexion : Hôte quitte = salle annulée, joueur quitte = mise à jour
- * 6. Démarrer la partie : Validation (hôte, min 2 joueurs)
- * 7. Exclure un joueur : Seul l'hôte peut exclure
+ * 1. Liste des sessions : demande et envoi des sessions disponibles
+ * 2. Liste des sessions : présence du nombre de joueurs par partie dans la réponse
+ * 3. Rejoindre une session : cas valide et erreurs (introuvable, pleine/verrouillée)
+ * 4. Liste dynamique : émission de GameSessionListUpdated quand une disponibilité change
+ * 5. Observation de session : abonnement à une salle d'attente valide
+ * 6. Disponibilités d'avatars : diffusion des avatars pris en temps réel
+ * 7. Quitter la salle d'attente : mise à jour de session et nettoyage de salle vide
  */
 describe('GameSessionGateway', () => {
     let gateway: GameSessionGateway;
@@ -62,8 +62,10 @@ describe('GameSessionGateway', () => {
             players: [] as Player[],
             host: { socketId: hostId, character: createCharacter('Host') },
             mapCopy: null,
+            socketToAvatar: new Map<string, number>(),
             isHost: jest.fn((id: string) => id === hostId),
             isFull: jest.fn(() => session.players.length >= session.maxPlayers),
+            getTakenAvatars: jest.fn(() => Array.from(session.socketToAvatar.values())),
             addPlayer: jest.fn(),
             removePlayer: jest.fn((id: string) => {
                 session.players = session.players.filter((p: Player) => p.socketId !== id);
@@ -86,6 +88,7 @@ describe('GameSessionGateway', () => {
             getAvailableGameSessions: jest.fn().mockReturnValue([]),
             deleteGameSession: jest.fn(),
             kickPlayer: jest.fn(),
+            removePlayer: jest.fn(),
         };
 
         mockChatGateway = {
@@ -112,6 +115,18 @@ describe('GameSessionGateway', () => {
         (gateway as unknown as { server: typeof mockServer }).server = mockServer;
     });
 
+    describe('handleConnection', () => {
+        it('devrait loguer la connexion du client', () => {
+            const socket = createSocket('s1');
+            const logger = (gateway as unknown as { logger: Logger }).logger;
+            const logSpy = jest.spyOn(logger, 'log');
+
+            gateway.handleConnection(socket);
+
+            expect(logSpy).toHaveBeenCalledWith(`Client connecté au GameSessionGateway: ${socket.id}`);
+        });
+    });
+
     describe('handleRequestAvailableGameSessionList', () => {
         it('devrait envoyer la liste des sessions disponibles au socket', () => {
             const socket = createSocket('s1');
@@ -121,6 +136,22 @@ describe('GameSessionGateway', () => {
             gateway.handleRequestAvailableGameSessionList(socket);
 
             expect(socket.emit).toHaveBeenCalledWith(GameSessionEvents.GameSessionList, sessions);
+        });
+
+        it('devrait inclure le nombre de joueurs via la liste players de chaque partie', () => {
+            const socket = createSocket('s1');
+            const sessions = [createMockSession('R1', 'h1', 3)];
+            mockGameSessionService.getAvailableGameSessions.mockReturnValue(sessions);
+
+            gateway.handleRequestAvailableGameSessionList(socket);
+
+            const gameSessionListCall = (socket.emit as jest.Mock).mock.calls.find(
+                ([event]) => event === GameSessionEvents.GameSessionList,
+            );
+            const emittedSessions = gameSessionListCall?.[1] as GameSession[];
+
+            expect(emittedSessions).toBeDefined();
+            expect(emittedSessions[0].players.length).toBe(3);
         });
     });
 
@@ -150,6 +181,19 @@ describe('GameSessionGateway', () => {
 
             expect(socket.join).toHaveBeenCalledWith('ROOM1');
             expect(mockServer.to).toHaveBeenCalledWith('ROOM1');
+        });
+
+        it('devrait émettre GameSessionListUpdated après un join valide', () => {
+            const socket = createSocket('p2');
+            const session = createMockSession('ROOM1', 'h1', 2);
+            const updatedSessions = [createMockSession('ROOM2', 'h2', 1)];
+            mockGameSessionService.joinSession.mockReturnValue(null);
+            mockGameSessionService.getGameSession.mockReturnValue(session);
+            mockGameSessionService.getAvailableGameSessions.mockReturnValue(updatedSessions);
+
+            gateway.handleJoinGameSession(socket, { roomId: 'ROOM1', player: createCharacter('P2') });
+
+            expect(mockServer.emit).toHaveBeenCalledWith(GameSessionEvents.GameSessionListUpdated, updatedSessions);
         });
 
         it('devrait émettre une erreur si la session est verrouillée ou pleine', () => {
@@ -292,6 +336,81 @@ describe('GameSessionGateway', () => {
             gateway.handleKickPlayer(socket, { roomId: 'FAKE', targetId: 'p1' });
 
             expect(socket.emit).toHaveBeenCalledWith(GameSessionEvents.GameSessionJoinError, 'Session introuvable');
+        });
+    });
+
+    describe('handleObserveGameSession', () => {
+        it('devrait permettre à un socket d\'observer une session valide', () => {
+            const socket = createSocket('obs-1');
+            const session = createMockSession('ROOM1', 'host-1', 2);
+            mockGameSessionService.getGameSession.mockReturnValue(session);
+
+            gateway.handleObserveGameSession(socket, { roomId: 'ROOM1' });
+
+            expect(socket.join).toHaveBeenCalledWith('ROOM1');
+            expect(socket.emit).toHaveBeenCalledWith(GameSessionEvents.AvatarTakenUpdated, expect.any(Array));
+        });
+
+        it('devrait émettre une erreur si la session est introuvable', () => {
+            const socket = createSocket('obs-1');
+            mockGameSessionService.getGameSession.mockReturnValue(undefined);
+
+            gateway.handleObserveGameSession(socket, { roomId: 'FAKE' });
+
+            expect(socket.emit).toHaveBeenCalledWith(GameSessionEvents.GameSessionJoinError, 'Session introuvable');
+        });
+    });
+
+    describe('handleAvatarTakenUpdated', () => {
+        it('devrait mettre à jour l\'avatar pris et notifier la salle', () => {
+            const socket = createSocket('p1');
+            const session = createMockSession('ROOM1', 'host-1', 2);
+            mockGameSessionService.getGameSession.mockReturnValue(session);
+
+            gateway.handleAvatarTakenUpdated(socket, { roomId: 'ROOM1', newAvatarId: 3 });
+
+            expect(session.socketToAvatar.get('p1')).toBe(3);
+            expect(session.getTakenAvatars).toHaveBeenCalled();
+            expect(mockServer.to).toHaveBeenCalledWith('ROOM1');
+        });
+
+        it('devrait ne rien faire si la session est introuvable', () => {
+            const socket = createSocket('p1');
+            mockGameSessionService.getGameSession.mockReturnValue(undefined);
+
+            gateway.handleAvatarTakenUpdated(socket, { roomId: 'FAKE', newAvatarId: 3 });
+
+            expect(mockServer.to).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('handleDisconnect en partie', () => {
+        it('devrait gérer la déconnexion pendant une partie en cours', () => {
+            const socket = createSocket('player-1');
+            const session = createMockSession('ROOM1', 'host-1', 2);
+            session.status = 'playing' as any;
+            mockGameSessionService.getGameSession.mockReturnValue(session);
+            (gateway as unknown as { socketToRoom: Map<string, string> }).socketToRoom.set('player-1', 'ROOM1');
+
+            gateway.handleDisconnect(socket);
+
+            expect(mockGameSessionService.removePlayer).toHaveBeenCalledWith('ROOM1', 'player-1');
+            expect(socket.leave).toHaveBeenCalledWith('ROOM1');
+        });
+    });
+
+    describe('handlePlayerLeave nettoyage salle vide', () => {
+        it('devrait nettoyer la salle si le dernier joueur non-hôte quitte et la salle est vide', () => {
+            const socket = createSocket('player-1');
+            const session = createMockSession('ROOM1', 'host-1', 2);
+            session.isHost = jest.fn().mockReturnValue(false);
+            session.removePlayer = jest.fn(() => { session.players = []; });
+            mockGameSessionService.getGameSession.mockReturnValue(session);
+
+            gateway.handleLeaveGameSession(socket, { roomId: 'ROOM1' });
+
+            expect(mockGameSessionService.deleteGameSession).toHaveBeenCalledWith('ROOM1');
+            expect(mockChatGateway.clearChatHistoryForRoom).toHaveBeenCalledWith('ROOM1');
         });
     });
 });

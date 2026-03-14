@@ -1,14 +1,17 @@
 import { GameService } from '@app/services/game/game.service';
 import { Character } from '@common/character';
+import { Dice } from '@common/dice';
 import { Player } from '@common/player';
 import { Test, TestingModule } from '@nestjs/testing';
+import { CombatService } from './combat.service';
 import { GameSessionService } from './gameSession.service';
-import { Dice } from '@common/dice';
+import { MovementService } from './movement.service';
+import { StartingPointService } from './starting-point.service';
+import { TurnManagementService } from './turn-management.service';
 
 /**
  * Stratégie de test pour GameSessionService:
  *
- * 1. Création de session : Vérifier la création avec joueur hôte et copie de la carte
  * 2. Rejoindre une session : Tester les cas valides et d'erreur (introuvable, pleine, déjà commencée)
  * 3. Sessions disponibles : Filtrer par statut et capacité
  * 4. Suppression et expulsion : Vérifier la gestion des joueurs et des sessions
@@ -17,9 +20,7 @@ import { Dice } from '@common/dice';
  * - Rejoindre une session inexistante
  * - Rejoindre une session pleine
  * - Rejoindre une session déjà commencée
- * - Expulser un joueur inexistant (pas de crash)
  * - Sessions disponibles avec mix de statuts
- * - A RAJOUTER: Expulser un joueur sans etre l'hote
  */
 describe('GameSessionService', () => {
     let service: GameSessionService;
@@ -49,11 +50,18 @@ describe('GameSessionService', () => {
 
     beforeEach(async () => {
         mockGameService = {
-            findOne: jest.fn().mockResolvedValue({ name: 'TestGame', mapConfig: { size: 'Small', tiles: [] } }),
+            findOne: jest.fn().mockResolvedValue({ name: 'TestGame', mapConfig: { size: 'Medium', tiles: [] } }),
         };
 
         const module: TestingModule = await Test.createTestingModule({
-            providers: [GameSessionService, { provide: GameService, useValue: mockGameService }],
+            providers: [
+                GameSessionService,
+                StartingPointService,
+                TurnManagementService,
+                MovementService,
+                CombatService,
+                { provide: GameService, useValue: mockGameService },
+            ],
         }).compile();
 
         service = module.get<GameSessionService>(GameSessionService);

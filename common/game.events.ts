@@ -37,6 +37,8 @@ export enum GameSessionEvents {
     StartGame = 'startGame',
     GameStarted = 'gameStarted',
 
+    ToggleDebugMode = 'toggleDebugMode',
+
     GameSessionStarted = 'gameSessionStarted',
     PlayerJoined = 'playerJoined',
     PlayerLeft = 'playerLeft',
@@ -48,6 +50,7 @@ export enum GameSessionEvents {
     EndTurnRequest = 'endTurnRequest',
 
     RequestMove = 'requestMove',
+    RequestAssignPosition = 'requestAssignPosition',
     MoveExecuted = 'moveExecuted',
     ReachableTiles = 'reachableTiles',
 
