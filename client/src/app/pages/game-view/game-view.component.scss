@@ -1,53 +1,41 @@
-// ─── Page container ───
+$primary-color: #000000;
+$info-board-color: rgba(0, 140, 255, 0.4);
+$overlay-color: rgba(222, 236, 255, 0.6);
+$turn-info-color: #f88400ec;
+
 .page-container {
     display: flex;
     flex-direction: column;
     width: 100vw;
     height: 100vh;
     overflow: hidden;
-    background-image: url('../../../assets/plate_background.jpg');
-    background-repeat: repeat;
+    background-image: 
+        linear-gradient($overlay-color, $overlay-color),
+        url('../../../assets/plate_background.jpg');    
     background-size: cover;
 }
 
-// ─── Top bar (retour + infos) ───
 .top-bar {
     display: flex;
     align-items: center;
     gap: 1rem;
     padding: 0.5rem 1rem;
-    background: rgba(0, 0, 0, 0.6);
-    border-bottom: 2px solid #ffa500;
-    z-index: 20;
     flex-shrink: 0;
-}
-
-.btn-back {
-    height: 50px;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-color: transparent;
-    background-size: contain;
-    padding: 14px 20px;
-    cursor: pointer;
-    color: #000;
-    font-size: 16px;
-    text-transform: uppercase;
-    border: none;
-    flex-shrink: 0;
-
-    &:hover {
-        filter: brightness(1.2);
-    }
 }
 
 .debug-mode {
-    color: white;
+    left: 45%;
     position: absolute;
-    left: 45%
+    font-size: 20px;
 }
 
+.return-button    {
+    height: 50px;
+    padding: 14px 20px;
+ }
+
 .info-panel {
+    font-size: 20px;
     display: flex;
     gap: 1.5rem;
     margin-left: auto;
@@ -59,17 +47,16 @@
 }
 
 .info-label {
-    color: #ffa500;
+    color: $primary-color;
     font-weight: bold;
-    font-size: 14px;
+    font-size: 20px;
 }
 
 .info-value {
     color: white;
-    font-size: 14px;
+    font-size: 20px;
 }
 
-// ─── Content area (map + right sidebar) ───
 .content-area {
     display: flex;
     flex: 1;
@@ -77,7 +64,6 @@
     overflow: hidden;
 }
 
-// ─── Map zone (centre, takes most space) ───
 .map-zone {
     flex: 1;
     display: flex;
@@ -100,8 +86,9 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        max-width: 100%;
-        max-height: 100%;
+        max-width: 98%;
+        max-height: 98%;
+        padding-top: 4px;
     }
 }
 
@@ -110,15 +97,15 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: rgba(255, 165, 0, 0.95);
+    background: $turn-info-color;
     padding: 2rem 3rem;
     border-radius: 12px;
-    border: 3px solid #fff;
+    border: 3px solid #000000;
     z-index: 30;
     text-align: center;
     font-size: 1.5rem;
     font-weight: bold;
-    color: #fff;
+    color: $primary-color;
     animation: pulse 1s ease-in-out infinite;
 }
 
@@ -128,21 +115,16 @@
 }
 
 .turn-info {
-    position: absolute;
-    bottom: 1rem;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(0, 0, 0, 0.8);
+    border: none;
+    background-size: 100% 100%;
     padding: 1rem 2rem;
-    border-radius: 8px;
-    border: 2px solid #ffa500;
     z-index: 10;
     text-align: center;
     color: white;
 
     h3 {
-        margin: 0 0 0.5rem 0;
-        color: #ffa500;
+        margin: 2 0 0.5rem 0;
+        color: $primary-color;
         font-size: 1.3rem;
     }
 
@@ -154,16 +136,16 @@
     .btn-end-turn {
         margin-top: 0.5rem;
         padding: 0.5rem 1.5rem;
-        background: #ffa500;
+        background: $primary-color;
         border: none;
         border-radius: 4px;
-        color: #000;
+        color: white;
         font-weight: bold;
         cursor: pointer;
         transition: all 0.2s;
 
         &:hover {
-            background: #ff8c00;
+            background: $primary-color;
             transform: scale(1.05);
         }
 
@@ -171,6 +153,9 @@
             transform: scale(0.95);
         }
     }
+}
+.brick-orange{
+    padding: 7px;
 }
 
 .players-info {
@@ -180,13 +165,13 @@
     background: rgba(0, 0, 0, 0.7);
     padding: 1rem;
     border-radius: 8px;
-    border: 2px solid #ffa500;
+    border: 2px solid $primary-color;
     z-index: 10;
     max-width: 250px;
 
     h4 {
         margin: 0 0 0.5rem 0;
-        color: #ffa500;
+        color: $primary-color;
     }
 
     .player-card {
@@ -214,15 +199,15 @@
         }
     }
 }
-// ─── Right sidebar (player board + stats) ───
-.right-sidebar {
+
+.left-sidebar {
     width: 250px;
     min-width: 200px;
     max-width: 300px;
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
-    padding: 0.75rem 0.75rem 0.75rem 0;
+    padding: 0 0.75rem 0.75rem 0.75rem ;
     overflow-y: auto;
     flex-shrink: 0;
 
@@ -233,7 +218,7 @@
         background: transparent;
     }
     &::-webkit-scrollbar-thumb {
-        background: rgba(255, 165, 0, 0.4);
+        background: #9c9c9c;
         border-radius: 3px;
     }
 
@@ -244,15 +229,13 @@
     }
 }
 
-// ─── Chat sidebar (left, integrated in layout) ───
 .chat-sidebar {
     display: flex;
     flex-direction: column;
     width: 280px;
     min-width: 280px;
     flex-shrink: 0;
-    border-right: 2px solid #ffa500;
-    background: rgba(0, 0, 0, 0.3);
+    border-right: 2px solid $primary-color;
     transition: width 0.3s ease, min-width 0.3s ease;
 
     &.chat-collapsed {
@@ -268,7 +251,7 @@
         .chat-toggle-label {
             writing-mode: vertical-rl;
             text-orientation: mixed;
-            font-size: 11px;
+            font-size: 15px;
         }
 
         .chat-toggle-arrow {
@@ -283,7 +266,7 @@
     gap: 8px;
     padding: 8px 12px;
     background: rgba(0, 0, 0, 0.4);
-    border-bottom: 1px solid rgba(255, 165, 0, 0.3);
+    border-bottom: 1px solid rgba(106, 0, 255, 0.3);
     cursor: pointer;
     user-select: none;
     flex-shrink: 0;
@@ -299,7 +282,7 @@
 }
 
 .chat-toggle-label {
-    color: #ffa500;
+    color: $primary-color;
     font-weight: bold;
     font-size: 12px;
     text-transform: uppercase;
@@ -308,7 +291,7 @@
 }
 
 .chat-toggle-arrow {
-    color: #ffa500;
+    color: $primary-color;
     font-size: 11px;
     opacity: 0.7;
 }

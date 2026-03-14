@@ -1,12 +1,11 @@
 <div class="page-container">
-    <!-- Header bar -->
     <header class="top-bar">
-        <button class="btn-back" style="background-image: url('/assets/images/red_large_brick.png')" (click)="abandonGame()">Abandonner</button>
+        <button class="return-button button" style="background-image: url('/assets/images/red_large_brick.png')" (click)="abandonGame()">Abandonner</button>
         @if (isDebugModeActivated()){
                 <div class="debug-mode">Mode débogage activé</div>
             }
         @if (gameData) {
-        <div class="info-panel">
+        <div class="info-panel brick-orange">
             <div class="info-item">
                 <span class="info-label">Taille:</span>
                 <span class="info-value">{{ gameData.mapConfig.size }}</span>
@@ -16,39 +15,16 @@
                 <span class="info-value">{{ playerCount() }}/{{ gameData.numberOfPlayers }}</span>
             </div>
             <div class="info-item">
-                <span class="info-label">Personnage:</span>
-                <span class="info-value">{{ currentPlayer()?.character?.name ?? 'Joueur' }}</span>
+                <span class="info-label">Tour de:</span>
+                <span class="info-value">{{ getCurrentTurnPlayerName() || 'Joueur' }}</span>
             </div>
         </div>
         }
     </header>
 
-    <!-- Main content area -->
     <div class="content-area">
-        <!-- Chat sidebar left -->
-        <div class="chat-sidebar" [class.chat-collapsed]="isChatCollapsed">
-            <div class="chat-toggle" (click)="isChatCollapsed = !isChatCollapsed">
-                <span class="chat-toggle-icon">💬</span>
-                <span class="chat-toggle-label">{{ isChatCollapsed ? 'Chat' : 'Réduire' }}</span>
-                <span class="chat-toggle-arrow">{{ isChatCollapsed ? '▶' : '◀' }}</span>
-            </div>
-            @if (!isChatCollapsed && gameData) {
-            <div class="chat-body" >
-                <app-chat [username]="currentPlayer()?.character?.name ?? ''" [gameId]="roomId()" [hostPlayerId]="hostId"
-                 [isWriting]="isWriting()" (isWritingChange)="handleWritingChange($event)"></app-chat>
-            </div>
-            }
-        </div>
-
-        <!-- Map zone (centre) -->
-        <div class="map-zone">
-            @if (isTurnStarting()) {
-                <div class="turn-notification">
-                    <p>Tour de {{ getCurrentTurnPlayerName() }} dans 3 secondes...</p>
-                </div>
-            }
-
-            <div class="turn-info">
+        <aside class="left-sidebar">
+            <div class="turn-info brick-orange">
                 @if (isMyTurn()) {
                     <h3>C'est votre tour!</h3>
                     <p>Temps restant: {{ getTurnTimeRemaining() }}s</p>
@@ -56,12 +32,22 @@
                     <button class="btn-end-turn" (click)="endTurn()">Terminer le tour</button>
                 } @else {
                     <h3>Tour de {{ getCurrentTurnPlayerName() }}</h3>
+                    <p>Temps restant: {{ getTurnTimeRemaining() }}s</p>
                     @if (isDebugModeActivated() && isHost()){
                         <button class="btn-end-turn" (click)="endTurn()">Terminer le tour</button>
                     }
-                    <p>Temps restant: {{ getTurnTimeRemaining() }}s</p>
                 }
             </div>
+            <app-player-sign [player]="currentPlayer()"></app-player-sign>
+            <app-player-board [players]="playerList()" [leftPlayers]="leftPlayerList()" [host]="hostPlayer()"></app-player-board>
+        </aside>
+
+        <div class="map-zone">
+            @if (isTurnStarting()) {
+                <div class="turn-notification">
+                    <p>Tour de {{ getCurrentTurnPlayerName() }} dans 3 secondes...</p>
+                </div>
+            }
 
             <div class="grid-container">
                 @if (gameData) {
@@ -75,11 +61,18 @@
                 }
             </div>
         </div>
-
-        <!-- Right sidebar: player board + stats -->
-        <aside class="right-sidebar">
-            <app-player-board [players]="playerList()" [leftPlayers]="leftPlayerList()" [host]="hostPlayer()"></app-player-board>
-            <app-player-sign [player]="currentPlayer()"></app-player-sign>
-        </aside>
+        <div class="chat-sidebar" [class.chat-collapsed]="isChatCollapsed">
+            <div class="chat-toggle" (click)="isChatCollapsed = !isChatCollapsed">
+                <span class="chat-toggle-icon">💬</span>
+                <span class="chat-toggle-label">{{ isChatCollapsed ? 'Chat' : 'Réduire' }}</span>
+                <span class="chat-toggle-arrow">{{ isChatCollapsed ? '◀' : '▶' }}</span>
+            </div>
+            @if (!isChatCollapsed && gameData) {
+            <div class="chat-body" >
+                <app-chat [username]="currentPlayer()?.character?.name ?? ''" [gameId]="roomId()" [hostPlayerId]="hostId"
+                 [isWriting]="isWriting()" (isWritingChange)="handleWritingChange($event)"></app-chat>
+            </div>
+            }
+        </div>      
     </div>
 </div>
