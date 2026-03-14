@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, effect, inject, signal } from '@angular/core';
+import { Component, Input, Output, OnChanges, OnDestroy, OnInit, SimpleChanges, effect, inject, signal, EventEmitter } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ChatService } from '@app/services/communication/chat.service';
 import { ChatMessage } from '@common/message';
@@ -15,7 +15,8 @@ export class ChatComponent implements OnInit, OnChanges, OnDestroy {
     @Input() username: string = 'Anonymous';
     @Input() gameId?: string;
     @Input() hostPlayerId?: string;
-
+    @Input() isWriting : boolean = true;
+    @Output() isWritingChange = new EventEmitter<boolean>();
     private chatService = inject(ChatService);
 
     messages: ChatMessage[] = [];
@@ -58,6 +59,7 @@ export class ChatComponent implements OnInit, OnChanges, OnDestroy {
         const roomId = this.gameId || 'waiting-room';
         this.chatService.sendMessage(this.username, content, roomId, this.hostPlayerId);
         this.messageInput.set('');
+        this.isWritingChange.emit(false);
     }
 
     clearChat(): void {
@@ -67,8 +69,13 @@ export class ChatComponent implements OnInit, OnChanges, OnDestroy {
         this.chatService.clearChatHistoryOnServer(roomId);
     }
 
+    onFocus(): void {
+        this.isWritingChange.emit(true);
+    }
+
     onKeyPress(event: KeyboardEvent): void {
         if (event.key === 'Enter' && !event.shiftKey) {
+            this.isWritingChange.emit(false);
             event.preventDefault();
             this.sendMessage();
         }

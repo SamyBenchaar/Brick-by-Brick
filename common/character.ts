@@ -1,9 +1,5 @@
 import { Dice } from '@common/dice';
-
-export interface Position {
-  x: number;
-  y: number;
-}
+import { Position } from '@common/position';
 
 export interface Character {
   id: string;
