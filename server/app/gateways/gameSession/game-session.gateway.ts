@@ -244,7 +244,7 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
     }
 
     private deactivateDebugMode(gameSession: GameSession):void {
-        if(gameSession.isDebugModeActivated){
+        if(gameSession && gameSession.isDebugModeActivated){
             this.server.to(gameSession.roomId).emit(GameSessionEvents.ToggleDebugMode, {
                 isDebugModeActivated: false,
             });
