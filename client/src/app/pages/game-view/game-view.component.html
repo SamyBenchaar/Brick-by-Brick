@@ -72,7 +72,12 @@
         <!-- Right sidebar: player board + stats -->
         <aside class="right-sidebar">
             <app-player-board [players]="playerList()" [leftPlayers]="leftPlayerList()" [host]="hostPlayer()"></app-player-board>
-            <app-player-sign [player]="currentPlayer()"></app-player-sign>
+            <app-player-sign
+                [player]="currentPlayer()"
+                [canAttack]="canAttackSelectedTarget()"
+                [selectedTargetName]="getSelectedAttackTargetName()"
+                (attack)="attackSelectedTarget()">
+            </app-player-sign>
         </aside>
     </div>
 </div>

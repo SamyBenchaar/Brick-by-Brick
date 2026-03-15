@@ -124,6 +124,18 @@ export class GameViewComponent implements OnInit, OnDestroy {
     return this.gameSessionSocketService.currentSession()?.players.map(p => p.character) ?? [];
   }
 
+  getSelectedAttackTargetName(): string | null {
+    return this.gameSessionSocketService.getAutoAttackTarget()?.name ?? null;
+  }
+
+  canAttackSelectedTarget(): boolean {
+    return this.gameSessionSocketService.canCurrentPlayerAttack();
+  }
+
+  attackSelectedTarget(): void {
+    this.gameSessionSocketService.requestAutoCombat();
+  }
+
   getAvatarImage(avatarId: number): string {
     return AVATARS.find(a => a.id === avatarId)?.image ?? 'assets/images/lily.jpg';
   }

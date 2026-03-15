@@ -287,4 +287,64 @@ export class GameSessionSocketService {
         const myPlayer = this.currentSession()?.players.find(p => p.socketId === mySocketId);
         return myPlayer?.character.id === currentPlayerId;
     }
+
+    getCurrentPlayerCharacter(): Character | null {
+        const mySocketId = this.getSocketId();
+        return this.currentSession()?.players.find(p => p.socketId === mySocketId)?.character ?? null;
+    }
+
+    getAutoAttackTarget(): Character | null {
+        const currentPlayer = this.getCurrentPlayerCharacter();
+        if (!currentPlayer?.position) {
+            return null;
+        }
+
+        const session = this.currentSession();
+        if (!session) {
+            return null;
+        }
+
+        return session.players
+            .map(player => player.character)
+            .find(character =>
+                character.id !== currentPlayer.id &&
+                character.position !== undefined &&
+                this.areAdjacent(currentPlayer.position as Position, character.position),
+            ) ?? null;
+    }
+
+    canCurrentPlayerAttack(): boolean {
+        if (!this.isMyTurn()) {
+            return false;
+        }
+
+        const currentPlayer = this.getCurrentPlayerCharacter();
+        if (!currentPlayer?.position) {
+            return false;
+        }
+
+        if (!currentPlayer.remainingActions || currentPlayer.remainingActions <= 0) {
+            return false;
+        }
+
+        return this.getAutoAttackTarget() !== null;
+    }
+
+    requestAutoCombat(): void {
+        if (!this.canCurrentPlayerAttack()) {
+            return;
+        }
+
+        const target = this.getAutoAttackTarget();
+        if (!target) {
+            return;
+        }
+
+        this.requestCombat(target.id);
+    }
+
+    private areAdjacent(positionA: Position, positionB: Position): boolean {
+        const distance = Math.abs(positionA.x - positionB.x) + Math.abs(positionA.y - positionB.y);
+        return distance === 1;
+    }
 }

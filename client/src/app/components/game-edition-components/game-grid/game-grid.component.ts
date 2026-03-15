@@ -162,54 +162,6 @@ export class GameGridComponent implements OnInit, OnChanges {
     }
   }
 
-  onTileClick(position: Position): void {
-    if (!this.isViewMode) {
-      return;
-    }
-
-    if (!this.gameSessionSocketService.isMyTurn()) {
-      return;
-    }
-
-    const playerAtPosition = this.getPlayerAtPosition(position);
-    if (playerAtPosition) {
-      const currentPlayer = this.getCurrentPlayer();
-      if (currentPlayer && currentPlayer.position && this.isAdjacent(currentPlayer.position, position)) {
-        if (!currentPlayer.remainingActions || currentPlayer.remainingActions <= 0) {
-          const noActionsDialogData: AppDialogData = {
-            title: 'Actions insuffisantes',
-            message: 'Vous n\'avez plus d\'actions disponibles pour attaquer ce tour.',
-            type: 'warning',
-            confirmText: 'OK',
-          };
-          this.dialog.open(AppDialogComponent, {
-            data: noActionsDialogData,
-          });
-          return;
-        }
-
-        const targetInfo = `Vie du joueur: ${playerAtPosition.life}/${playerAtPosition.maxLife}\n` +
-          `Attaque: ${playerAtPosition.attack}\nDéfense: ${playerAtPosition.defense}`;
-        const attackDialogData: AppDialogData = {
-          title: 'Attaque',
-          message: `Attaquer ${playerAtPosition.name}?\n\n${targetInfo}\n\nVos actions restantes: ${currentPlayer.remainingActions}`,
-          type: 'warning',
-          confirmText: 'Attaquer',
-          cancelText: 'Annuler',
-        };
-        const dialogRef = this.dialog.open(AppDialogComponent, {
-          data: attackDialogData,
-        });
-        dialogRef.afterClosed().subscribe((result) => {
-          if (result) {
-            this.gameSessionSocketService.requestCombat(playerAtPosition.id);
-          }
-        });
-      }
-    }
-  }
-
-
   onTileMouseEnter(position: Position): void {
     if (this.isViewMode) {
       return;
@@ -347,11 +299,6 @@ export class GameGridComponent implements OnInit, OnChanges {
     
     const playerData = session.players.find(p => p.socketId === socketId);
     return playerData?.character ?? null;
-  }
-
-  private isAdjacent(pos1: Position, pos2: Position): boolean {
-    const distance = Math.abs(pos1.x - pos2.x) + Math.abs(pos1.y - pos2.y);
-    return distance === 1;
   }
 
   private getTileCost(tileType: TileType): number {
