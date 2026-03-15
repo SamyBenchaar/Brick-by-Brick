@@ -32,6 +32,7 @@ export class GameViewComponent implements OnInit, OnDestroy {
 
   gameData: Game | null = null;
   isChatCollapsed = false;
+  isAttackSelectionMode = signal<boolean>(false);
 
   isWriting = signal<boolean>(false);
 
@@ -55,6 +56,14 @@ export class GameViewComponent implements OnInit, OnDestroy {
     effect(() => {
       const map = this.gameSessionSocketService.mapCopy();
       this.gameData = map ? JSON.parse(JSON.stringify(map)) : null;
+    }, { injector: this.injector });
+
+    effect(() => {
+      this.gameSessionSocketService.currentSession();
+      this.gameSessionSocketService.currentPlayerTurn();
+      if (!this.gameSessionSocketService.canCurrentPlayerAttack()) {
+        this.isAttackSelectionMode.set(false);
+      }
     }, { injector: this.injector });
 
     window.addEventListener('beforeunload', this.handleBeforeUnload);
@@ -159,7 +168,7 @@ export class GameViewComponent implements OnInit, OnDestroy {
   }
 
   getSelectedAttackTargetName(): string | null {
-    return this.gameSessionSocketService.getAutoAttackTarget()?.name ?? null;
+    return this.isAttackSelectionMode() ? 'une cible' : null;
   }
 
   canAttackSelectedTarget(): boolean {
@@ -167,7 +176,19 @@ export class GameViewComponent implements OnInit, OnDestroy {
   }
 
   attackSelectedTarget(): void {
-    this.gameSessionSocketService.requestAutoCombat();
+    if (!this.canAttackSelectedTarget()) {
+      return;
+    }
+    this.isAttackSelectionMode.set(true);
+  }
+
+  onAttackTargetSelected(target: Character): void {
+    if (!this.gameSessionSocketService.canAttackTarget(target)) {
+      return;
+    }
+
+    this.gameSessionSocketService.requestCombat(target.id);
+    this.isAttackSelectionMode.set(false);
   }
 
   getAvatarImage(avatarId: number): string {

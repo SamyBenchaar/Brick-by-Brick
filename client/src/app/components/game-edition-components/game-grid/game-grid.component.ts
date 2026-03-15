@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, HostListener, inject, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, HostListener, inject, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { GameMap } from '@app/classes/game-map';
@@ -35,6 +35,9 @@ export class GameGridComponent implements OnInit, OnChanges {
   @Input() isViewMode: boolean = false;
   @Input() players: Character[] = [];
   @Input() reachableTiles: Position[] = [];
+  @Input() isAttackSelectionMode: boolean = false;
+
+  @Output() attackTargetSelected = new EventEmitter<Character>();
 
   readonly gridSize = GRID_SIZE;
   readonly objectDescriptions = OBJECT_DESCRIPTIONS;
@@ -112,6 +115,9 @@ export class GameGridComponent implements OnInit, OnChanges {
 
   onTileMouseDown(position: Position, event: MouseEvent): void {
     if (this.isViewMode) {
+      if (event.button === ClickEvent.Left && this.isAttackSelectionMode) {
+        this.handleAttackTargetSelection(position);
+      }
       return;
     }
 
@@ -307,6 +313,19 @@ export class GameGridComponent implements OnInit, OnChanges {
     
     const playerData = session.players.find(p => p.socketId === socketId);
     return playerData?.character ?? null;
+  }
+
+  private handleAttackTargetSelection(position: Position): void {
+    const target = this.getPlayerAtPosition(position);
+    if (!target) {
+      return;
+    }
+
+    if (!this.gameSessionSocketService.canAttackTarget(target)) {
+      return;
+    }
+
+    this.attackTargetSelected.emit(target);
   }
 
   private getTileCost(tileType: TileType): number {

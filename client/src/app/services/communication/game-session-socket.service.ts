@@ -337,6 +337,27 @@ export class GameSessionSocketService {
             ) ?? null;
     }
 
+    canAttackTarget(target: Character | null): boolean {
+        if (!this.isMyTurn()) {
+            return false;
+        }
+
+        const currentPlayer = this.getCurrentPlayerCharacter();
+        if (!currentPlayer?.position || !target?.position) {
+            return false;
+        }
+
+        if (target.id === currentPlayer.id) {
+            return false;
+        }
+
+        if (!currentPlayer.remainingActions || currentPlayer.remainingActions <= 0) {
+            return false;
+        }
+
+        return this.areAdjacent(currentPlayer.position as Position, target.position);
+    }
+
     canCurrentPlayerAttack(): boolean {
         if (!this.isMyTurn()) {
             return false;

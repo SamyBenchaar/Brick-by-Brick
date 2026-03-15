@@ -20,12 +20,26 @@ export function setupGameplayEventListeners(
         },
     );
 
-    socketService.on<{ playerId: string; playerName: string; turnTime: number }>(
+    socketService.on<{ playerId: string; playerName: string; turnTime: number; remainingMovement?: number; remainingActions?: number }>(
         GameSessionEvents.TurnStarted,
         (data) => {
             service.turnStarting.set(false);
             service.currentPlayerTurn.set(data.playerId);
             service.turnTimeRemaining.set(data.turnTime);
+
+            const session = service.currentSession();
+            if (session) {
+                const player = session.players.find(p => p.character.id === data.playerId);
+                if (player) {
+                    if (data.remainingMovement !== undefined) {
+                        player.character.remainingMovement = data.remainingMovement;
+                    }
+                    if (data.remainingActions !== undefined) {
+                        player.character.remainingActions = data.remainingActions;
+                    }
+                    service.currentSession.set({ ...session });
+                }
+            }
         },
     );
 
