@@ -145,11 +145,9 @@ export class GameGridComponent implements OnInit, OnChanges {
     const validTeleportTile = !playerAtPosition && !tile?.object && tile?.type !== TileType.Wall;
 
     if (debugMode && myTurn && validTeleportTile) {
-    this.gameSessionSocketService.requestAssignPosition(position);
-    return;
-    } 
-
-    else if (playerAtPosition) {
+      this.gameSessionSocketService.requestAssignPosition(position);
+      return;
+    } else if (playerAtPosition) {
       const dialogData: AppDialogData = {
         title: 'Informations du joueur',
         message: `Joueur: ${playerAtPosition.name}\nAvatar ID: ${playerAtPosition.avatarId}\nVictoires: ${playerAtPosition.victories}`,
