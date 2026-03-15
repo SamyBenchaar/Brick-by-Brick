@@ -37,7 +37,6 @@ export enum GameSessionEvents {
     StartGame = 'startGame',
     GameStarted = 'gameStarted',
 
-    GameSessionStarted = 'gameSessionStarted',
     PlayerJoined = 'playerJoined',
     PlayerLeft = 'playerLeft',
 
