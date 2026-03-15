@@ -1,11 +1,14 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, effect, HostListener, inject, Injector, OnDestroy, OnInit, signal } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { ChatComponent } from '@app/components/chat/chat.component';
+import { AppDialogComponent } from '@app/components/game-edition-components/app-dialog/app-dialog.component';
 import { GameGridComponent } from '@app/components/game-edition-components/game-grid/game-grid.component';
 import { PlayerBoardComponent } from '@app/components/game-view-components/player-board/player-board/player-board.component';
 import { PlayerSignComponent } from '@app/components/game-view-components/player-sign/player-sign/player-sign.component';
 import { AVATARS } from '@app/constants/character.constants';
+import { AppDialogData } from '@app/interfaces/dialog-model';
 import { Game } from '@app/interfaces/game';
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket.service';
 import { Character } from '@common/character';
@@ -23,6 +26,7 @@ import { KEY_DIRECTION_MAP, KEY_DEBUG, KEY_ENTER } from '@app/constants/key-even
 export class GameViewComponent implements OnInit, OnDestroy {
   gameSessionSocketService = inject(GameSessionSocketService);
   private router = inject(Router);
+  private dialog = inject(MatDialog);
   private injector = inject(Injector);
   private routeSubscription?: Subscription;
 
@@ -132,9 +136,22 @@ export class GameViewComponent implements OnInit, OnDestroy {
   }
 
   abandonGame(): void {
-    if (confirm('Êtes-vous sûr de vouloir abandonner la partie?')) {
-      this.gameSessionSocketService.abandonGame();
-    }
+    const dialogData: AppDialogData = {
+      title: 'Abandon de la partie',
+      message: 'Etes-vous sur de vouloir abandonner la partie?',
+      type: 'warning',
+      confirmText: 'Abandonner',
+      cancelText: 'Annuler',
+    };
+
+    this.dialog.open(AppDialogComponent, {
+      data: dialogData,
+      disableClose: true,
+    }).afterClosed().subscribe((confirmed: boolean) => {
+      if (confirmed) {
+        this.gameSessionSocketService.abandonGame();
+      }
+    });
   }
 
   getPlayers(): Character[] {
