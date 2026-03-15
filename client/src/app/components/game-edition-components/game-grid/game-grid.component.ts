@@ -1,10 +1,13 @@
 import { CommonModule } from '@angular/common';
 import { Component, HostListener, inject, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { GameMap } from '@app/classes/game-map';
+import { AppDialogComponent } from '@app/components/game-edition-components/app-dialog/app-dialog.component';
 import { Tile } from '@app/classes/tile';
 import { AVATARS } from '@app/constants/character.constants';
 import { ClickEvent } from '@app/constants/click-event-constants';
+import { AppDialogData } from '@app/interfaces/dialog-model';
 import { GameSize } from '@app/constants/game-size.enum';
 import { OBJECT_DESCRIPTIONS } from '@app/constants/object-descriptions';
 import { Game } from '@app/interfaces/game';
@@ -40,6 +43,7 @@ export class GameGridComponent implements OnInit, OnChanges {
   private mapEditorService = inject(MapEditorServiceService);
   private objectCounterService = inject(ObjectCounterService);
   private gameSessionSocketService = inject(GameSessionSocketService);
+  private dialog = inject(MatDialog);
   private isDrawing = false;
   private isDeleting = false;
   private isShiftPressed = false;
@@ -137,10 +141,24 @@ export class GameGridComponent implements OnInit, OnChanges {
     const playerAtPosition = this.getPlayerAtPosition(position);
 
     if (playerAtPosition) {
-      alert(`Joueur: ${playerAtPosition.name}\nAvatar ID: ${playerAtPosition.avatarId}\nVictoires: ${playerAtPosition.victories}`);
+      const dialogData: AppDialogData = {
+        title: 'Informations du joueur',
+        message: `Joueur: ${playerAtPosition.name}\nAvatar ID: ${playerAtPosition.avatarId}\nVictoires: ${playerAtPosition.victories}`,
+        type: 'info',
+      };
+      this.dialog.open(AppDialogComponent, {
+        data: dialogData,
+      });
     } else if (tile) {
       const cost = this.getTileCost(tile.type);
-      alert(`Type: ${tile.type}\nCoût de déplacement: ${cost}`);
+      const dialogData: AppDialogData = {
+        title: 'Informations de la tuile',
+        message: `Type: ${tile.type}\nCoût de déplacement: ${cost}`,
+        type: 'info',
+      };
+      this.dialog.open(AppDialogComponent, {
+        data: dialogData,
+      });
     }
   }
 
@@ -157,9 +175,36 @@ export class GameGridComponent implements OnInit, OnChanges {
     if (playerAtPosition) {
       const currentPlayer = this.getCurrentPlayer();
       if (currentPlayer && currentPlayer.position && this.isAdjacent(currentPlayer.position, position)) {
-        if (confirm(`Attaquer ${playerAtPosition.name}?`)) {
-          this.gameSessionSocketService.requestCombat(playerAtPosition.id);
+        if (!currentPlayer.remainingActions || currentPlayer.remainingActions <= 0) {
+          const noActionsDialogData: AppDialogData = {
+            title: 'Actions insuffisantes',
+            message: 'Vous n\'avez plus d\'actions disponibles pour attaquer ce tour.',
+            type: 'warning',
+            confirmText: 'OK',
+          };
+          this.dialog.open(AppDialogComponent, {
+            data: noActionsDialogData,
+          });
+          return;
         }
+
+        const targetInfo = `Vie du joueur: ${playerAtPosition.life}/${playerAtPosition.maxLife}\n` +
+          `Attaque: ${playerAtPosition.attack}\nDéfense: ${playerAtPosition.defense}`;
+        const attackDialogData: AppDialogData = {
+          title: 'Attaque',
+          message: `Attaquer ${playerAtPosition.name}?\n\n${targetInfo}\n\nVos actions restantes: ${currentPlayer.remainingActions}`,
+          type: 'warning',
+          confirmText: 'Attaquer',
+          cancelText: 'Annuler',
+        };
+        const dialogRef = this.dialog.open(AppDialogComponent, {
+          data: attackDialogData,
+        });
+        dialogRef.afterClosed().subscribe((result) => {
+          if (result) {
+            this.gameSessionSocketService.requestCombat(playerAtPosition.id);
+          }
+        });
       }
     }
   }
