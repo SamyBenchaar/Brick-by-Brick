@@ -38,8 +38,13 @@
                     }
                 }
             </div>
-            <app-player-sign [player]="currentPlayer()"></app-player-sign>
             <app-player-board [players]="playerList()" [leftPlayers]="leftPlayerList()" [host]="hostPlayer()"></app-player-board>
+                <app-player-sign
+                    [player]="currentPlayer()"
+                    [canAttack]="canAttackSelectedTarget()"
+                    [selectedTargetName]="getSelectedAttackTargetName()"
+                    (attack)="attackSelectedTarget()">
+                </app-player-sign>
         </aside>
 
         <div class="map-zone">
@@ -56,7 +61,9 @@
                     [gameData]="gameData" 
                     [isViewMode]="true"
                     [players]="getPlayers()"
-                    [reachableTiles]="gameSessionSocketService.reachableTiles()">
+                    [reachableTiles]="gameSessionSocketService.reachableTiles()"
+                    [isAttackSelectionMode]="isAttackSelectionMode()"
+                    (attackTargetSelected)="onAttackTargetSelected($event)">
                 </app-game-grid>
                 }
             </div>

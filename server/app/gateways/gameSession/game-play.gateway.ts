@@ -266,6 +266,8 @@ export class GamePlayGateway implements OnGatewayInit {
                         playerId: currentPlayer?.id,
                         playerName: currentPlayer?.name,
                         turnTime: gameSession.getCurrentTurnTime(),
+                        remainingMovement: currentPlayer?.remainingMovement,
+                        remainingActions: currentPlayer?.remainingActions,
                     });
                     this.emitReachableTiles(gameSession);
 

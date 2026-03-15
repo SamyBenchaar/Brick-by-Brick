@@ -31,5 +31,9 @@
                 <span class="stat-value">{{ player?.character?.remainingMovement ?? player?.character?.movements }}</span>
             </div>
         </div>
+
+        <button class="attack-button" type="button" [disabled]="!canAttack" (click)="onAttackClick()">
+            {{ selectedTargetName ? 'Attaquer ' + selectedTargetName : 'Attaquer' }}
+        </button>
     </div>
 </app-base-sign>
