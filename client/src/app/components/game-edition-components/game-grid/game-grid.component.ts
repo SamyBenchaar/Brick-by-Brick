@@ -140,7 +140,16 @@ export class GameGridComponent implements OnInit, OnChanges {
     const tile = this.getTile(position);
     const playerAtPosition = this.getPlayerAtPosition(position);
 
-    if (playerAtPosition) {
+    const debugMode = this.gameSessionSocketService.isDebugModeActivated();
+    const myTurn = this.gameSessionSocketService.isMyTurn();
+    const validTeleportTile = !playerAtPosition && !tile?.object && tile?.type !== TileType.Wall;
+
+    if (debugMode && myTurn && validTeleportTile) {
+    this.gameSessionSocketService.requestAssignPosition(position);
+    return;
+    } 
+
+    else if (playerAtPosition) {
       const dialogData: AppDialogData = {
         title: 'Informations du joueur',
         message: `Joueur: ${playerAtPosition.name}\nAvatar ID: ${playerAtPosition.avatarId}\nVictoires: ${playerAtPosition.victories}`,
@@ -159,17 +168,6 @@ export class GameGridComponent implements OnInit, OnChanges {
       this.dialog.open(AppDialogComponent, {
         data: dialogData,
       });
-    }
-
-    if(this.gameSessionSocketService.isDebugModeActivated()){
-      if(!this.gameSessionSocketService.isMyTurn()) {
-        return;
-      }
-      if (playerAtPosition || tile?.object || tile?.type === TileType.Wall){
-        return;
-      } else {
-        this.gameSessionSocketService.requestAssignPosition(position);
-      }
     }
  }
 
