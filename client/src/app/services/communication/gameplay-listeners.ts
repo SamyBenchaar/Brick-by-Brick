@@ -1,7 +1,7 @@
 import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { AppDialogComponent } from '@app/components/game-edition-components/app-dialog/app-dialog.component';
-import { Position } from '@common/character';
+import { Position } from '@common/position';
 import { GameSessionEvents } from '@common/game.events';
 import { SocketService } from './socket.service';
 import type { GameSessionSocketService } from './game-session-socket.service';

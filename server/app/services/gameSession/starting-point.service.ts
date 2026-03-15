@@ -1,5 +1,5 @@
 import { GameSession } from '@app/domain/game-session';
-import { Position } from '@common/character';
+import { Position } from '@common/position';
 import { Injectable } from '@nestjs/common';
 
 interface MapTile {

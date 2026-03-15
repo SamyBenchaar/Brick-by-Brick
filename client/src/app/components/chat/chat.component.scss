@@ -47,14 +47,15 @@
     flex-direction: column;
     padding: 8px 10px;
     border-radius: 6px;
-    word-wrap: break-word;
     animation: fadeIn 0.2s ease;
+    max-width: 50%;
+    min-width: 0;
+    word-break: break-word;
 
     &.own {
         align-self: flex-end;
         background-color: #e3f2fd;
         border: 1px solid #bbdefb;
-        max-width: 80%;
     }
 
     &:not(.own) {
@@ -62,7 +63,6 @@
         background-color: white;
         border: 1px solid #e0e0e0;
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
-        max-width: 80%;
     }
 }
 
@@ -92,7 +92,9 @@
 .message-content {
     color: #333;
     line-height: 1.3;
-    white-space: pre-wrap;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    min-width: 0;
     font-size: 0.88em;
 }
 
@@ -136,25 +138,11 @@
 }
 
 .send-button {
-    padding: 8px 14px;
-    background-color: #2196f3;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
+    width: 120px;
+    height: 60px;
     font-weight: 600;
-    font-size: 0.82em;
-    text-transform: uppercase;
+    font-size: 1.2em;
     letter-spacing: 0.5px;
     transition: all 0.2s;
-
-    &:hover:not(:disabled) {
-        background-color: #1976d2;
-    }
-
-    &:disabled {
-        background-color: #ccc;
-        color: white;
-        cursor: not-allowed;
-    }
+    background-size: 100% 100%;
 }

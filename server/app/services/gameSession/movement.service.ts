@@ -177,6 +177,10 @@ export class MovementService {
         return true;
     }
 
+    assignPosition(player: Character, gameSession: GameSession, newPosition: Position){
+        player.position = newPosition;
+    }
+
     resetMovementPoints(player: Character): void {
         player.remainingMovement = player.speed;
         player.remainingActions = 1;

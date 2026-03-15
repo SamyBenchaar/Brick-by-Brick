@@ -19,6 +19,7 @@ body {
     background-image: url('./assets/plate_background.jpg');
     background-repeat: repeat;
     background-size: cover; 
+    background-attachment: fixed;
 }
 
 .header {
@@ -69,6 +70,10 @@ button:disabled {
 .brick-orange {
     background-image: url('./assets/images/3x1_orange.png');
     background-size: contain;
+}
+
+.brick-green {
+    background-image: url('./assets/images/green_large_brick.png');
 }
 
 .description-tooltip {

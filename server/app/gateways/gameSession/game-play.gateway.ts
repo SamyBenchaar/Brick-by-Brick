@@ -5,11 +5,11 @@ import { Character } from '@common/character';
 import { GameSessionEvents } from '@common/game.events';
 import { GameSession } from '@app/domain/game-session';
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
-import {
-    OnGatewayInit, SubscribeMessage,
-    WebSocketGateway, WebSocketServer,
-} from '@nestjs/websockets';
+import { OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer,
+    } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
+import { MovementService } from '@app/services/gameSession/movement.service';
+import { Position } from '@common/position';
 
 @WebSocketGateway({ cors: true })
 @Injectable()
@@ -27,6 +27,7 @@ export class GamePlayGateway implements OnGatewayInit {
         private chatGateway: ChatGateway,
         @Inject(forwardRef(() => GameSessionGateway))
         private gameSessionGateway: GameSessionGateway,
+        private movementService: MovementService,
     ) {}
 
     afterInit() {
@@ -63,6 +64,20 @@ export class GamePlayGateway implements OnGatewayInit {
         this.startGameTurn(gameSession);
     }
 
+    @SubscribeMessage(GameSessionEvents.ToggleDebugMode)
+    handleToggleDebugMode(socket: Socket, payload: { currentRoomId: string}) {
+        const gameSession = this.gameSessionService.getGameSession(payload.currentRoomId);
+        if (!gameSession) {
+            return;
+        }
+        const newIsDebugModeActivated = !gameSession.isDebugModeActivated;
+        gameSession.isDebugModeActivated = newIsDebugModeActivated;
+        
+        this.server.to(payload.currentRoomId).emit(GameSessionEvents.ToggleDebugMode, {
+            isDebugModeActivated: newIsDebugModeActivated,
+        });
+    }
+
     @SubscribeMessage(GameSessionEvents.EndTurnRequest)
     handleEndTurnRequest(socket: Socket, payload: { roomId: string }) {
         const gameSession = this.gameSessionService.getGameSession(payload.roomId);
@@ -76,8 +91,7 @@ export class GamePlayGateway implements OnGatewayInit {
 
         const currentPlayer = gameSession.getCurrentPlayer();
         const requestingPlayer = gameSession.players.find(p => p.socketId === socket.id);
-        
-        if (!currentPlayer || !requestingPlayer || currentPlayer.id !== requestingPlayer.character.id) {
+        if (!currentPlayer || !requestingPlayer || currentPlayer.id !== requestingPlayer.character.id && !gameSession.isDebugModeActivated) {
             return;
         }
 
@@ -121,6 +135,21 @@ export class GamePlayGateway implements OnGatewayInit {
                 this.handleTurnEnd(gameSession);
             }
         }
+    }
+
+    @SubscribeMessage(GameSessionEvents.RequestAssignPosition)
+    handleRequestAssignPosition(socket: Socket, payload: { roomId: string; position: Position }){
+        const gameSession = this.gameSessionService.getGameSession(payload.roomId);
+
+        const currentPlayer = gameSession.getCurrentPlayer();
+        this.movementService.assignPosition(currentPlayer, gameSession, payload.position);
+        this.server.to(payload.roomId).emit(GameSessionEvents.MoveExecuted, {
+                playerId: currentPlayer.id,
+                position: currentPlayer.position,
+                remainingMovement: currentPlayer.remainingMovement,
+                remainingActions: currentPlayer.remainingActions,
+            });
+        this.emitReachableTiles(gameSession);
     }
 
     @SubscribeMessage(GameSessionEvents.RequestCombat)

@@ -63,14 +63,14 @@ export class GameService {
     async findAdminMenuGames(): Promise<Game[]> {
         return this.gameModel.find({}, {
             _id: 1, name: 1, mapConfig: { size: 1 }, lastModified: 1, isVisible: 1,
-            description: 1, previewImage: 1,
+            description: 1, previewImage: 1, gameMode: 1,
         }).exec();
     }
 
     async findVisible(): Promise<Game[]> {
         return this.gameModel.find({ isVisible: true }, {
             _id: 1, name: 1, mapConfig: { size: 1 }, lastModified: 1, isVisible: 1,
-            description: 1, previewImage: 1,
+            description: 1, previewImage: 1, gameMode: 1,
         }).exec();
     }
 
@@ -97,7 +97,23 @@ export class GameService {
     }
 
     async updateVisibility(id: string, isVisible: boolean): Promise<Game> {
+        const originalGame = await this.gameModel.findById(id).exec();
+        if (!originalGame) {
+            throw new NotFoundException(`Jeu avec ID ${id} non trouvé`);
+        }
+
+        const originalLastModified = originalGame.lastModified;
+
         const updatedGame = await this.gameModel.findByIdAndUpdate(id, { isVisible }, { new: true }).exec();
+
+        if (updatedGame && originalLastModified) {
+            await this.gameModel.updateOne(
+                { _id: id },
+                { lastModified: originalLastModified },
+                { timestamps: false },
+            ).exec();
+            updatedGame.lastModified = originalLastModified;
+        }
 
         if (this.gameGateway && updatedGame) {
             this.gameGateway.notifyGameUpdated(updatedGame);

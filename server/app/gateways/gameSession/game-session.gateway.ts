@@ -5,10 +5,8 @@ import { Character } from '@common/character';
 import { GameSessionEvents } from '@common/game.events';
 import { Player } from '@common/player';
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
-import {
-    OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, SubscribeMessage,
-    WebSocketGateway, WebSocketServer,
-} from '@nestjs/websockets';
+import { OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, SubscribeMessage,
+    WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 
 @WebSocketGateway({ cors: true })
@@ -152,6 +150,10 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
     }
 
     private handlePlayingDisconnect(socket: Socket, roomId: string) {
+        const gameSession = this.gameSessionService.getGameSession(roomId);
+        if(gameSession.isHost(socket.id)){
+            this.deactivateDebugMode(gameSession);
+        }
         this.socketToRoom.delete(socket.id);
         socket.leave(roomId);
 
@@ -197,6 +199,8 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
 
     private handleHostLeave(session: GameSession) {
         const roomId = session.roomId;
+        
+        this.deactivateDebugMode(session);
 
         this.server.to(roomId).emit(GameSessionEvents.RoomCancelled, {
             message: "L'organisateur a quitté la salle. La partie est annulée.",
@@ -219,6 +223,7 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
 
     cleanUpRoom(roomId: string) {
         this.notifyAvatarTakenUpdated(roomId, []);
+        this.deactivateDebugMode(this.gameSessionService.getGameSession(roomId));
         this.gameSessionService.deleteGameSession(roomId);
         this.chatGateway.clearChatHistoryForRoom(roomId);
         this.notifyGameSessionDeleted(roomId);
@@ -236,6 +241,14 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
     private createPlayer(socketId: string, character: Character): Player {
         character.id = socketId;
         return { socketId, character };
+    }
+
+    private deactivateDebugMode(gameSession: GameSession):void {
+        if(gameSession && gameSession.isDebugModeActivated){
+            this.server.to(gameSession.roomId).emit(GameSessionEvents.ToggleDebugMode, {
+                isDebugModeActivated: false,
+            });
+        }
     }
 
     notifyGameSessionCreated(gameSession: GameSession): void {

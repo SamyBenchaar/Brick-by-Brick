@@ -1,7 +1,7 @@
 import { Injectable, signal } from '@angular/core';
 import { Game } from '@app/interfaces/game';
 import { ObjectType, TileType } from '@common/map';
-import { Position } from '@app/interfaces/position';
+import { Position } from '@common/position';
 
 
 @Injectable({
