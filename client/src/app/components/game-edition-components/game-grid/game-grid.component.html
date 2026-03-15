@@ -10,7 +10,6 @@
             [style.backgroundImage]="'url(' + getTilePath(tile.type) + ')'"
             (mousedown)="onTileMouseDown(position, $event)"
             (mouseenter)="onTileMouseEnter(position)"
-            (click)="onTileClick(position)"
             (contextmenu)="onTileRightClick(position, $event)"
             [matTooltip]="tile.object ? objectDescriptions[tile.object] : ''"
             matTooltipShowDelay="0"

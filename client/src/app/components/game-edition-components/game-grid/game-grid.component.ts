@@ -1,10 +1,13 @@
 import { CommonModule } from '@angular/common';
-import { Component, HostListener, inject, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, HostListener, inject, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { GameMap } from '@app/classes/game-map';
+import { AppDialogComponent } from '@app/components/game-edition-components/app-dialog/app-dialog.component';
 import { Tile } from '@app/classes/tile';
 import { AVATARS } from '@app/constants/character.constants';
 import { ClickEvent } from '@app/constants/click-event-constants';
+import { AppDialogData } from '@app/interfaces/dialog-model';
 import { GameSize } from '@app/constants/game-size.enum';
 import { OBJECT_DESCRIPTIONS } from '@app/constants/object-descriptions';
 import { Game } from '@app/interfaces/game';
@@ -32,6 +35,9 @@ export class GameGridComponent implements OnInit, OnChanges {
   @Input() isViewMode: boolean = false;
   @Input() players: Character[] = [];
   @Input() reachableTiles: Position[] = [];
+  @Input() isAttackSelectionMode: boolean = false;
+
+  @Output() attackTargetSelected = new EventEmitter<Character>();
 
   readonly gridSize = GRID_SIZE;
   readonly objectDescriptions = OBJECT_DESCRIPTIONS;
@@ -40,6 +46,7 @@ export class GameGridComponent implements OnInit, OnChanges {
   private mapEditorService = inject(MapEditorServiceService);
   private objectCounterService = inject(ObjectCounterService);
   private gameSessionSocketService = inject(GameSessionSocketService);
+  private dialog = inject(MatDialog);
   private isDrawing = false;
   private isDeleting = false;
   private isShiftPressed = false;
@@ -108,6 +115,9 @@ export class GameGridComponent implements OnInit, OnChanges {
 
   onTileMouseDown(position: Position, event: MouseEvent): void {
     if (this.isViewMode) {
+      if (event.button === ClickEvent.Left && this.isAttackSelectionMode) {
+        this.handleAttackTargetSelection(position);
+      }
       return;
     }
 
@@ -136,45 +146,34 @@ export class GameGridComponent implements OnInit, OnChanges {
     const tile = this.getTile(position);
     const playerAtPosition = this.getPlayerAtPosition(position);
 
-    if(this.gameSessionSocketService.isDebugModeActivated()){
-      if(!this.gameSessionSocketService.isMyTurn()) {
-        return;
-      }
-      if (playerAtPosition || tile?.object || tile?.type === TileType.Wall){
-        return;
-      } else {
-        this.gameSessionSocketService.requestAssignPosition(position);
-      }
-    } else {
-      if (playerAtPosition) {
-        alert(`Joueur: ${playerAtPosition.name}\nAvatar ID: ${playerAtPosition.avatarId}\nVictoires: ${playerAtPosition.victories}`);
-      } else if (tile) {
-        const cost = this.getTileCost(tile.type);
-        alert(`Type: ${tile.type}\nCoût de déplacement: ${cost}`);
-      } 
-    }
-  }
+    const debugMode = this.gameSessionSocketService.isDebugModeActivated();
+    const myTurn = this.gameSessionSocketService.isMyTurn();
+    const validTeleportTile = !playerAtPosition && !tile?.object && tile?.type !== TileType.Wall;
 
-  onTileClick(position: Position): void {
-    if (!this.isViewMode) {
+    if (debugMode && myTurn && validTeleportTile) {
+      this.gameSessionSocketService.requestAssignPosition(position);
       return;
+    } else if (playerAtPosition) {
+      const dialogData: AppDialogData = {
+        title: 'Informations du joueur',
+        message: `Joueur: ${playerAtPosition.name}\nAvatar ID: ${playerAtPosition.avatarId}\nVictoires: ${playerAtPosition.victories}`,
+        type: 'info',
+      };
+      this.dialog.open(AppDialogComponent, {
+        data: dialogData,
+      });
+    } else if (tile) {
+      const cost = this.getTileCost(tile.type);
+      const dialogData: AppDialogData = {
+        title: 'Informations de la tuile',
+        message: `Type: ${tile.type}\nCoût de déplacement: ${cost}`,
+        type: 'info',
+      };
+      this.dialog.open(AppDialogComponent, {
+        data: dialogData,
+      });
     }
-
-    if (!this.gameSessionSocketService.isMyTurn()) {
-      return;
-    }
-
-    const playerAtPosition = this.getPlayerAtPosition(position);
-    if (playerAtPosition) {
-      const currentPlayer = this.getCurrentPlayer();
-      if (currentPlayer && currentPlayer.position && this.isAdjacent(currentPlayer.position, position)) {
-        if (confirm(`Attaquer ${playerAtPosition.name}?`)) {
-          this.gameSessionSocketService.requestCombat(playerAtPosition.id);
-        }
-      }
-    }
-  }
-
+ }
 
   onTileMouseEnter(position: Position): void {
     if (this.isViewMode) {
@@ -316,9 +315,17 @@ export class GameGridComponent implements OnInit, OnChanges {
     return playerData?.character ?? null;
   }
 
-  private isAdjacent(pos1: Position, pos2: Position): boolean {
-    const distance = Math.abs(pos1.x - pos2.x) + Math.abs(pos1.y - pos2.y);
-    return distance === 1;
+  private handleAttackTargetSelection(position: Position): void {
+    const target = this.getPlayerAtPosition(position);
+    if (!target) {
+      return;
+    }
+
+    if (!this.gameSessionSocketService.canAttackTarget(target)) {
+      return;
+    }
+
+    this.attackTargetSelected.emit(target);
   }
 
   private getTileCost(tileType: TileType): number {
