@@ -8,8 +8,8 @@ import { CombatService } from '@app/services/gameSession/combat.service';
 import { MovementService } from '@app/services/gameSession/movement.service';
 import { StartingPointService } from '@app/services/gameSession/starting-point.service';
 import { TurnManagementService } from '@app/services/gameSession/turn-management.service';
-import { GameMetaDataValidationService } from '@app/services/validations/gameMetaDataValidation.service';
-import { MapValidationService } from '@app/services/validations/mapValidation.service';
+import { GameMetadataValidationService } from '@app/services/validations/game-metadata-validation.service';
+import { MapValidationService } from '@app/services/validations/map-validation.service';
 import { Logger, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -23,7 +23,7 @@ import { GameSessionService } from './services/gameSession/gameSession.service';
             imports: [ConfigModule],
             inject: [ConfigService],
             useFactory: async (config: ConfigService) => ({
-                uri: config.get<string>('DATABASE_CONNECTION_STRING'), 
+                uri: config.get<string>('DATABASE_CONNECTION_STRING'),
             }),
         }),
         MongooseModule.forFeature([
@@ -44,7 +44,7 @@ import { GameSessionService } from './services/gameSession/gameSession.service';
         CombatService,
         Logger,
         MapValidationService,
-        GameMetaDataValidationService,
+        GameMetadataValidationService,
     ],
 })
 export class AppModule {}

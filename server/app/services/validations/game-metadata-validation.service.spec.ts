@@ -2,7 +2,7 @@ import { Game, GameDocument } from '@app/model/game';
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Model } from 'mongoose';
-import { GameMetaDataValidationService } from './gameMetaDataValidation.service';
+import { GameMetadataValidationService } from '@app/services/validations/game-metadata-validation.service';
 
 type MockModel<T> = Partial<Record<keyof Model<T>, jest.Mock>>;
 
@@ -15,8 +15,8 @@ type MockModel<T> = Partial<Record<keyof Model<T>, jest.Mock>>;
  * 3. Tests de champs obligatoires : Confirmer que description et name sont présents
  * 4. Cas limites : valeurs nulles, doublons
  */
-describe('GameMetaDataValidationService', () => {
-  let service: GameMetaDataValidationService;
+describe('GameMetadataValidationService', () => {
+  let service: GameMetadataValidationService;
   let model: MockModel<GameDocument>;
 
   const mockModel: MockModel<GameDocument> = {
@@ -29,12 +29,12 @@ describe('GameMetaDataValidationService', () => {
     });
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        GameMetaDataValidationService,
+        GameMetadataValidationService,
         { provide: getModelToken(Game.name), useValue: mockModel },
       ],
     }).compile();
 
-    service = module.get(GameMetaDataValidationService);
+    service = module.get(GameMetadataValidationService);
     model = module.get(getModelToken(Game.name));
   });
 
