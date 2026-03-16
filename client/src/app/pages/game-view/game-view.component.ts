@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, effect, HostListener, inject, Injector, OnDestroy, OnInit, signal } from '@angular/core';
+import { Component, computed, effect, HostListener, inject, Injector, OnDestroy, OnInit, signal, ViewChild, ElementRef } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { ChatComponent } from '@app/components/chat/chat.component';
@@ -29,6 +29,8 @@ export class GameViewComponent implements OnInit, OnDestroy {
   private dialog = inject(MatDialog);
   private injector = inject(Injector);
   private routeSubscription?: Subscription;
+
+  @ViewChild('chatSidebar') chatSidebar!: ElementRef<HTMLElement>;
 
   gameData: Game | null = null;
   isChatCollapsed = false;
@@ -93,7 +95,7 @@ export class GameViewComponent implements OnInit, OnDestroy {
 
   @HostListener('document:click', ['$event'])
   handleClickOutside(event: MouseEvent): void {
-    const chatSidebar = document.querySelector('.chat-sidebar');
+    const chatSidebar = this.chatSidebar?.nativeElement;
     if (chatSidebar && !chatSidebar.contains(event.target as Node)) {
       this.isWriting.set(false);
     }

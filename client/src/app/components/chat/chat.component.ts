@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, Output, OnChanges, OnDestroy, OnInit, SimpleChanges, effect, inject, signal, EventEmitter } from '@angular/core';
+import { Component, Input, Output, OnChanges, OnDestroy, OnInit, SimpleChanges, 
+    effect, inject, signal, EventEmitter, ViewChild, ElementRef} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ChatService } from '@app/services/communication/chat.service';
 import { ChatMessage } from '@common/message';
@@ -17,6 +18,7 @@ export class ChatComponent implements OnInit, OnChanges, OnDestroy {
     @Input() hostPlayerId?: string;
     @Input() isWriting : boolean = true;
     @Output() isWritingChange = new EventEmitter<boolean>();
+    @ViewChild('messagesContainer') messagesContainer!: ElementRef;
     private chatService = inject(ChatService);
 
     messages: ChatMessage[] = [];
@@ -82,10 +84,10 @@ export class ChatComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     private scrollToBottom(): void {
-        const messagesContainer = document.querySelector('.messages-container');
-        if (messagesContainer) {
+        if (this.messagesContainer) {
             setTimeout(() => {
-                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                const el = this.messagesContainer.nativeElement;
+                el.scrollTop = el.scrollHeight;
             }, 0);
         }
     }

@@ -1,15 +1,7 @@
 import { GameSession } from '@app/domain/game-session';
 import { Position } from '@common/position';
 import { Injectable } from '@nestjs/common';
-
-interface MapTile {
-    type: string;
-    object?: { type: string };
-}
-
-interface GameMap {
-    tiles: MapTile[][];
-}
+import { MapTile, GameMap } from '@app/interfaces/game-map-interfaces';
 
 @Injectable()
 export class StartingPointService {

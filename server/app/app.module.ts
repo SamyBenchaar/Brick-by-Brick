@@ -8,7 +8,7 @@ import { CombatService } from '@app/services/gameSession/combat.service';
 import { MovementService } from '@app/services/gameSession/movement.service';
 import { StartingPointService } from '@app/services/gameSession/starting-point.service';
 import { TurnManagementService } from '@app/services/gameSession/turn-management.service';
-import { GameMetadataValidationService } from '@app/services/validations/gameMetadataValidation.service';
+import { GameMetaDataValidationService } from '@app/services/validations/gameMetaDataValidation.service';
 import { MapValidationService } from '@app/services/validations/mapValidation.service';
 import { Logger, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -44,7 +44,7 @@ import { GameSessionService } from './services/gameSession/gameSession.service';
         CombatService,
         Logger,
         MapValidationService,
-        GameMetadataValidationService,
+        GameMetaDataValidationService,
     ],
 })
 export class AppModule {}

@@ -1,6 +1,6 @@
 import { GameGateway } from '@app/gateways/game/game.gateway';
 import { Game, GameDocument } from '@app/model/game';
-import { GameMetadataValidationService } from '@app/services/validations/gameMetadataValidation.service';
+import { GameMetaDataValidationService } from '@app/services/validations/gameMetaDataValidation.service';
 import { MapValidationService } from '@app/services/validations/mapValidation.service';
 import { BadRequestException } from '@nestjs/common';
 import { getModelToken } from '@nestjs/mongoose';
@@ -24,7 +24,7 @@ describe('GameService', () => {
 
   let model: jest.Mocked<Model<GameDocument>>;
   let mapValidation: jest.Mocked<MapValidationService>;
-  let metadataValidation: jest.Mocked<GameMetadataValidationService>;
+  let metadataValidation: jest.Mocked<GameMetaDataValidationService>;
   let gateway: jest.Mocked<GameGateway>;
 
   const validGameData: Partial<Game> = {
@@ -52,7 +52,7 @@ describe('GameService', () => {
 
     metadataValidation = {
       validateMetadata: jest.fn().mockResolvedValue([]),
-    } as unknown as jest.Mocked<GameMetadataValidationService>;
+    } as unknown as jest.Mocked<GameMetaDataValidationService>;
 
     gateway = {
       notifyGameCreated: jest.fn(),
@@ -65,7 +65,7 @@ describe('GameService', () => {
         GameService,
         { provide: getModelToken(Game.name), useValue: model },
         { provide: MapValidationService, useValue: mapValidation },
-        { provide: GameMetadataValidationService, useValue: metadataValidation },
+        { provide: GameMetaDataValidationService, useValue: metadataValidation },
         { provide: GameGateway, useValue: gateway },
       ],
     }).compile();

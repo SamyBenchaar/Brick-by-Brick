@@ -1,7 +1,7 @@
 import { CreateGameDto } from '@app/dto/create-game.dto';
 import { GameGateway } from '@app/gateways/game/game.gateway';
 import { Game, GameDocument } from '@app/model/game';
-import { GameMetadataValidationService } from '@app/services/validations/gameMetadataValidation.service';
+import { GameMetaDataValidationService } from '@app/services/validations/gameMetaDataValidation.service';
 import { MapValidationService } from '@app/services/validations/mapValidation.service';
 import { BadRequestException, Inject, Injectable, NotFoundException, forwardRef } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
@@ -15,7 +15,7 @@ export class GameService {
     constructor(
         @InjectModel(Game.name) private gameModel: Model<GameDocument>,
         private mapValidationService: MapValidationService,
-        private gameMetadataValidationService: GameMetadataValidationService,
+        private gameMetaDataValidationService: GameMetaDataValidationService,
         @Inject(forwardRef(() => GameGateway))
         private gameGateway: GameGateway,
     ) {}
@@ -33,7 +33,7 @@ export class GameService {
             });
         }
 
-        errors.push(...await this.gameMetadataValidationService.validateMetadata(gameData));
+        errors.push(...await this.gameMetaDataValidationService.validateMetadata(gameData));
 
         errors.push(...await this.mapValidationService.validateMap(gameData));
 

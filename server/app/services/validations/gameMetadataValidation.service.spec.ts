@@ -2,12 +2,12 @@ import { Game, GameDocument } from '@app/model/game';
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Model } from 'mongoose';
-import { GameMetadataValidationService } from './gameMetadataValidation.service';
+import { GameMetaDataValidationService } from './gameMetaDataValidation.service';
 
 type MockModel<T> = Partial<Record<keyof Model<T>, jest.Mock>>;
 
 /**
- * Stratégie de test pour GameMetadataValidationService:
+ * Stratégie de test pour GameMetaDataValidationService:
  * Communication avec la base de données: findOne()
  * 
  * 1. Tests de validation : Vérifier que les métadonnées sont validées correctement
@@ -15,8 +15,8 @@ type MockModel<T> = Partial<Record<keyof Model<T>, jest.Mock>>;
  * 3. Tests de champs obligatoires : Confirmer que description et name sont présents
  * 4. Cas limites : valeurs nulles, doublons
  */
-describe('GameMetadataValidationService', () => {
-  let service: GameMetadataValidationService;
+describe('GameMetaDataValidationService', () => {
+  let service: GameMetaDataValidationService;
   let model: MockModel<GameDocument>;
 
   const mockModel: MockModel<GameDocument> = {
@@ -29,12 +29,12 @@ describe('GameMetadataValidationService', () => {
     });
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        GameMetadataValidationService,
+        GameMetaDataValidationService,
         { provide: getModelToken(Game.name), useValue: mockModel },
       ],
     }).compile();
 
-    service = module.get(GameMetadataValidationService);
+    service = module.get(GameMetaDataValidationService);
     model = module.get(getModelToken(Game.name));
   });
 

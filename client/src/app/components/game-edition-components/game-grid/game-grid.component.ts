@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, HostListener, inject, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, HostListener, inject, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild, ElementRef} from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { GameMap } from '@app/classes/game-map';
@@ -36,6 +36,7 @@ export class GameGridComponent implements OnInit, OnChanges {
   @Input() players: Character[] = [];
   @Input() reachableTiles: Position[] = [];
   @Input() isAttackSelectionMode: boolean = false;
+  @ViewChild('gridContainer') gridContainer!: ElementRef<HTMLElement>;
 
   @Output() attackTargetSelected = new EventEmitter<Character>();
 
@@ -284,7 +285,7 @@ export class GameGridComponent implements OnInit, OnChanges {
 
   async captureMapPreview(maxWidth: number = GameGridComponent.defaultPreviewMaxWidth): Promise<string> {
     try {
-      const gridElement = document.querySelector('.grid-container') as HTMLElement;
+      const gridElement = this.gridContainer?.nativeElement;
       if (!gridElement) return '';
       const scale = Math.min(1, maxWidth / gridElement.offsetWidth);
       const gridCanva = await html2canvas(gridElement, {
