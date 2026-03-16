@@ -94,29 +94,6 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
         socket.emit(GameSessionEvents.AvatarTakenUpdated, gameSession.getTakenAvatars());
     }
 
-    @SubscribeMessage(GameSessionEvents.StartGame)
-    handleStartGame(socket: Socket, payload: { roomId: string }) {
-        const gameSession = this.getSessionOrFail(socket, payload.roomId);
-        if (!gameSession) return;
-
-        if (!gameSession.isHost(socket.id)) {
-            socket.emit(GameSessionEvents.GameSessionJoinError, "Seul l'organisateur peut démarrer la partie");
-            return;
-        }
-        if (gameSession.players.length < 2) {
-            socket.emit(GameSessionEvents.GameSessionJoinError, 'Il faut au moins 2 joueurs pour démarrer');
-            return;
-        }
-
-        gameSession.startGame();
-        this.server.to(payload.roomId).emit(GameSessionEvents.GameStarted, {
-            roomId: payload.roomId,
-            mapData: gameSession.mapCopy,
-            gameSession,
-        });
-        this.logger.log(`Partie démarrée dans la salle ${payload.roomId}`);
-    }
-
     @SubscribeMessage(GameSessionEvents.LeaveGameSession)
     handleLeaveGameSession(socket: Socket, payload: { roomId: string }) {
         this.handleLeaveLogic(socket, payload.roomId);
@@ -244,7 +221,7 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
     }
 
     private deactivateDebugMode(gameSession: GameSession):void {
-        if(gameSession.isDebugModeActivated){
+        if(gameSession && gameSession.isDebugModeActivated){
             this.server.to(gameSession.roomId).emit(GameSessionEvents.ToggleDebugMode, {
                 isDebugModeActivated: false,
             });

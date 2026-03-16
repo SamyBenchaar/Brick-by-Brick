@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
-import { Character, Position } from '@common/character';
+import { Character } from '@common/character';
+import { Position } from '@common/position';
 import { GameEvents } from '@common/game.events';
 import { Subject } from 'rxjs';
 import { io, Socket } from 'socket.io-client';

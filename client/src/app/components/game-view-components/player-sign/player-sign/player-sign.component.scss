@@ -71,3 +71,22 @@
     font-weight: bold;
     letter-spacing: 1px;
 }
+
+.attack-button {
+    width: 100%;
+    margin-top: 4px;
+    padding: 6px 8px;
+    border: 2px solid #6b4c2a;
+    border-radius: 3px;
+    background-color: rgba(255, 255, 255, 0.3);
+    color: #3a2510;
+    font-family: 'MyFont', sans-serif;
+    font-size: 13px;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+.attack-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

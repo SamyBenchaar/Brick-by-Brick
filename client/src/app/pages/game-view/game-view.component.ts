@@ -1,11 +1,14 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, effect, HostListener, inject, Injector, OnDestroy, OnInit, signal } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { ChatComponent } from '@app/components/chat/chat.component';
+import { AppDialogComponent } from '@app/components/game-edition-components/app-dialog/app-dialog.component';
 import { GameGridComponent } from '@app/components/game-edition-components/game-grid/game-grid.component';
 import { PlayerBoardComponent } from '@app/components/game-view-components/player-board/player-board/player-board.component';
 import { PlayerSignComponent } from '@app/components/game-view-components/player-sign/player-sign/player-sign.component';
 import { AVATARS } from '@app/constants/character.constants';
+import { AppDialogData } from '@app/interfaces/dialog-model';
 import { Game } from '@app/interfaces/game';
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket.service';
 import { Character } from '@common/character';
@@ -23,11 +26,13 @@ import { KEY_DIRECTION_MAP, KEY_DEBUG, KEY_ENTER } from '@app/constants/key-even
 export class GameViewComponent implements OnInit, OnDestroy {
   gameSessionSocketService = inject(GameSessionSocketService);
   private router = inject(Router);
+  private dialog = inject(MatDialog);
   private injector = inject(Injector);
   private routeSubscription?: Subscription;
 
   gameData: Game | null = null;
   isChatCollapsed = false;
+  isAttackSelectionMode = signal<boolean>(false);
 
   isWriting = signal<boolean>(false);
 
@@ -51,6 +56,14 @@ export class GameViewComponent implements OnInit, OnDestroy {
     effect(() => {
       const map = this.gameSessionSocketService.mapCopy();
       this.gameData = map ? JSON.parse(JSON.stringify(map)) : null;
+    }, { injector: this.injector });
+
+    effect(() => {
+      this.gameSessionSocketService.currentSession();
+      this.gameSessionSocketService.currentPlayerTurn();
+      if (!this.gameSessionSocketService.canCurrentPlayerAttack()) {
+        this.isAttackSelectionMode.set(false);
+      }
     }, { injector: this.injector });
 
     window.addEventListener('beforeunload', this.handleBeforeUnload);
@@ -132,13 +145,50 @@ export class GameViewComponent implements OnInit, OnDestroy {
   }
 
   abandonGame(): void {
-    if (confirm('Êtes-vous sûr de vouloir abandonner la partie?')) {
-      this.gameSessionSocketService.abandonGame();
-    }
+    const dialogData: AppDialogData = {
+      title: 'Abandon de la partie',
+      message: 'Etes-vous sur de vouloir abandonner la partie?',
+      type: 'warning',
+      confirmText: 'Abandonner',
+      cancelText: 'Annuler',
+    };
+
+    this.dialog.open(AppDialogComponent, {
+      data: dialogData,
+      disableClose: true,
+    }).afterClosed().subscribe((confirmed: boolean) => {
+      if (confirmed) {
+        this.gameSessionSocketService.abandonGame();
+      }
+    });
   }
 
   getPlayers(): Character[] {
     return this.gameSessionSocketService.currentSession()?.players.map(p => p.character) ?? [];
+  }
+
+  getSelectedAttackTargetName(): string | null {
+    return this.isAttackSelectionMode() ? 'une cible' : null;
+  }
+
+  canAttackSelectedTarget(): boolean {
+    return this.gameSessionSocketService.canCurrentPlayerAttack();
+  }
+
+  attackSelectedTarget(): void {
+    if (!this.canAttackSelectedTarget()) {
+      return;
+    }
+    this.isAttackSelectionMode.set(true);
+  }
+
+  onAttackTargetSelected(target: Character): void {
+    if (!this.gameSessionSocketService.canAttackTarget(target)) {
+      return;
+    }
+
+    this.gameSessionSocketService.requestCombat(target.id);
+    this.isAttackSelectionMode.set(false);
   }
 
   getAvatarImage(avatarId: number): string {

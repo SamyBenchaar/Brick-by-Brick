@@ -1,4 +1,3 @@
-/* eslint-disable max-lines */
 import { Injectable, signal, WritableSignal } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
@@ -9,6 +8,7 @@ import { Character } from '@common/character';
 import { GameSessionEvents } from '@common/game.events';
 import { Position } from '@common/position';
 import { SocketService } from './socket.service';
+import { setupGameplayEventListeners } from './gameplay-listeners';
 
 @Injectable({
     providedIn: 'root',
@@ -20,7 +20,6 @@ export class GameSessionSocketService {
     roomId: WritableSignal<string> = signal<string>('');
     hostSocketId: WritableSignal<string> = signal<string>('');
     mapCopy: WritableSignal<Game | null> = signal<Game | null>(null);
-
     currentPlayerTurn: WritableSignal<string | null> = signal<string | null>(null);
     turnTimeRemaining: WritableSignal<number> = signal<number>(0);
     reachableTiles: WritableSignal<Position[]> = signal<Position[]>([]);
@@ -30,13 +29,12 @@ export class GameSessionSocketService {
     isDebugModeActivated: WritableSignal<boolean> = signal<boolean>(false);
 
     private listenersInitialized = false;
-    private readonly endGameDelay = 3000;
     kickedMessage: WritableSignal<string | null> = signal<string | null>(null);
     cancelledMessage: WritableSignal<string | null> = signal<string | null>(null);
     takenAvatars: WritableSignal<number[]> = signal<number[]>([]);
     private lastJoinRoomId: string | null = null;
     private lastJoinPlayer: Character | null = null;
-
+    readonly endGameDelay = 3000;
     constructor(
         private socketService: SocketService,
         private router: Router,
@@ -181,129 +179,7 @@ export class GameSessionSocketService {
             this.router.navigate(['/game-view'], { queryParams: { roomId } });
         });
 
-        //debut TODO mettre ca seul 
-        this.socketService.on<{ playerId: string; playerName: string; delay: number }>(
-            GameSessionEvents.TurnStarting,
-            (data) => {
-                this.turnStarting.set(true);
-                this.currentPlayerTurn.set(data.playerId);
-            },
-        );
-
-        this.socketService.on<{ playerId: string; playerName: string; turnTime: number }>(
-            GameSessionEvents.TurnStarted,
-            (data) => {
-                this.turnStarting.set(false);
-                this.currentPlayerTurn.set(data.playerId);
-                this.turnTimeRemaining.set(data.turnTime);
-            },
-        );
-
-        this.socketService.on<{ timeRemaining: number }>(GameSessionEvents.TurnTimeUpdate, (data) => {
-            this.turnTimeRemaining.set(data.timeRemaining);
-        });
-
-        this.socketService.on<{ playerId: string }>(GameSessionEvents.TurnEnded, () => {
-            this.currentPlayerTurn.set(null);
-            this.reachableTiles.set([]);
-        });
-
-        this.socketService.on<{ playerId: string; position: Position; remainingMovement: number; remainingActions: number }>(
-            GameSessionEvents.MoveExecuted,
-            (data) => {
-                const session = this.currentSession();
-                if (session) {
-                    const player = session.players.find(p => p.character.id === data.playerId);
-                    if (player) {
-                        player.character.position = data.position;
-                        player.character.remainingMovement = data.remainingMovement;
-                        player.character.remainingActions = data.remainingActions;
-                        this.currentSession.set({ ...session });
-                    }
-                }
-            },
-        );
-
-        this.socketService.on<{ playerId: string; tiles: Position[] }>(GameSessionEvents.ReachableTiles, (data) => {
-            this.reachableTiles.set(data.tiles);
-        });
-
-        this.socketService.on<{
-            winner: string;
-            loser: string;
-            attackerVictories: number;
-            defenderNewPosition: Position;
-            remainingActions: number;
-        }>(GameSessionEvents.CombatResult, (data) => {
-            const session = this.currentSession();
-            if (session) {
-                const attacker = session.players.find(p => p.character.id === data.winner);
-                const defender = session.players.find(p => p.character.id === data.loser);
-
-                if (attacker) {
-                    attacker.character.victories = data.attackerVictories;
-                    attacker.character.remainingActions = data.remainingActions;
-                }
-                if (defender) {
-                    defender.character.position = data.defenderNewPosition;
-                }
-
-                this.currentSession.set({ ...session });
-            }
-        });
-
-        this.socketService.on<{ playerId: string }>(GameSessionEvents.PlayerAbandoned, (data) => {
-            const session = this.currentSession();
-            if (session) {
-                session.players = session.players.filter(p => p.character.id !== data.playerId);
-                if (session.playerOrder) {
-                    session.playerOrder = session.playerOrder.filter(id => id !== data.playerId);
-                }
-                this.currentSession.set({ ...session });
-            }
-        });
-
-        this.socketService.on<{ winner: { id: string; name: string; avatarId: number } | null; reason: string }>(
-            GameSessionEvents.GameEnded,
-            (data) => {
-                if (this.hasAbandoned()) {
-                    this.hasAbandoned.set(false);
-                    this.currentSession.set(null);
-                    return;
-                }
-
-                this.gameEnded.set(true);
-                let message = '';
-                let title = 'Partie terminée';
-
-                if (data.reason === 'victory' && data.winner) {
-                    const mySocketId = this.socketService.getSocketId();
-                    if (data.winner.id === mySocketId) {
-                        title = 'Victoire!';
-                        message = `Félicitations! Vous avez gagné la partie avec 3 victoires!`;
-                    } else {
-                        title = 'Partie terminée';
-                        message = `${data.winner.name} a gagné la partie avec 3 victoires!`;
-                    }
-                } else if (data.reason === 'noPlayers') {
-                    message = 'La partie est terminée car tous les autres joueurs ont abandonné.';
-                } else {
-                    message = 'La partie est terminée.';
-                }
-
-                setTimeout(() => {
-                    this.router.navigate(['/']).then(() => {
-                        this.dialog.open(AppDialogComponent, {
-                            data: { title, message, type: data.reason === 'victory' ? 'info' : 'info' },
-                            disableClose: true,
-                        });
-                        this.gameEnded.set(false);
-                        this.currentSession.set(null);
-                    });
-                }, this.endGameDelay);
-            },
-        );
-        // fin de TODO 
+        setupGameplayEventListeners(this, this.socketService, this.router, this.dialog);
 
         this.socketService.on<number[]>(GameSessionEvents.AvatarTakenUpdated, (avatarIds) => {
             this.takenAvatars.set(avatarIds);
@@ -431,9 +307,89 @@ export class GameSessionSocketService {
     isMyTurn(): boolean {
         const currentPlayerId = this.currentPlayerTurn();
         if (!currentPlayerId) return false;
-
         const mySocketId = this.getSocketId();
         const myPlayer = this.currentSession()?.players.find(p => p.socketId === mySocketId);
         return myPlayer?.character.id === currentPlayerId;
+    }
+
+    getCurrentPlayerCharacter(): Character | null {
+        const mySocketId = this.getSocketId();
+        return this.currentSession()?.players.find(p => p.socketId === mySocketId)?.character ?? null;
+    }
+
+    getAutoAttackTarget(): Character | null {
+        const currentPlayer = this.getCurrentPlayerCharacter();
+        if (!currentPlayer?.position) {
+            return null;
+        }
+
+        const session = this.currentSession();
+        if (!session) {
+            return null;
+        }
+
+        return session.players
+            .map(player => player.character)
+            .find(character =>
+                character.id !== currentPlayer.id &&
+                character.position !== undefined &&
+                this.areAdjacent(currentPlayer.position as Position, character.position),
+            ) ?? null;
+    }
+
+    canAttackTarget(target: Character | null): boolean {
+        if (!this.isMyTurn()) {
+            return false;
+        }
+
+        const currentPlayer = this.getCurrentPlayerCharacter();
+        if (!currentPlayer?.position || !target?.position) {
+            return false;
+        }
+
+        if (target.id === currentPlayer.id) {
+            return false;
+        }
+
+        if (!currentPlayer.remainingActions || currentPlayer.remainingActions <= 0) {
+            return false;
+        }
+
+        return this.areAdjacent(currentPlayer.position as Position, target.position);
+    }
+
+    canCurrentPlayerAttack(): boolean {
+        if (!this.isMyTurn()) {
+            return false;
+        }
+
+        const currentPlayer = this.getCurrentPlayerCharacter();
+        if (!currentPlayer?.position) {
+            return false;
+        }
+
+        if (!currentPlayer.remainingActions || currentPlayer.remainingActions <= 0) {
+            return false;
+        }
+
+        return this.getAutoAttackTarget() !== null;
+    }
+
+    requestAutoCombat(): void {
+        if (!this.canCurrentPlayerAttack()) {
+            return;
+        }
+
+        const target = this.getAutoAttackTarget();
+        if (!target) {
+            return;
+        }
+
+        this.requestCombat(target.id);
+    }
+
+    private areAdjacent(positionA: Position, positionB: Position): boolean {
+        const distance = Math.abs(positionA.x - positionB.x) + Math.abs(positionA.y - positionB.y);
+        return distance === 1;
     }
 }

@@ -80,7 +80,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
 
             this.gameSessionService.initializeGameSession(gameSession, game);
 
-            this.server.to(roomId).emit(GameSessionEvents.GameSessionStarted, {
+            this.server.to(roomId).emit(GameSessionEvents.GameStarted, {
                 players: gameSession.getActivePlayers(),
                 playerOrder: gameSession.playerOrder,
                 startingPoints: Array.from(gameSession.startingPoints.entries()),
