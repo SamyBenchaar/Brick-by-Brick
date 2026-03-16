@@ -380,58 +380,26 @@ export class GameSessionSocketService {
     }
 
     canAttackTarget(target: Character | null): boolean {
-        if (!this.isMyTurn()) {
-            return false;
-        }
-
         const currentPlayer = this.getCurrentPlayerCharacter();
-        if (!currentPlayer?.position || !target?.position) {
-            return false;
-        }
 
-        if (target.id === currentPlayer.id) {
-            return false;
-        }
-
-        if (!currentPlayer.remainingActions || currentPlayer.remainingActions <= 0) {
-            return false;
-        }
-
-        return this.areAdjacent(currentPlayer.position as Position, target.position);
+        return (
+            this.isMyTurn() &&
+            currentPlayer?.position !== undefined &&
+            target?.position !== undefined &&
+            target.id !== currentPlayer.id &&
+            currentPlayer.remainingActions !== undefined &&
+            currentPlayer.remainingActions > 0 &&
+            this.areAdjacent(currentPlayer.position, target.position)
+        );
     }
 
     canCurrentPlayerAttack(): boolean {
-        if (!this.isMyTurn()) {
-            return false;
-        }
-
         const currentPlayer = this.getCurrentPlayerCharacter();
-        if (!currentPlayer?.position) {
-            return false;
-        }
-
-        if (!currentPlayer.remainingActions || currentPlayer.remainingActions <= 0) {
-            return false;
-        }
-
-        return this.getAutoAttackTarget() !== null;
-    }
-
-    requestAutoCombat(): void {
-        if (!this.canCurrentPlayerAttack()) {
-            return;
-        }
-
-        const target = this.getAutoAttackTarget();
-        if (!target) {
-            return;
-        }
-
-        this.requestCombat(target.id);
+        return this.isMyTurn() && currentPlayer?.position != null && currentPlayer.remainingActions != null &&
+            currentPlayer.remainingActions > 0 && this.getAutoAttackTarget() !== null;
     }
 
     private areAdjacent(positionA: Position, positionB: Position): boolean {
-        const distance = Math.abs(positionA.x - positionB.x) + Math.abs(positionA.y - positionB.y);
-        return distance === 1;
+        return Math.abs(positionA.x - positionB.x) + Math.abs(positionA.y - positionB.y) === 1;
     }
 }

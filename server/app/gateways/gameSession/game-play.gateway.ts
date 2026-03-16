@@ -91,11 +91,9 @@ export class GamePlayGateway implements OnGatewayInit {
         if (!gameSession) {
             return;
         }
-
         if (gameSession.isTurnStarting) {
             return;
         }
-
         const currentPlayer = gameSession.getCurrentPlayer();
         const requestingPlayer = gameSession.players.find((p) => p.socketId === socket.id);
         const isHost = gameSession.isHost(socket.id);
@@ -281,42 +279,31 @@ export class GamePlayGateway implements OnGatewayInit {
     @SubscribeMessage(GameSessionEvents.PlayerAbandoned)
     handlePlayerAbandoned(socket: Socket, payload: { roomId: string }) {
         const gameSession = this.gameSessionService.getGameSession(payload.roomId);
-        if (!gameSession) {
-            return;
-        }
 
-        if (gameSession.status !== 'playing') {
-            return;
-        }
+        if (gameSession && gameSession.status === 'playing') {
+            const currentPlayer = gameSession.getCurrentPlayer();
+            const abandoningPlayer = gameSession.players.find((p) => p.socketId === socket.id);
+            const abandoningPlayerId = abandoningPlayer?.character.id;
+            const wasCurrentPlayer =
+                !!currentPlayer &&
+                !!abandoningPlayer &&
+                currentPlayer.id === abandoningPlayer.character.id;
 
-        const currentPlayer = gameSession.getCurrentPlayer();
-        const abandoningPlayer = gameSession.players.find((p) => p.socketId === socket.id);
-        const wasCurrentPlayer = currentPlayer && abandoningPlayer && currentPlayer.id === abandoningPlayer.character.id;
+            this.gameSessionService.removePlayer(payload.roomId, socket.id);
 
-        this.gameSessionService.removePlayer(payload.roomId, socket.id);
+            this.server.to(payload.roomId).emit(GameSessionEvents.PlayerAbandoned, {
+                playerId: abandoningPlayerId,
+            });
 
-        this.server.to(payload.roomId).emit(GameSessionEvents.PlayerAbandoned, {
-            playerId: abandoningPlayer?.character.id,
-        });
+            const winner = this.gameSessionService.checkGameWinner(gameSession);
 
-        const winner = this.gameSessionService.checkGameWinner(gameSession);
-        if (winner) {
-            this.handleGameEnd(gameSession, winner);
-            return;
-        }
-
-        if (gameSession.playerOrder.length === 1) {
-            this.handleGameEnd(gameSession, null);
-            return;
-        }
-
-        if (gameSession.playerOrder.length === 0) {
-            this.handleGameEnd(gameSession, null);
-            return;
-        }
-
-        if (wasCurrentPlayer && abandoningPlayer) {
-            this.handleTurnEnd(gameSession, abandoningPlayer.character.id);
+            if (winner) {
+                this.handleGameEnd(gameSession, winner);
+            } else if (gameSession.playerOrder.length <= 1) {
+                this.handleGameEnd(gameSession, null);
+            } else if (wasCurrentPlayer && abandoningPlayerId) {
+                this.handleTurnEnd(gameSession, abandoningPlayerId);
+            }
         }
     }
 

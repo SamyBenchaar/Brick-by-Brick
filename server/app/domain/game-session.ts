@@ -66,13 +66,13 @@ export class GameSession {
             return;
         }
 
-        const [player] = this.players.splice(index, 1);
-        this.leftPlayers.push(player);
+        const [removedPlayer] = this.players.splice(index, 1);
+        this.leftPlayers.push(removedPlayer);
 
-        const removedOrderIndex = this.playerOrder.indexOf(player.character.id);
+        const removedOrderIndex = this.playerOrder.indexOf(removedPlayer.character.id);
 
-        this.playerOrder = this.playerOrder.filter((id) => id !== player.character.id);
-        this.startingPoints.delete(player.character.id);
+        this.playerOrder = this.playerOrder.filter((id) => id !== removedPlayer.character.id);
+        this.startingPoints.delete(removedPlayer.character.id);
 
         if (removedOrderIndex !== -1 && removedOrderIndex < this.currentPlayerIndex) {
             this.currentPlayerIndex -= 1;
