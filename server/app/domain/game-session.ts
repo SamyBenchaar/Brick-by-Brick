@@ -1,7 +1,7 @@
 import { Character } from '@common/character';
 import { Player } from '@common/player';
-import { SessionStatus } from '@common/session.status';
 import { Position } from '@common/position';
+import { SessionStatus } from '@common/session.status';
 
 const ROOM_ID_LENGTH = 8;
 const MAX_PLAYER = 6;
@@ -49,25 +49,37 @@ export class GameSession {
     }
 
     removePlayer(socketId: string): void {
-        const existingPlayer = this.players.find(player => player.socketId === socketId);
-        if (!existingPlayer) return;
+        const existingPlayer = this.players.find((player) => player.socketId === socketId);
+        if (!existingPlayer) {
+            return;
+        }
+
         this.socketToAvatar.delete(socketId);
 
         if (this.status === 'waiting') {
-            // Salle d'attente : suppression définitive
-            this.players = this.players.filter(p => p.socketId !== socketId);
-        } else {
-            // En partie : déplacer dans leftPlayers pour l'affichage grisé sur le board
-            const index = this.players.findIndex(p => p.socketId === socketId);
-            if (index !== -1) {
-                const [player] = this.players.splice(index, 1);
-                this.leftPlayers.push(player);
-                this.playerOrder = this.playerOrder.filter(id => id !== player.character.id);
-                this.startingPoints.delete(player.character.id);
-                if (this.currentPlayerIndex >= this.playerOrder.length && this.playerOrder.length > 0) {
-                    this.currentPlayerIndex = 0;
-                }
-            }
+            this.players = this.players.filter((p) => p.socketId !== socketId);
+            return;
+        }
+
+        const index = this.players.findIndex((p) => p.socketId === socketId);
+        if (index === -1) {
+            return;
+        }
+
+        const [player] = this.players.splice(index, 1);
+        this.leftPlayers.push(player);
+
+        const removedOrderIndex = this.playerOrder.indexOf(player.character.id);
+
+        this.playerOrder = this.playerOrder.filter((id) => id !== player.character.id);
+        this.startingPoints.delete(player.character.id);
+
+        if (removedOrderIndex !== -1 && removedOrderIndex < this.currentPlayerIndex) {
+            this.currentPlayerIndex -= 1;
+        }
+
+        if (this.currentPlayerIndex >= this.playerOrder.length && this.playerOrder.length > 0) {
+            this.currentPlayerIndex = 0;
         }
     }
 
