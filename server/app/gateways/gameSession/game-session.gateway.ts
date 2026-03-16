@@ -5,8 +5,10 @@ import { Character } from '@common/character';
 import { GameSessionEvents } from '@common/game.events';
 import { Player } from '@common/player';
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
-import { OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, SubscribeMessage,
-    WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
+import {
+    OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, SubscribeMessage,
+    WebSocketGateway, WebSocketServer,
+} from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 
 @WebSocketGateway({ cors: true })
@@ -128,7 +130,7 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
 
     private handlePlayingDisconnect(socket: Socket, roomId: string) {
         const gameSession = this.gameSessionService.getGameSession(roomId);
-        if(gameSession.isHost(socket.id)){
+        if (gameSession.isHost(socket.id)) {
             this.deactivateDebugMode(gameSession);
         }
         this.socketToRoom.delete(socket.id);
@@ -176,7 +178,7 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
 
     private handleHostLeave(session: GameSession) {
         const roomId = session.roomId;
-        
+
         this.deactivateDebugMode(session);
 
         this.server.to(roomId).emit(GameSessionEvents.RoomCancelled, {
@@ -220,8 +222,9 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
         return { socketId, character };
     }
 
-    private deactivateDebugMode(gameSession: GameSession):void {
-        if(gameSession && gameSession.isDebugModeActivated){
+    private deactivateDebugMode(gameSession: GameSession): void {
+        if (gameSession && gameSession.isDebugModeActivated) {
+            gameSession.isDebugModeActivated = false;
             this.server.to(gameSession.roomId).emit(GameSessionEvents.ToggleDebugMode, {
                 isDebugModeActivated: false,
             });

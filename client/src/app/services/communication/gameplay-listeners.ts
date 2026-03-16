@@ -1,10 +1,10 @@
 import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { AppDialogComponent } from '@app/components/game-edition-components/app-dialog/app-dialog.component';
-import { Position } from '@common/position';
 import { GameSessionEvents } from '@common/game.events';
-import { SocketService } from './socket.service';
+import { Position } from '@common/position';
 import type { GameSessionSocketService } from './game-session-socket.service';
+import { SocketService } from './socket.service';
 
 export function setupGameplayEventListeners(
     service: GameSessionSocketService,
@@ -17,6 +17,7 @@ export function setupGameplayEventListeners(
         (data) => {
             service.turnStarting.set(true);
             service.currentPlayerTurn.set(data.playerId);
+            service.reachableTiles.set([]);
         },
     );
 
@@ -68,9 +69,34 @@ export function setupGameplayEventListeners(
         },
     );
 
-    socketService.on<{ playerId: string; tiles: Position[] }>(GameSessionEvents.ReachableTiles, (data) => {
-        service.reachableTiles.set(data.tiles);
-    });
+    socketService.on<{ playerId: string; tiles: Position[] }>(
+        GameSessionEvents.ReachableTiles,
+        (data) => {
+            const session = service.currentSession();
+            const mySocketId = service.getSocketId();
+
+            if (!session || !mySocketId) {
+                service.reachableTiles.set([]);
+                return;
+            }
+
+            const myPlayer = session.players.find((p) => p.socketId === mySocketId);
+            if (!myPlayer) {
+                service.reachableTiles.set([]);
+                return;
+            }
+
+            const isMyTiles = myPlayer.character.id === data.playerId;
+            const isMyTurn = service.currentPlayerTurn() === data.playerId;
+
+            if (!isMyTiles || !isMyTurn) {
+                service.reachableTiles.set([]);
+                return;
+            }
+
+            service.reachableTiles.set(data.tiles);
+        },
+    );
 
     socketService.on<{
         winner: string;

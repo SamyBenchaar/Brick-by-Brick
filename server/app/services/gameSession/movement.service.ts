@@ -1,5 +1,5 @@
-import { Character } from '@common/character';
 import { GameSession, Position } from '@app/domain/game-session';
+import { Character } from '@common/character';
 import { TileType } from '@common/map';
 import { Injectable, Logger } from '@nestjs/common';
 
@@ -71,24 +71,25 @@ export class MovementService {
         mapData: MapTile[][],
     ): Position[] {
         const reachable = new Set<string>();
-        const visited = new Set<string>();
+        const bestCosts = new Map<string, number>();
         const occupiedPositions = this.getOccupiedPositions(gameSession);
-        occupiedPositions.delete(`${currentPosition.x},${currentPosition.y}`); // Exclude current position
+        occupiedPositions.delete(`${currentPosition.x},${currentPosition.y}`);
 
-        const startPosKey = `${currentPosition.x},${currentPosition.y}`;
-        visited.add(startPosKey);
-        reachable.add(startPosKey);
+        const startKey = `${currentPosition.x},${currentPosition.y}`;
+        reachable.add(startKey);
+        bestCosts.set(startKey, 0);
 
-        // BFS 
-        const queue: { pos: Position; cost: number }[] = [
-            { pos: currentPosition, cost: 0 },
-        ];
+        const queue: { pos: Position; cost: number }[] = [{ pos: currentPosition, cost: 0 }];
 
         while (queue.length > 0) {
-            const current = queue.shift();
-            if (!current) {
-                continue;
+            let currentIndex = 0;
+            for (let i = 1; i < queue.length; i++) {
+                if (queue[i].cost < queue[currentIndex].cost) {
+                    currentIndex = i;
+                }
             }
+
+            const [current] = queue.splice(currentIndex, 1);
             const { pos, cost } = current;
 
             for (const direction of Object.values(this.directions)) {
@@ -99,10 +100,6 @@ export class MovementService {
 
                 const newPosKey = `${newPos.x},${newPos.y}`;
 
-                if (visited.has(newPosKey)) {
-                    continue;
-                }
-
                 if (!this.isValidTile(mapData, newPos, occupiedPositions)) {
                     continue;
                 }
@@ -112,16 +109,19 @@ export class MovementService {
                 const totalCost = cost + moveCost;
 
                 if (totalCost <= movementPoints) {
-                    visited.add(newPosKey);
-                    reachable.add(newPosKey);
+                    const previousBest = bestCosts.get(newPosKey);
+                    if (previousBest !== undefined && totalCost >= previousBest) {
+                        continue;
+                    }
 
-                    // Continuation BFS
+                    bestCosts.set(newPosKey, totalCost);
+                    reachable.add(newPosKey);
                     queue.push({ pos: newPos, cost: totalCost });
                 }
             }
         }
 
-        return Array.from(reachable).map(key => {
+        return Array.from(reachable).map((key) => {
             const [x, y] = key.split(',');
             return { x: parseInt(x, 10), y: parseInt(y, 10) };
         });
@@ -177,7 +177,27 @@ export class MovementService {
         return true;
     }
 
-    assignPosition(player: Character, gameSession: GameSession, newPosition: Position){
+    assignPosition(player: Character, gameSession: GameSession, newPosition: Position): void {
+        if (!player) {
+            return;
+        }
+
+        const tile = gameSession.getMapCopy()?.tiles?.[newPosition.y]?.[newPosition.x];
+        if (!tile) {
+            return;
+        }
+
+        const occupied = gameSession.players.some(
+            (p) =>
+                p.character.id !== player.id &&
+                p.character.position?.x === newPosition.x &&
+                p.character.position?.y === newPosition.y,
+        );
+
+        if (occupied || tile.type === TileType.Wall || tile.type === TileType.Door || !!tile.object) {
+            return;
+        }
+
         player.position = newPosition;
     }
 
