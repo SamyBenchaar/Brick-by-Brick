@@ -9,16 +9,8 @@ import { CombatResult, CombatService } from './combat.service';
 import { MovementService } from './movement.service';
 import { StartingPointService } from './starting-point.service';
 import { TurnManagementService } from './turn-management.service';
-interface MapTile {
-    type: string;
-    object?: { type: string };
-}
+import { GameDataForInit } from '@app/interfaces/game-map-interfaces';
 
-interface GameDataForInit {
-    mapConfig: {
-        tiles: MapTile[][];
-    };
-}
 @Injectable()
 export class GameSessionService {
 

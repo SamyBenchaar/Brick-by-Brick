@@ -1,7 +1,7 @@
 import { GameGateway } from '@app/gateways/game/game.gateway';
 import { Game, GameDocument } from '@app/model/game';
-import { GameMetadataValidationService } from '@app/services/validations/gameMetadataValidation.service';
-import { MapValidationService } from '@app/services/validations/mapValidation.service';
+import { GameMetadataValidationService } from '@app/services/validations/game-metadata-validation.service';
+import { MapValidationService } from '@app/services/validations/map-validation.service';
 import { BadRequestException } from '@nestjs/common';
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';

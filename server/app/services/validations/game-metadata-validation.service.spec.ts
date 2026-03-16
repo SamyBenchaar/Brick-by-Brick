@@ -2,12 +2,12 @@ import { Game, GameDocument } from '@app/model/game';
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Model } from 'mongoose';
-import { GameMetadataValidationService } from './gameMetadataValidation.service';
+import { GameMetadataValidationService } from '@app/services/validations/game-metadata-validation.service';
 
 type MockModel<T> = Partial<Record<keyof Model<T>, jest.Mock>>;
 
 /**
- * Stratégie de test pour GameMetadataValidationService:
+ * Stratégie de test pour GameMetaDataValidationService:
  * Communication avec la base de données: findOne()
  * 
  * 1. Tests de validation : Vérifier que les métadonnées sont validées correctement

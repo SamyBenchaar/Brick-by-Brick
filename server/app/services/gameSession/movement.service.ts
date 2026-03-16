@@ -2,17 +2,7 @@ import { GameSession, Position } from '@app/domain/game-session';
 import { Character } from '@common/character';
 import { TileType } from '@common/map';
 import { Injectable, Logger } from '@nestjs/common';
-
-interface MovementCost {
-    base: number;
-    water: number;
-    ice: number;
-}
-
-interface MapTile {
-    type: string;
-    object?: { type: string };
-}
+import { MovementCost, MapTile } from '@app/interfaces/game-map-interfaces';
 
 @Injectable()
 export class MovementService {

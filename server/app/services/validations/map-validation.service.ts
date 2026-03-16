@@ -2,7 +2,7 @@ import { Game } from '@app/model/game';
 import { Tile } from '@app/model/tile';
 import { MapSize, MIN_TERRAIN_COVERAGE, PERCENTAGE_MULTIPLIER, PLAYABLE_TYPES, TileType } from '@common/map';
 import { Injectable } from '@nestjs/common';
-import { Direction, GridPosition } from '@app/interfaces/map-validation.interfaces';
+import { Direction, GridPosition } from '@app/interfaces/map-validation-interfaces';
 
 @Injectable()
 export class MapValidationService {
