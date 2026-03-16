@@ -1,4 +1,4 @@
-import { Injectable, signal, WritableSignal } from '@angular/core';
+import { inject, Injectable, signal, WritableSignal } from '@angular/core';
 import { ChatEvents } from '@common/game.events';
 import { ChatMessage } from '@common/message';
 import { SocketService } from './socket.service';
@@ -10,7 +10,7 @@ export class ChatService {
     messages: WritableSignal<ChatMessage[]> = signal<ChatMessage[]>([]);
     isLoading: WritableSignal<boolean> = signal(false);
 
-    constructor(private socketService: SocketService) {}
+    private socketService = inject(SocketService);
 
     connect(username: string, gameId?: string, hostPlayerId?: string): void {
         if (!this.socketService.isConnected()) {

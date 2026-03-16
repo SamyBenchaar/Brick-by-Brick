@@ -1,4 +1,4 @@
-import { Injectable, signal, WritableSignal } from '@angular/core';
+import { Injectable, signal, WritableSignal, inject} from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { AppDialogComponent } from '@app/components/game-edition-components/app-dialog/app-dialog.component';
@@ -35,11 +35,10 @@ export class GameSessionSocketService {
     private lastJoinRoomId: string | null = null;
     private lastJoinPlayer: Character | null = null;
     readonly endGameDelay = 3000;
-    constructor(
-        private socketService: SocketService,
-        private router: Router,
-        private dialog: MatDialog,
-    ) {}
+
+    private socketService = inject(SocketService);
+    private router = inject(Router);
+    private dialog = inject(MatDialog);
 
     connect(): void {
         if (!this.socketService.isConnected()) {
