@@ -13,7 +13,7 @@ export class JoinGamePageComponent {
   private router = inject(Router);
 
   join(): void {
-    const selectedGameSessionId = this.gameSessionListComponent.selectedGameSessionId();
+    const selectedGameSessionId = this.gameSessionListComponent?.selectedGameSessionId();
     if (selectedGameSessionId) {
       this.router.navigate(['/character-creation'], { queryParams: { roomId: selectedGameSessionId } });
     }

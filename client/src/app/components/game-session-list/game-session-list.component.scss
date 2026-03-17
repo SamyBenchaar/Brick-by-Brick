@@ -22,10 +22,10 @@
     }
 
     &.selected {
-      border-color: #acf691;
-      border-width: 5px;
+      border-color: #060606;
+      border-width: 1px;
       border-style: solid;
-      box-shadow: 0 12px 24px rgba(145, 217, 147, 0.7);
+      background: rgba(145, 217, 147, 0.8);
     }
 }
 
@@ -34,4 +34,8 @@
     color: #000000;
     padding: 0.75rem;
     text-align: center;
+}
+
+.previewImage {
+  width: 150px;
 }

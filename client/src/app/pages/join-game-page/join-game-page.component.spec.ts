@@ -1,3 +1,4 @@
+import { signal, WritableSignal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { GameSessionListComponent } from '@app/components/game-session-list/game-session-list.component';
@@ -5,11 +6,11 @@ import { GameSessionSocketService } from '@app/services/communication/game-sessi
 import { JoinGamePageComponent } from './join-game-page.component';
 
 /**
- * Stratégie de test pour JoinGamePageComponent:
- * 
- * 1. Tests d'intégration du service : Vérifier que le composant appelle correctement et gère les réponses du service
- * 2. Tests de navigation : Assurer que la navigation du routeur se produit lorsque l'on rejoint une session de jeu
- * 3. Cas Limite : Tester quand GameSessionListComponent n'a pas de session sélectionnée
+ * Stratégie de test pour JoinGamePageComponent (jointure):
+ *
+ * 1. Préconditions de jointure : bouton joignable seulement si une session est sélectionnée.
+ * 2. Navigation de jointure : redirection vers la création de personnage avec le roomId choisi.
+ * 3. Cas limites : aucune navigation si aucune session, si le composant de liste n'est pas initialisé, ou roomId absent.
  */
 
 describe('JoinGamePageComponent', () => {
@@ -17,12 +18,14 @@ describe('JoinGamePageComponent', () => {
     let fixture: ComponentFixture<JoinGamePageComponent>;
     let gameSessionSocketServiceSpy: jasmine.SpyObj<GameSessionSocketService>;
     let routerSpy: jasmine.SpyObj<Router>;
-    let gameSessionListComponentSpy: jasmine.SpyObj<GameSessionListComponent>;
+    let gameSessionListComponentSpy: Pick<GameSessionListComponent, 'selectedGameSessionId'>;
+    let selectedId: WritableSignal<string | null>;
 
     beforeEach(async () => {
         gameSessionSocketServiceSpy = jasmine.createSpyObj('GameSessionSocketService', ['createGameSession']);
         routerSpy = jasmine.createSpyObj('Router', ['navigate']);
-        gameSessionListComponentSpy = jasmine.createSpyObj('GameSessionListComponent', ['selectedGameSessionId']);
+        selectedId = signal<string | null>(null);
+        gameSessionListComponentSpy = { selectedGameSessionId: selectedId };
 
 
         await TestBed.configureTestingModule({
@@ -36,7 +39,7 @@ describe('JoinGamePageComponent', () => {
 
         fixture = TestBed.createComponent(JoinGamePageComponent);
         component = fixture.componentInstance;
-        component.gameSessionListComponent = gameSessionListComponentSpy;
+        component.gameSessionListComponent = gameSessionListComponentSpy as GameSessionListComponent;
     });
 
     it('devrait créer le composant', () => {
@@ -44,17 +47,17 @@ describe('JoinGamePageComponent', () => {
     });
 
     it('devrait retourner false pour canJoinGameSession quand aucune partie n\'est sélectionnée', () => {
-        gameSessionListComponentSpy.selectedGameSessionId.and.returnValue(null);
+        selectedId.set(null);
         expect(component.canJoinGameSession()).toBeFalse();
     });
 
     it('devrait retourner true pour canJoinGameSession quand une partie est sélectionnée', () => {
-        gameSessionListComponentSpy.selectedGameSessionId.and.returnValue('123');
+        selectedId.set('123');
         expect(component.canJoinGameSession()).toBeTrue();
     });
 
     it('ne devrait pas naviguer si aucune session n\'est sélectionnée', () => {
-        gameSessionListComponentSpy.selectedGameSessionId.and.returnValue(null);
+        selectedId.set(null);
 
         component.join();
 
@@ -62,13 +65,35 @@ describe('JoinGamePageComponent', () => {
     });
 
     it('devrait naviguer vers character-creation avec le bon roomId quand une session est sélectionnée', () => {
-        gameSessionListComponentSpy.selectedGameSessionId.and.returnValue('123');
+        selectedId.set('123');
 
         component.join();
 
         expect(routerSpy.navigate).toHaveBeenCalledWith(
             ['/character-creation'],
             { queryParams: { roomId: '123' } },
+        );
+    });
+
+    it('devrait retourner false pour canJoinGameSession si le gameSessionListComponent n\'est pas initialisé', () => {
+        component.gameSessionListComponent = undefined as unknown as GameSessionListComponent;
+        expect(component.canJoinGameSession()).toBeFalse();
+    });
+
+    it('ne devrait pas naviguer si le gameSessionListComponent n\'est pas initialisé lors du join', () => {
+        component.gameSessionListComponent = undefined as unknown as GameSessionListComponent;
+        component.join();
+        expect(routerSpy.navigate).not.toHaveBeenCalled();
+    });
+
+    it('devrait permettre de rejoindre une partie avec un roomId différent', () => {
+        selectedId.set('ABC123');
+
+        component.join();
+
+        expect(routerSpy.navigate).toHaveBeenCalledWith(
+            ['/character-creation'],
+            { queryParams: { roomId: 'ABC123' } },
         );
     });
 

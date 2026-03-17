@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
-import { AVATARS } from '@app/constants/character.constants';
+import { AVATARS } from '@app/constants/character-constants';
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket.service';
 import { Character } from '@common/character';
 

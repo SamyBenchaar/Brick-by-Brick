@@ -2,20 +2,14 @@ import { Character } from '@common/character';
 import { GameSession, Position } from '@app/domain/game-session';
 import { Injectable, Logger } from '@nestjs/common';
 import { StartingPointService } from './starting-point.service';
+import { GameMap, CombatResult, CombatInfo} from '@app/interfaces/game-map-interfaces';
+import { VICTORIES_TO_WIN } from '@common/constants/game-config-constants';
 
-interface MapTile {
-    type: string;
-    object?: { type: string };
-}
-
-interface GameMap {
-    tiles: MapTile[][];
-}
 
 @Injectable()
 export class CombatService {
     private logger = new Logger(CombatService.name);
-    private readonly victoriesToWin = 3;
+    private readonly victoriesToWin = VICTORIES_TO_WIN;
 
     constructor(private startingPointService: StartingPointService) {}
 
@@ -113,27 +107,4 @@ export class CombatService {
             },
         };
     }
-}
-
-export interface CombatResult {
-    winner: string;
-    loser: string;
-    attackerVictories: number;
-    defenderKnockedDown: boolean;
-    gameWon: boolean;
-}
-
-export interface CombatInfo {
-    attacker: {
-        id: string;
-        name: string;
-        avatarId: number;
-        victories: number;
-    };
-    defender: {
-        id: string;
-        name: string;
-        avatarId: number;
-        victories: number;
-    };
 }

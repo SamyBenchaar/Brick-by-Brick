@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { Tile } from '@app/classes/tile';
 import { TILE_TYPE_DESCRIPTIONS } from '@app/constants/tile-type-description';
-import { MapEditorServiceService } from '@app/services/map-editor-service.service';
+import { MapEditorServiceService } from '@app/services/map-editor.service';
 import { TileType } from '@common/map';
 
 @Component({

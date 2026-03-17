@@ -12,11 +12,11 @@ import {
     BONUS_ATTRIBUTES,
     DICE_PROBABILITY,
     RANDOM_NAME_MAX,
-} from '@app/constants/character.constants';
+} from '@app/constants/character-constants';
+import { AvatarOption } from '@app/interfaces/avatar';
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket.service';
 import { Character } from '@common/character';
 import { Dice } from '@common/dice';
-import { AvatarOption } from '@app/interfaces/avatar';
 
 
 @Component({
@@ -119,8 +119,11 @@ export class CharacterCreationPageComponent implements OnInit, OnDestroy {
     }
 
     getSelectedAvatarImage(): string {
+        if (!this.avatars?.length) {
+            return '';
+        }
         const avatar = this.avatars.find(a => a.id === this.character.avatarId);
-        return avatar ? avatar.image : this.avatars[0].image;
+        return avatar?.image ?? this.avatars[0]?.image ?? '';
     }
 
     applyBonus(target: 'life' | 'speed') {
@@ -151,7 +154,7 @@ export class CharacterCreationPageComponent implements OnInit, OnDestroy {
 
         const availableAvatars = this.avatarState().filter(avatar => !avatar.taken);
 
-        const randomAvatar = availableAvatars[Math.floor(Math.random() * availableAvatars.length) + 1];
+        const randomAvatar = availableAvatars[Math.floor(Math.random() * availableAvatars.length)];
         this.selectAvatar(randomAvatar);
 
         const attributes = ['life', 'speed'] as const;

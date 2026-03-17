@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MapEditorServiceService } from '@app/services/map-editor-service.service';
+import { MapEditorServiceService } from '@app/services/map-editor.service';
 import { ObjectCounterService } from '@app/services/object-counter/object-counter.service';
 import { ObjectType, TileType } from '@common/map';
 import { Tile } from '@app/classes/tile';

@@ -135,7 +135,7 @@ export class GameSessionSocketService {
         this.socketService.on<string>(GameSessionEvents.GameSessionJoinError, (message) => {
             const dialogRef = this.dialog.open(AppDialogComponent, {
                 data: {
-                    title: 'Salle pleine',
+                    title: 'Erreur de jointure',
                     message,
                     type: 'warning',
                     confirmText: 'Réessayer',
@@ -221,6 +221,8 @@ export class GameSessionSocketService {
     }
 
     createGameSession(gameId: string, hostPlayer: Character): void {
+        // Reset avatar selection state when starting a new session
+        this.takenAvatars.set([]);
         this.socketService.emit(GameSessionEvents.CreateGameSession, { gameId, hostPlayer });
     }
 
@@ -315,6 +317,7 @@ export class GameSessionSocketService {
         }
 
         this.currentSession.set(null);
+        this.takenAvatars.set([]);
         this.resetGameplayState();
         this.router.navigate(['/']);
     }

@@ -1,5 +1,7 @@
 import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket.service';
+import { getGameModeLabel, getGameSizeLabel } from '@common/constants/game-config-constants';
+import { GameSession } from '@app/interfaces/game-session';
 
 @Component({
   selector: 'app-game-session-list',
@@ -28,5 +30,23 @@ export class GameSessionListComponent implements OnInit, OnDestroy {
 
   isSelected(gameSessionId: string): boolean {
     return this.selectedGameSessionId() === gameSessionId;
+  }
+
+  getPreviewImage(gameSession: GameSession): string {
+    const previewImage =  gameSession.mapCopy?.previewImage;
+    if(previewImage) {
+      return previewImage;
+    }
+    return '';
+  }
+
+  getGameSizeLabel(gameSession: GameSession): string {
+    const size = gameSession.mapCopy?.mapConfig?.size;
+    return size ? getGameSizeLabel(size) : '';
+  }
+
+  getGameModeLabel(gameSession: GameSession): string {
+    const mode = gameSession.mapCopy?.gameMode;
+    return mode ? getGameModeLabel(mode) : '';
   }
 }
