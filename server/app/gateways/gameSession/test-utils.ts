@@ -5,6 +5,8 @@ import { Player } from '@common/player';
 import { SessionStatus } from '@common/session.status';
 import { Socket } from 'socket.io';
 
+const DEFAULT_MAX_PLAYERS = 4;
+
 export const createTestCharacter = (name = 'TestPlayer'): Character => ({
     id: '',
     name,
@@ -35,7 +37,7 @@ export const createMockSession = (
     playerCount = 1,
     options?: { status?: SessionStatus; maxPlayers?: number; mapId?: string; includeStartGameSpy?: boolean },
 ): GameSession => {
-    const { status = 'waiting', maxPlayers = 4, mapId = 'MAP1', includeStartGameSpy = true } = options || {};
+    const { status = 'waiting', maxPlayers = DEFAULT_MAX_PLAYERS, mapId = 'MAP1', includeStartGameSpy = true } = options || {};
 
     const session = {
         roomId,

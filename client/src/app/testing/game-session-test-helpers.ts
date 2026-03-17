@@ -3,7 +3,11 @@ import { Character } from '@common/character';
 
 export type SessionStatus = 'waiting' | 'playing';
 
-export const makeTestCharacter = (name = 'Player', avatarId = 1): Character => ({
+const DEFAULT_AVATAR_ID = 1;
+const DEFAULT_MAX_PLAYERS = 4;
+const AVATAR_SPREAD = 6;
+
+export const makeTestCharacter = (name = 'Player', avatarId = DEFAULT_AVATAR_ID): Character => ({
     id: '',
     name,
     avatarId,
@@ -14,7 +18,7 @@ export const makeTestSession = (
         roomId,
         status = 'waiting',
         playerCount = 1,
-        maxPlayers = 4,
+        maxPlayers = DEFAULT_MAX_PLAYERS,
         hostId = 'host-1',
         playerNames,
         avatarIds,
@@ -31,7 +35,7 @@ export const makeTestSession = (
     const players = Array.from({ length: playerCount }, (_, i) => {
         const socketId = i === 0 ? hostId : `p${i}`;
         const name = playerNames?.[i] ?? `Player${i}`;
-        const avatarId = avatarIds?.[i] ?? (i % 6) + 1;
+        const avatarId = avatarIds?.[i] ?? (i % AVATAR_SPREAD) + DEFAULT_AVATAR_ID;
         return { socketId, character: makeTestCharacter(name, avatarId) };
     });
 

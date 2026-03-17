@@ -60,7 +60,7 @@ describe('GamePlayGateway - handleStartGame', () => {
         }).compile();
 
         gateway = module.get<GamePlayGateway>(GamePlayGateway);
-        (gateway as unknown as { server: typeof mockServer }).server = mockServer as unknown as any;
+        (gateway as unknown as { server: typeof mockServer }).server = mockServer;
         // Éviter les timers internes pendant les tests
         (gateway as unknown as { startGameTurn: jest.Mock }).startGameTurn = jest.fn();
     });

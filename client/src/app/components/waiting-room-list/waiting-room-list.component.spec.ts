@@ -30,7 +30,7 @@ describe('WaitingRoomListComponent', () => {
         maxPlayers: 4,
         hostId: 'host-1',
         playerNames: ['Host', 'Player2'],
-        avatarIds: [1, 3],
+        avatarIds: [1, 2 + 1],
     });
     const hostChar: Character = mockSession.host.character;
 
