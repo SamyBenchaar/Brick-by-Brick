@@ -2,15 +2,7 @@ import { Character } from '@common/character';
 import { GameSession, Position } from '@app/domain/game-session';
 import { Injectable, Logger } from '@nestjs/common';
 import { StartingPointService } from './starting-point.service';
-
-interface MapTile {
-    type: string;
-    object?: { type: string };
-}
-
-interface GameMap {
-    tiles: MapTile[][];
-}
+import { GameMap } from '@app/interfaces/game-map-interfaces';
 
 @Injectable()
 export class CombatService {
