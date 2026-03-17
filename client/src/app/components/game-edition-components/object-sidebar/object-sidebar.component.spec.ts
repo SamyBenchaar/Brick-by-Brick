@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
-import { MapEditorServiceService } from '@app/services/map-editor-service.service';
+import { MapEditorServiceService } from '@app/services/map-editor.service';
 import { ObjectCounterService } from '@app/services/object-counter/object-counter.service';
 import { ObjectType } from '@common/map';
 import { ObjectSidebarComponent } from './object-sidebar.component';
