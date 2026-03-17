@@ -123,6 +123,10 @@ export function setupGameplayEventListeners(
     socketService.on<{ playerId: string }>(GameSessionEvents.PlayerAbandoned, (data) => {
         const session = service.currentSession();
         if (session) {
+            const leftPlayer = session.players.find(p => p.character.id === data.playerId);
+            if (leftPlayer) {
+                session.leftPlayers = [...(session.leftPlayers ?? []), leftPlayer];
+            }
             session.players = session.players.filter(p => p.character.id !== data.playerId);
             if (session.playerOrder) {
                 session.playerOrder = session.playerOrder.filter(id => id !== data.playerId);
