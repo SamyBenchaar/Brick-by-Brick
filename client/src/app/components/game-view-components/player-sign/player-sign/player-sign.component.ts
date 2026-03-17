@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { BaseSignComponent } from '@app/components/game-view-components/base-sign/base-sign.component';
-import { AVATARS } from '@app/constants/character.constants';
+import { AVATARS } from '@app/constants/character-constants';
 import { AvatarOption } from '@app/interfaces/avatar';
 import { Player } from '@common/player';
 

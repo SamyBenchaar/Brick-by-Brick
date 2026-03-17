@@ -2,18 +2,9 @@ import { Character } from '@common/character';
 import { Player } from '@common/player';
 import { Position } from '@common/position';
 import { SessionStatus } from '@common/session.status';
+import { GameMap } from '@app/interfaces/game-map-interfaces';
+import { ROOM_ID_LENGTH, MAX_PLAYER } from '@common/constants/game-config-constants';
 
-const ROOM_ID_LENGTH = 8;
-const MAX_PLAYER = 6;
-
-interface MapTile {
-    type: string;
-    object?: { type: string };
-}
-
-interface MapConfig {
-    tiles: MapTile[][];
-}
 
 export class GameSession {
     players: Player[] = [];
@@ -21,7 +12,7 @@ export class GameSession {
     status: SessionStatus = 'waiting';
     roomId: string;
     maxPlayers: number;
-    mapCopy: MapConfig | null = null;
+    mapCopy: GameMap | null = null;
     host: Player;
     mapId: string;
     socketToAvatar: Map<string, number> = new Map();
@@ -158,11 +149,11 @@ export class GameSession {
         }
     }
 
-    setMapCopy(mapData: MapConfig): void {
+    setMapCopy(mapData: GameMap): void {
         this.mapCopy = mapData;
     }
 
-    getMapCopy(): MapConfig | null {
+    getMapCopy(): GameMap | null {
         return this.mapCopy;
     }
 

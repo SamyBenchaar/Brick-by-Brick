@@ -19,3 +19,26 @@ export interface GameDataForInit {
     };
 }
 
+export interface CombatResult {
+    winner: string;
+    loser: string;
+    attackerVictories: number;
+    defenderKnockedDown: boolean;
+    gameWon: boolean;
+}
+
+export interface CombatInfo {
+    attacker: {
+        id: string;
+        name: string;
+        avatarId: number;
+        victories: number;
+    };
+    defender: {
+        id: string;
+        name: string;
+        avatarId: number;
+        victories: number;
+    };
+}
+
