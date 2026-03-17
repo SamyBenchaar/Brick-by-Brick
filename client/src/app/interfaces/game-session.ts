@@ -1,6 +1,7 @@
-import { Position } from '@common/position';
 import { Player } from '@common/player';
+import { Position } from '@common/position';
 import { SessionStatus } from '@common/session.status';
+import { Game } from './game';
 
 export interface GameSession {
     players: Player[];
@@ -8,7 +9,7 @@ export interface GameSession {
     status: SessionStatus;
     roomId: string;
     maxPlayers: number;
-    mapCopy: null;
+    mapCopy: Game | null;
     host: Player;
     mapId: string;
     socketToAvatar: Map<string, number>;
