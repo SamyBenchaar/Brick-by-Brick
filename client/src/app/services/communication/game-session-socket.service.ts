@@ -136,7 +136,7 @@ export class GameSessionSocketService {
         this.socketService.on<string>(GameSessionEvents.GameSessionJoinError, (message) => {
             const dialogRef = this.dialog.open(AppDialogComponent, {
                 data: {
-                    title: 'Salle pleine',
+                    title: 'Erreur de jointure',
                     message,
                     type: 'warning',
                     confirmText: 'Réessayer',
