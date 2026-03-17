@@ -9,15 +9,15 @@ import { of } from 'rxjs';
 import { CharacterCreationPageComponent } from './character-creation-page.component';
 
 /**
- * Stratégie de test pour CharacterCreationPageComponent:
+ * Stratégie de test pour CharacterCreationPageComponent (pré-join):
  *
- * 1. Création de base : Vérifier les valeurs par défaut du personnage
- * 2. Sélection d'avatar : Vérifier le changement d'avatar
- * 3. Bonus : Vérifier l'application correcte du bonus vie/rapidité
- * 4. Dés : Vérifier la logique d'inversion des dés attaque/défense
- * 5. Validation : Bouton désactivé sans nom ou bonus
- * 6. Soumission : Rejoindre existant vs créer nouvelle session
- * 7. Personnage aléatoire : Vérifier que les champs sont remplis
+ * 1. Création de base : valeurs par défaut du personnage.
+ * 2. Sélection d'avatar : changement d'avatar et cas limite avatar déjà pris / même avatar sélectionné deux fois.
+ * 3. Bonus : application correcte du bonus vie/rapidité et réinitialisation quand on change de bonus.
+ * 4. Dés : inversion attaque/défense (cas limite d'inversion forcée pour éviter doublon de dés).
+ * 5. Validation : bouton désactivé sans nom/bonus ou avec nom contenant des espaces (cas limite données invalides).
+ * 6. Soumission : rejoindre une session existante (roomId) vs création nouvelle; alerte si aucun id fourni (cas limite).
+ * 7. Personnage aléatoire : champs remplis et dés cohérents.
  */
 describe('CharacterCreationPageComponent', () => {
     let component: CharacterCreationPageComponent;

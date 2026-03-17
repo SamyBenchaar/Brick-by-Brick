@@ -13,13 +13,13 @@ const FULL_PLAYERS = 4;
 const SIX_PLAYERS = 6;
 
 /**
- * Stratégie de test pour GameSessionListComponent:
+ * Stratégie de test pour GameSessionListComponent (jointure):
  *
- * 1. Affichage de la vue de jointure : sessions disponibles visibles
- * 2. Filtrage des parties joignables : état waiting + au moins 1 place
- * 3. Sélection d'une partie : mémorisation de la session choisie
- * 4. Mise à jour dynamique : retrait/ajout automatique selon disponibilité
- * 5. Informations affichées : nombre de joueurs par partie
+ * 1. Affichage de la vue de jointure : sessions disponibles visibles et sélectionnables.
+ * 2. Filtrage des parties joignables (cas limites) : exclure les sessions en 'playing', les sessions pleines (0 place) et la liste vide.
+ * 3. Sélection d'une partie : mémorisation et changement de sélection.
+ * 4. Mise à jour dynamique : retrait/ajout automatique selon disponibilité (session qui devient pleine ou passe à playing).
+ * 5. Informations affichées : nombre de joueurs par partie pour aider l'utilisateur à choisir.
  */
 describe('GameSessionListComponent', () => {
     let component: GameSessionListComponent;

@@ -10,13 +10,12 @@ import { createMockSession, createTestCharacter, createTestSocket } from './test
 /**
  * Stratégie de test (portée: joindre une partie) pour GameSessionGateway:
  *
- * 1. Liste des sessions : demande et envoi des sessions disponibles
- * 2. Liste des sessions : présence du nombre de joueurs par partie dans la réponse
- * 3. Rejoindre une session : cas valide et erreurs (introuvable, pleine/verrouillée)
- * 4. Liste dynamique : émission de GameSessionListUpdated quand une disponibilité change
- * 5. Observation de session : abonnement à une salle d'attente valide
- * 6. Disponibilités d'avatars : diffusion des avatars pris en temps réel
- * 7. Quitter la salle d'attente : mise à jour de session et nettoyage de salle vide
+ * 1. Liste des sessions : demande/envoi des sessions disponibles et présence du nombre de joueurs par partie
+ * 2. Rejoindre une session : cas valide + cas limites (session introuvable, session pleine/verrouillée, non-hôte qui démarre, <2 joueurs)
+ * 3. Liste dynamique : émission de GameSessionListUpdated quand la disponibilité change
+ * 4. Observation de session : abonnement valide et gestion d'une session introuvable (cas limite)
+ * 5. Disponibilités d'avatars : diffusion en temps réel et ignorance des mises à jour si la session est introuvable (cas limite)
+ * 6. Quitter la salle d'attente/déconnexion : nettoyage de salle vide, suppression de session par l'hôte, suppression côté joueur non-hôte, déconnexion en partie (cas limite)
  */
 describe('GameSessionGateway', () => {
     const MAX_PLAYERS = 4;

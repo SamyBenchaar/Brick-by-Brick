@@ -8,11 +8,11 @@ import { makeTestSession } from '@app/testing/game-session-test-helpers';
 import { WaitingRoomPage } from './waiting-room-page.component';
 
 /**
- * Stratégie de test pour WaitingRoomPage:
+ * Stratégie de test pour WaitingRoomPage (jointure/salle d'attente):
  *
- * 1. Initialisation de la salle d'attente : socket, roomId et username
- * 2. Sortie utilisateur : quitter la salle à tout moment puis retour à la vue initiale
- * 3. Données dérivées : roomId et hostId cohérents selon l'état de session
+ * 1. Initialisation : connexion socket, récupération du roomId (priorité route puis session) et du username (sessionStorage ou valeur par défaut).
+ * 2. Sortie utilisateur : quitter la salle à tout moment puis retour /home.
+ * 3. Données dérivées avec cas limites : roomId/hostId cohérents quand la session est absente ou vide (retourne chaîne vide), hostId issu du premier joueur.
  */
 
 @Component({ selector: 'app-chat', template: '' })

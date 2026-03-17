@@ -7,11 +7,12 @@ import { Character } from '@common/character';
 import { WaitingRoomListComponent } from './waiting-room-list.component';
 
 /**
- * Stratégie de test pour WaitingRoomListComponent:
+ * Stratégie de test pour WaitingRoomListComponent (salle d'attente / jointure):
  *
- * 1. Affichage en salle d'attente : noms et avatars des joueurs
- * 2. Identification : hôte et joueur courant correctement reconnus
- * 3. Cohérence d'affichage : valeurs par défaut sûres (nom/avatar) en cas de données manquantes
+ * 1. Affichage en salle d'attente : noms et avatars des joueurs, icônes cohérentes.
+ * 2. Identification : hôte et joueur courant correctement reconnus; cas limite d'utilisateur non-hôte.
+ * 3. Cas limites de données manquantes : valeurs par défaut sûres pour nom/avatar quand les données sont nulles/inconnues.
+ * 4. Actions autorisées : vérifie canStartGame et kick/startGame côté hôte, refuse quand conditions non remplies.
  */
 describe('WaitingRoomListComponent', () => {
     let component: WaitingRoomListComponent;

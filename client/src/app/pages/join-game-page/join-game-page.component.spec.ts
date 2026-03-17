@@ -6,11 +6,11 @@ import { GameSessionSocketService } from '@app/services/communication/game-sessi
 import { JoinGamePageComponent } from './join-game-page.component';
 
 /**
- * Stratégie de test pour JoinGamePageComponent:
+ * Stratégie de test pour JoinGamePageComponent (jointure):
  *
- * 1. Préconditions de jointure : bouton joignable seulement si une session est sélectionnée
- * 2. Navigation de jointure : redirection vers la création de personnage avec roomId
- * 3. Cas limites : aucune navigation si aucune session (ou liste non initialisée)
+ * 1. Préconditions de jointure : bouton joignable seulement si une session est sélectionnée.
+ * 2. Navigation de jointure : redirection vers la création de personnage avec le roomId choisi.
+ * 3. Cas limites : aucune navigation si aucune session, si le composant de liste n'est pas initialisé, ou roomId absent.
  */
 
 describe('JoinGamePageComponent', () => {
