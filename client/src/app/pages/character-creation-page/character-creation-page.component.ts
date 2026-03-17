@@ -119,8 +119,11 @@ export class CharacterCreationPageComponent implements OnInit, OnDestroy {
     }
 
     getSelectedAvatarImage(): string {
+        if (!this.avatars?.length) {
+            return '';
+        }
         const avatar = this.avatars.find(a => a.id === this.character.avatarId);
-        return avatar ? avatar.image : this.avatars[0].image;
+        return avatar?.image ?? this.avatars[0]?.image ?? '';
     }
 
     applyBonus(target: 'life' | 'speed') {
