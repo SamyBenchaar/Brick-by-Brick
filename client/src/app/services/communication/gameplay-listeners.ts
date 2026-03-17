@@ -5,6 +5,7 @@ import { GameSessionEvents } from '@common/game.events';
 import { Position } from '@common/position';
 import type { GameSessionSocketService } from './game-session-socket.service';
 import { SocketService } from './socket.service';
+import { Tile } from '@app/interfaces/game';
 
 export function setupGameplayEventListeners(
     service: GameSessionSocketService,
@@ -120,7 +121,7 @@ export function setupGameplayEventListeners(
         }
     });
 
-    socketService.on<{ playerId: string }>(GameSessionEvents.PlayerAbandoned, (data) => {
+    socketService.on<{ playerId: string; mapCopyTiles: Tile[][] }>(GameSessionEvents.PlayerAbandoned, (data) => {
         const session = service.currentSession();
         if (session) {
             const leftPlayer = session.players.find(p => p.character.id === data.playerId);
@@ -130,6 +131,14 @@ export function setupGameplayEventListeners(
             session.players = session.players.filter(p => p.character.id !== data.playerId);
             if (session.playerOrder) {
                 session.playerOrder = session.playerOrder.filter(id => id !== data.playerId);
+            }
+
+            if (data.mapCopyTiles) {
+                const currentMap = service.mapCopy();
+                if (currentMap) {
+                    service.mapCopy.set({...currentMap,mapConfig: { ...currentMap.mapConfig, tiles: data.mapCopyTiles },
+                    });
+                }
             }
             service.currentSession.set({ ...session });
         }
