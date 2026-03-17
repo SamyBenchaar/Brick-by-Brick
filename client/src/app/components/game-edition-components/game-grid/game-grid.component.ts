@@ -5,7 +5,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { GameMap } from '@app/classes/game-map';
 import { Tile } from '@app/classes/tile';
 import { AppDialogComponent } from '@app/components/game-edition-components/app-dialog/app-dialog.component';
-import { AVATARS } from '@app/constants/character.constants';
+import { AVATARS } from '@app/constants/character-constants';
 import { ClickEvent } from '@app/constants/click-event-constants';
 import { GameSize } from '@app/constants/game-size.enum';
 import { OBJECT_DESCRIPTIONS } from '@app/constants/object-descriptions';
