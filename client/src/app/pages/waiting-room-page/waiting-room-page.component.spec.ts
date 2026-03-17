@@ -4,7 +4,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { GameSession } from '@app/interfaces/game-session';
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket.service';
-import { Character } from '@common/character';
+import { makeTestSession } from '@app/testing/game-session-test-helpers';
 import { WaitingRoomPage } from './waiting-room-page.component';
 
 /**
@@ -32,16 +32,15 @@ describe('WaitingRoomPage', () => {
     let currentSessionSignal: WritableSignal<GameSession | null>;
     let routerMock: jasmine.SpyObj<Router>;
 
-    const mockSession: GameSession = {
+    const mockSession: GameSession = makeTestSession({
         roomId: 'ROOM1',
         status: 'waiting',
+        playerCount: 2,
         maxPlayers: 4,
-        players: [
-            { socketId: 'host-1', character: { name: 'Host' } as Character },
-            { socketId: 'p2', character: { name: 'P2' } as Character },
-        ],
-        host: { socketId: 'host-1', character: { name: 'Host' } as Character },
-    } as unknown as GameSession;
+        hostId: 'host-1',
+        playerNames: ['Host', 'P2'],
+        avatarIds: [1, 2],
+    });
 
     beforeEach(async () => {
         currentSessionSignal = signal<GameSession | null>(mockSession);

@@ -2,6 +2,7 @@ import { signal, WritableSignal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { GameSession } from '@app/interfaces/game-session';
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket.service';
+import { makeTestSession } from '@app/testing/game-session-test-helpers';
 import { Character } from '@common/character';
 import { WaitingRoomListComponent } from './waiting-room-list.component';
 
@@ -21,19 +22,16 @@ describe('WaitingRoomListComponent', () => {
     const PLAYER_COUNT = 2;
     const MAX_PLAYERS = 4;
 
-    const hostChar: Character = { name: 'Host', avatarId: 1 } as Character;
-    const playerChar: Character = { name: 'Player2', avatarId: 3 } as Character;
-
-    const mockSession: GameSession = {
+    const mockSession: GameSession = makeTestSession({
         roomId: 'ROOM1',
         status: 'waiting',
+        playerCount: 2,
         maxPlayers: 4,
-        players: [
-            { socketId: 'host-1', character: hostChar },
-            { socketId: 'p2', character: playerChar },
-        ],
-        host: { socketId: 'host-1', character: hostChar },
-    } as unknown as GameSession;
+        hostId: 'host-1',
+        playerNames: ['Host', 'Player2'],
+        avatarIds: [1, 3],
+    });
+    const hostChar: Character = mockSession.host.character;
 
     beforeEach(async () => {
         currentSessionSignal = signal<GameSession | null>(mockSession);
