@@ -7,7 +7,7 @@ export enum TileType {
 }
 
 export enum ObjectType {
-    Startpoint = 'startingpoint'
+    StartingPoint = 'startingpoint'
 }
 
 export enum MapSize {
