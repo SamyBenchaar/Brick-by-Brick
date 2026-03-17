@@ -309,9 +309,11 @@ export class GamePlayGateway implements OnGatewayInit {
 
     private startGameTurn(gameSession: GameSession): void {
         gameSession.isTurnStarting = true;
+        gameSession.status = 'playing';
+        this.gameSessionGateway.notifyGameSessionUpdated(gameSession);
 
         const startingPlayer = gameSession.getCurrentPlayer();
-
+        
         this.server.to(gameSession.roomId).emit(GameSessionEvents.TurnStarting, {
             playerId: startingPlayer?.id,
             playerName: startingPlayer?.name,
