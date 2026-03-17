@@ -68,7 +68,7 @@
                 }
             </div>
         </div>
-        <div class="chat-sidebar" [class.chat-collapsed]="isChatCollapsed">
+        <div #chatSidebar class="chat-sidebar" [class.chat-collapsed]="isChatCollapsed">
             <div class="chat-toggle" (click)="isChatCollapsed = !isChatCollapsed">
                 <span class="chat-toggle-icon">💬</span>
                 <span class="chat-toggle-label">{{ isChatCollapsed ? 'Chat' : 'Réduire' }}</span>

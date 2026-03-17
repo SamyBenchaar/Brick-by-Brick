@@ -1,22 +1,22 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, HostListener, inject, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, HostListener, inject, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild, ElementRef} from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { GameMap } from '@app/classes/game-map';
-import { AppDialogComponent } from '@app/components/game-edition-components/app-dialog/app-dialog.component';
 import { Tile } from '@app/classes/tile';
+import { AppDialogComponent } from '@app/components/game-edition-components/app-dialog/app-dialog.component';
 import { AVATARS } from '@app/constants/character.constants';
 import { ClickEvent } from '@app/constants/click-event-constants';
-import { AppDialogData } from '@app/interfaces/dialog-model';
 import { GameSize } from '@app/constants/game-size.enum';
 import { OBJECT_DESCRIPTIONS } from '@app/constants/object-descriptions';
+import { AppDialogData } from '@app/interfaces/dialog-model';
 import { Game } from '@app/interfaces/game';
-import { Position } from '@common/position';
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket.service';
 import { MapEditorServiceService } from '@app/services/map-editor-service.service';
 import { ObjectCounterService } from '@app/services/object-counter/object-counter.service';
 import { Character } from '@common/character';
 import { GRID_SIZE, MapSize, ObjectType, TileType } from '@common/map';
+import { Position } from '@common/position';
 import html2canvas from 'html2canvas';
 
 @Component({
@@ -36,6 +36,7 @@ export class GameGridComponent implements OnInit, OnChanges {
   @Input() players: Character[] = [];
   @Input() reachableTiles: Position[] = [];
   @Input() isAttackSelectionMode: boolean = false;
+  @ViewChild('gridContainer') gridContainer!: ElementRef<HTMLElement>;
 
   @Output() attackTargetSelected = new EventEmitter<Character>();
 
@@ -148,7 +149,11 @@ export class GameGridComponent implements OnInit, OnChanges {
 
     const debugMode = this.gameSessionSocketService.isDebugModeActivated();
     const myTurn = this.gameSessionSocketService.isMyTurn();
-    const validTeleportTile = !playerAtPosition && !tile?.object && tile?.type !== TileType.Wall;
+    const validTeleportTile =
+      !playerAtPosition &&
+      !tile?.object &&
+      tile?.type !== TileType.Wall &&
+      tile?.type !== TileType.Door;
 
     if (debugMode && myTurn && validTeleportTile) {
       this.gameSessionSocketService.requestAssignPosition(position);
@@ -173,7 +178,7 @@ export class GameGridComponent implements OnInit, OnChanges {
         data: dialogData,
       });
     }
- }
+  }
 
   onTileMouseEnter(position: Position): void {
     if (this.isViewMode) {
@@ -280,7 +285,7 @@ export class GameGridComponent implements OnInit, OnChanges {
 
   async captureMapPreview(maxWidth: number = GameGridComponent.defaultPreviewMaxWidth): Promise<string> {
     try {
-      const gridElement = document.querySelector('.grid-container') as HTMLElement;
+      const gridElement = this.gridContainer?.nativeElement;
       if (!gridElement) return '';
       const scale = Math.min(1, maxWidth / gridElement.offsetWidth);
       const gridCanva = await html2canvas(gridElement, {
@@ -310,7 +315,7 @@ export class GameGridComponent implements OnInit, OnChanges {
     const socketId = this.gameSessionSocketService.getSocketId();
     const session = this.gameSessionSocketService.currentSession();
     if (!session) return null;
-    
+
     const playerData = session.players.find(p => p.socketId === socketId);
     return playerData?.character ?? null;
   }

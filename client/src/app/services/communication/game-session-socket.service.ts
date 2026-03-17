@@ -7,8 +7,8 @@ import { GameSession } from '@app/interfaces/game-session';
 import { Character } from '@common/character';
 import { GameSessionEvents } from '@common/game.events';
 import { Position } from '@common/position';
-import { SocketService } from './socket.service';
 import { setupGameplayEventListeners } from './gameplay-listeners';
+import { SocketService } from './socket.service';
 
 @Injectable({
     providedIn: 'root',
@@ -75,7 +75,23 @@ export class GameSessionSocketService {
         this.socketService.off(GameSessionEvents.GameEnded);
         this.socketService.off(GameSessionEvents.ToggleDebugMode);
         this.socketService.off(GameSessionEvents.AvatarTakenUpdated);
+
+        this.resetGameplayState();
+        this.currentSession.set(null);
+        this.takenAvatars.set([]);
+        this.hasAbandoned.set(false);
+
         this.socketService.disconnect();
+    }
+
+    resetGameplayState(): void {
+        this.currentPlayerTurn.set(null);
+        this.turnTimeRemaining.set(0);
+        this.reachableTiles.set([]);
+        this.gameEnded.set(false);
+        this.turnStarting.set(false);
+        this.isDebugModeActivated.set(false);
+        this.mapCopy.set(null);
     }
 
     private setupEventListeners(): void {
@@ -111,6 +127,8 @@ export class GameSessionSocketService {
                 current.filter(gameSession => gameSession.roomId !== deletedRoomId));
             if (this.currentSession()?.roomId === deletedRoomId) {
                 this.currentSession.set(null);
+                this.resetGameplayState();
+                this.hasAbandoned.set(false);
                 this.takenAvatars.set([]);
             }
         });
@@ -138,6 +156,9 @@ export class GameSessionSocketService {
 
         this.socketService.on<{ message: string }>(GameSessionEvents.PlayerKicked, (data) => {
             this.currentSession.set(null);
+            this.resetGameplayState();
+            this.takenAvatars.set([]);
+            this.hasAbandoned.set(false);
             this.router.navigate(['/']).then(() => {
                 this.dialog.open(AppDialogComponent, {
                     data: { title: 'Exclu de la salle', message: data.message, type: 'error' },
@@ -148,6 +169,9 @@ export class GameSessionSocketService {
 
         this.socketService.on<{ message: string }>(GameSessionEvents.RoomCancelled, (data) => {
             this.currentSession.set(null);
+            this.resetGameplayState();
+            this.takenAvatars.set([]);
+            this.hasAbandoned.set(false);
             this.router.navigate(['/']).then(() => {
                 this.dialog.open(AppDialogComponent, {
                     data: { title: 'Salle annulée', message: data.message, type: 'info' },
@@ -173,6 +197,9 @@ export class GameSessionSocketService {
                 this.router.navigate(['/']);
                 return;
             }
+
+            this.hasAbandoned.set(false);
+            this.resetGameplayState();
 
             this.currentSession.set(gameSession);
             this.mapCopy.set(mapData);
@@ -208,9 +235,15 @@ export class GameSessionSocketService {
         this.socketService.emit(GameSessionEvents.ObserveGameSession, { roomId });
     }
 
-    toggleDebugMode() {
+    toggleDebugMode(): void {
+        if (!this.isCurrentUserHost()) {
+            return;
+        }
+
         const currentRoomId = this.getRoomId();
-        this.socketService.emit(GameSessionEvents.ToggleDebugMode, { currentRoomId });
+        if (currentRoomId) {
+            this.socketService.emit(GameSessionEvents.ToggleDebugMode, { currentRoomId });
+        }
     }
 
     kickPlayer(targetId: string): void {
@@ -224,9 +257,12 @@ export class GameSessionSocketService {
         const currentRoomId = this.getRoomId();
         if (currentRoomId) {
             this.socketService.emit(GameSessionEvents.LeaveGameSession, { roomId: currentRoomId });
-            this.currentSession.set(null);
-            this.takenAvatars.set([]);
         }
+
+        this.currentSession.set(null);
+        this.takenAvatars.set([]);
+        this.hasAbandoned.set(false);
+        this.resetGameplayState();
     }
 
     updateTakenAvatars(roomId: string, newAvatarId: number): void {
@@ -248,6 +284,10 @@ export class GameSessionSocketService {
     }
 
     requestAssignPosition(position: Position): void {
+        if (!this.isMyTurn() || !this.isDebugModeActivated()) {
+            return;
+        }
+
         const currentRoomId = this.getRoomId();
         if (currentRoomId) {
             this.socketService.emit(GameSessionEvents.RequestAssignPosition, { roomId: currentRoomId, position });
@@ -273,9 +313,11 @@ export class GameSessionSocketService {
         if (currentRoomId) {
             this.hasAbandoned.set(true);
             this.socketService.emit(GameSessionEvents.PlayerAbandoned, { roomId: currentRoomId });
-            this.currentSession.set(null);
-            this.router.navigate(['/']);
         }
+
+        this.currentSession.set(null);
+        this.resetGameplayState();
+        this.router.navigate(['/']);
     }
 
     getSocketId(): string {
@@ -338,58 +380,26 @@ export class GameSessionSocketService {
     }
 
     canAttackTarget(target: Character | null): boolean {
-        if (!this.isMyTurn()) {
-            return false;
-        }
-
         const currentPlayer = this.getCurrentPlayerCharacter();
-        if (!currentPlayer?.position || !target?.position) {
-            return false;
-        }
 
-        if (target.id === currentPlayer.id) {
-            return false;
-        }
-
-        if (!currentPlayer.remainingActions || currentPlayer.remainingActions <= 0) {
-            return false;
-        }
-
-        return this.areAdjacent(currentPlayer.position as Position, target.position);
+        return (
+            this.isMyTurn() &&
+            currentPlayer?.position !== undefined &&
+            target?.position !== undefined &&
+            target.id !== currentPlayer.id &&
+            currentPlayer.remainingActions !== undefined &&
+            currentPlayer.remainingActions > 0 &&
+            this.areAdjacent(currentPlayer.position, target.position)
+        );
     }
 
     canCurrentPlayerAttack(): boolean {
-        if (!this.isMyTurn()) {
-            return false;
-        }
-
         const currentPlayer = this.getCurrentPlayerCharacter();
-        if (!currentPlayer?.position) {
-            return false;
-        }
-
-        if (!currentPlayer.remainingActions || currentPlayer.remainingActions <= 0) {
-            return false;
-        }
-
-        return this.getAutoAttackTarget() !== null;
-    }
-
-    requestAutoCombat(): void {
-        if (!this.canCurrentPlayerAttack()) {
-            return;
-        }
-
-        const target = this.getAutoAttackTarget();
-        if (!target) {
-            return;
-        }
-
-        this.requestCombat(target.id);
+        return this.isMyTurn() && currentPlayer?.position != null && currentPlayer.remainingActions != null &&
+            currentPlayer.remainingActions > 0 && this.getAutoAttackTarget() !== null;
     }
 
     private areAdjacent(positionA: Position, positionB: Position): boolean {
-        const distance = Math.abs(positionA.x - positionB.x) + Math.abs(positionA.y - positionB.y);
-        return distance === 1;
+        return Math.abs(positionA.x - positionB.x) + Math.abs(positionA.y - positionB.y) === 1;
     }
 }

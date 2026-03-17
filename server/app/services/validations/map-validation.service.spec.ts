@@ -3,7 +3,7 @@ import { MapSize } from '@common/map';
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Model } from 'mongoose';
-import { MapValidationService } from './mapValidation.service';
+import { MapValidationService } from './map-validation.service';
 
 type MockModel<T> = Partial<Record<keyof Model<T>, jest.Mock>>;
 
@@ -116,7 +116,7 @@ describe('MapValidationService', () => {
     // Remplir avec des murs pour avoir exactement 50% jouable
     let wallCount = 0;
     const totalTiles = size * size;
-    const targetWalls = Math.floor((totalTiles - 1) / 2); 
+    const targetWalls = Math.floor((totalTiles - 1) / 2);
 
     for (let y = 0; y < size && wallCount < targetWalls; y++) {
       for (let x = 0; x < size && wallCount < targetWalls; x++) {

@@ -1,24 +1,16 @@
 import { GameSession } from '@app/domain/game-session';
 import { GameService } from '@app/services/game/game.service';
 import { Character } from '@common/character';
-import { Position } from '@common/position';
 import { getGameSizeConfig } from '@common/constants/game-config-constants';
 import { Player } from '@common/player';
+import { Position } from '@common/position';
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import { CombatResult, CombatService } from './combat.service';
 import { MovementService } from './movement.service';
 import { StartingPointService } from './starting-point.service';
 import { TurnManagementService } from './turn-management.service';
-interface MapTile {
-    type: string;
-    object?: { type: string };
-}
+import { GameDataForInit } from '@app/interfaces/game-map-interfaces';
 
-interface GameDataForInit {
-    mapConfig: {
-        tiles: MapTile[][];
-    };
-}
 @Injectable()
 export class GameSessionService {
 
@@ -52,7 +44,7 @@ export class GameSessionService {
         if (!session) return 'Session de jeu introuvable';
         if (session.status !== 'waiting') return 'La session de jeu a déjà commencé';
         if (session.isFull()) return 'La session de jeu est pleine';
-        
+
         player.character.name = session.verifyUniqueName(player.character.name);
         session.addPlayer(player);
         return null;
@@ -97,21 +89,25 @@ export class GameSessionService {
         gameSession: GameSession,
         onStartCallback: () => void,
         onTickCallback?: (timeRemaining: number) => void,
-        onTurnEndCallback?: () => void,
+        onTurnEndCallback?: (endedPlayerId: string) => void,
     ): Promise<void> {
         const currentPlayer = gameSession.getCurrentPlayer();
         if (!currentPlayer) {
             throw new Error('No current player found');
         }
+
         this.movementService.resetMovementPoints(currentPlayer);
         gameSession.setCurrentTurnTime(this.turnManagementService.getTurnTimeInSeconds());
         onStartCallback();
+
+        const endedPlayerId = currentPlayer.id;
+
         this.turnManagementService.startTurnTimer(
             gameSession,
             () => {
                 this.endCurrentTurn(gameSession);
                 if (onTurnEndCallback) {
-                    onTurnEndCallback();
+                    onTurnEndCallback(endedPlayerId);
                 }
             },
             onTickCallback,
@@ -185,24 +181,21 @@ export class GameSessionService {
 
     canPlayerTakeAction(gameSession: GameSession): boolean {
         const currentPlayer = gameSession.getCurrentPlayer();
-        if (!currentPlayer) {
+        if (!currentPlayer || !currentPlayer.position) {
             return false;
         }
 
         const reachableTiles = this.getReachableTiles(gameSession);
-        if (reachableTiles.length > 1) {
-            return true;
-        }
+        const canMove = reachableTiles.length > 1;
 
+        const hasRemainingActions = (currentPlayer.remainingActions ?? 0) > 0;
         const adjacentPlayers = this.movementService.getAdjacentPlayers(
             gameSession,
             currentPlayer.position,
         );
-        if (adjacentPlayers.length > 0) {
-            return true;
-        }
+        const canFight = hasRemainingActions && adjacentPlayers.length > 0;
 
-        return false;
+        return canMove || canFight;
     }
 
     removePlayer(roomId: string, playerId: string): void {
@@ -211,7 +204,7 @@ export class GameSessionService {
             return;
         }
         gameSession.removePlayer(playerId);
-        
+
         if (gameSession.status === 'playing' && gameSession.mapCopy) {
             this.startingPointService.cleanupUnusedStartingPoints(gameSession, gameSession.mapCopy.tiles);
         }

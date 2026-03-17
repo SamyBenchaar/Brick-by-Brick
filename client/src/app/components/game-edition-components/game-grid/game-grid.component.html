@@ -1,4 +1,4 @@
-<div class="grid-container" (contextmenu)="onContextMenu($event)">
+<div #gridContainer class="grid-container" (contextmenu)="onContextMenu($event)">
     @for (row of getGrid(); track $index; let y = $index) {
     <div class="grid-row">
         @for (tile of row; track $index; let x = $index) { @let position = {x: x, y: y};

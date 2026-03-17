@@ -16,7 +16,7 @@
         }
       </ul>
     }
-    @if (!isArray) {
+    @else {
       <p class="message-text">{{ data.message }}</p>
     }
   </mat-dialog-content>
@@ -32,7 +32,7 @@
         </button>
       }
     }
-    @if (data.type !== 'warning') {
+    @else {
       <button mat-raised-button [ngClass]="data.type + '-button'" (click)="close()">
         OK
       </button>
