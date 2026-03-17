@@ -12,7 +12,7 @@ import { OBJECT_DESCRIPTIONS } from '@app/constants/object-descriptions';
 import { AppDialogData } from '@app/interfaces/dialog-model';
 import { Game } from '@app/interfaces/game';
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket.service';
-import { MapEditorServiceService } from '@app/services/map-editor-service.service';
+import { MapEditorServiceService } from '@app/services/map-editor.service';
 import { ObjectCounterService } from '@app/services/object-counter/object-counter.service';
 import { Character } from '@common/character';
 import { GRID_SIZE, MapSize, ObjectType, TileType } from '@common/map';
