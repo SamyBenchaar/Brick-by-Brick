@@ -10,7 +10,7 @@ export class Tile {
         ];
     static readonly editableObjects: ObjectType[] =
         [
-            ObjectType.Startpoint,
+            ObjectType.StartingPoint,
         ];
     type: TileType;
     object: ObjectType | undefined;

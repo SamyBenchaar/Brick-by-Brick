@@ -3,11 +3,13 @@ import { GameSession, Position } from '@app/domain/game-session';
 import { Injectable, Logger } from '@nestjs/common';
 import { StartingPointService } from './starting-point.service';
 import { GameMap } from '@app/interfaces/game-map-interfaces';
+import { VICTORIES_TO_WIN } from '@common/constants/game-config-constants';
+
 
 @Injectable()
 export class CombatService {
     private logger = new Logger(CombatService.name);
-    private readonly victoriesToWin = 3;
+    private readonly victoriesToWin = VICTORIES_TO_WIN;
 
     constructor(private startingPointService: StartingPointService) {}
 

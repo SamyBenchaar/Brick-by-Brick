@@ -6,10 +6,10 @@ export enum GameEvents {
     GameDeleted = 'gameDeleted',
     GameList = 'gameList',
     RequestMove = 'requestMove',
-    JoinGameSession = "JoinGameSession",
-    PlayerAbandoned = "PlayerAbandoned",
-    RequestCombat = "RequestCombat",
-    EndTurnRequest = "EndTurnRequest",
+    JoinGameSession = "joinGameSession",
+    PlayerAbandoned = "playerAbandoned",
+    RequestCombat = "requestCombat",
+    EndTurnRequest = "endTurnRequest",
 }
 
 export enum GameSessionEvents {
