@@ -1,4 +1,4 @@
-import { Injectable, signal, WritableSignal } from '@angular/core';
+import { Injectable, signal, WritableSignal, inject} from '@angular/core';
 import { Game } from '@app/interfaces/game';
 import { GameEvents } from '@common/game.events';
 import { SocketService } from './socket.service';
@@ -9,8 +9,9 @@ import { SocketService } from './socket.service';
 export class GameSocketService {
     games: WritableSignal<Game[]> = signal<Game[]>([]);
 
-    constructor(private socketService: SocketService) {}
+    private socketService = inject(SocketService);
 
+    
     connect(): void {
         this.socketService.connect();
         this.setupEventListeners();
