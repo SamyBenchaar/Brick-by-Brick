@@ -16,18 +16,19 @@ export class GameSessionListComponent implements OnInit, OnDestroy {
   availableGameSessions = computed(() => this.gameSessionSocketService.gameSessions().filter(
     session => session.status === 'waiting' && session.players.length < session.maxPlayers));
 
+  private clearUnavailableSelection = effect(() => {
+    const selected = this.selectedGameSessionId();
+    if (selected && !this.availableGameSessions().some(s => s.roomId === selected)) {
+      this.selectedGameSessionId.set(null);
+    }
+  });
+
   ngOnInit(): void {
     this.gameSessionSocketService.connect();
-    effect(() => {
-      const selected = this.selectedGameSessionId();
-      if (selected && !this.availableGameSessions().some(s => s.roomId === selected)) {
-        this.selectedGameSessionId.set(null);
-      }
-    });
   }
 
   ngOnDestroy(): void {
-    // this.gameSessionSocketService.disconnect();
+    this.clearUnavailableSelection.destroy();
   }
 
   selectGameSession(gameSessionId: string): void {
