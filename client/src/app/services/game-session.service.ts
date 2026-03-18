@@ -33,7 +33,7 @@ export class GameSessionService {
         });
 
         this.socket.on('disconnect', () => {
-            // disconnection
+            // deconnection
         });
 
         this.socket.on('error', (error: unknown) => {

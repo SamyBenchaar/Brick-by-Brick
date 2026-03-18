@@ -194,7 +194,6 @@ export class GamePlayGateway implements OnGatewayInit {
                 this.gameSessionService.endCurrentTurn(gameSession);
                 this.handleTurnEnd(gameSession);
             } else {
-                // If the attacker won but has no more actions, end turn
                 if (!this.gameSessionService.canPlayerTakeAction(gameSession)) {
                     this.gameSessionService.endCurrentTurn(gameSession);
                     this.handleTurnEnd(gameSession);

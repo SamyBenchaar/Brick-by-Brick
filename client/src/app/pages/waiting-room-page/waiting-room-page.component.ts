@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, OnDestroy, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ChatComponent } from '@app/components/chat/chat.component';
 import { WaitingRoomListComponent } from '@app/components/waiting-room-list/waiting-room-list.component';
@@ -11,7 +11,7 @@ import { GameSessionSocketService } from '@app/services/communication/game-sessi
     templateUrl: './waiting-room-page.component.html',
     styleUrls: ['./waiting-room-page.component.scss'],
 })
-export class WaitingRoomPage implements OnInit, OnDestroy {
+export class WaitingRoomPage implements OnInit {
     private router = inject(Router);
     private activatedRoute = inject(ActivatedRoute);
     protected gameSessionSocketService = inject(GameSessionSocketService);
@@ -21,7 +21,6 @@ export class WaitingRoomPage implements OnInit, OnDestroy {
     isWriting: boolean = true;
 
     get roomId(): string {
-        // Toujours utiliser le roomId de la route en priorité
         if (this.roomIdFromRoute) {
             return this.roomIdFromRoute;
         }
@@ -33,20 +32,14 @@ export class WaitingRoomPage implements OnInit, OnDestroy {
     }
 
     ngOnInit(): void {
-        // Get username from sessionStorage
         this.username = sessionStorage.getItem('playerUsername') || 'Player';
 
-        // Get roomId from route params SYNCHRONOUSLY (the route param is called 'gameId' but it contains the roomId)
         const params = this.activatedRoute.snapshot.params;
         if (params.gameId) {
             this.roomIdFromRoute = params.gameId;
         }
 
         this.gameSessionSocketService.connect();
-    }
-
-    ngOnDestroy(): void {
-        // this.gameSessionSocketService.disconnect();
     }
 
     leave(): void {

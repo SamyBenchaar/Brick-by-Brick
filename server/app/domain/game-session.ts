@@ -17,7 +17,6 @@ export class GameSession {
     mapId: string;
     socketToAvatar: Map<string, number> = new Map();
 
-    // Gameplay properties
     playerOrder: string[] = [];
     currentPlayerIndex: number = 0;
     currentTurnTime: number = 30;

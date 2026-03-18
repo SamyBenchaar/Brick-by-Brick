@@ -222,7 +222,6 @@ export class GameSessionSocketService {
     }
 
     createGameSession(gameId: string, hostPlayer: Character): void {
-        // Reset avatar selection state when starting a new session
         this.takenAvatars.set([]);
         this.socketService.emit(GameSessionEvents.CreateGameSession, { gameId, hostPlayer });
     }

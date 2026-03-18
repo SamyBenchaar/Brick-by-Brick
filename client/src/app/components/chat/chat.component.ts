@@ -42,7 +42,6 @@ export class ChatComponent implements OnInit, OnChanges, OnDestroy {
             this.chatService.clearMessages();
             this.messages = [];
             this.messageInput.set('');
-            // a voir si ceci marche avec un gameID
             const roomId = this.gameId || 'waiting-room';
             this.chatService.loadChatHistory(this.username, roomId, this.hostPlayerId);
         }

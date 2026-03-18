@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, Injector, OnDestroy, OnInit } from '@angular/core';
+import { Component, computed, effect, inject, Injector, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
@@ -26,7 +26,7 @@ import { Dice } from '@common/dice';
     imports: [FormsModule],
 })
 
-export class CharacterCreationPageComponent implements OnInit, OnDestroy {
+export class CharacterCreationPageComponent implements OnInit {
     private router = inject(Router);
     private gameSessionSocketService = inject(GameSessionSocketService);
     private injector = inject(Injector);
@@ -83,10 +83,6 @@ export class CharacterCreationPageComponent implements OnInit, OnDestroy {
                 this.character = this.createBaseCharacter(AVATARS[0].id);
             }
         });
-    }
-
-    ngOnDestroy(): void {
-        // nettoyage si necessaire
     }
 
     createBaseCharacter(freeAvatarId: number): Character {

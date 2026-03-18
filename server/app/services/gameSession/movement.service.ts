@@ -14,10 +14,10 @@ export class MovementService {
     };
 
     private readonly directions = {
-        arrowUp: { x: 0, y: -1 },    // Up
-        arrowDown: { x: 0, y: 1 },   // Down
-        arrowLeft: { x: -1, y: 0 },  // Left
-        arrowRight: { x: 1, y: 0 },  // Right
+        arrowUp: { x: 0, y: -1 },
+        arrowDown: { x: 0, y: 1 },
+        arrowLeft: { x: -1, y: 0 },
+        arrowRight: { x: 1, y: 0 },
     };
 
     private getTileCost(tileType: string): number {
@@ -34,7 +34,6 @@ export class MovementService {
     }
 
     private isValidTile(mapData: MapTile[][], position: Position, occupiedPositions: Set<string>): boolean {
-        // Check bounds
         if (position.y < 0 || position.y >= mapData.length ||
             position.x < 0 || position.x >= mapData[0].length) {
             return false;

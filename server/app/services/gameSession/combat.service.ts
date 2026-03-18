@@ -26,7 +26,6 @@ export class CombatService {
         defender: Character,
         mapConfig: GameMap,
     ): CombatResult {
-        // Decrement attacker's remaining actions
         if (attacker.remainingActions !== undefined && attacker.remainingActions > 0) {
             attacker.remainingActions -= 1;
         }
