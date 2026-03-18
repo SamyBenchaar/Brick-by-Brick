@@ -3,6 +3,7 @@ import { GamePlayGateway } from '@app/gateways/gameSession/game-play.gateway';
 import { GameSessionGateway } from '@app/gateways/gameSession/game-session.gateway';
 import { GameSessionService } from '@app/services/gameSession/gameSession.service';
 import { MovementService } from '@app/services/gameSession/movement.service';
+import { TurnManagementService } from '@app/services/gameSession/turn-management.service';
 import { GameSessionEvents } from '@common/game.events';
 import { Logger } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
@@ -22,6 +23,7 @@ describe('GamePlayGateway - handleStartGame', () => {
     let mockChatGateway: Record<string, jest.Mock>;
     let mockGameSessionGateway: Record<string, jest.Mock>;
     let mockMovementService: Record<string, jest.Mock>;
+    let mockTurnManagementService: Record<string, jest.Mock>;
     let mockServer: { emit: jest.Mock; to: jest.Mock };
 
     beforeEach(async () => {
@@ -39,10 +41,11 @@ describe('GamePlayGateway - handleStartGame', () => {
         };
 
         mockChatGateway = {} as Record<string, jest.Mock>;
-        mockGameSessionGateway = {    
+        mockGameSessionGateway = {
             notifyGameSessionListUpdated: jest.fn(),
-            } as Record<string, jest.Mock>;
+        } as Record<string, jest.Mock>;
         mockMovementService = {} as Record<string, jest.Mock>;
+        mockTurnManagementService = {} as Record<string, jest.Mock>;
 
         const toReturn = { emit: jest.fn() };
         mockServer = {
@@ -58,6 +61,7 @@ describe('GamePlayGateway - handleStartGame', () => {
                 { provide: ChatGateway, useValue: mockChatGateway },
                 { provide: GameSessionGateway, useValue: mockGameSessionGateway },
                 { provide: MovementService, useValue: mockMovementService },
+                { provide: TurnManagementService, useValue: mockTurnManagementService },
             ],
         }).compile();
 

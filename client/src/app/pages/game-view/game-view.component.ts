@@ -138,6 +138,10 @@ export class GameViewComponent implements OnInit, OnDestroy {
     return this.gameSessionSocketService.turnTimeRemaining();
   }
 
+  getInterTurnTimeRemaining(): number {
+    return this.gameSessionSocketService.interTurnTimeRemaining();
+  }
+
   isTurnStarting(): boolean {
     return this.gameSessionSocketService.turnStarting();
   }

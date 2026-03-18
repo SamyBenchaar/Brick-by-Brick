@@ -50,7 +50,7 @@
         <div class="map-zone">
             @if (isTurnStarting()) {
                 <div class="turn-notification">
-                    <p>Tour de {{ getCurrentTurnPlayerName() }} dans 3 secondes...</p>
+                    <p>Tour de {{ getCurrentTurnPlayerName() }} dans {{ getInterTurnTimeRemaining() }}</p>
                 </div>
             }
 

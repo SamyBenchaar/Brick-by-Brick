@@ -18,15 +18,17 @@ describe('JoinGamePageComponent', () => {
     let fixture: ComponentFixture<JoinGamePageComponent>;
     let gameSessionSocketServiceSpy: jasmine.SpyObj<GameSessionSocketService>;
     let routerSpy: jasmine.SpyObj<Router>;
-    let gameSessionListComponentSpy: Pick<GameSessionListComponent, 'selectedGameSessionId'>;
+    let gameSessionListComponentSpy: Partial<GameSessionListComponent>;
     let selectedId: WritableSignal<string | null>;
 
     beforeEach(async () => {
         gameSessionSocketServiceSpy = jasmine.createSpyObj('GameSessionSocketService', ['createGameSession']);
         routerSpy = jasmine.createSpyObj('Router', ['navigate']);
         selectedId = signal<string | null>(null);
-        gameSessionListComponentSpy = { selectedGameSessionId: selectedId };
-
+        gameSessionListComponentSpy = {
+            selectedGameSessionId: selectedId,
+            isSelectedAvailable: () => selectedId() !== null,
+        };
 
         await TestBed.configureTestingModule({
             imports: [JoinGamePageComponent],

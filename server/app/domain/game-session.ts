@@ -21,6 +21,7 @@ export class GameSession {
     playerOrder: string[] = [];
     currentPlayerIndex: number = 0;
     currentTurnTime: number = 30;
+    currentInterTurnTime: number = 3;
     startingPoints: Map<string, Position> = new Map();
     isTurnStarting: boolean = false;
     isDebugModeActivated = false;
@@ -141,6 +142,14 @@ export class GameSession {
 
     getCurrentTurnTime(): number {
         return this.currentTurnTime;
+    }
+
+    getCurrentInterTurnTime(): number {
+        return this.currentInterTurnTime;
+    }
+
+    setCurrentInterTurnTime(time: number): void {
+        this.currentInterTurnTime = time;
     }
 
     decrementTurnTime(): void {

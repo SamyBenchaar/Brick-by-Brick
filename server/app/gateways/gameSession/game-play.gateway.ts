@@ -1,4 +1,3 @@
-import { ChatGateway } from '@app/gateways/chat/chat.gateway';
 import { GameSessionGateway } from '@app/gateways/gameSession/game-session.gateway';
 import { GameSessionService } from '@app/services/gameSession/gameSession.service';
 import { Character } from '@common/character';
@@ -10,24 +9,26 @@ import { OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer,
 import { Server, Socket } from 'socket.io';
 import { MovementService } from '@app/services/gameSession/movement.service';
 import { Position } from '@common/position';
+import { TurnManagementService } from '@app/services/gameSession/turn-management.service';
 
 @WebSocketGateway({ cors: true })
 @Injectable()
 export class GamePlayGateway implements OnGatewayInit {
     @WebSocketServer() private server: Server;
 
-    private readonly turnStartDelay = 3000;
     private readonly gameEndCleanupDelay = 5000;
+    private readonly toMllisecondsFactor = 1000;
+    private readonly interTurnTime = 3;
 
     constructor(
         private readonly logger: Logger,
         @Inject(forwardRef(() => GameSessionService))
         private gameSessionService: GameSessionService,
-        @Inject(forwardRef(() => ChatGateway))
-        private chatGateway: ChatGateway,
         @Inject(forwardRef(() => GameSessionGateway))
         private gameSessionGateway: GameSessionGateway,
         private movementService: MovementService,
+        @Inject(forwardRef(() => TurnManagementService))
+        private turnManagementService: TurnManagementService,
     ) {}
 
     afterInit() {
@@ -251,41 +252,53 @@ export class GamePlayGateway implements OnGatewayInit {
         const currentPlayer = gameSession.getCurrentPlayer();
 
         gameSession.isTurnStarting = true;
+        gameSession.setCurrentInterTurnTime(this.interTurnTime);
 
         this.server.to(gameSession.roomId).emit(GameSessionEvents.TurnStarting, {
             playerId: currentPlayer?.id,
             playerName: currentPlayer?.name,
-            delay: this.turnStartDelay,
+            delay: gameSession.getCurrentInterTurnTime() * this.toMllisecondsFactor,
         });
 
-        setTimeout(() => {
-            gameSession.isTurnStarting = false;
+        this.turnManagementService.startInterTurnCountdown(
+            gameSession,
+            gameSession.getCurrentInterTurnTime(),
+            (timeRemaining) => {
+                this.server.to(gameSession.roomId).emit(GameSessionEvents.InterTurnTimeUpdate, {
+                    timeRemaining,
+                });
+            },
+            () => {
+                gameSession.isTurnStarting = false;
 
-            this.gameSessionService.startCurrentTurn(
-                gameSession,
-                () => {
-                    this.server.to(gameSession.roomId).emit(GameSessionEvents.TurnStarted, {
-                        playerId: currentPlayer?.id,
-                        playerName: currentPlayer?.name,
-                        turnTime: gameSession.getCurrentTurnTime(),
-                    });
-                    this.emitReachableTiles(gameSession);
+                this.gameSessionService.startCurrentTurn(
+                    gameSession,
+                    () => {
+                        this.server.to(gameSession.roomId).emit(GameSessionEvents.TurnStarted, {
+                            playerId: currentPlayer?.id,
+                            playerName: currentPlayer?.name,
+                            turnTime: gameSession.getCurrentTurnTime(),
+                            remainingMovement: currentPlayer?.remainingMovement,
+                            remainingActions: currentPlayer?.remainingActions,
+                        });
+                        this.emitReachableTiles(gameSession);
 
-                    if (!this.gameSessionService.canPlayerTakeAction(gameSession)) {
-                        this.gameSessionService.endCurrentTurn(gameSession);
+                        if (!this.gameSessionService.canPlayerTakeAction(gameSession)) {
+                            this.gameSessionService.endCurrentTurn(gameSession);
+                            this.handleTurnEnd(gameSession);
+                        }
+                    },
+                    (timeRemaining: number) => {
+                        this.server.to(gameSession.roomId).emit(GameSessionEvents.TurnTimeUpdate, {
+                            timeRemaining,
+                        });
+                    },
+                    () => {
                         this.handleTurnEnd(gameSession);
-                    }
-                },
-                (timeRemaining: number) => {
-                    this.server.to(gameSession.roomId).emit(GameSessionEvents.TurnTimeUpdate, {
-                        timeRemaining,
-                    });
-                },
-                () => {
-                    this.handleTurnEnd(gameSession);
-                },
-            );
-        }, this.turnStartDelay);
+                    },
+                );
+            },
+        );
     }
 
     private handleTurnEnd(gameSession: GameSession): void {
