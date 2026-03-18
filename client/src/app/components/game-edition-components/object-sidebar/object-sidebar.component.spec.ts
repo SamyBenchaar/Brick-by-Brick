@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
-import { MapEditorServiceService } from '@app/services/map-editor-service.service';
+import { MapEditorService } from '@app/services/map-editor/map-editor.service';
 import { ObjectCounterService } from '@app/services/object-counter/object-counter.service';
 import { ObjectType } from '@common/map';
 import { ObjectSidebarComponent } from './object-sidebar.component';
@@ -11,11 +11,11 @@ describe('ObjectSidebarComponent', () => {
 
   const REMAINING_COUNT = 3;
 
-  let mapEditorServiceSpy: jasmine.SpyObj<MapEditorServiceService>;
+  let mapEditorServiceSpy: jasmine.SpyObj<MapEditorService>;
   let objectCounterServiceSpy: jasmine.SpyObj<ObjectCounterService>;
 
   beforeEach(async () => {
-    mapEditorServiceSpy = jasmine.createSpyObj('MapEditorServiceService', ['selectObject', 'getSelectedObject']);
+    mapEditorServiceSpy = jasmine.createSpyObj('MapEditorService', ['selectObject', 'getSelectedObject']);
     objectCounterServiceSpy = jasmine.createSpyObj('ObjectCounterService', ['canPlace', 'getRemainingCount'], { startPoint: undefined });
 
     await TestBed.configureTestingModule({
@@ -29,7 +29,7 @@ describe('ObjectSidebarComponent', () => {
             },
           },
         },
-        { provide: MapEditorServiceService, useValue: mapEditorServiceSpy },
+        { provide: MapEditorService, useValue: mapEditorServiceSpy },
         { provide: ObjectCounterService, useValue: objectCounterServiceSpy },
       ],
     }).compileComponents();

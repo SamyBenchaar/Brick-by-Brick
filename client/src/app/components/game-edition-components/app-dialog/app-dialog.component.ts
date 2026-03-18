@@ -12,7 +12,7 @@ import { AppDialogData } from '@app/interfaces/dialog-model';
 })
 export class AppDialogComponent {
   private dialogRef = inject(MatDialogRef<AppDialogComponent>);
-  data = inject<AppDialogData>(MAT_DIALOG_DATA);
+  readonly data = inject<AppDialogData>(MAT_DIALOG_DATA);
 
   get isArray(): boolean {
     return Array.isArray(this.data.message);

@@ -49,7 +49,7 @@
         </div>
     </div>
     }
-    <app-game-list mode="admin" [showOnlyVisible]="false"> </app-game-list>
+    <app-game-list [mode]="gameListMode.ADMIN" [showOnlyVisible]="false"> </app-game-list>
     <div class="footer">
         <button class="button add-button brick-orange" (click)="openGameCreationModal()">Ajouter un jeu</button>
     </div>

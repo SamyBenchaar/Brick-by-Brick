@@ -1,7 +1,7 @@
 import { GameGateway } from '@app/gateways/game/game.gateway';
 import { Game, GameDocument } from '@app/model/game';
-import { GameMetadataValidationService } from '@app/services/validations/gameMetadataValidation.service';
-import { MapValidationService } from '@app/services/validations/mapValidation.service';
+import { GameMetadataValidationService } from '@app/services/validations/game-metadata-validation.service';
+import { MapValidationService } from '@app/services/validations/map-validation.service';
 import { BadRequestException } from '@nestjs/common';
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
@@ -43,6 +43,7 @@ describe('GameService', () => {
       findById: jest.fn(),
       findByIdAndUpdate: jest.fn(),
       findByIdAndDelete: jest.fn(),
+      updateOne: jest.fn(),
     } as unknown as jest.Mocked<Model<GameDocument>>;
 
     mapValidation = {
@@ -158,8 +159,14 @@ describe('GameService', () => {
 
   describe('updateVisibility', () => {
     it('met à jour la visibilité', async () => {
+      model.findById.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(validGameData),
+      } as never);
       model.findByIdAndUpdate.mockReturnValue({
         exec: jest.fn().mockResolvedValue(validGameData),
+      } as never);
+      model.updateOne.mockReturnValue({
+        exec: jest.fn().mockResolvedValue({}),
       } as never);
 
       const result = await service.updateVisibility('123', true);

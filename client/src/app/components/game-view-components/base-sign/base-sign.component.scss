@@ -1,0 +1,60 @@
+.sign-wrapper {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: stretch;
+    filter: drop-shadow(3px 3px 0px #3a2510);
+}
+
+.sign-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 14px;
+
+    background-color: #c8a96e;
+    border: 3px solid #6b4c2a;
+    border-radius: 4px 4px 0 0;
+    box-shadow: inset 0 0 0 2px #e8c98a;
+
+    font-size: 15px;
+    color: #3a2510;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    white-space: nowrap;
+
+    cursor: pointer;
+    user-select: none;
+
+    &:hover {
+        filter: brightness(1.12);
+    }
+
+    &:active {
+        transform: translate(1px, 1px);
+        filter: brightness(0.95);
+    }
+}
+
+.sign-icon {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+    image-rendering: pixelated;
+}
+
+.sign-title {
+    flex: 1;
+}
+
+.sign-arrow {
+    font-size: 11px;
+    opacity: 0.7;
+}
+
+.sign-body {
+    border: 3px solid #6b4c2a;
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+    box-shadow: inset 0 0 0 2px #e8c98a;
+    overflow: hidden;
+}

@@ -1,0 +1,23 @@
+<app-base-sign [name]="name">
+    <div class="board-container">
+        @for (player of players; track player.character.id) {
+        <div class="player-row">
+            @if (player.socketId === host?.socketId) {
+            <span class="player-badge">👑</span>
+            } @else {
+            <span class="player-badge">🧍🏽‍♂️</span>
+            } @if (player.character.isActif) {
+            <span class="player-badge">⚔️</span>
+            }
+            <span class="player-name">{{ player.character.name }}</span>
+            <span class="player-wins">{{ player.character.victories }} victoires</span>
+        </div>
+        } @for (player of leftPlayers; track player.character.id) {
+        <div class="player-row left-row">
+            <span class="player-badge">🚪</span>
+            <span class="player-name player-hasleft">{{ player.character.name }}</span>
+            <span class="player-wins">{{ player.character.victories }} victoires</span>
+        </div>
+        }
+    </div>
+</app-base-sign>

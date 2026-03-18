@@ -1,0 +1,24 @@
+<div class="container">
+    <div class="header">
+        <span class="header-title">Joindre une partie</span>
+        <button class="button" style="background-image: url('./assets/images/red_large_brick.png');"
+        [routerLink]="['/home']">retour</button>
+
+    </div>
+
+    <div class="content">
+        <section class="game-sessions">
+            <h3 class="title brick-orange">Parties disponibles</h3>
+            <app-game-session-list></app-game-session-list>
+        </section>
+    </div>
+
+    <div class="footer">
+        <button
+            class="join-button button"
+            style="background-image: url('./assets/images/4x1_green.png')"
+            [disabled]="!canJoinGameSession()"
+            (click)="join()">
+            <span class="join-button-text">Rejoindre<br>la partie</span>
+        </button>
+</div>

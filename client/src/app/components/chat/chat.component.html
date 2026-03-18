@@ -1,0 +1,37 @@
+<div class="chat-container">
+    <div #messagesContainer class="messages-container">
+        @if (isLoading()) {
+            <div class="loading">Chargement des messages...</div>
+        }
+        @for (message of messages; track message._id) {
+            <div class="message" [class.own]="message.username === username">
+                <div class="message-header">
+                    <span class="username">{{ message.username }}</span>
+                    <span class="timestamp">{{ message.timestamp | date: 'HH:mm:ss' }}</span>
+                </div>
+                <div class="message-content">{{ message.content }}</div>
+            </div>
+        }
+    </div>
+
+    <div class="input-container">
+        <input
+            [(ngModel)]="messageInput"
+            (keypress)="onKeyPress($event)"
+            (click)="onFocus()"
+            (focus)="onFocus()"
+            placeholder="Tapez votre message..."
+            class="message-input"
+            [disabled]="isLoading()"
+            [readonly]="!isWriting"
+            maxlength="200"
+            type="text">
+
+        <button 
+            (click)="sendMessage()"
+            [disabled]="!messageInput().trim() || isLoading()"
+            class="send-button brick-green button">
+            Envoyer
+        </button>
+    </div>
+</div>

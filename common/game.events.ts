@@ -5,4 +5,71 @@ export enum GameEvents {
     GameUpdated = 'gameUpdated',
     GameDeleted = 'gameDeleted',
     GameList = 'gameList',
+    RequestMove = 'requestMove',
+    JoinGameSession = "joinGameSession",
+    PlayerAbandoned = "playerAbandoned",
+    RequestCombat = "requestCombat",
+    EndTurnRequest = "endTurnRequest",
+}
+
+export enum GameSessionEvents {
+    RequestGameSessionList = 'requestGameSessionList',
+    GameSessionList = 'gameSessionList',
+    GameSessionListUpdated = 'gameSessionListUpdated',
+
+    GameSessionCreated = 'gameSessionCreated',
+    GameSessionUpdated = 'gameSessionUpdated',
+    GameSessionDeleted = 'gameSessionDeleted',
+
+    CreateGameSession = 'createGameSession',
+    JoinGameSession = 'joinGameSession',
+    GameSessionJoinError = 'gameSessionJoinError',
+    GameSessionFull = 'gameSessionFull',
+    LeaveGameSession = 'leaveGameSession',
+
+    AvatarTakenUpdated = 'avatarTakenUpdated',
+    ObserveGameSession = 'observeGameSession',
+
+    KickPlayer = 'kickPlayer',
+    PlayerKicked = 'playerKicked',
+    RoomCancelled = 'roomCancelled',
+
+    StartGame = 'startGame',
+    GameStarted = 'gameStarted',
+
+    ToggleDebugMode = 'toggleDebugMode',
+
+    GameSessionStarted = 'gameSessionStarted',
+    PlayerJoined = 'playerJoined',
+    PlayerLeft = 'playerLeft',
+
+    TurnStarting = 'turnStarting',
+    TurnStarted = 'turnStarted',
+    TurnTimeUpdate = 'turnTimeUpdate',
+    InterTurnTimeUpdate = 'interTurnTimeUpdate',
+    TurnEnded = 'turnEnded',
+    EndTurnRequest = 'endTurnRequest',
+
+    RequestMove = 'requestMove',
+    RequestAssignPosition = 'requestAssignPosition',
+    MoveExecuted = 'moveExecuted',
+    ReachableTiles = 'reachableTiles',
+
+    RequestCombat = 'requestCombat',
+    CombatResult = 'combatResult',
+
+    PlayerAbandoned = 'playerAbandoned',
+    GameEnded = 'gameEnded',
+
+    RequestPlayerInfo = 'requestPlayerInfo',
+    RequestTileInfo = 'requestTileInfo',
+}
+
+export enum ChatEvents {
+    SendMessage = 'sendMessage',
+    ReceiveMessage = 'receiveMessage',
+    LoadChatHistory = 'loadChatHistory',
+    ChatHistory = 'chatHistory',
+    ClearChatHistory = 'clearChatHistory',
+
 }

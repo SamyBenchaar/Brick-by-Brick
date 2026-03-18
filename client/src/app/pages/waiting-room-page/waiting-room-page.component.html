@@ -1,18 +1,20 @@
 <div class="container">
     <div class="header">
         <span class="header-title">Salle d'attente</span>
-        <button class="button" style="background-image: url('/assets/images/red_large_brick.png');"
-        [routerLink]="['/home']">retour</button>
+        <button class="button" style="background-image: url('./assets/images/red_large_brick.png');"
+        (click)="leave()">retour</button>
 
     </div>
 
     <div class="content">
         <section class="players">
             <h3 class="title brick-orange">Joueurs dans la partie</h3>
+            <app-waiting-room-list></app-waiting-room-list>
         </section>
 
         <section class="chat">
             <h3 class="title brick-orange">Clavardage</h3>
+            <app-chat [username]="username" [gameId]="roomId" [hostPlayerId]="hostId" [isWriting]="isWriting"></app-chat>
         </section>
     </div>
 </div>

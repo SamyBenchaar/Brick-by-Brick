@@ -1,9 +1,9 @@
-import { Component, inject } from '@angular/core';
-import { Tile } from '@app/classes/tile';
-import { TileType } from '@common/map';
 import { CommonModule } from '@angular/common';
-import { MapEditorServiceService } from '@app/services/map-editor-service.service';
+import { Component, inject } from '@angular/core';
+import { Tile } from '@app/classes/tile/tile';
 import { TILE_TYPE_DESCRIPTIONS } from '@app/constants/tile-type-description';
+import { MapEditorService } from '@app/services/map-editor/map-editor.service';
+import { TileType } from '@common/map';
 
 @Component({
   selector: 'app-tile-type-sidebar',
@@ -14,8 +14,8 @@ import { TILE_TYPE_DESCRIPTIONS } from '@app/constants/tile-type-description';
 export class TileTypeSidebarComponent {
   editableTypes = Tile.editableTypes;
 
-  
-  private mapEditorService = inject(MapEditorServiceService);
+
+  private mapEditorService = inject(MapEditorService);
   readonly tile = Tile;
 
   selectTileType(type: TileType): void {
@@ -29,9 +29,9 @@ export class TileTypeSidebarComponent {
   getTileTypeDescription(type: TileType): string {
     return TILE_TYPE_DESCRIPTIONS[type];
   }
-  
+
   getTilePath(tile: TileType): string {
-    return `assets/images/${tile}.jpg`;
+    return `./assets/images/${tile}.jpg`;
   }
 
 }

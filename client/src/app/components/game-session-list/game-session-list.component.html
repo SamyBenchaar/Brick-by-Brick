@@ -1,0 +1,17 @@
+<div class="game-session-list">
+    @if (availableGameSessions().length === 0) {
+    <div class="no-sessions">
+        <p>Aucune partie disponible</p>
+    </div>
+    } @else { @for (gameSession of availableGameSessions(); track gameSession.roomId) {
+    <div class="game-session-item" [class.selected]="isSelected(gameSession.roomId)" (click)="selectGameSession(gameSession.roomId)">
+        <div class="game-session-description">
+            <img class="previewImage" [src]="getPreviewImage(gameSession)" />
+            <div><strong>Nom du jeu:</strong> {{ gameSession.mapCopy?.name }}</div>
+            <div><strong>Grandeur: </strong> {{getGameSizeLabel(gameSession)}}</div>
+            <div><strong>Mode: </strong> {{getGameModeLabel(gameSession)}}</div>
+            <div>{{ gameSession.players.length }} / {{ gameSession.maxPlayers }} joueurs</div>
+        </div>
+    </div>
+    } }
+</div>

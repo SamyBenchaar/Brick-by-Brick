@@ -1,0 +1,60 @@
+import { Component, computed, effect, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { GameSession } from '@app/interfaces/game-session';
+import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
+import { getGameModeLabel, getGameSizeLabel } from '@common/constants/game-config-constants';
+
+@Component({
+  selector: 'app-game-session-list',
+  imports: [],
+  templateUrl: './game-session-list.component.html',
+  styleUrl: './game-session-list.component.scss',
+})
+export class GameSessionListComponent implements OnInit, OnDestroy {
+  gameSessionSocketService = inject(GameSessionSocketService);
+  selectedGameSessionId = signal<string | null>(null);
+
+  availableGameSessions = computed(() => this.gameSessionSocketService.gameSessions().filter(
+    session => session.status === 'waiting' && session.players.length < session.maxPlayers));
+
+  private clearUnavailableSelection = effect(() => {
+    const selected = this.selectedGameSessionId();
+    if (selected && !this.availableGameSessions().some(s => s.roomId === selected)) {
+      this.selectedGameSessionId.set(null);
+    }
+  });
+
+  ngOnInit(): void {
+    this.gameSessionSocketService.connect();
+  }
+
+  ngOnDestroy(): void {
+    this.clearUnavailableSelection.destroy();
+  }
+
+  selectGameSession(gameSessionId: string): void {
+    this.selectedGameSessionId.set(gameSessionId);
+  }
+
+  isSelected(gameSessionId: string): boolean {
+    return this.selectedGameSessionId() === gameSessionId;
+  }
+
+  isSelectedAvailable(): boolean {
+    const selected = this.selectedGameSessionId();
+    return selected !== null && this.availableGameSessions().some(s => s.roomId === selected);
+  }
+
+  getPreviewImage(gameSession: GameSession): string {
+    return gameSession.mapCopy?.previewImage ?? '';
+  }
+
+  getGameSizeLabel(gameSession: GameSession): string {
+    const size = gameSession.mapCopy?.mapConfig?.size;
+    return size ? getGameSizeLabel(size) : '';
+  }
+
+  getGameModeLabel(gameSession: GameSession): string {
+    const mode = gameSession.mapCopy?.gameMode;
+    return mode ? getGameModeLabel(mode) : '';
+  }
+}

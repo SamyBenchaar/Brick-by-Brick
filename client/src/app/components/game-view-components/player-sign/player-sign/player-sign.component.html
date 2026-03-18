@@ -1,0 +1,39 @@
+<app-base-sign [name]="name" [iconUrl]="iconUrl">
+    <div class="player-sign-container">
+        <div class="player-header">
+            <img class="player-avatar" [src]="avatar?.image" [alt]="player?.character?.name" />
+            <span class="player-name">{{ player?.character?.name }}</span>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-row">
+                <span class="stat-label">❤️ Vie</span>
+                <span class="stat-value">{{ player?.character?.life }} / {{ player?.character?.maxLife }}</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">⚡ Rapidité</span>
+                <span class="stat-value">{{ player?.character?.speed }}</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">⚔️ Attaque</span>
+                <span class="stat-value">{{ player?.character?.attack }} ({{ player?.character?.attackDice }})</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">🛡️ Défense</span>
+                <span class="stat-value">{{ player?.character?.defense }} ({{ player?.character?.defenseDice }})</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">🎯 Actions</span>
+                <span class="stat-value">{{ player?.character?.remainingActions ?? player?.character?.actions }}</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">🚶 Mouvements</span>
+                <span class="stat-value">{{ player?.character?.remainingMovement ?? player?.character?.movements }}</span>
+            </div>
+        </div>
+
+        <button class="attack-button" type="button" [disabled]="!canAttack" (click)="onAttackClick()">
+            {{ selectedTargetName ? 'Attaquer ' + selectedTargetName : 'Attaquer' }}
+        </button>
+    </div>
+</app-base-sign>

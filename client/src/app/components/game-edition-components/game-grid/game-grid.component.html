@@ -1,19 +1,27 @@
-<div class="grid-container" (contextmenu)="onContextMenu($event)">
+<div #gridContainer class="grid-container" (contextmenu)="onContextMenu($event)">
     @for (row of getGrid(); track $index; let y = $index) {
     <div class="grid-row">
         @for (tile of row; track $index; let x = $index) { @let position = {x: x, y: y};
+        @let playerAtPos = getPlayerAtPosition(position);
         <div
             class="tile"
             [class]="'tile-' + tile.type"
+            [class.reachable]="isViewMode && isReachableTile(position)"
             [style.backgroundImage]="'url(' + getTilePath(tile.type) + ')'"
             (mousedown)="onTileMouseDown(position, $event)"
             (mouseenter)="onTileMouseEnter(position)"
+            (contextmenu)="onTileRightClick(position, $event)"
             [matTooltip]="tile.object ? objectDescriptions[tile.object] : ''"
             matTooltipShowDelay="0"
             matTooltipClass="description-tooltip"
             >
             @if(tile.object) {
             <img [src]="getObjectPath(tile.object)" class="tile-object-image"/>
+            }
+            @if(playerAtPos) {
+            <div class="player-avatar">
+                <img [src]="getAvatarImage(playerAtPos.avatarId)" [alt]="playerAtPos.name" />
+            </div>
             }
         </div>
         }

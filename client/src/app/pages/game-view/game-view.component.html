@@ -1,0 +1,85 @@
+<div class="page-container">
+    <header class="top-bar">
+        <button class="return-button button" style="background-image: url('assets/images/red_large_brick.png')" (click)="abandonGame()">Abandonner</button>
+        @if (isDebugModeActivated()){
+                <div class="debug-mode">Mode débogage activé</div>
+            }
+        @if (gameData) {
+        <div class="info-panel brick-orange">
+            <div class="info-item">
+                <span class="info-label">Taille:</span>
+                <span class="info-value">{{ gameData.mapConfig.size }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Joueurs:</span>
+                <span class="info-value">{{ playerCount() }}/{{ gameData.numberOfPlayers }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Tour de:</span>
+                <span class="info-value">{{ getCurrentTurnPlayerName() || 'Joueur' }}</span>
+            </div>
+        </div>
+        }
+    </header>
+
+    <div class="content-area">
+        <aside class="left-sidebar">
+            <div class="turn-info brick-orange">
+                @if (isMyTurn()) {
+                    <h3>C'est votre tour!</h3>
+                    <p>Temps restant: {{ getTurnTimeRemaining() }}s</p>
+                    <p>Utilisez WASD pour vous déplacer</p>
+                    <button class="btn-end-turn" (click)="endTurn()">Terminer le tour</button>
+                } @else {
+                    <h3>Tour de {{ getCurrentTurnPlayerName() }}</h3>
+                    <p>Temps restant: {{ getTurnTimeRemaining() }}s</p>
+                    @if (isDebugModeActivated() && isHost()){
+                        <button class="btn-end-turn" (click)="endTurn()">Terminer le tour</button>
+                    }
+                }
+            </div>
+            <app-player-board [players]="playerList()" [leftPlayers]="leftPlayerList()" [host]="hostPlayer()"></app-player-board>
+                <app-player-sign
+                    [player]="currentPlayer()"
+                    [canAttack]="canAttackSelectedTarget()"
+                    [selectedTargetName]="getSelectedAttackTargetName()"
+                    (attack)="attackSelectedTarget()">
+                </app-player-sign>
+        </aside>
+
+        <div class="map-zone">
+            @if (isTurnStarting()) {
+                <div class="turn-notification">
+                    <p>Tour de {{ getCurrentTurnPlayerName() }} dans {{ getInterTurnTimeRemaining() }}</p>
+                </div>
+            }
+
+            <div class="grid-container">
+                @if (gameData) {
+                <app-game-grid 
+                    [mapSize]="getMapSize()" 
+                    [gameData]="gameData" 
+                    [isViewMode]="true"
+                    [players]="getPlayers()"
+                    [reachableTiles]="gameSessionSocketService.reachableTiles()"
+                    [isAttackSelectionMode]="isAttackSelectionMode()"
+                    (attackTargetSelected)="onAttackTargetSelected($event)">
+                </app-game-grid>
+                }
+            </div>
+        </div>
+        <div #chatSidebar class="chat-sidebar" [class.chat-collapsed]="isChatCollapsed">
+            <div class="chat-toggle" (click)="isChatCollapsed = !isChatCollapsed">
+                <span class="chat-toggle-icon">💬</span>
+                <span class="chat-toggle-label">{{ isChatCollapsed ? 'Chat' : 'Réduire' }}</span>
+                <span class="chat-toggle-arrow">{{ isChatCollapsed ? '◀' : '▶' }}</span>
+            </div>
+            @if (!isChatCollapsed && gameData) {
+            <div class="chat-body" >
+                <app-chat [username]="currentPlayer()?.character?.name ?? ''" [gameId]="roomId()" [hostPlayerId]="hostId"
+                 [isWriting]="isWriting()" (isWritingChange)="handleWritingChange($event)"></app-chat>
+            </div>
+            }
+        </div>      
+    </div>
+</div>
