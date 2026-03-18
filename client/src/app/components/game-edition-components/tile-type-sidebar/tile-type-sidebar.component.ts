@@ -1,8 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
-import { Tile } from '@app/classes/tile';
+import { Tile } from '@app/classes/tile/tile';
 import { TILE_TYPE_DESCRIPTIONS } from '@app/constants/tile-type-description';
-import { MapEditorService } from '@app/services/map-editor.service';
+import { MapEditorService } from '@app/services/map-editor/map-editor.service';
 import { TileType } from '@common/map';
 
 @Component({

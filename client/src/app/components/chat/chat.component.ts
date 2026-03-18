@@ -1,8 +1,17 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, Output, OnChanges, OnDestroy, OnInit, SimpleChanges, 
-    effect, inject, signal, EventEmitter, ViewChild, ElementRef} from '@angular/core';
+import {
+    Component,
+    ElementRef,
+    EventEmitter,
+    Input,
+    OnChanges, OnDestroy, OnInit,
+    Output,
+    SimpleChanges,
+    ViewChild,
+    effect, inject, signal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ChatService } from '@app/services/communication/chat.service';
+import { ChatService } from '@app/services/communication/chat/chat.service';
 import { ChatMessage } from '@common/message';
 
 @Component({
@@ -16,7 +25,7 @@ export class ChatComponent implements OnInit, OnChanges, OnDestroy {
     @Input() username: string = 'Anonymous';
     @Input() gameId?: string;
     @Input() hostPlayerId?: string;
-    @Input() isWriting : boolean = true;
+    @Input() isWriting: boolean = true;
     @Output() isWritingChange = new EventEmitter<boolean>();
     @ViewChild('messagesContainer') messagesContainer!: ElementRef;
     private chatService = inject(ChatService);

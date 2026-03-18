@@ -3,7 +3,7 @@ import { Component, inject, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ChatComponent } from '@app/components/chat/chat.component';
 import { WaitingRoomListComponent } from '@app/components/waiting-room-list/waiting-room-list.component';
-import { GameSessionSocketService } from '@app/services/communication/game-session-socket.service';
+import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
 
 @Component({
     selector: 'app-waiting-room-page',

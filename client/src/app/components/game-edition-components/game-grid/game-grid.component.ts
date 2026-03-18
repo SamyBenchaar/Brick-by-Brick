@@ -2,22 +2,21 @@ import { CommonModule } from '@angular/common';
 import { Component, ElementRef, EventEmitter, HostListener, inject, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { GameMap } from '@app/classes/game-map';
-import { Tile } from '@app/classes/tile';
+import { GameMap } from '@app/classes/game-map/game-map';
+import { Tile } from '@app/classes/tile/tile';
 import { AppDialogComponent } from '@app/components/game-edition-components/app-dialog/app-dialog.component';
 import { AVATARS } from '@app/constants/character-constants';
 import { ClickEvent } from '@app/constants/click-event-constants';
 import { GameSize } from '@app/constants/game-size.enum';
 import { OBJECT_DESCRIPTIONS } from '@app/constants/object-descriptions';
 import { Game } from '@app/interfaces/game';
-import { GameSessionSocketService } from '@app/services/communication/game-session-socket.service';
-import { MapEditorService } from '@app/services/map-editor.service';
+import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
+import { MapEditorService } from '@app/services/map-editor/map-editor.service';
 import { ObjectCounterService } from '@app/services/object-counter/object-counter.service';
 import { Character } from '@common/character';
-import { GRID_SIZE, MapSize, ObjectType, TileType, PLAYABLE_TYPES } from '@common/map';
+import { GRID_SIZE, MapSize, ObjectType, PLAYABLE_TYPES, TILE_COST, TileType } from '@common/map';
 import { Position } from '@common/position';
 import html2canvas from 'html2canvas';
-import { TILE_COST } from '@common/map';
 
 @Component({
   selector: 'app-game-grid',
@@ -148,7 +147,7 @@ export class GameGridComponent implements OnInit, OnChanges {
 
     if (this.tryDebugTeleport(position, tile, playerAtPosition)) {
       return;
-    } 
+    }
     if (playerAtPosition) {
       this.openPlayerDialog(playerAtPosition);
     } else if (tile) {
@@ -179,7 +178,7 @@ export class GameGridComponent implements OnInit, OnChanges {
   private isTileValidForTeleport(tile: Tile | null, player: Character | null): boolean {
     const isEmpty = !!tile && !tile.object;
     const hasNoPlayer = !player;
-    const isWalkable = tile ? PLAYABLE_TYPES.includes(tile.type) : false;    
+    const isWalkable = tile ? PLAYABLE_TYPES.includes(tile.type) : false;
     return isEmpty && hasNoPlayer && isWalkable;
   }
 

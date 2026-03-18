@@ -5,8 +5,8 @@ import { RouterLink } from '@angular/router';
 import { AppDialogComponent } from '@app/components/game-edition-components/app-dialog/app-dialog.component';
 import { GameListMode } from '@app/constants/game-list-mode.enum';
 import { Game } from '@app/interfaces/game';
-import { CommunicationService } from '@app/services/communication/communication.service';
-import { GameSocketService } from '@app/services/communication/game-socket.service';
+import { CommunicationService } from '@app/services/communication/communication/communication.service';
+import { GameSocketService } from '@app/services/communication/game-socket/game-socket.service';
 import { getGameModeLabel, getGameSizeLabel } from '@common/constants/game-config-constants';
 
 @Component({

@@ -1,15 +1,15 @@
 import { GameSession } from '@app/domain/game-session';
+import { CombatResult, GameDataForInit } from '@app/interfaces/game-map-interfaces';
 import { GameService } from '@app/services/game/game.service';
 import { Character } from '@common/character';
 import { getGameSizeConfig } from '@common/constants/game-config-constants';
 import { Player } from '@common/player';
 import { Position } from '@common/position';
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
-import { CombatResult, GameDataForInit } from '@app/interfaces/game-map-interfaces';
-import { MovementService } from './movement.service';
-import { StartingPointService } from './starting-point.service';
-import { TurnManagementService } from './turn-management.service';
-import { CombatService } from './combat.service';
+import { CombatService } from '../combat.service';
+import { MovementService } from '../movement.service';
+import { StartingPointService } from '../starting-point.service';
+import { TurnManagementService } from '../turn-management.service';
 
 @Injectable()
 export class GameSessionService {

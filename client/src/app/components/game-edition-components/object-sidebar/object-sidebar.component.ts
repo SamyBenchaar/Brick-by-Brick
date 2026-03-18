@@ -1,9 +1,9 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { Tile } from '@app/classes/tile';
+import { Tile } from '@app/classes/tile/tile';
 import { OBJECT_DESCRIPTIONS } from '@app/constants/object-descriptions';
-import { MapEditorService } from '@app/services/map-editor.service';
+import { MapEditorService } from '@app/services/map-editor/map-editor.service';
 import { ObjectCounterService } from '@app/services/object-counter/object-counter.service';
 import { getGameSizeConfig } from '@common/constants/game-config-constants';
 import { ObjectType } from '@common/map';

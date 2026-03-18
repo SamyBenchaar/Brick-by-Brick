@@ -3,11 +3,11 @@ import { Character } from '@common/character';
 import { Dice } from '@common/dice';
 import { Player } from '@common/player';
 import { Test, TestingModule } from '@nestjs/testing';
-import { CombatService } from './combat.service';
-import { GameSessionService } from './gameSession.service';
-import { MovementService } from './movement.service';
-import { StartingPointService } from './starting-point.service';
-import { TurnManagementService } from './turn-management.service';
+import { CombatService } from '../combat.service';
+import { MovementService } from '../movement.service';
+import { StartingPointService } from '../starting-point.service';
+import { TurnManagementService } from '../turn-management.service';
+import { GameSessionService } from './game-session.service';
 
 /**
  * Stratégie de test pour GameSessionService:

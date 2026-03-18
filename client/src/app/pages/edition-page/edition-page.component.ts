@@ -10,8 +10,8 @@ import { TileTypeSidebarComponent } from '@app/components/game-edition-component
 import { DialogType } from '@app/constants/dialog-type.enum';
 import { DialogData, GameCreationData, GridDimensions, TileData } from '@app/interfaces/edition-page';
 import { Game } from '@app/interfaces/game';
-import { CommunicationService } from '@app/services/communication/communication.service';
-import { MapEditorService } from '@app/services/map-editor.service';
+import { CommunicationService } from '@app/services/communication/communication/communication.service';
+import { MapEditorService } from '@app/services/map-editor/map-editor.service';
 import { ObjectCounterService } from '@app/services/object-counter/object-counter.service';
 import { GameModeValue, GameSizeId, getGameSizeConfig } from '@common/constants/game-config-constants';
 import { MapSize } from '@common/map';

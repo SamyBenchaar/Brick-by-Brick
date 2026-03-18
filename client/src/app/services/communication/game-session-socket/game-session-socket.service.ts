@@ -1,4 +1,4 @@
-import { Injectable, signal, WritableSignal, inject} from '@angular/core';
+import { inject, Injectable, signal, WritableSignal } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { AppDialogComponent } from '@app/components/game-edition-components/app-dialog/app-dialog.component';
@@ -7,8 +7,8 @@ import { GameSession } from '@app/interfaces/game-session';
 import { Character } from '@common/character';
 import { GameSessionEvents } from '@common/game.events';
 import { Position } from '@common/position';
-import { setupGameplayEventListeners } from './gameplay-listeners';
-import { SocketService } from './socket.service';
+import { setupGameplayEventListeners } from '@app/services/communication/gameplay-listeners/gameplay-listeners';
+import { SocketService } from '@app/services/communication/socket/socket.service';
 
 @Injectable({
     providedIn: 'root',

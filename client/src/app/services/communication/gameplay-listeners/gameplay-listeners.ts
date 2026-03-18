@@ -1,11 +1,11 @@
 import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { AppDialogComponent } from '@app/components/game-edition-components/app-dialog/app-dialog.component';
+import { Tile } from '@app/interfaces/game';
 import { GameSessionEvents } from '@common/game.events';
 import { Position } from '@common/position';
-import type { GameSessionSocketService } from './game-session-socket.service';
-import { SocketService } from './socket.service';
-import { Tile } from '@app/interfaces/game';
+import type { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
+import { SocketService } from '@app/services/communication/socket/socket.service';
 
 export function setupGameplayEventListeners(
     service: GameSessionSocketService,
@@ -140,7 +140,8 @@ export function setupGameplayEventListeners(
             if (data.mapCopyTiles) {
                 const currentMap = service.mapCopy();
                 if (currentMap) {
-                    service.mapCopy.set({...currentMap,mapConfig: { ...currentMap.mapConfig, tiles: data.mapCopyTiles },
+                    service.mapCopy.set({
+                        ...currentMap, mapConfig: { ...currentMap.mapConfig, tiles: data.mapCopyTiles },
                     });
                 }
             }

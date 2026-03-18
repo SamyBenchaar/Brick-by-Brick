@@ -1,11 +1,11 @@
 import { GameSession } from '@app/domain/game-session';
 import { ChatGateway } from '@app/gateways/chat/chat.gateway';
-import { GameSessionService } from '@app/services/gameSession/gameSession.service';
+import { GameSessionService } from '@app/services/game-session/game-session/game-session.service';
 import { GameSessionEvents } from '@common/game.events';
 import { Logger } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { createMockSession, createTestCharacter, createTestSocket } from '../test-utils';
 import { GameSessionGateway } from './game-session.gateway';
-import { createMockSession, createTestCharacter, createTestSocket } from './test-utils';
 
 /**
  * Stratégie de test (portée: joindre une partie) pour GameSessionGateway:

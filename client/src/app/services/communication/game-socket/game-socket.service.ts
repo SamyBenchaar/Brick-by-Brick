@@ -1,7 +1,7 @@
-import { Injectable, signal, WritableSignal, inject} from '@angular/core';
+import { inject, Injectable, signal, WritableSignal } from '@angular/core';
 import { Game } from '@app/interfaces/game';
 import { GameEvents } from '@common/game.events';
-import { SocketService } from './socket.service';
+import { SocketService } from '@app/services/communication/socket/socket.service';
 
 @Injectable({
     providedIn: 'root',
@@ -11,7 +11,7 @@ export class GameSocketService {
 
     private socketService = inject(SocketService);
 
-    
+
     connect(): void {
         this.socketService.connect();
         this.setupEventListeners();

@@ -1,6 +1,6 @@
-import { Tile } from '@app/classes/tile';
-import { Position } from '@common/position';
+import { Tile } from '@app/classes/tile/tile';
 import { MapSize, TileType } from '@common/map';
+import { Position } from '@common/position';
 
 export class GameMap {
 

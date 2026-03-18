@@ -14,7 +14,7 @@ import {
     RANDOM_NAME_MAX,
 } from '@app/constants/character-constants';
 import { AvatarOption } from '@app/interfaces/avatar';
-import { GameSessionSocketService } from '@app/services/communication/game-session-socket.service';
+import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
 import { Character } from '@common/character';
 import { Dice } from '@common/dice';
 

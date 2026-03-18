@@ -4,9 +4,9 @@ import { Router } from '@angular/router';
 import { GameSession } from '@app/interfaces/game-session';
 import { GameSessionEvents } from '@common/game.events';
 import { of } from 'rxjs';
-import { GameSessionSocketService } from './game-session-socket.service';
-import { mockGameSession, mockGameSession2 } from './game-session-socket.service.spec.mocks';
-import { SocketService } from './socket.service';
+import { SocketService } from '@app/services/communication/socket/socket.service';
+import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
+import { mockGameSession, mockGameSession2 } from '@app/services/communication/game-session-socket/game-session-socket.service.spec.mocks';
 
 const AVATAR_ID_THREE = 3;
 

@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Tile } from '@app/classes/tile';
-import { MapEditorService } from '@app/services/map-editor.service';
+import { Tile } from '@app/classes/tile/tile';
+import { MapEditorService } from '@app/services/map-editor/map-editor.service';
 import { ObjectCounterService } from '@app/services/object-counter/object-counter.service';
 import { ObjectType, TileType } from '@common/map';
 import { GameGridComponent } from './game-grid.component';

@@ -5,9 +5,10 @@ import { GameSession } from '@app/interfaces/game-session';
 import { Character } from '@common/character';
 import { GameSessionEvents } from '@common/game.events';
 import { of } from 'rxjs';
-import { GameSessionSocketService } from './game-session-socket.service';
-import { mockGameSession, mockGameSession2, mockPlayer } from './game-session-socket.service.spec.mocks';
-import { SocketService } from './socket.service';
+import { SocketService } from '@app/services/communication/socket/socket.service';
+import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
+import { mockGameSession, mockGameSession2, mockPlayer }
+    from '@app/services/communication/game-session-socket/game-session-socket.service.spec.mocks';
 
 const AVATAR_ID_THREE = 3;
 const AVATAR_ID_FIVE = 5;

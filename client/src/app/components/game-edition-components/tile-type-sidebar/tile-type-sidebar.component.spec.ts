@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MapEditorService } from '@app/services/map-editor.service';
+import { MapEditorService } from '@app/services/map-editor/map-editor.service';
 import { TileType } from '@common/map';
 import { TileTypeSidebarComponent } from './tile-type-sidebar.component';
 

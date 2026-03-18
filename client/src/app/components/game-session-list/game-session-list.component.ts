@@ -1,7 +1,7 @@
 import { Component, computed, effect, inject, OnDestroy, OnInit, signal } from '@angular/core';
-import { GameSessionSocketService } from '@app/services/communication/game-session-socket.service';
-import { getGameModeLabel, getGameSizeLabel } from '@common/constants/game-config-constants';
 import { GameSession } from '@app/interfaces/game-session';
+import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
+import { getGameModeLabel, getGameSizeLabel } from '@common/constants/game-config-constants';
 
 @Component({
   selector: 'app-game-session-list',
@@ -45,7 +45,7 @@ export class GameSessionListComponent implements OnInit, OnDestroy {
   }
 
   getPreviewImage(gameSession: GameSession): string {
-     return gameSession.mapCopy?.previewImage ?? '';
+    return gameSession.mapCopy?.previewImage ?? '';
   }
 
   getGameSizeLabel(gameSession: GameSession): string {

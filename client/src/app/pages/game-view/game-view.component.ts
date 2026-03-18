@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, effect, HostListener, inject, Injector, OnDestroy, OnInit, signal, ViewChild, ElementRef } from '@angular/core';
+import { Component, computed, effect, ElementRef, HostListener, inject, Injector, OnDestroy, OnInit, signal, ViewChild } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { ChatComponent } from '@app/components/chat/chat.component';
@@ -8,14 +8,14 @@ import { GameGridComponent } from '@app/components/game-edition-components/game-
 import { PlayerBoardComponent } from '@app/components/game-view-components/player-board/player-board/player-board.component';
 import { PlayerSignComponent } from '@app/components/game-view-components/player-sign/player-sign/player-sign.component';
 import { AVATARS } from '@app/constants/character-constants';
+import { KEY_DEBUG, KEY_DIRECTION_MAP, KEY_ENTER } from '@app/constants/key-event.constants';
 import { AppDialogData } from '@app/interfaces/dialog-model';
 import { Game } from '@app/interfaces/game';
-import { GameSessionSocketService } from '@app/services/communication/game-session-socket.service';
+import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
 import { Character } from '@common/character';
 import { getGameSizeConfig } from '@common/constants/game-config-constants';
 import { MapSize } from '@common/map';
 import { Subscription } from 'rxjs';
-import { KEY_DIRECTION_MAP, KEY_DEBUG, KEY_ENTER } from '@app/constants/key-event.constants';
 
 @Component({
   selector: 'app-game-view',
@@ -86,12 +86,12 @@ export class GameViewComponent implements OnInit, OnDestroy {
     }
 
     if (!this.isMyTurn() || this.isWriting()) return;
-      const direction = KEY_DIRECTION_MAP[key];
+    const direction = KEY_DIRECTION_MAP[key];
 
     if (direction) {
       this.gameSessionSocketService.requestMove(direction);
     }
-  } 
+  }
 
   @HostListener('document:click', ['$event'])
   handleClickOutside(event: MouseEvent): void {
@@ -105,7 +105,7 @@ export class GameViewComponent implements OnInit, OnDestroy {
     this.gameSessionSocketService.abandonGame();
   };
 
- handleWritingChange(value: boolean): void {
+  handleWritingChange(value: boolean): void {
     this.isWriting.set(value);
   }
   getMapSize(): MapSize {

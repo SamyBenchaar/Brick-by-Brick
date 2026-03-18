@@ -1,15 +1,16 @@
-import { GameSessionGateway } from '@app/gateways/gameSession/game-session.gateway';
-import { GameSessionService } from '@app/services/gameSession/gameSession.service';
+import { GameSession } from '@app/domain/game-session';
+import { GameSessionGateway } from '@app/gateways/gameSession/game-session/game-session.gateway';
+import { GameSessionService } from '@app/services/game-session/game-session/game-session.service';
+import { MovementService } from '@app/services/game-session/movement.service';
+import { TurnManagementService } from '@app/services/game-session/turn-management.service';
 import { Character } from '@common/character';
 import { GameSessionEvents } from '@common/game.events';
-import { GameSession } from '@app/domain/game-session';
-import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
-import { OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer,
-    } from '@nestjs/websockets';
-import { Server, Socket } from 'socket.io';
-import { MovementService } from '@app/services/gameSession/movement.service';
 import { Position } from '@common/position';
-import { TurnManagementService } from '@app/services/gameSession/turn-management.service';
+import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
+import {
+    OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer,
+} from '@nestjs/websockets';
+import { Server, Socket } from 'socket.io';
 
 @WebSocketGateway({ cors: true })
 @Injectable()
@@ -68,14 +69,14 @@ export class GamePlayGateway implements OnGatewayInit {
     }
 
     @SubscribeMessage(GameSessionEvents.ToggleDebugMode)
-    handleToggleDebugMode(socket: Socket, payload: { currentRoomId: string}) {
+    handleToggleDebugMode(socket: Socket, payload: { currentRoomId: string }) {
         const gameSession = this.gameSessionService.getGameSession(payload.currentRoomId);
         if (!gameSession) {
             return;
         }
         const newIsDebugModeActivated = !gameSession.isDebugModeActivated;
         gameSession.isDebugModeActivated = newIsDebugModeActivated;
-        
+
         this.server.to(payload.currentRoomId).emit(GameSessionEvents.ToggleDebugMode, {
             isDebugModeActivated: newIsDebugModeActivated,
         });
@@ -115,7 +116,7 @@ export class GamePlayGateway implements OnGatewayInit {
 
         const currentPlayer = gameSession.getCurrentPlayer();
         const requestingPlayer = gameSession.players.find(p => p.socketId === socket.id);
-        
+
         if (!currentPlayer || !requestingPlayer || currentPlayer.id !== requestingPlayer.character.id) {
             return;
         }
@@ -141,17 +142,17 @@ export class GamePlayGateway implements OnGatewayInit {
     }
 
     @SubscribeMessage(GameSessionEvents.RequestAssignPosition)
-    handleRequestAssignPosition(socket: Socket, payload: { roomId: string; position: Position }){
+    handleRequestAssignPosition(socket: Socket, payload: { roomId: string; position: Position }) {
         const gameSession = this.gameSessionService.getGameSession(payload.roomId);
 
         const currentPlayer = gameSession.getCurrentPlayer();
         this.movementService.assignPosition(currentPlayer, gameSession, payload.position);
         this.server.to(payload.roomId).emit(GameSessionEvents.MoveExecuted, {
-                playerId: currentPlayer.id,
-                position: currentPlayer.position,
-                remainingMovement: currentPlayer.remainingMovement,
-                remainingActions: currentPlayer.remainingActions,
-            });
+            playerId: currentPlayer.id,
+            position: currentPlayer.position,
+            remainingMovement: currentPlayer.remainingMovement,
+            remainingActions: currentPlayer.remainingActions,
+        });
         this.emitReachableTiles(gameSession);
     }
 
@@ -168,7 +169,7 @@ export class GamePlayGateway implements OnGatewayInit {
 
         const currentPlayer = gameSession.getCurrentPlayer();
         const requestingPlayer = gameSession.players.find(p => p.socketId === socket.id);
-        
+
         if (!currentPlayer || !requestingPlayer || currentPlayer.id !== requestingPlayer.character.id) {
             return;
         }
