@@ -52,33 +52,43 @@ export class StartingPointService {
         return startingPoints;
     }
 
-    getClosestAvailableStartingPoint(
-        targetPosition: Position,
+    getAfterCombatPosition(
+        startingPoint: Position,
         mapConfig: GameMap,
         occupiedPositions: Position[],
     ): Position {
-        const validStartingPoints = this.getValidStartingPoints(mapConfig.tiles);
+        const occupied = new Set(occupiedPositions.map((p) => `${p.x},${p.y}`));
+        let closestPoint: Position | null = null;
+        let minDistance = Infinity;
 
-        const availablePoints = validStartingPoints.filter(
-            point => !occupiedPositions.some(p => p.x === point.x && p.y === point.y),
-        );
+        for (let y = 0; y < mapConfig.tiles.length; y++) {
+            for (let x = 0; x < mapConfig.tiles[y].length; x++) {
+                const tile = mapConfig.tiles[y][x];
+                const posKey = `${x},${y}`;
 
-        if (availablePoints.length === 0) {
-            return validStartingPoints[0];
-        }
+                if (occupied.has(posKey)) {
+                    continue;
+                }
 
-        let closestPoint = availablePoints[0];
-        let minDistance = this.calculateDistance(targetPosition, closestPoint);
+                if (tile.type === 'wall' || tile.type === 'door') {
+                    continue;
+                }
 
-        for (const point of availablePoints) {
-            const distance = this.calculateDistance(targetPosition, point);
-            if (distance < minDistance) {
-                minDistance = distance;
-                closestPoint = point;
+                if (tile.object && tile.object.type !== 'startingpoint') {
+                    continue;
+                }
+
+                const candidate = { x, y };
+                const distance = this.calculateDistance(startingPoint, candidate);
+
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    closestPoint = candidate;
+                }
             }
         }
 
-        return closestPoint;
+        return closestPoint ?? startingPoint;
     }
 
     private calculateDistance(pos1: Position, pos2: Position): number {
