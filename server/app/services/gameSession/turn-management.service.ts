@@ -5,11 +5,10 @@ import { Injectable, Logger } from '@nestjs/common';
 export class TurnManagementService {
     private logger = new Logger(TurnManagementService.name);
     private turnTimers: Map<string, NodeJS.Timeout> = new Map();
+
     private readonly randomOffset = 0.5;
     private readonly turnTimeInSeconds = 30;
     private readonly timerIntervalInMilliseconds = 1000;
-    private readonly delayBeforeTurnStartInMilliseconds = 3000;
-
 
     establishTurnOrder(gameSession: GameSession): void {
         const players = gameSession.getCharacters();
@@ -32,39 +31,47 @@ export class TurnManagementService {
         return this.turnTimeInSeconds;
     }
 
-    startTurnTimer(gameSession: GameSession, onTimeoutCallback: () => void, onTickCallback?: (timeRemaining: number) => void): void {
-        const roomId = gameSession.roomId;
+    private createTimer(roomId: string, getValue: () => number, decrement: () => void, onTick: (value: number) => void,
+        onFinish: () => void): void {
 
-        if (this.turnTimers.has(roomId)) {
-            clearInterval(this.turnTimers.get(roomId));
-        }
+        this.clearTimer(roomId);
+        onTick(getValue());
 
-        const timerInterval = setInterval(() => {
-            gameSession.decrementTurnTime();
-            const timeRemaining = gameSession.getCurrentTurnTime();
+        const interval = setInterval(() => {
+            decrement();
+            const value = getValue();
+            onTick(value);
 
-            // Call the tick callback with the current time
-            if (onTickCallback) {
-                onTickCallback(timeRemaining);
-            }
-
-            if (timeRemaining <= 0) {
-                clearInterval(timerInterval);
-                this.turnTimers.delete(roomId);
-                onTimeoutCallback();
+            if (value <= 0) {
+                this.clearTimer(roomId);
+                onFinish();
             }
         }, this.timerIntervalInMilliseconds);
 
-        this.turnTimers.set(roomId, timerInterval);
+        this.turnTimers.set(roomId, interval);
+    }
+
+    startTurnTimer(gameSession: GameSession, onTimeoutCallback: () => void, onTickCallback?: (timeRemaining: number) => void): void {
+        const roomId = gameSession.roomId;
+
+        this.createTimer(roomId, () => gameSession.getCurrentTurnTime(),
+            () => gameSession.decrementTurnTime(), (time) => onTickCallback?.(time), onTimeoutCallback);
+    }
+
+    startInterTurnCountdown(gameSession: GameSession, seconds: number, onTickCallback: (time: number) => void,
+        onFinishCallback: () => void): void {
+        let remaining = seconds;
+
+        this.createTimer(gameSession.roomId, () => remaining, () => {
+                remaining--;
+                gameSession.setCurrentInterTurnTime(remaining);
+            },onTickCallback, onFinishCallback);
     }
 
     endTurn(gameSession: GameSession): void {
         const roomId = gameSession.roomId;
 
-        if (this.turnTimers.has(roomId)) {
-            clearInterval(this.turnTimers.get(roomId));
-            this.turnTimers.delete(roomId);
-        }
+        this.clearTimer(roomId);
 
         const currentPlayer = gameSession.getCurrentPlayer();
         if (currentPlayer) {
@@ -73,6 +80,18 @@ export class TurnManagementService {
         }
 
         gameSession.advanceToNextPlayer();
+    }
+
+    private clearTimer(roomId: string): void {
+        const timer = this.turnTimers.get(roomId);
+        if (timer) {
+            clearInterval(timer);
+            this.turnTimers.delete(roomId);
+        }
+    }
+
+    cleanupTimers(roomId: string): void {
+        this.clearTimer(roomId);
     }
 
     isPlayerTurn(gameSession: GameSession, playerId: string): boolean {
@@ -88,12 +107,6 @@ export class TurnManagementService {
         this.endTurn(gameSession);
     }
 
-    cleanupTimers(roomId: string): void {
-        if (this.turnTimers.has(roomId)) {
-            clearInterval(this.turnTimers.get(roomId));
-            this.turnTimers.delete(roomId);
-        }
-    }
     canPlayerAct(gameSession: GameSession, playerId: string): boolean {
         return this.isPlayerTurn(gameSession, playerId) && gameSession.getCurrentTurnTime() > 0;
     }

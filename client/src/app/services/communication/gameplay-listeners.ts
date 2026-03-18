@@ -49,6 +49,10 @@ export function setupGameplayEventListeners(
         service.turnTimeRemaining.set(data.timeRemaining);
     });
 
+    socketService.on<{ timeRemaining: number }>(GameSessionEvents.InterTurnTimeUpdate, (data) => {
+        service.interTurnTimeRemaining.set(data.timeRemaining);
+    });
+
     socketService.on<{ playerId: string }>(GameSessionEvents.TurnEnded, () => {
         service.currentPlayerTurn.set(null);
         service.reachableTiles.set([]);

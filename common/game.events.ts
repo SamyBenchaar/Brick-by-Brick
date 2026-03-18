@@ -46,6 +46,7 @@ export enum GameSessionEvents {
     TurnStarting = 'turnStarting',
     TurnStarted = 'turnStarted',
     TurnTimeUpdate = 'turnTimeUpdate',
+    InterTurnTimeUpdate = 'interTurnTimeUpdate',
     TurnEnded = 'turnEnded',
     EndTurnRequest = 'endTurnRequest',
 

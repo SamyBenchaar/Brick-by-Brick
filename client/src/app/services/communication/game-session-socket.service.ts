@@ -22,6 +22,7 @@ export class GameSessionSocketService {
     mapCopy: WritableSignal<Game | null> = signal<Game | null>(null);
     currentPlayerTurn: WritableSignal<string | null> = signal<string | null>(null);
     turnTimeRemaining: WritableSignal<number> = signal<number>(0);
+    interTurnTimeRemaining: WritableSignal<number> = signal<number>(0);
     reachableTiles: WritableSignal<Position[]> = signal<Position[]>([]);
     gameEnded: WritableSignal<boolean> = signal<boolean>(false);
     turnStarting: WritableSignal<boolean> = signal<boolean>(false);
