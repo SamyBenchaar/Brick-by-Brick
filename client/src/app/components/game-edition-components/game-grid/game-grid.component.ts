@@ -18,6 +18,7 @@ import { Character } from '@common/character';
 import { GRID_SIZE, MapSize, ObjectType, TileType } from '@common/map';
 import { Position } from '@common/position';
 import html2canvas from 'html2canvas';
+import { TILE_COST } from '@app/constants/tile-type-description';
 
 @Component({
   selector: 'app-game-grid',
@@ -141,43 +142,54 @@ export class GameGridComponent implements OnInit, OnChanges {
     if (!this.isViewMode) {
       return;
     }
-
     event.preventDefault();
 
     const tile = this.getTile(position);
     const playerAtPosition = this.getPlayerAtPosition(position);
 
-    const debugMode = this.gameSessionSocketService.isDebugModeActivated();
-    const myTurn = this.gameSessionSocketService.isMyTurn();
-    const validTeleportTile =
-      !playerAtPosition &&
-      !tile?.object &&
-      tile?.type !== TileType.Wall &&
-      tile?.type !== TileType.Door;
-
-    if (debugMode && myTurn && validTeleportTile) {
-      this.gameSessionSocketService.requestAssignPosition(position);
+    if (this.tryDebugTeleport(position, tile, playerAtPosition)) {
       return;
-    } else if (playerAtPosition) {
-      const dialogData: AppDialogData = {
-        title: 'Informations du joueur',
-        message: `Joueur: ${playerAtPosition.name}\nAvatar ID: ${playerAtPosition.avatarId}\nVictoires: ${playerAtPosition.victories}`,
-        type: 'info',
-      };
-      this.dialog.open(AppDialogComponent, {
-        data: dialogData,
-      });
+    } 
+    if (playerAtPosition) {
+      this.openPlayerDialog(playerAtPosition);
     } else if (tile) {
-      const cost = this.getTileCost(tile.type);
-      const dialogData: AppDialogData = {
-        title: 'Informations de la tuile',
-        message: `Type: ${tile.type}\nCoût de déplacement: ${cost}`,
-        type: 'info',
-      };
-      this.dialog.open(AppDialogComponent, {
-        data: dialogData,
-      });
+      this.openTileDialog(tile);
     }
+  }
+
+  private openPlayerDialog(player: Character): void {
+    this.dialog.open(AppDialogComponent, {
+      data: {
+        title: 'Informations du joueur',
+        message: `Joueur: ${player.name}\nAvatar ID: ${player.avatarId}\nVictoires: ${player.victories}`,
+        type: 'info',
+      }
+    });
+  }
+
+  private openTileDialog(tile: Tile): void {
+    this.dialog.open(AppDialogComponent, {
+      data: {
+        title: 'Informations de la tuile',
+        message: `Type: ${tile.type}\nCoût: ${this.getTileCost(tile.type)}`,
+        type: 'info',
+      }
+    });
+  }
+
+  private isTileValidForTeleport(tile: Tile | null, player: Character | null): boolean {
+    return !!tile && !player && !tile.object && tile.type !== TileType.Wall && tile.type !== TileType.Door;
+  }
+
+  private tryDebugTeleport(position: Position, tile: Tile | null, player: Character | null): boolean {
+    const isDebug = this.gameSessionSocketService.isDebugModeActivated();
+    const isMyTurn = this.gameSessionSocketService.isMyTurn();
+
+    if (!isDebug || !isMyTurn) return false;
+    if (!this.isTileValidForTeleport(tile, player)) return false;
+
+    this.gameSessionSocketService.requestAssignPosition(position);
+    return true;
   }
 
   onTileMouseEnter(position: Position): void {
@@ -334,15 +346,6 @@ export class GameGridComponent implements OnInit, OnChanges {
   }
 
   private getTileCost(tileType: TileType): number {
-    switch (tileType) {
-      case TileType.Base:
-        return 1;
-      case TileType.Water:
-        return 2;
-      case TileType.Ice:
-        return 0;
-      default:
-        return 0;
-    }
+    return TILE_COST[tileType] ?? 0;
   }
 }
