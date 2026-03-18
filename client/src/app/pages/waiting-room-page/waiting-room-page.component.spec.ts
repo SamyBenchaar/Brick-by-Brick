@@ -3,7 +3,7 @@ import { Component, Input, signal, WritableSignal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { GameSession } from '@app/interfaces/game-session';
-import { GameSessionSocketService } from '@app/services/communication/game-session-socket.service';
+import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
 import { makeTestSession } from '@app/testing/game-session-test-helpers';
 import { WaitingRoomPage } from './waiting-room-page.component';
 

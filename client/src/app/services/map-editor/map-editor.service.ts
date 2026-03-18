@@ -1,12 +1,13 @@
 import { Injectable, signal } from '@angular/core';
 import { Game } from '@app/interfaces/game';
 import { ObjectType, TileType } from '@common/map';
+import { Position } from '@common/position';
 
 
 @Injectable({
   providedIn: 'root',
 })
-export class MapEditorServiceService {
+export class MapEditorService {
   private selectedTileType = signal<TileType | null>(null);
   private selectedObject = signal<ObjectType | null>(null);
   private currentGame = signal<Game | null>(null);
@@ -38,21 +39,21 @@ export class MapEditorServiceService {
     this.currentGame.set(game);
   }
 
-  setTileType(x: number, y: number, type: TileType): void {
+  setTileType(position: Position, type: TileType): void {
     const game = this.currentGame();
     if (game) {
-      game.mapConfig.tiles[y][x].type = type;
+      game.mapConfig.tiles[position.y][position.x].type = type;
       this.currentGame.set(game);
     }
   }
 
-  setObject(x: number, y: number, type: ObjectType | null): void {
+  setObject(position: Position, type: ObjectType | null): void {
     const game = this.currentGame();
     if (game) {
       if (type) {
-        game.mapConfig.tiles[y][x].object = { type };
+        game.mapConfig.tiles[position.y][position.x].object = { type };
       } else {
-        delete game.mapConfig.tiles[y][x].object;
+        delete game.mapConfig.tiles[position.y][position.x].object;
       }
       this.currentGame.set(game);
     }

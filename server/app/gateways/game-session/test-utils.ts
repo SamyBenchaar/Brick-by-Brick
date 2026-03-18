@@ -37,7 +37,7 @@ export const createMockSession = (
     playerCount = 1,
     options?: { status?: SessionStatus; maxPlayers?: number; mapId?: string; includeStartGameSpy?: boolean },
 ): GameSession => {
-    const { status = 'waiting', maxPlayers = DEFAULT_MAX_PLAYERS, mapId = 'MAP1', includeStartGameSpy = true } = options || {};
+    const { status = SessionStatus.Waiting, maxPlayers = DEFAULT_MAX_PLAYERS, mapId = 'MAP1', includeStartGameSpy = true } = options || {};
 
     const session = {
         roomId,
@@ -59,7 +59,7 @@ export const createMockSession = (
 
     if (includeStartGameSpy) {
         (session as unknown as { startGame: jest.Mock }).startGame = jest.fn(() => {
-            (session as { status: SessionStatus }).status = 'playing';
+            (session as { status: SessionStatus }).status = SessionStatus.Playing;
         });
     }
 

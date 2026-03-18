@@ -1,12 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, Input, OnDestroy, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, Input, OnInit, signal } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { RouterLink } from '@angular/router';
 import { AppDialogComponent } from '@app/components/game-edition-components/app-dialog/app-dialog.component';
 import { GameListMode } from '@app/constants/game-list-mode.enum';
 import { Game } from '@app/interfaces/game';
-import { CommunicationService } from '@app/services/communication/communication.service';
-import { GameSocketService } from '@app/services/communication/game-socket.service';
+import { CommunicationService } from '@app/services/communication/communication/communication.service';
+import { GameSocketService } from '@app/services/communication/game-socket/game-socket.service';
 import { getGameModeLabel, getGameSizeLabel } from '@common/constants/game-config-constants';
 
 @Component({
@@ -15,7 +15,7 @@ import { getGameModeLabel, getGameSizeLabel } from '@common/constants/game-confi
     styleUrls: ['./game-list.component.scss'],
     imports: [CommonModule, RouterLink],
 })
-export class GameListComponent implements OnInit, OnDestroy {
+export class GameListComponent implements OnInit {
     @Input() mode: GameListMode = GameListMode.CREATION;
     @Input() showOnlyVisible = true;
 
@@ -37,10 +37,6 @@ export class GameListComponent implements OnInit, OnDestroy {
     ngOnInit(): void {
         this.gameSocketService.connect();
         this.gameSocketService.requestGameList(this.showOnlyVisible);
-    }
-
-    ngOnDestroy(): void {
-        // this.gameSocketService.disconnect();
     }
 
     getGameModeLabel(mode: string): string {

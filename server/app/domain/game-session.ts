@@ -9,7 +9,7 @@ import { ROOM_ID_LENGTH, MAX_PLAYER } from '@common/constants/game-config-consta
 export class GameSession {
     players: Player[] = [];
     leftPlayers: Player[] = [];
-    status: SessionStatus = 'waiting';
+    status: SessionStatus = SessionStatus.Waiting;
     roomId: string;
     maxPlayers: number;
     mapCopy: GameMap | null = null;
@@ -17,7 +17,6 @@ export class GameSession {
     mapId: string;
     socketToAvatar: Map<string, number> = new Map();
 
-    // Gameplay properties
     playerOrder: string[] = [];
     currentPlayerIndex: number = 0;
     currentTurnTime: number = 30;
@@ -48,7 +47,8 @@ export class GameSession {
 
         this.socketToAvatar.delete(socketId);
 
-        if (this.status === 'waiting') {
+        if (this.status === SessionStatus.Waiting
+        ) {
             this.players = this.players.filter((p) => p.socketId !== socketId);
             return;
         }
@@ -107,7 +107,7 @@ export class GameSession {
     }
 
     startGame(): void {
-        this.status = 'playing';
+        this.status = SessionStatus.Playing;
     }
 
     getCharacters(): Character[] {

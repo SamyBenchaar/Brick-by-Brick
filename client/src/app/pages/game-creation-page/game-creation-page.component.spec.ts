@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { GameListComponent } from '@app/components/game-list/game-list.component';
-import { CommunicationService } from '@app/services/communication/communication.service';
+import { CommunicationService } from '@app/services/communication/communication/communication.service';
 import { GameCreationPageComponent } from './game-creation-page.component';
 
 /**

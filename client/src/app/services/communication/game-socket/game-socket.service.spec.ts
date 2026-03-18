@@ -1,8 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { Game } from '@app/interfaces/game';
 import { GameEvents } from '@common/game.events';
-import { GameSocketService } from './game-socket.service';
-import { SocketService } from './socket.service';
+import { SocketService } from '@app/services/communication/socket/socket.service';
+import { GameSocketService } from '@app/services/communication/game-socket/game-socket.service';
 
 /**
  * Stratégie de test pour GameSocketService:

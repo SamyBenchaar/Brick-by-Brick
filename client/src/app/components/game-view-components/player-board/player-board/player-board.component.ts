@@ -13,5 +13,4 @@ export class PlayerBoardComponent {
   @Input() leftPlayers: Player[] = [];
   @Input() host: Player | undefined = undefined;
   name: string = 'Players board';
-  iconUrl: string = 'blabla';
 }
