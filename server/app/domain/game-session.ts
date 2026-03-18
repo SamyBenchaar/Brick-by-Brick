@@ -47,7 +47,8 @@ export class GameSession {
 
         this.socketToAvatar.delete(socketId);
 
-        if (this.status === 'waiting') {
+        if (this.status === SessionStatus.Waiting
+        ) {
             this.players = this.players.filter((p) => p.socketId !== socketId);
             return;
         }

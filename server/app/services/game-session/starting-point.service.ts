@@ -111,7 +111,7 @@ export class StartingPointService {
 
                 if (
                     tile.object &&
-                    tile.object.type === TileType.Wall &&
+                    tile.object.type === ObjectType.StartingPoint &&
                     !activePlayerPositions.has(posKey)
                 ) {
                     tile.object = undefined;
