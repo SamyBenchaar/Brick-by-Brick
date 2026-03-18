@@ -13,14 +13,16 @@ export class JoinGamePageComponent {
   private router = inject(Router);
 
   join(): void {
-    const selectedGameSessionId = this.gameSessionListComponent?.selectedGameSessionId();
-    if (selectedGameSessionId) {
-      this.router.navigate(['/character-creation'], { queryParams: { roomId: selectedGameSessionId } });
+    if (this.canJoinGameSession()) {
+      const selectedGameSessionId = this.gameSessionListComponent?.selectedGameSessionId();
+      if (selectedGameSessionId) {
+        this.router.navigate(['/character-creation'], { queryParams: { roomId: selectedGameSessionId } });
+      }
     }
   }
 
   canJoinGameSession(): boolean {
-    return !!this.gameSessionListComponent?.selectedGameSessionId();
+    return this.gameSessionListComponent?.isSelectedAvailable() ?? false;
   }
 
 }

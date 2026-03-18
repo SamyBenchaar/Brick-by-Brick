@@ -1,4 +1,4 @@
-import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { Component, computed, effect, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket.service';
 import { getGameModeLabel, getGameSizeLabel } from '@common/constants/game-config-constants';
 import { GameSession } from '@app/interfaces/game-session';
@@ -18,6 +18,12 @@ export class GameSessionListComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.gameSessionSocketService.connect();
+    effect(() => {
+      const selected = this.selectedGameSessionId();
+      if (selected && !this.availableGameSessions().some(s => s.roomId === selected)) {
+        this.selectedGameSessionId.set(null);
+      }
+    });
   }
 
   ngOnDestroy(): void {
@@ -30,6 +36,11 @@ export class GameSessionListComponent implements OnInit, OnDestroy {
 
   isSelected(gameSessionId: string): boolean {
     return this.selectedGameSessionId() === gameSessionId;
+  }
+
+  isSelectedAvailable(): boolean {
+    const selected = this.selectedGameSessionId();
+    return selected !== null && this.availableGameSessions().some(s => s.roomId === selected);
   }
 
   getPreviewImage(gameSession: GameSession): string {
