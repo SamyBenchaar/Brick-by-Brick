@@ -4,7 +4,7 @@ import { GameSessionService } from '@app/services/game-session/game-session/game
 import { GameSessionEvents } from '@common/game.events';
 import { Logger } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { createMockSession, createTestCharacter, createTestSocket } from '../test-utils';
+import { createMockSession, createTestCharacter, createTestSocket } from '@app/gateways/game-session/test-utils';
 import { GameSessionGateway } from './game-session.gateway';
 
 /**

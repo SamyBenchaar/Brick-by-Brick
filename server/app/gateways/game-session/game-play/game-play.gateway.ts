@@ -1,5 +1,5 @@
 import { GameSession } from '@app/domain/game-session';
-import { GameSessionGateway } from '@app/gateways/gameSession/game-session/game-session.gateway';
+import { GameSessionGateway } from '@app/gateways/game-session/game-session/game-session.gateway';
 import { GameSessionService } from '@app/services/game-session/game-session/game-session.service';
 import { MovementService } from '@app/services/game-session/movement.service';
 import { TurnManagementService } from '@app/services/game-session/turn-management.service';

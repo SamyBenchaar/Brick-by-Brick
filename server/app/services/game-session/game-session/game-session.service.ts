@@ -6,10 +6,10 @@ import { getGameSizeConfig } from '@common/constants/game-config-constants';
 import { Player } from '@common/player';
 import { Position } from '@common/position';
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
-import { CombatService } from '../combat.service';
-import { MovementService } from '../movement.service';
-import { StartingPointService } from '../starting-point.service';
-import { TurnManagementService } from '../turn-management.service';
+import { CombatService } from '@app/services/game-session/combat.service';
+import { MovementService } from '@app/services/game-session/movement.service';
+import { StartingPointService } from '@app/services/game-session/starting-point.service';
+import { TurnManagementService } from '@app/services/game-session/turn-management.service';
 
 @Injectable()
 export class GameSessionService {

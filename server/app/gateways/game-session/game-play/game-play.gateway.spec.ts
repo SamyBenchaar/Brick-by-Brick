@@ -1,13 +1,13 @@
 import { ChatGateway } from '@app/gateways/chat/chat.gateway';
-import { GamePlayGateway } from '@app/gateways/gameSession/game-play/game-play.gateway';
-import { GameSessionGateway } from '@app/gateways/gameSession/game-session/game-session.gateway';
+import { GamePlayGateway } from '@app/gateways/game-session/game-play/game-play.gateway';
+import { GameSessionGateway } from '@app/gateways/game-session/game-session/game-session.gateway';
 import { GameSessionService } from '@app/services/game-session/game-session/game-session.service';
 import { MovementService } from '@app/services/game-session/movement.service';
 import { TurnManagementService } from '@app/services/game-session/turn-management.service';
 import { GameSessionEvents } from '@common/game.events';
 import { Logger } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { createMockSession, createTestSocket } from '../test-utils';
+import { createMockSession, createTestSocket } from '@app/gateways/game-session/test-utils';
 
 /**
  * Stratégie de test (portée: démarrer une partie) pour GamePlayGateway:
