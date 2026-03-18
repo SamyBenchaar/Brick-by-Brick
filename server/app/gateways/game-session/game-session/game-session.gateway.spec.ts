@@ -6,6 +6,7 @@ import { Logger } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { createMockSession, createTestCharacter, createTestSocket } from '@app/gateways/game-session/test-utils';
 import { GameSessionGateway } from './game-session.gateway';
+import { SessionStatus } from '@common/session.status';
 
 /**
  * Stratégie de test (portée: joindre une partie) pour GameSessionGateway:
@@ -301,7 +302,7 @@ describe('GameSessionGateway', () => {
         it('devrait gérer la déconnexion pendant une partie en cours', () => {
             const socket = createTestSocket('player-1');
             const session = createMockSession('ROOM1', 'host-1', 2);
-            session.status = 'playing';
+            session.status = SessionStatus.Playing;
             mockGameSessionService.getGameSession.mockReturnValue(session);
             (gateway as unknown as { socketToRoom: Map<string, string> }).socketToRoom.set('player-1', 'ROOM1');
 

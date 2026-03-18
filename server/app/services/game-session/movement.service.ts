@@ -1,6 +1,6 @@
 import { GameSession, Position } from '@app/domain/game-session';
 import { Character } from '@common/character';
-import { TileType } from '@common/map';
+import { TileType, TILE_COST } from '@common/map';
 import { Injectable, Logger } from '@nestjs/common';
 import { MovementCost, MapTile } from '@app/interfaces/game-map-interfaces';
 
@@ -21,16 +21,7 @@ export class MovementService {
     };
 
     private getTileCost(tileType: string): number {
-        switch (tileType) {
-            case TileType.Base:
-                return this.cost.base;
-            case TileType.Water:
-                return this.cost.water;
-            case TileType.Ice:
-                return this.cost.ice;
-            default:
-                return Infinity; // Impassable
-        }
+        return TILE_COST[tileType] ?? 0;
     }
 
     private isValidTile(mapData: MapTile[][], position: Position, occupiedPositions: Set<string>): boolean {

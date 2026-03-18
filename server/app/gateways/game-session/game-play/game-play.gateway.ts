@@ -6,6 +6,7 @@ import { TurnManagementService } from '@app/services/game-session/turn-managemen
 import { Character } from '@common/character';
 import { GameSessionEvents } from '@common/game.events';
 import { Position } from '@common/position';
+import { SessionStatus } from '@common/session.status';
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import {
     OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer,
@@ -52,7 +53,7 @@ export class GamePlayGateway implements OnGatewayInit {
             socket.emit(GameSessionEvents.GameSessionJoinError, 'Il faut au moins 2 joueurs pour démarrer');
             return;
         }
-        gameSession.status = 'playing';
+        gameSession.status = SessionStatus.Playing;
         this.gameSessionGateway.notifyGameSessionListUpdated();
 
         const fullMapData = await this.gameSessionService.getFullMapData(gameSession.mapId);
@@ -212,7 +213,7 @@ export class GamePlayGateway implements OnGatewayInit {
             return;
         }
 
-        if (gameSession.status !== 'playing') {
+        if (gameSession.status !== SessionStatus.Playing) {
             return;
         }
 

@@ -10,6 +10,7 @@ import { CombatService } from '@app/services/game-session/combat.service';
 import { MovementService } from '@app/services/game-session/movement.service';
 import { StartingPointService } from '@app/services/game-session/starting-point.service';
 import { TurnManagementService } from '@app/services/game-session/turn-management.service';
+import { SessionStatus } from '@common/session.status';
 
 @Injectable()
 export class GameSessionService {
@@ -42,7 +43,7 @@ export class GameSessionService {
         const session = this.gameSessions.get(roomId);
 
         if (!session) return 'Session de jeu introuvable';
-        if (session.status !== 'waiting') return 'La session de jeu a déjà commencé';
+        if (session.status !== SessionStatus.Waiting) return 'La session de jeu a déjà commencé';
         if (session.isFull()) return 'La session de jeu est pleine';
 
         player.character.name = session.verifyUniqueName(player.character.name);
@@ -63,7 +64,7 @@ export class GameSessionService {
 
     getAvailableGameSessions(): GameSession[] {
         return Array.from(this.gameSessions.values()).filter(session =>
-            session.status === 'waiting' && session.players.length < session.maxPlayers);
+            session.status === SessionStatus.Waiting && session.players.length < session.maxPlayers);
     }
 
     deleteGameSession(roomId: string): void {
@@ -81,7 +82,7 @@ export class GameSessionService {
         gameSession.setMapCopy(mapConfig);
         this.startingPointService.assignStartingPoints(gameSession, mapConfig);
         this.startingPointService.cleanupUnusedStartingPoints(gameSession, mapConfig.tiles);
-        gameSession.setStatus('playing');
+        gameSession.setStatus(SessionStatus.Playing);
         this.logger.log(`Game session ${gameSession.roomId} initialized`);
     }
 
@@ -205,7 +206,7 @@ export class GameSessionService {
         }
         gameSession.removePlayer(playerId);
 
-        if (gameSession.status === 'playing' && gameSession.mapCopy) {
+        if (gameSession.status === SessionStatus.Playing && gameSession.mapCopy) {
             this.startingPointService.cleanupUnusedStartingPoints(gameSession, gameSession.mapCopy.tiles);
         }
     }

@@ -1,1 +1,5 @@
-export type SessionStatus = 'waiting' | 'playing' | 'ended';
+export enum SessionStatus {
+    Waiting = 'waiting',
+    Playing = 'playing',
+    Ended = 'ended',
+}

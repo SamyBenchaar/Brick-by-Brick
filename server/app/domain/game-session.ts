@@ -9,7 +9,7 @@ import { ROOM_ID_LENGTH, MAX_PLAYER } from '@common/constants/game-config-consta
 export class GameSession {
     players: Player[] = [];
     leftPlayers: Player[] = [];
-    status: SessionStatus = 'waiting';
+    status: SessionStatus = SessionStatus.Waiting;
     roomId: string;
     maxPlayers: number;
     mapCopy: GameMap | null = null;
@@ -106,7 +106,7 @@ export class GameSession {
     }
 
     startGame(): void {
-        this.status = 'playing';
+        this.status = SessionStatus.Playing;
     }
 
     getCharacters(): Character[] {
