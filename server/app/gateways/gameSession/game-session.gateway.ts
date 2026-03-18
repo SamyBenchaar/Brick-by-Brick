@@ -240,7 +240,7 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
         this.server.emit(GameSessionEvents.GameSessionUpdated, gameSession);
     }
 
-    private notifyGameSessionListUpdated() {
+    notifyGameSessionListUpdated() {
         const sessions = this.gameSessionService.getAvailableGameSessions();
         this.server.emit(GameSessionEvents.GameSessionListUpdated, sessions);
     }

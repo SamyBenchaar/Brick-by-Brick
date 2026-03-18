@@ -1,17 +1,15 @@
-import { GameSession } from '@app/domain/game-session';
 import { ChatGateway } from '@app/gateways/chat/chat.gateway';
 import { GameSessionGateway } from '@app/gateways/gameSession/game-session.gateway';
 import { GameSessionService } from '@app/services/gameSession/gameSession.service';
-import { MovementService } from '@app/services/gameSession/movement.service';
 import { Character } from '@common/character';
 import { GameSessionEvents } from '@common/game.events';
-import { TileType } from '@common/map';
-import { Position } from '@common/position';
+import { GameSession } from '@app/domain/game-session';
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
-import {
-    OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer,
-} from '@nestjs/websockets';
+import { OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer,
+    } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
+import { MovementService } from '@app/services/gameSession/movement.service';
+import { Position } from '@common/position';
 
 @WebSocketGateway({ cors: true })
 @Injectable()
@@ -52,6 +50,8 @@ export class GamePlayGateway implements OnGatewayInit {
             socket.emit(GameSessionEvents.GameSessionJoinError, 'Il faut au moins 2 joueurs pour démarrer');
             return;
         }
+        gameSession.status = 'playing';
+        this.gameSessionGateway.notifyGameSessionListUpdated();
 
         const fullMapData = await this.gameSessionService.getFullMapData(gameSession.mapId);
         this.gameSessionService.initializeGameSession(gameSession, fullMapData);
@@ -67,19 +67,14 @@ export class GamePlayGateway implements OnGatewayInit {
     }
 
     @SubscribeMessage(GameSessionEvents.ToggleDebugMode)
-    handleToggleDebugMode(socket: Socket, payload: { currentRoomId: string }) {
+    handleToggleDebugMode(socket: Socket, payload: { currentRoomId: string}) {
         const gameSession = this.gameSessionService.getGameSession(payload.currentRoomId);
         if (!gameSession) {
             return;
         }
-
-        if (!gameSession.isHost(socket.id)) {
-            return;
-        }
-
         const newIsDebugModeActivated = !gameSession.isDebugModeActivated;
         gameSession.isDebugModeActivated = newIsDebugModeActivated;
-
+        
         this.server.to(payload.currentRoomId).emit(GameSessionEvents.ToggleDebugMode, {
             isDebugModeActivated: newIsDebugModeActivated,
         });
@@ -91,22 +86,19 @@ export class GamePlayGateway implements OnGatewayInit {
         if (!gameSession) {
             return;
         }
+
         if (gameSession.isTurnStarting) {
             return;
         }
-        const currentPlayer = gameSession.getCurrentPlayer();
-        const requestingPlayer = gameSession.players.find((p) => p.socketId === socket.id);
-        const isHost = gameSession.isHost(socket.id);
-        const isCurrentPlayer = !!currentPlayer && !!requestingPlayer && currentPlayer.id === requestingPlayer.character.id;
-        const canForceEndTurn = gameSession.isDebugModeActivated && isHost;
 
-        if (!currentPlayer || (!isCurrentPlayer && !canForceEndTurn)) {
+        const currentPlayer = gameSession.getCurrentPlayer();
+        const requestingPlayer = gameSession.players.find(p => p.socketId === socket.id);
+        if (!currentPlayer || !requestingPlayer || currentPlayer.id !== requestingPlayer.character.id && !gameSession.isDebugModeActivated) {
             return;
         }
 
-        const endedPlayerId = currentPlayer.id;
         this.gameSessionService.endCurrentTurn(gameSession);
-        this.handleTurnEnd(gameSession, endedPlayerId);
+        this.handleTurnEnd(gameSession);
     }
 
     @SubscribeMessage(GameSessionEvents.RequestMove)
@@ -121,8 +113,8 @@ export class GamePlayGateway implements OnGatewayInit {
         }
 
         const currentPlayer = gameSession.getCurrentPlayer();
-        const requestingPlayer = gameSession.players.find((p) => p.socketId === socket.id);
-
+        const requestingPlayer = gameSession.players.find(p => p.socketId === socket.id);
+        
         if (!currentPlayer || !requestingPlayer || currentPlayer.id !== requestingPlayer.character.id) {
             return;
         }
@@ -130,98 +122,36 @@ export class GamePlayGateway implements OnGatewayInit {
         const direction = payload.direction as 'arrowUp' | 'arrowDown' | 'arrowLeft' | 'arrowRight';
         const success = this.gameSessionService.executeMove(gameSession, direction);
 
-        if (!success) {
-            return;
-        }
+        if (success) {
+            this.server.to(payload.roomId).emit(GameSessionEvents.MoveExecuted, {
+                playerId: currentPlayer.id,
+                position: currentPlayer.position,
+                remainingMovement: currentPlayer.remainingMovement,
+                remainingActions: currentPlayer.remainingActions,
+            });
 
-        this.server.to(payload.roomId).emit(GameSessionEvents.MoveExecuted, {
-            playerId: currentPlayer.id,
-            position: currentPlayer.position,
-            remainingMovement: currentPlayer.remainingMovement,
-            remainingActions: currentPlayer.remainingActions,
-        });
+            this.emitReachableTiles(gameSession);
 
-        this.emitReachableTiles(gameSession);
-
-        if (!this.gameSessionService.canPlayerTakeAction(gameSession)) {
-            const endedPlayerId = currentPlayer.id;
-            this.gameSessionService.endCurrentTurn(gameSession);
-            this.handleTurnEnd(gameSession, endedPlayerId);
+            if (!this.gameSessionService.canPlayerTakeAction(gameSession)) {
+                this.gameSessionService.endCurrentTurn(gameSession);
+                this.handleTurnEnd(gameSession);
+            }
         }
     }
 
     @SubscribeMessage(GameSessionEvents.RequestAssignPosition)
-    handleRequestAssignPosition(socket: Socket, payload: { roomId: string; position: Position }) {
+    handleRequestAssignPosition(socket: Socket, payload: { roomId: string; position: Position }){
         const gameSession = this.gameSessionService.getGameSession(payload.roomId);
 
-        if (!gameSession) {
-            return;
-        }
-
-        if (!this.canAssignPosition(socket, gameSession, payload.position)) {
-            return;
-        }
-
         const currentPlayer = gameSession.getCurrentPlayer();
-        if (!currentPlayer) {
-            return;
-        }
-
         this.movementService.assignPosition(currentPlayer, gameSession, payload.position);
-
         this.server.to(payload.roomId).emit(GameSessionEvents.MoveExecuted, {
-            playerId: currentPlayer.id,
-            position: currentPlayer.position,
-            remainingMovement: currentPlayer.remainingMovement,
-            remainingActions: currentPlayer.remainingActions,
-        });
-
+                playerId: currentPlayer.id,
+                position: currentPlayer.position,
+                remainingMovement: currentPlayer.remainingMovement,
+                remainingActions: currentPlayer.remainingActions,
+            });
         this.emitReachableTiles(gameSession);
-
-        if (!this.gameSessionService.canPlayerTakeAction(gameSession)) {
-            const endedPlayerId = currentPlayer.id;
-            this.gameSessionService.endCurrentTurn(gameSession);
-            this.handleTurnEnd(gameSession, endedPlayerId);
-        }
-    }
-
-    private canAssignPosition(
-        socket: Socket,
-        gameSession: GameSession,
-        position: Position,
-    ): boolean {
-        if (gameSession.isTurnStarting || !gameSession.isDebugModeActivated) {
-            return false;
-        }
-
-        const currentPlayer = gameSession.getCurrentPlayer();
-        const requestingPlayer = gameSession.players.find((p) => p.socketId === socket.id);
-
-        if (!currentPlayer || !requestingPlayer || currentPlayer.id !== requestingPlayer.character.id) {
-            return false;
-        }
-
-        return this.isValidTeleportDestination(gameSession, currentPlayer, position);
-    }
-
-    private isValidTeleportDestination(
-        gameSession: GameSession,
-        currentPlayer: Character,
-        position: Position,
-    ): boolean {
-        const tile = gameSession.getMapCopy()?.tiles?.[position.y]?.[position.x];
-        if (!tile) {
-            return false;
-        }
-
-        const occupied = gameSession.players.some(
-            (p) =>
-                p.character.id !== currentPlayer.id &&
-                p.character.position?.x === position.x &&
-                p.character.position?.y === position.y,
-        );
-
-        return tile.type !== TileType.Wall && tile.type !== TileType.Door && !tile.object && !occupied;
     }
 
     @SubscribeMessage(GameSessionEvents.RequestCombat)
@@ -236,8 +166,8 @@ export class GamePlayGateway implements OnGatewayInit {
         }
 
         const currentPlayer = gameSession.getCurrentPlayer();
-        const requestingPlayer = gameSession.players.find((p) => p.socketId === socket.id);
-
+        const requestingPlayer = gameSession.players.find(p => p.socketId === socket.id);
+        
         if (!currentPlayer || !requestingPlayer || currentPlayer.id !== requestingPlayer.character.id) {
             return;
         }
@@ -249,7 +179,7 @@ export class GamePlayGateway implements OnGatewayInit {
                 winner: result.winner,
                 loser: result.loser,
                 attackerVictories: result.attackerVictories,
-                defenderNewPosition: gameSession.players.find((p) => p.character.id === payload.defenderId)?.character.position,
+                defenderNewPosition: gameSession.players.find(p => p.character.id === payload.defenderId)?.character.position,
                 remainingActions: currentPlayer.remainingActions,
             });
 
@@ -260,16 +190,14 @@ export class GamePlayGateway implements OnGatewayInit {
             }
 
             if (result.loser === currentPlayer.id) {
-                const endedPlayerId = currentPlayer.id;
                 this.gameSessionService.endCurrentTurn(gameSession);
-                this.handleTurnEnd(gameSession, endedPlayerId);
-                return;
-            }
-
-            if (!this.gameSessionService.canPlayerTakeAction(gameSession)) {
-                const endedPlayerId = currentPlayer.id;
-                this.gameSessionService.endCurrentTurn(gameSession);
-                this.handleTurnEnd(gameSession, endedPlayerId);
+                this.handleTurnEnd(gameSession);
+            } else {
+                // If the attacker won but has no more actions, end turn
+                if (!this.gameSessionService.canPlayerTakeAction(gameSession)) {
+                    this.gameSessionService.endCurrentTurn(gameSession);
+                    this.handleTurnEnd(gameSession);
+                }
             }
         } catch (error) {
             this.logger.error(`Combat error: ${error.message}`);
@@ -279,77 +207,73 @@ export class GamePlayGateway implements OnGatewayInit {
     @SubscribeMessage(GameSessionEvents.PlayerAbandoned)
     handlePlayerAbandoned(socket: Socket, payload: { roomId: string }) {
         const gameSession = this.gameSessionService.getGameSession(payload.roomId);
+        if (!gameSession) {
+            return;
+        }
 
-        if (gameSession && gameSession.status === 'playing') {
-            const currentPlayer = gameSession.getCurrentPlayer();
-            const abandoningPlayer = gameSession.players.find((p) => p.socketId === socket.id);
-            const abandoningPlayerId = abandoningPlayer?.character.id;
-            const wasCurrentPlayer =
-                !!currentPlayer &&
-                !!abandoningPlayer &&
-                currentPlayer.id === abandoningPlayer.character.id;
+        if (gameSession.status !== 'playing') {
+            return;
+        }
 
-            this.gameSessionService.removePlayer(payload.roomId, socket.id);
+        const currentPlayer = gameSession.getCurrentPlayer();
+        const abandoningPlayer = gameSession.players.find(p => p.socketId === socket.id);
+        const wasCurrentPlayer = currentPlayer && abandoningPlayer && currentPlayer.id === abandoningPlayer.character.id;
 
-            this.server.to(payload.roomId).emit(GameSessionEvents.PlayerAbandoned, {
-                playerId: abandoningPlayerId,
-            });
+        this.gameSessionService.removePlayer(payload.roomId, socket.id);
 
-            const winner = this.gameSessionService.checkGameWinner(gameSession);
+        this.server.to(payload.roomId).emit(GameSessionEvents.PlayerAbandoned, {
+            playerId: abandoningPlayer?.character.id,
+            mapCopyTiles: gameSession.mapCopy?.tiles,
+        });
 
-            if (winner) {
-                this.handleGameEnd(gameSession, winner);
-            } else if (gameSession.playerOrder.length <= 1) {
-                this.handleGameEnd(gameSession, null);
-            } else if (wasCurrentPlayer && abandoningPlayerId) {
-                this.handleTurnEnd(gameSession, abandoningPlayerId);
-            }
+        const winner = this.gameSessionService.checkGameWinner(gameSession);
+        if (winner) {
+            this.handleGameEnd(gameSession, winner);
+            return;
+        }
+
+        if (gameSession.playerOrder.length === 1) {
+            this.handleGameEnd(gameSession, null);
+            return;
+        }
+
+        if (gameSession.playerOrder.length === 0) {
+            this.handleGameEnd(gameSession, null);
+            return;
+        }
+
+        if (wasCurrentPlayer) {
+            this.handleTurnEnd(gameSession);
         }
     }
 
     private startGameTurn(gameSession: GameSession): void {
-        gameSession.isTurnStarting = true;
-        gameSession.status = 'playing';
-        this.gameSessionGateway.notifyGameSessionUpdated(gameSession);
+        const currentPlayer = gameSession.getCurrentPlayer();
 
-        const startingPlayer = gameSession.getCurrentPlayer();
-        
+        gameSession.isTurnStarting = true;
+
         this.server.to(gameSession.roomId).emit(GameSessionEvents.TurnStarting, {
-            playerId: startingPlayer?.id,
-            playerName: startingPlayer?.name,
+            playerId: currentPlayer?.id,
+            playerName: currentPlayer?.name,
             delay: this.turnStartDelay,
         });
 
         setTimeout(() => {
-            if (!this.gameSessionService.getGameSession(gameSession.roomId)) {
-                this.logger.warn(`Session ${gameSession.roomId} no longer exists, aborting turn start`);
-                return;
-            }
-
             gameSession.isTurnStarting = false;
 
             this.gameSessionService.startCurrentTurn(
                 gameSession,
                 () => {
-                    const currentPlayer = gameSession.getCurrentPlayer();
-                    if (!currentPlayer) {
-                        return;
-                    }
-
                     this.server.to(gameSession.roomId).emit(GameSessionEvents.TurnStarted, {
-                        playerId: currentPlayer.id,
-                        playerName: currentPlayer.name,
+                        playerId: currentPlayer?.id,
+                        playerName: currentPlayer?.name,
                         turnTime: gameSession.getCurrentTurnTime(),
-                        remainingMovement: currentPlayer.remainingMovement,
-                        remainingActions: currentPlayer.remainingActions,
                     });
-
                     this.emitReachableTiles(gameSession);
 
                     if (!this.gameSessionService.canPlayerTakeAction(gameSession)) {
-                        const endedPlayerId = currentPlayer.id;
                         this.gameSessionService.endCurrentTurn(gameSession);
-                        this.handleTurnEnd(gameSession, endedPlayerId);
+                        this.handleTurnEnd(gameSession);
                     }
                 },
                 (timeRemaining: number) => {
@@ -357,16 +281,17 @@ export class GamePlayGateway implements OnGatewayInit {
                         timeRemaining,
                     });
                 },
-                (endedPlayerId: string) => {
-                    this.handleTurnEnd(gameSession, endedPlayerId);
+                () => {
+                    this.handleTurnEnd(gameSession);
                 },
             );
         }, this.turnStartDelay);
     }
 
-    private handleTurnEnd(gameSession: GameSession, endedPlayerId: string): void {
+    private handleTurnEnd(gameSession: GameSession): void {
+        const currentPlayer = gameSession.getCurrentPlayer();
         this.server.to(gameSession.roomId).emit(GameSessionEvents.TurnEnded, {
-            playerId: endedPlayerId,
+            playerId: currentPlayer?.id,
         });
 
         const winner = this.gameSessionService.checkGameWinner(gameSession);

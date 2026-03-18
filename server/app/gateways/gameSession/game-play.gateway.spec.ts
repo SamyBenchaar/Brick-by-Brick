@@ -39,7 +39,9 @@ describe('GamePlayGateway - handleStartGame', () => {
         };
 
         mockChatGateway = {} as Record<string, jest.Mock>;
-        mockGameSessionGateway = {} as Record<string, jest.Mock>;
+        mockGameSessionGateway = {    
+            notifyGameSessionListUpdated: jest.fn(),
+            } as Record<string, jest.Mock>;
         mockMovementService = {} as Record<string, jest.Mock>;
 
         const toReturn = { emit: jest.fn() };
