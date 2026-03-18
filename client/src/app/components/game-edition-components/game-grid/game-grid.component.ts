@@ -9,7 +9,6 @@ import { AVATARS } from '@app/constants/character-constants';
 import { ClickEvent } from '@app/constants/click-event-constants';
 import { GameSize } from '@app/constants/game-size.enum';
 import { OBJECT_DESCRIPTIONS } from '@app/constants/object-descriptions';
-import { AppDialogData } from '@app/interfaces/dialog-model';
 import { Game } from '@app/interfaces/game';
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket.service';
 import { MapEditorService } from '@app/services/map-editor.service';
@@ -163,7 +162,7 @@ export class GameGridComponent implements OnInit, OnChanges {
         title: 'Informations du joueur',
         message: `Joueur: ${player.name}\nAvatar ID: ${player.avatarId}\nVictoires: ${player.victories}`,
         type: 'info',
-      }
+      },
     });
   }
 
@@ -173,7 +172,7 @@ export class GameGridComponent implements OnInit, OnChanges {
         title: 'Informations de la tuile',
         message: `Type: ${tile.type}\nCoût: ${this.getTileCost(tile.type)}`,
         type: 'info',
-      }
+      },
     });
   }
 
