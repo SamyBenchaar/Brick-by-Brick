@@ -50,6 +50,8 @@ export class GamePlayGateway implements OnGatewayInit {
             socket.emit(GameSessionEvents.GameSessionJoinError, 'Il faut au moins 2 joueurs pour démarrer');
             return;
         }
+        gameSession.status = 'playing';
+        this.gameSessionGateway.notifyGameSessionUpdated(gameSession);
 
         const fullMapData = await this.gameSessionService.getFullMapData(gameSession.mapId);
         this.gameSessionService.initializeGameSession(gameSession, fullMapData);
