@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, HostListener, inject, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild, ElementRef} from '@angular/core';
+import { Component, ElementRef, EventEmitter, HostListener, inject, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { GameMap } from '@app/classes/game-map';
@@ -12,7 +12,7 @@ import { OBJECT_DESCRIPTIONS } from '@app/constants/object-descriptions';
 import { AppDialogData } from '@app/interfaces/dialog-model';
 import { Game } from '@app/interfaces/game';
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket.service';
-import { MapEditorServiceService } from '@app/services/map-editor.service';
+import { MapEditorService } from '@app/services/map-editor.service';
 import { ObjectCounterService } from '@app/services/object-counter/object-counter.service';
 import { Character } from '@common/character';
 import { GRID_SIZE, MapSize, ObjectType, TileType } from '@common/map';
@@ -44,7 +44,7 @@ export class GameGridComponent implements OnInit, OnChanges {
   readonly objectDescriptions = OBJECT_DESCRIPTIONS;
 
   gameMap!: GameMap;
-  private mapEditorService = inject(MapEditorServiceService);
+  private mapEditorService = inject(MapEditorService);
   private objectCounterService = inject(ObjectCounterService);
   private gameSessionSocketService = inject(GameSessionSocketService);
   private dialog = inject(MatDialog);

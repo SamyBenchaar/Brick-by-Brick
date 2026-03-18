@@ -1,25 +1,25 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MapEditorServiceService } from '@app/services/map-editor.service';
+import { Tile } from '@app/classes/tile';
+import { MapEditorService } from '@app/services/map-editor.service';
 import { ObjectCounterService } from '@app/services/object-counter/object-counter.service';
 import { ObjectType, TileType } from '@common/map';
-import { Tile } from '@app/classes/tile';
 import { GameGridComponent } from './game-grid.component';
 
 describe('GameGridComponent', () => {
   let component: GameGridComponent;
   let fixture: ComponentFixture<GameGridComponent>;
 
-  let mapEditorServiceSpy: jasmine.SpyObj<MapEditorServiceService>;
+  let mapEditorServiceSpy: jasmine.SpyObj<MapEditorService>;
   let objectCounterServiceSpy: jasmine.SpyObj<ObjectCounterService>;
 
   beforeEach(async () => {
-    mapEditorServiceSpy = jasmine.createSpyObj('MapEditorServiceService', ['getSelectedTileType', 'getSelectedObject', 'setTileType', 'setObject']);
+    mapEditorServiceSpy = jasmine.createSpyObj('MapEditorService', ['getSelectedTileType', 'getSelectedObject', 'setTileType', 'setObject']);
     objectCounterServiceSpy = jasmine.createSpyObj('ObjectCounterService', ['canPlace', 'place', 'remove', 'reset']);
 
     await TestBed.configureTestingModule({
       imports: [GameGridComponent],
       providers: [
-        { provide: MapEditorServiceService, useValue: mapEditorServiceSpy },
+        { provide: MapEditorService, useValue: mapEditorServiceSpy },
         { provide: ObjectCounterService, useValue: objectCounterServiceSpy },
       ],
     }).compileComponents();

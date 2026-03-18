@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MapEditorServiceService } from '@app/services/map-editor.service';
+import { MapEditorService } from '@app/services/map-editor.service';
 import { TileType } from '@common/map';
 import { TileTypeSidebarComponent } from './tile-type-sidebar.component';
 
@@ -7,15 +7,15 @@ describe('TileTypeSidebarComponent', () => {
   let component: TileTypeSidebarComponent;
   let fixture: ComponentFixture<TileTypeSidebarComponent>;
 
-  let mapEditorServiceSpy: jasmine.SpyObj<MapEditorServiceService>;
+  let mapEditorServiceSpy: jasmine.SpyObj<MapEditorService>;
 
   beforeEach(async () => {
-    mapEditorServiceSpy = jasmine.createSpyObj('MapEditorServiceService', ['selectTileType', 'getSelectedTileType']);
+    mapEditorServiceSpy = jasmine.createSpyObj('MapEditorService', ['selectTileType', 'getSelectedTileType']);
 
     await TestBed.configureTestingModule({
       imports: [TileTypeSidebarComponent],
       providers: [
-        { provide: MapEditorServiceService, useValue: mapEditorServiceSpy },
+        { provide: MapEditorService, useValue: mapEditorServiceSpy },
       ],
     }).compileComponents();
 

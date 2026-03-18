@@ -8,10 +8,10 @@ import { ObjectSidebarComponent } from '@app/components/game-edition-components/
 import { TextInputComponent } from '@app/components/game-edition-components/text-input/text-input.component';
 import { TileTypeSidebarComponent } from '@app/components/game-edition-components/tile-type-sidebar/tile-type-sidebar.component';
 import { DialogType } from '@app/constants/dialog-type.enum';
-import { Game } from '@app/interfaces/game';
 import { DialogData, GameCreationData, GridDimensions, TileData } from '@app/interfaces/edition-page';
+import { Game } from '@app/interfaces/game';
 import { CommunicationService } from '@app/services/communication/communication.service';
-import { MapEditorServiceService } from '@app/services/map-editor.service';
+import { MapEditorService } from '@app/services/map-editor.service';
 import { ObjectCounterService } from '@app/services/object-counter/object-counter.service';
 import { GameModeValue, GameSizeId, getGameSizeConfig } from '@common/constants/game-config-constants';
 import { MapSize } from '@common/map';
@@ -37,7 +37,7 @@ export class EditionPageComponent implements OnInit {
 
   private route = inject(ActivatedRoute);
   private communicationService = inject(CommunicationService);
-  mapEditorService = inject(MapEditorServiceService);
+  mapEditorService = inject(MapEditorService);
   objectCounterService = inject(ObjectCounterService);
   private router = inject(Router);
   private dialog = inject(MatDialog);

@@ -6,7 +6,7 @@ import { ObjectType, TileType } from '@common/map';
 @Injectable({
   providedIn: 'root',
 })
-export class MapEditorServiceService {
+export class MapEditorService {
   private selectedTileType = signal<TileType | null>(null);
   private selectedObject = signal<ObjectType | null>(null);
   private currentGame = signal<Game | null>(null);
