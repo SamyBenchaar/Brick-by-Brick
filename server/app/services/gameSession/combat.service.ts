@@ -75,7 +75,7 @@ export class CombatService {
             return defenderStartingPoint;
         }
 
-        return this.startingPointService.getClosestAvailableStartingPoint(
+        return this.startingPointService.getAfterCombatPosition(
             defenderStartingPoint,
             mapConfig,
             occupiedPositions,
