@@ -177,7 +177,10 @@ export class GameGridComponent implements OnInit, OnChanges {
   }
 
   private isTileValidForTeleport(tile: Tile | null, player: Character | null): boolean {
-    return !!tile && !player && !tile.object && tile.type !== TileType.Wall && tile.type !== TileType.Door;
+    const isEmpty = !!tile && !tile.object;
+    const hasNoPlayer = !player;
+    const isWalkable = tile?.type !== TileType.Wall && tile?.type !== TileType.Door;
+    return isEmpty && hasNoPlayer && isWalkable;
   }
 
   private tryDebugTeleport(position: Position, tile: Tile | null, player: Character | null): boolean {
