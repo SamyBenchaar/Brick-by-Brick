@@ -14,10 +14,10 @@ import { GameSessionSocketService } from '@app/services/communication/game-sessi
 import { MapEditorService } from '@app/services/map-editor.service';
 import { ObjectCounterService } from '@app/services/object-counter/object-counter.service';
 import { Character } from '@common/character';
-import { GRID_SIZE, MapSize, ObjectType, TileType } from '@common/map';
+import { GRID_SIZE, MapSize, ObjectType, TileType, PLAYABLE_TYPES } from '@common/map';
 import { Position } from '@common/position';
 import html2canvas from 'html2canvas';
-import { TILE_COST } from '@app/constants/tile-type-description';
+import { TILE_COST } from '@common/map';
 
 @Component({
   selector: 'app-game-grid',
@@ -179,7 +179,7 @@ export class GameGridComponent implements OnInit, OnChanges {
   private isTileValidForTeleport(tile: Tile | null, player: Character | null): boolean {
     const isEmpty = !!tile && !tile.object;
     const hasNoPlayer = !player;
-    const isWalkable = tile?.type !== TileType.Wall && tile?.type !== TileType.Door;
+    const isWalkable = tile ? PLAYABLE_TYPES.includes(tile.type) : false;    
     return isEmpty && hasNoPlayer && isWalkable;
   }
 

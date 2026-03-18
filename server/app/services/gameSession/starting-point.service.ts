@@ -2,6 +2,7 @@ import { GameSession } from '@app/domain/game-session';
 import { Position } from '@common/position';
 import { Injectable } from '@nestjs/common';
 import { MapTile, GameMap } from '@app/interfaces/game-map-interfaces';
+import { ObjectType, TileType } from '@common/map';
 
 @Injectable()
 export class StartingPointService {
@@ -43,7 +44,7 @@ export class StartingPointService {
             for (let x = 0; x < mapData[y].length; x++) {
                 const tile = mapData[y][x];
 
-                if (tile.object && tile.object.type === 'startingpoint') {
+                if (tile.object && tile.object.type === ObjectType.StartingPoint) {
                     startingPoints.push({ x, y });
                 }
             }
@@ -70,11 +71,11 @@ export class StartingPointService {
                     continue;
                 }
 
-                if (tile.type === 'wall' || tile.type === 'door') {
+                if (tile.type === TileType.Wall || tile.type === TileType.Door) {
                     continue;
                 }
 
-                if (tile.object && tile.object.type !== 'startingpoint') {
+                if (tile.object && tile.object.type !== ObjectType.StartingPoint) {
                     continue;
                 }
 
@@ -110,7 +111,7 @@ export class StartingPointService {
 
                 if (
                     tile.object &&
-                    tile.object.type === 'startingpoint' &&
+                    tile.object.type === TileType.Wall &&
                     !activePlayerPositions.has(posKey)
                 ) {
                     tile.object = undefined;
