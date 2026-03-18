@@ -51,7 +51,7 @@ export class GamePlayGateway implements OnGatewayInit {
             return;
         }
         gameSession.status = 'playing';
-        this.gameSessionGateway.notifyGameSessionUpdated(gameSession);
+        this.gameSessionGateway.notifyGameSessionListUpdated();
 
         const fullMapData = await this.gameSessionService.getFullMapData(gameSession.mapId);
         this.gameSessionService.initializeGameSession(gameSession, fullMapData);
