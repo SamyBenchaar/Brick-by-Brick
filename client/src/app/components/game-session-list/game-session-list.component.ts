@@ -45,11 +45,7 @@ export class GameSessionListComponent implements OnInit, OnDestroy {
   }
 
   getPreviewImage(gameSession: GameSession): string {
-    const previewImage =  gameSession.mapCopy?.previewImage;
-    if(previewImage) {
-      return previewImage;
-    }
-    return '';
+     return gameSession.mapCopy?.previewImage ?? '';
   }
 
   getGameSizeLabel(gameSession: GameSession): string {
