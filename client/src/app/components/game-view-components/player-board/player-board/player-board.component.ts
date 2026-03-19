@@ -12,5 +12,5 @@ export class PlayerBoardComponent {
   @Input() players: Player[] = [];
   @Input() leftPlayers: Player[] = [];
   @Input() host: Player | undefined = undefined;
-  name: string = 'Players board';
+  name: string = 'Joueurs';
 }
