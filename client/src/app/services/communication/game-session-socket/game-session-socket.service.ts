@@ -4,11 +4,12 @@ import { Router } from '@angular/router';
 import { AppDialogComponent } from '@app/components/game-edition-components/app-dialog/app-dialog.component';
 import { Game } from '@app/interfaces/game';
 import { GameSession } from '@app/interfaces/game-session';
+import { setupGameplayEventListeners } from '@app/services/communication/gameplay-listeners/gameplay-listeners';
+import { SocketService } from '@app/services/communication/socket/socket.service';
 import { Character } from '@common/character';
 import { GameSessionEvents } from '@common/game.events';
 import { Position } from '@common/position';
-import { setupGameplayEventListeners } from '@app/services/communication/gameplay-listeners/gameplay-listeners';
-import { SocketService } from '@app/services/communication/socket/socket.service';
+import { VirtualPlayerProfile } from '@common/virtual.player.profile';
 
 @Injectable({
     providedIn: 'root',
@@ -251,6 +252,13 @@ export class GameSessionSocketService {
         const currentRoomId = this.getRoomId();
         if (currentRoomId) {
             this.socketService.emit(GameSessionEvents.KickPlayer, { roomId: currentRoomId, targetId });
+        }
+    }
+
+    addVirtualPlayer(profile: VirtualPlayerProfile): void {
+        const currentRoomId = this.getRoomId();
+        if (currentRoomId) {
+            this.socketService.emit(GameSessionEvents.AddVirtualPlayer, { roomId: currentRoomId, profile });
         }
     }
 

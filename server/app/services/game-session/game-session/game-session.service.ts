@@ -1,16 +1,27 @@
 import { GameSession } from '@app/domain/game-session';
 import { CombatResult, GameDataForInit } from '@app/interfaces/game-map-interfaces';
-import { GameService } from '@app/services/game/game.service';
-import { Character } from '@common/character';
-import { getGameSizeConfig } from '@common/constants/game-config-constants';
-import { Player } from '@common/player';
-import { Position } from '@common/position';
-import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import { CombatService } from '@app/services/game-session/combat.service';
 import { MovementService } from '@app/services/game-session/movement.service';
 import { StartingPointService } from '@app/services/game-session/starting-point.service';
 import { TurnManagementService } from '@app/services/game-session/turn-management.service';
+import { GameService } from '@app/services/game/game.service';
+import { Character } from '@common/character';
+import { AVATAR_IDS } from '@common/constants/avatar-constants';
+import { getGameSizeConfig } from '@common/constants/game-config-constants';
+import { VIRTUAL_PLAYER_ID_PREFIX, VIRTUAL_PLAYER_NAMES } from '@common/constants/virtual-player-constants';
+import { Dice } from '@common/dice';
+import { Player } from '@common/player';
+import { Position } from '@common/position';
 import { SessionStatus } from '@common/session.status';
+import { VirtualPlayerProfile } from '@common/virtual.player.profile';
+import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
+
+const BASE_LIFE = 6;
+const BASE_SPEED = 6;
+const BASE_ATTACK = 4;
+const BASE_DEFENSE = 4;
+const BASE_ACTIONS = 1;
+const BONUS_AMOUNT = 2;
 
 @Injectable()
 export class GameSessionService {
@@ -48,6 +59,22 @@ export class GameSessionService {
 
         player.character.name = session.verifyUniqueName(player.character.name);
         session.addPlayer(player);
+        return null;
+    }
+
+    addVirtualPlayer(roomId: string, profile: VirtualPlayerProfile): string | null {
+        const session = this.gameSessions.get(roomId);
+
+        if (!session) return 'Session de jeu introuvable';
+        if (session.status !== SessionStatus.Waiting) return 'La session de jeu a déjà commencé';
+        if (session.isFull()) return 'La session de jeu est pleine';
+
+        const virtualPlayer = this.createVirtualPlayer(session, profile);
+        if (!virtualPlayer) {
+            return 'Aucun avatar disponible pour ajouter un joueur virtuel';
+        }
+
+        session.addPlayer(virtualPlayer);
         return null;
     }
 
@@ -217,5 +244,46 @@ export class GameSessionService {
 
     cleanupTurnTimers(roomId: string): void {
         this.turnManagementService.cleanupTimers(roomId);
+    }
+
+    private createVirtualPlayer(session: GameSession, profile: VirtualPlayerProfile): Player | null {
+        const availableAvatarIds = AVATAR_IDS.filter((avatarId) => !session.getTakenAvatars().includes(avatarId));
+        if (availableAvatarIds.length === 0) {
+            return null;
+        }
+
+        const socketId = `${VIRTUAL_PLAYER_ID_PREFIX}_${crypto.randomUUID()}`;
+        const avatarId = this.pickRandom(availableAvatarIds);
+        const baseName = this.pickRandom(VIRTUAL_PLAYER_NAMES);
+        const name = session.verifyUniqueName(baseName);
+        const bonusTarget = Math.random() < 0.5 ? 'life' : 'speed';
+
+        const speed = bonusTarget === 'speed' ? BASE_SPEED + BONUS_AMOUNT : BASE_SPEED;
+        const maxLife = bonusTarget === 'life' ? BASE_LIFE + BONUS_AMOUNT : BASE_LIFE;
+
+        return {
+            socketId,
+            virtualProfile: profile,
+            character: {
+                id: socketId,
+                isActif: false,
+                battlesWon: 0,
+                name,
+                avatarId,
+                maxLife,
+                life: maxLife,
+                speed,
+                attack: BASE_ATTACK,
+                defense: BASE_DEFENSE,
+                movements: speed,
+                actions: BASE_ACTIONS,
+                attackDice: Dice.D4,
+                defenseDice: Dice.D6,
+            },
+        };
+    }
+
+    private pickRandom<T>(items: T[]): T {
+        return items[Math.floor(Math.random() * items.length)];
     }
 }
