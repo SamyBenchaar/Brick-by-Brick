@@ -1,6 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { Game } from '@app/interfaces/game';
-import { ObjectType, TileType } from '@common/map';
+import { DoorState, ObjectType, TileType } from '@common/map';
 import { Position } from '@common/position';
 
 
@@ -43,6 +43,14 @@ export class MapEditorService {
     const game = this.currentGame();
     if (game) {
       game.mapConfig.tiles[position.y][position.x].type = type;
+      this.currentGame.set(game);
+    }
+  }
+
+  setDoorState(position: Position, state: DoorState | undefined): void {
+    const game = this.currentGame();
+    if (game) {
+      game.mapConfig.tiles[position.y][position.x].doorState = state;
       this.currentGame.set(game);
     }
   }

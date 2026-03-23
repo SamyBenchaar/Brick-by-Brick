@@ -5,7 +5,7 @@ export interface MapConfig {
 
 export interface Tile {
     type: string;
-    state?: string;
+    doorState?: string;
     object?: MapObject;
 }
 
