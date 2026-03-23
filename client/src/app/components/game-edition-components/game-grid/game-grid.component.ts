@@ -243,6 +243,7 @@ export class GameGridComponent implements OnInit, OnChanges {
       if (this.isShiftPressed) {
         this.removeObject(position);
       } else {
+        tile.doorState = undefined;
         tile.type = TileType.Base;
         this.mapEditorService.setTileType(position, TileType.Base);
       }
