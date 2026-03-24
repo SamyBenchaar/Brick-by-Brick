@@ -18,6 +18,7 @@ export enum ObjectType {
 }
 
 export const MULTI_TILE_OBJECTS = [
+    ObjectType.Flag,
     ObjectType.HealingSanctuary,
     ObjectType.CombatSanctuary,
 ];
