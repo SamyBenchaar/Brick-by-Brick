@@ -22,8 +22,8 @@ export class CreateGameDto {
     @Min(2, { message: 'Le nombre de joueurs doit être au minimum 2' })
     numberOfPlayers: number;
 
-    @ApiProperty({ description: 'Mode de jeu', enum: ['classic'], example: 'classic' })
-    @IsEnum(['classic'], { message: 'Le mode de jeu doit être classic' })
+    @ApiProperty({ description: 'Mode de jeu', enum: ['classic', 'ctf'], example: 'classic' })
+    @IsEnum(['classic', 'ctf'], { message: 'Le mode de jeu doit être classic ou ctf' })
     gameMode: string;
 
     @ApiProperty({ description: 'Configuration de la carte', type: MapConfigDto })

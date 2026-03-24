@@ -1,5 +1,6 @@
 import { GameSession } from '@app/domain/game-session';
 import { GameSessionGateway } from '@app/gateways/game-session/game-session/game-session.gateway';
+import { MapConfig } from '@app/model/map-config';
 import { GameSessionService } from '@app/services/game-session/game-session/game-session.service';
 import { MovementService } from '@app/services/game-session/movement.service';
 import { TurnManagementService } from '@app/services/game-session/turn-management.service';
@@ -53,11 +54,24 @@ export class GamePlayGateway implements OnGatewayInit {
             socket.emit(GameSessionEvents.GameSessionJoinError, 'Il faut au moins 2 joueurs pour démarrer');
             return;
         }
+
+        // CTF validation
+        if (gameSession.gameMode === 'ctf' && gameSession.players.length % 2 !== 0) {
+            socket.emit(GameSessionEvents.GameSessionJoinError, 'Le mode CTF requiert un nombre pair de joueurs');
+            return;
+        }
+
         gameSession.status = SessionStatus.Playing;
         this.gameSessionGateway.notifyGameSessionListUpdated();
 
         const fullMapData = await this.gameSessionService.getFullMapData(gameSession.mapId);
         this.gameSessionService.initializeGameSession(gameSession, fullMapData);
+
+        // CTF setup: assign teams and find flag position
+        if (gameSession.gameMode === 'ctf') {
+            gameSession.assignTeams();
+            this.findAndSetFlagPosition(gameSession, fullMapData);
+        }
 
         this.server.to(payload.roomId).emit(GameSessionEvents.GameStarted, {
             roomId: payload.roomId,
@@ -389,5 +403,17 @@ export class GamePlayGateway implements OnGatewayInit {
             playerId: currentPlayer.id,
             tiles: reachableTiles,
         });
+    }
+
+    private findAndSetFlagPosition(gameSession: GameSession, mapData: MapConfig): void {
+        const tiles = mapData.mapConfig.tiles;
+        for (let y = 0; y < tiles.length; y++) {
+            for (let x = 0; x < tiles[y].length; x++) {
+                if (tiles[y][x].object?.type === 'flag') {
+                    gameSession.setFlagPosition({ x, y });
+                    return;
+                }
+            }
+        }
     }
 }
