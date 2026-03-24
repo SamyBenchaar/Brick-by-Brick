@@ -6,6 +6,11 @@ export enum TileType {
     Door = 'door',
 }
 
+export enum DoorState {
+    Opened = 'opened',
+    Closed = 'closed',
+}
+
 export enum ObjectType {
     StartingPoint = 'startingpoint'
 }

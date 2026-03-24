@@ -1,4 +1,4 @@
-import { ObjectType, TileType } from '@common/map';
+import { ObjectType, TileType, DoorState } from '@common/map';
 
 export class Tile {
 
@@ -7,6 +7,7 @@ export class Tile {
             TileType.Water,
             TileType.Ice,
             TileType.Wall,
+            TileType.Door,
         ];
     static readonly editableObjects: ObjectType[] =
         [
@@ -14,6 +15,7 @@ export class Tile {
         ];
     type: TileType;
     object: ObjectType | undefined;
+    doorState?: DoorState;
 
     constructor(type: TileType = TileType.Base) {
         this.type = type;

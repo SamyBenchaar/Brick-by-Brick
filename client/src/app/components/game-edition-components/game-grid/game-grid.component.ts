@@ -14,7 +14,7 @@ import { GameSessionSocketService } from '@app/services/communication/game-sessi
 import { MapEditorService } from '@app/services/map-editor/map-editor.service';
 import { ObjectCounterService } from '@app/services/object-counter/object-counter.service';
 import { Character } from '@common/character';
-import { GRID_SIZE, MapSize, ObjectType, PLAYABLE_TYPES, TILE_COST, TileType } from '@common/map';
+import { DoorState, GRID_SIZE, MapSize, ObjectType, PLAYABLE_TYPES, TILE_COST, TileType } from '@common/map';
 import { Position } from '@common/position';
 import html2canvas from 'html2canvas';
 
@@ -91,7 +91,10 @@ export class GameGridComponent implements OnInit, OnChanges {
           if (!tile) continue;
 
           tile.type = tileData.type as TileType;
-
+          tile.doorState = undefined;
+          if (tileData.type === TileType.Door) {
+            tile.doorState = (tileData.doorState as DoorState) ?? DoorState.Closed;
+          }
           if (tileData.object) {
             tile.object = tileData.object.type as ObjectType;
             this.objectCounterService.place(tile.object);
@@ -240,6 +243,7 @@ export class GameGridComponent implements OnInit, OnChanges {
       if (this.isShiftPressed) {
         this.removeObject(position);
       } else {
+        tile.doorState = undefined;
         tile.type = TileType.Base;
         this.mapEditorService.setTileType(position, TileType.Base);
       }
@@ -253,8 +257,14 @@ export class GameGridComponent implements OnInit, OnChanges {
       if (selectedType === TileType.Wall && tile.object) {
         this.removeObject(position);
       }
+      if (selectedType === TileType.Door) {
+        tile.doorState= tile.doorState === DoorState.Closed ? DoorState.Opened : DoorState.Closed;
+      } else {
+        tile.doorState = undefined;
+      }
       tile.type = selectedType;
       this.mapEditorService.setTileType(position, selectedType);
+      this.mapEditorService.setDoorState(position, tile.doorState);
     }
   }
 
@@ -272,7 +282,7 @@ export class GameGridComponent implements OnInit, OnChanges {
     if (!tile || !selectedObject) return;
     if (!this.objectCounterService.canPlace(selectedObject)) return;
     if (!this.isTileObjectFree(tile)) return;
-    if (tile.type === TileType.Wall) return;
+    if (tile.type === TileType.Wall || tile.type === TileType.Door) return;
 
     tile.object = selectedObject;
     this.objectCounterService.place(selectedObject);
@@ -292,8 +302,13 @@ export class GameGridComponent implements OnInit, OnChanges {
     return `./assets/images/${object}.png`;
   }
 
-  getTilePath(tile: TileType): string {
-    return `./assets/images/${tile}.jpg`;
+  getTilePath(tile: TileType, doorState?: DoorState): string {
+    if (tile === TileType.Door) {
+      // images de portes temporaires
+      return `./assets/images/${doorState}-door.jpg`;
+    } else {
+      return `./assets/images/${tile}.jpg`;
+    }
   }
 
   async captureMapPreview(maxWidth: number = GameGridComponent.defaultPreviewMaxWidth): Promise<string> {

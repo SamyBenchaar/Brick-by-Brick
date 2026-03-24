@@ -31,6 +31,7 @@ export class TileTypeSidebarComponent {
   }
 
   getTilePath(tile: TileType): string {
+    // image de porte temporaire
     return `./assets/images/${tile}.jpg`;
   }
 
