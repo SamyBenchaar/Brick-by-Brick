@@ -1,6 +1,7 @@
 export interface MapTile {
     type: string;
     object?: { type: string };
+    doorState?: string;
 }
 
 export interface GameMap {
