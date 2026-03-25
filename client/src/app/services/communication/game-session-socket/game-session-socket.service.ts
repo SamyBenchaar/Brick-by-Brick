@@ -413,7 +413,7 @@ export class GameSessionSocketService {
             { x, y: y - 1 },
             { x, y: y + 1 },
         ];
-        return adjacentPos.some(pos => map.mapConfig.tiles[pos.y]?.[pos.x].doorState !== undefined);
+        return adjacentPos.some(pos => map.mapConfig.tiles[pos.y]?.[pos.x]?.type === 'door');
     }
 
     canAttackTarget(target: Character | null): boolean {
