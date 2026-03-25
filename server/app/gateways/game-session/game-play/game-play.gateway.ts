@@ -206,6 +206,35 @@ export class GamePlayGateway implements OnGatewayInit {
         }
     }
 
+    @SubscribeMessage(GameSessionEvents.RequestInteract)
+    handleRequestInteract(socket:Socket, payload: { roomId: string; position: Position }) {
+        const gameSession = this.gameSessionService.getGameSession(payload.roomId);
+        if (!gameSession || gameSession.isTurnStarting) return;
+
+        const currentPlayer = gameSession.getCurrentPlayer();
+        const requestingPlayer = gameSession.players.find(p => p.socketId === socket.id);
+
+        if (!currentPlayer || !requestingPlayer || currentPlayer.id !== requestingPlayer.character.id) return;
+        if ((currentPlayer.remainingActions ?? 0) <= 0) return;
+
+        const tile = gameSession.mapCopy?.tiles[payload.position.y]?.[payload.position.x];
+        if (!tile || tile.type !== 'door') return;
+        tile.doorState = tile.doorState === 'opened' ? 'closed' : 'opened';
+
+        currentPlayer.remainingActions -= 1;
+
+        this.server.to(payload.roomId).emit(GameSessionEvents.InteractResult, {
+            position: payload.position,
+            newDoorState: tile.doorState,
+            remainingActions: currentPlayer.remainingActions,
+        });
+        if (!this.gameSessionService.canPlayerTakeAction(gameSession)) {
+            this.gameSessionService.endCurrentTurn(gameSession);
+            this.handleTurnEnd(gameSession);
+        }
+    }
+
+
     @SubscribeMessage(GameSessionEvents.PlayerAbandoned)
     handlePlayerAbandoned(socket: Socket, payload: { roomId: string }) {
         const gameSession = this.gameSessionService.getGameSession(payload.roomId);

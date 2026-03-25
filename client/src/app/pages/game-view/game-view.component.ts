@@ -11,10 +11,12 @@ import { AVATARS } from '@app/constants/character-constants';
 import { KEY_DEBUG, KEY_DIRECTION_MAP, KEY_ENTER } from '@app/constants/key-event.constants';
 import { AppDialogData } from '@app/interfaces/dialog-model';
 import { Game } from '@app/interfaces/game';
+import { Tile } from '@app/classes/tile/tile';
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
 import { Character } from '@common/character';
 import { getGameSizeConfig } from '@common/constants/game-config-constants';
 import { MapSize } from '@common/map';
+import { Position } from '@common/position';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -34,7 +36,7 @@ export class GameViewComponent implements OnInit, OnDestroy {
 
   gameData: Game | null = null;
   isChatCollapsed = false;
-  isAttackSelectionMode = signal<boolean>(false);
+  isActionSelectionMode = signal<boolean>(false);
 
   isWriting = signal<boolean>(false);
 
@@ -64,7 +66,7 @@ export class GameViewComponent implements OnInit, OnDestroy {
       this.gameSessionSocketService.currentSession();
       this.gameSessionSocketService.currentPlayerTurn();
       if (!this.gameSessionSocketService.canCurrentPlayerAttack()) {
-        this.isAttackSelectionMode.set(false);
+        this.isActionSelectionMode.set(false);
       }
     }, { injector: this.injector });
 
@@ -173,19 +175,27 @@ export class GameViewComponent implements OnInit, OnDestroy {
     return this.gameSessionSocketService.currentSession()?.players.map(p => p.character) ?? [];
   }
 
-  getSelectedAttackTargetName(): string | null {
-    return this.isAttackSelectionMode() ? 'une cible' : null;
+  getSelectedTarget(): string | null {
+    return this.isActionSelectionMode() ? 'une cible' : null;
   }
 
   canAttackSelectedTarget(): boolean {
     return this.gameSessionSocketService.canCurrentPlayerAttack();
   }
 
-  attackSelectedTarget(): void {
-    if (!this.canAttackSelectedTarget()) {
-      return;
-    }
-    this.isAttackSelectionMode.set(true);
+  canInteract(): boolean {
+    return this.gameSessionSocketService.canPlayerInteractDoor();
+  }
+
+  onActionClick(): void {
+    this.isActionSelectionMode.set(true);
+
+  }
+
+  onActionTargetSelected(event: {tile: Tile, position: Position}): void {
+    if (!this.gameSessionSocketService.canInteractWithTarget(event.tile, event.position)) return;
+    this.gameSessionSocketService.requestInteract(event.position);
+    this.isActionSelectionMode.set(false);
   }
 
   onAttackTargetSelected(target: Character): void {
@@ -194,7 +204,7 @@ export class GameViewComponent implements OnInit, OnDestroy {
     }
 
     this.gameSessionSocketService.requestCombat(target.id);
-    this.isAttackSelectionMode.set(false);
+    this.isActionSelectionMode.set(false);
   }
 
   getAvatarImage(avatarId: number): string {
