@@ -22,6 +22,7 @@ const BASE_ATTACK = 4;
 const BASE_DEFENSE = 4;
 const BASE_ACTIONS = 1;
 const BONUS_AMOUNT = 2;
+const LIFE_BONUS_THRESHOLD = 0.5;
 
 @Injectable()
 export class GameSessionService {
@@ -247,7 +248,7 @@ export class GameSessionService {
     }
 
     private createVirtualPlayer(session: GameSession, profile: VirtualPlayerProfile): Player | null {
-        const availableAvatarIds = AVATAR_IDS.filter((avatarId) => !session.getTakenAvatars().includes(avatarId));
+        const availableAvatarIds = AVATAR_IDS.filter((availableAvatarId) => !session.getTakenAvatars().includes(availableAvatarId));
         if (availableAvatarIds.length === 0) {
             return null;
         }
@@ -256,7 +257,7 @@ export class GameSessionService {
         const avatarId = this.pickRandom(availableAvatarIds);
         const baseName = this.pickRandom(VIRTUAL_PLAYER_NAMES);
         const name = session.verifyUniqueName(baseName);
-        const bonusTarget = Math.random() < 0.5 ? 'life' : 'speed';
+        const bonusTarget = Math.random() < LIFE_BONUS_THRESHOLD ? 'life' : 'speed';
 
         const speed = bonusTarget === 'speed' ? BASE_SPEED + BONUS_AMOUNT : BASE_SPEED;
         const maxLife = bonusTarget === 'life' ? BASE_LIFE + BONUS_AMOUNT : BASE_LIFE;

@@ -81,7 +81,6 @@ export class GameSessionSocketService {
         this.currentSession.set(null);
         this.takenAvatars.set([]);
         this.hasAbandoned.set(false);
-
         this.socketService.disconnect();
     }
 
@@ -175,8 +174,7 @@ export class GameSessionSocketService {
             this.hasAbandoned.set(false);
             this.router.navigate(['/']).then(() => {
                 this.dialog.open(AppDialogComponent, {
-                    data: { title: 'Salle annulée', message: data.message, type: 'info' },
-                    disableClose: true,
+                    data: { title: 'Salle annulée', message: data.message, type: 'info' }, disableClose: true,
                 });
             });
         });
@@ -383,8 +381,7 @@ export class GameSessionSocketService {
         return session.players
             .map(player => player.character)
             .find(character =>
-                character.id !== currentPlayer.id &&
-                character.position !== undefined &&
+                character.id !== currentPlayer.id && character.position !== undefined &&
                 this.areAdjacent(currentPlayer.position as Position, character.position),
             ) ?? null;
     }
@@ -393,12 +390,9 @@ export class GameSessionSocketService {
         const currentPlayer = this.getCurrentPlayerCharacter();
 
         return (
-            this.isMyTurn() &&
-            currentPlayer?.position !== undefined &&
-            target?.position !== undefined &&
-            target.id !== currentPlayer.id &&
-            currentPlayer.remainingActions !== undefined &&
-            currentPlayer.remainingActions > 0 &&
+            this.isMyTurn() && currentPlayer?.position !== undefined &&
+            target?.position !== undefined &&target.id !== currentPlayer.id &&
+            currentPlayer.remainingActions !== undefined && currentPlayer.remainingActions > 0 &&
             this.areAdjacent(currentPlayer.position, target.position)
         );
     }
