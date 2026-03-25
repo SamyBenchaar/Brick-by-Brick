@@ -205,6 +205,16 @@ export class MovementService {
             this.isAdjacentToPlayer(position, player),
         );
     }
+
+    isDoorAdjacent(position: Position, gameSession: GameSession): boolean {
+        const adjacentPositions = [
+            { x: position.x - 1, y: position.y },
+            { x: position.x + 1, y: position.y },
+            { x: position.x, y: position.y - 1 },
+            { x: position.x, y: position.y + 1 },
+        ];
+        return adjacentPositions.some(pos => gameSession.getMapCopy()?.tiles?.[pos.y]?.[pos.x]?.type === 'door');
+    }
 }
 
 

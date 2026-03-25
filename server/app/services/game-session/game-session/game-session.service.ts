@@ -194,9 +194,10 @@ export class GameSessionService {
             gameSession,
             currentPlayer.position,
         );
+        const canInteract = hasRemainingActions && this.movementService.isDoorAdjacent(currentPlayer.position, gameSession);
         const canFight = hasRemainingActions && adjacentPlayers.length > 0;
 
-        return canMove || canFight;
+        return canMove || canFight || canInteract;
     }
 
     removePlayer(roomId: string, playerId: string): void {
