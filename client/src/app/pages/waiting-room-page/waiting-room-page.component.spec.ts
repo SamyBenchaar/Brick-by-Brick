@@ -26,6 +26,7 @@ class MockChatComponent {
 class MockWaitingRoomListComponent {}
 
 describe('WaitingRoomPage', () => {
+    const WAITING_ROOM_ACCESS_KEY = 'waitingRoomAccess';
     let component: WaitingRoomPage;
     let fixture: ComponentFixture<WaitingRoomPage>;
     let mockGameSessionSocketService: Record<string, unknown>;
@@ -43,6 +44,7 @@ describe('WaitingRoomPage', () => {
     });
 
     beforeEach(async () => {
+        sessionStorage.setItem(WAITING_ROOM_ACCESS_KEY, 'true');
         currentSessionSignal = signal<GameSession | null>(mockSession);
         mockGameSessionSocketService = {
             connect: jasmine.createSpy('connect'),
@@ -70,6 +72,11 @@ describe('WaitingRoomPage', () => {
 
         fixture = TestBed.createComponent(WaitingRoomPage);
         component = fixture.componentInstance;
+    });
+
+    afterEach(() => {
+        sessionStorage.removeItem(WAITING_ROOM_ACCESS_KEY);
+        sessionStorage.removeItem('waitingRoomRefresh');
     });
 
     it('devrait créer le composant', () => {
