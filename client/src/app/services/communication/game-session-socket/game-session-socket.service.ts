@@ -5,12 +5,13 @@ import { AppDialogComponent } from '@app/components/game-edition-components/app-
 import { Game } from '@app/interfaces/game';
 import { Tile } from '@app/classes/tile/tile';
 import { GameSession } from '@app/interfaces/game-session';
-import { Character } from '@common/character';
-import { GameSessionEvents } from '@common/game.events';
-import { Position } from '@common/position';
 import { setupGameplayEventListeners } from '@app/services/communication/gameplay-listeners/gameplay-listeners';
 import { SocketService } from '@app/services/communication/socket/socket.service';
+import { Character } from '@common/character';
+import { GameSessionEvents } from '@common/game.events';
 import { TileType } from '@common/map';
+import { Position } from '@common/position';
+import { VirtualPlayerProfile } from '@common/virtual.player.profile';
 
 @Injectable({
     providedIn: 'root',
@@ -82,7 +83,6 @@ export class GameSessionSocketService {
         this.currentSession.set(null);
         this.takenAvatars.set([]);
         this.hasAbandoned.set(false);
-
         this.socketService.disconnect();
     }
 
@@ -176,8 +176,7 @@ export class GameSessionSocketService {
             this.hasAbandoned.set(false);
             this.router.navigate(['/']).then(() => {
                 this.dialog.open(AppDialogComponent, {
-                    data: { title: 'Salle annulée', message: data.message, type: 'info' },
-                    disableClose: true,
+                    data: { title: 'Salle annulée', message: data.message, type: 'info' }, disableClose: true,
                 });
             });
         });
@@ -253,6 +252,13 @@ export class GameSessionSocketService {
         const currentRoomId = this.getRoomId();
         if (currentRoomId) {
             this.socketService.emit(GameSessionEvents.KickPlayer, { roomId: currentRoomId, targetId });
+        }
+    }
+
+    addVirtualPlayer(profile: VirtualPlayerProfile): void {
+        const currentRoomId = this.getRoomId();
+        if (currentRoomId) {
+            this.socketService.emit(GameSessionEvents.AddVirtualPlayer, { roomId: currentRoomId, profile });
         }
     }
 
@@ -384,8 +390,7 @@ export class GameSessionSocketService {
         return session.players
             .map(player => player.character)
             .find(character =>
-                character.id !== currentPlayer.id &&
-                character.position !== undefined &&
+                character.id !== currentPlayer.id && character.position !== undefined &&
                 this.areAdjacent(currentPlayer.position as Position, character.position),
             ) ?? null;
     }
@@ -420,12 +425,9 @@ export class GameSessionSocketService {
         const currentPlayer = this.getCurrentPlayerCharacter();
 
         return (
-            this.isMyTurn() &&
-            currentPlayer?.position !== undefined &&
-            target?.position !== undefined &&
-            target.id !== currentPlayer.id &&
-            currentPlayer.remainingActions !== undefined &&
-            currentPlayer.remainingActions > 0 &&
+            this.isMyTurn() && currentPlayer?.position !== undefined &&
+            target?.position !== undefined &&target.id !== currentPlayer.id &&
+            currentPlayer.remainingActions !== undefined && currentPlayer.remainingActions > 0 &&
             this.areAdjacent(currentPlayer.position, target.position)
         );
     }

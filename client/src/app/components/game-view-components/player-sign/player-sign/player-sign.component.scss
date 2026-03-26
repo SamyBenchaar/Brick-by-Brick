@@ -86,7 +86,7 @@
     cursor: pointer;
 }
 
-.attack-button:disabled {
-    opacity: 0.5;
+.action-button:disabled {
+    opacity: 0.2;
     cursor: not-allowed;
 }

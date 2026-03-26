@@ -18,6 +18,8 @@ import { GameSessionSocketService } from '@app/services/communication/game-sessi
 import { Character } from '@common/character';
 import { Dice } from '@common/dice';
 
+const WAITING_ROOM_ACCESS_KEY = 'waitingRoomAccess';
+
 
 @Component({
     selector: 'app-character-creation-page',
@@ -183,11 +185,13 @@ export class CharacterCreationPageComponent implements OnInit {
             effect(() => {
                 const roomId = this.gameSessionSocketService.currentSession()?.roomId;
                 if (roomId && roomId !== '') {
+                    sessionStorage.setItem(WAITING_ROOM_ACCESS_KEY, 'true');
                     this.router.navigate(['/waiting-room', roomId]);
                 }
             }, { injector: this.injector });
         } else if (this.roomId) {
             this.gameSessionSocketService.joinGameSession(this.roomId, this.character);
+            sessionStorage.setItem(WAITING_ROOM_ACCESS_KEY, 'true');
             this.router.navigate(['/waiting-room', this.roomId]);
         }
     }
