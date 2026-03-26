@@ -6,9 +6,11 @@ import { GameSessionEvents } from '@common/game.events';
 import { Position } from '@common/position';
 import type { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
 import { SocketService } from '@app/services/communication/socket/socket.service';
+import { GamePlaySocketService } from '../game-session-socket/game-play-socket.service';
 
 export function setupGameplayEventListeners(
-    service: GameSessionSocketService,
+    service: GamePlaySocketService,
+    gameSessionSocketService: GameSessionSocketService,
     socketService: SocketService,
     router: Router,
     dialog: MatDialog,
@@ -39,7 +41,7 @@ export function setupGameplayEventListeners(
                     if (data.remainingActions !== undefined) {
                         player.character.remainingActions = data.remainingActions;
                     }
-                    service.currentSession.set({ ...session });
+                    gameSessionSocketService.currentSession.set({ ...session });
                 }
             }
         },
@@ -68,7 +70,7 @@ export function setupGameplayEventListeners(
                     player.character.position = data.position;
                     player.character.remainingMovement = data.remainingMovement;
                     player.character.remainingActions = data.remainingActions;
-                    service.currentSession.set({ ...session });
+                    gameSessionSocketService.currentSession.set({ ...session });
                 }
             }
         },
@@ -121,7 +123,7 @@ export function setupGameplayEventListeners(
             if (defender) {
                 defender.character.position = data.defenderNewPosition;
             }
-            service.currentSession.set({ ...session });
+            gameSessionSocketService.currentSession.set({ ...session });
         }
     });
 
@@ -145,16 +147,16 @@ export function setupGameplayEventListeners(
                     });
                 }
             }
-            service.currentSession.set({ ...session });
+            gameSessionSocketService.currentSession.set({ ...session });
         }
     });
 
     socketService.on<{ winner: { id: string; name: string; avatarId: number } | null; reason: string }>(
         GameSessionEvents.GameEnded,
         (data) => {
-            if (service.hasAbandoned()) {
-                service.hasAbandoned.set(false);
-                service.currentSession.set(null);
+            if (gameSessionSocketService.hasAbandoned()) {
+                gameSessionSocketService.hasAbandoned.set(false);
+                gameSessionSocketService.currentSession.set(null);
                 return;
             }
 
@@ -184,9 +186,9 @@ export function setupGameplayEventListeners(
                         disableClose: true,
                     });
                     service.gameEnded.set(false);
-                    service.currentSession.set(null);
+                    gameSessionSocketService.currentSession.set(null);
                 });
-            }, service.endGameDelay);
+            }, gameSessionSocketService.endGameDelay);
         },
     );
 }
