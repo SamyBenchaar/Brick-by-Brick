@@ -52,6 +52,9 @@ export class ObjectSidebarComponent implements OnInit {
   }
 
   getObjectPath(object: ObjectType): string {
+    if (object === ObjectType.Flag) {
+      return `./assets/images/flag.svg`;
+    }
     return `./assets/images/${object}.png`;
   }
 
