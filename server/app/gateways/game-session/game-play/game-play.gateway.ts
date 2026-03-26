@@ -228,6 +228,9 @@ export class GamePlayGateway implements OnGatewayInit {
             newDoorState: tile.doorState,
             remainingActions: currentPlayer.remainingActions,
         });
+
+        this.emitReachableTiles(gameSession);
+        
         if (!this.gameSessionService.canPlayerTakeAction(gameSession)) {
             this.gameSessionService.endCurrentTurn(gameSession);
             this.handleTurnEnd(gameSession);
