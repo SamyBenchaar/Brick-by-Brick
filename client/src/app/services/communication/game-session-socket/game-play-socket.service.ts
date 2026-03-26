@@ -1,18 +1,21 @@
-import { Injectable, inject, signal } from '@angular/core';
-import { Position } from '@common/position';
+import { Injectable, Injector, WritableSignal, inject, signal } from '@angular/core';
 import { Game } from '@app/interfaces/game';
-import { SocketService } from '../socket/socket.service';
-import { GameSessionEvents } from '@common/game.events';
 import { Character } from '@common/character';
+import { GameSessionEvents } from '@common/game.events';
+import { Position } from '@common/position';
+import { SocketService } from '@app/services/communication/socket/socket.service';
 import { GameSessionSocketService } from './game-session-socket.service';
-import { WritableSignal } from '@angular/core';
 
 @Injectable({
     providedIn: 'root',
 })
 export class GamePlaySocketService {
-    private gameSessionSocketService = inject(GameSessionSocketService);
     private socketService = inject(SocketService);
+    private injector = inject(Injector);
+
+    private get gameSessionSocketService(): GameSessionSocketService {
+        return this.injector.get(GameSessionSocketService);
+    }
 
     playerSocketId: WritableSignal<string | null> = signal<string | null>(null);
     isDebugModeActivated: WritableSignal<boolean> = signal<boolean>(false);
@@ -140,7 +143,7 @@ export class GamePlaySocketService {
 
         return (
             this.isMyTurn() && currentPlayer?.position !== undefined &&
-            target?.position !== undefined &&target.id !== currentPlayer.id &&
+            target?.position !== undefined && target.id !== currentPlayer.id &&
             currentPlayer.remainingActions !== undefined && currentPlayer.remainingActions > 0 &&
             this.areAdjacent(currentPlayer.position, target.position)
         );
