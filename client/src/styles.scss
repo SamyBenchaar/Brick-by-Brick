@@ -9,6 +9,8 @@ body {
     font-family: 'MyFont';
 }
 
+$overlay-color: rgba(222, 236, 255, 0.6);
+
 .container {
     font-family: 'MyFont';
     padding: 0.5rem;
@@ -16,7 +18,8 @@ body {
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    background-image: url('./assets/plate_background.jpg');
+    background-image: linear-gradient($overlay-color, $overlay-color),
+        url('./assets/plate_background.jpg');
     background-repeat: repeat;
     background-size: cover; 
     background-attachment: fixed;
@@ -74,6 +77,14 @@ button:disabled {
 
 .brick-green {
     background-image: url('./assets/images/green_large_brick.png');
+}
+
+.brick-blue {
+    background-image: url('./assets/images/blue_large_brick.png');
+}
+
+.brick-yellow {
+    background-image: url('./assets/images/4x1_yellow.png');
 }
 
 .description-tooltip {

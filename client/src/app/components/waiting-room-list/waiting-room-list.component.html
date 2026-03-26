@@ -42,7 +42,7 @@
     <div class="list-footer">
         <div class="footer-left">
             @if (isCurrentUserHost()) {
-            <button class="btn-add-virtual" (click)="openVirtualPlayerDialog()">
+            <button class="button add-virtual brick-yellow" (click)="openVirtualPlayerDialog()">
                 <span class="material-icons">smart_toy</span>
                 Ajouter JV
             </button>
@@ -51,9 +51,9 @@
 
         <div class="footer-right">
             @if (canStartGame()) {
-            <button class="btn-start" (click)="startGame()">
+            <button class="button start brick-green" (click)="startGame()">
                 <span class="material-icons">play_arrow</span>
-                Démarrer la partie
+                Démarrer
             </button>
             } @if (isCurrentUserHost() && ((gameSessionSocketService.currentSession()?.players?.length ?? 0) < 2)) {
             <span class="hint-start">En attente d'au moins un autre joueur...</span>
@@ -67,9 +67,9 @@
         <h4>Ajouter un joueur virtuel</h4>
         <p>Choisissez un profil :</p>
         <div class="profile-actions">
-            <button class="btn-profile-aggressive" (click)="onAddVirtualPlayer(virtualPlayerProfile.Aggressive)">Agressif</button>
-            <button class="btn-profile-defensive" (click)="onAddVirtualPlayer(virtualPlayerProfile.Defensive)">Défensif</button>
-            <button class="btn-profile-cancel" (click)="closeVirtualPlayerDialog()">Annuler</button>
+            <button class="button profile-aggressive" (click)="onAddVirtualPlayer(virtualPlayerProfile.Aggressive)">Agressif</button>
+            <button class="button profile-defensive" (click)="onAddVirtualPlayer(virtualPlayerProfile.Defensive)">Défensif</button>
+            <button class="button profile-cancel" (click)="closeVirtualPlayerDialog()">Annuler</button>
         </div>
     </div>
     }

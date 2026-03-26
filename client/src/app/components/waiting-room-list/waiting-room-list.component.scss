@@ -19,24 +19,12 @@
     }
 }
 
-.btn-add-virtual {
+.add-virtual {
     display: flex;
     align-items: center;
     gap: 0.3rem;
     padding: 0.4rem 0.9rem;
-    background-color: #5f53b0;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 0.9rem;
-    font-weight: bold;
-    transition: background-color 0.2s;
-
-    &:hover {
-        background-color: #4a4094;
-    }
-
+    font-size: 1.5rem;
     .material-icons {
         font-size: 1.1rem;
     }
@@ -74,24 +62,12 @@
     }
 }
 
-.btn-start {
+.start {
     display: flex;
     align-items: center;
     gap: 0.3rem;
-    padding: 0.4rem 1rem;
-    background-color: #4caf50;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 0.95rem;
-    font-weight: bold;
-    transition: background-color 0.2s;
-
-    &:hover {
-        background-color: #388e3c;
-    }
-
+    padding: 0.5rem 1.2rem;
+    font-size: 1.5rem;
     .material-icons {
         font-size: 1.1rem;
     }
@@ -236,7 +212,7 @@
     padding: 1rem;
     z-index: 1000;
     box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
-
+    font-size: 1.3rem;
     h4 {
         margin: 0 0 0.4rem 0;
     }
@@ -256,22 +232,22 @@
         border: none;
         border-radius: 6px;
         padding: 0.4rem 0.8rem;
-        font-weight: bold;
+        font-size: 1.7rem;
         cursor: pointer;
     }
 }
 
-.btn-profile-aggressive {
+.profile-aggressive {
     background: #d84315;
     color: white;
 }
 
-.btn-profile-defensive {
+.profile-defensive {
     background: #1565c0;
     color: white;
 }
 
-.btn-profile-cancel {
+.profile-cancel {
     background: #eceff1;
     color: #333;
 }
