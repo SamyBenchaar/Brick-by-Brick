@@ -11,6 +11,7 @@ import { AVATARS } from '@app/constants/character-constants';
 import { KEY_DEBUG, KEY_DIRECTION_MAP, KEY_ENTER } from '@app/constants/key-event.constants';
 import { AppDialogData } from '@app/interfaces/dialog-model';
 import { Game } from '@app/interfaces/game';
+import { GamePlaySocketService } from '@app/services/communication/game-session-socket/game-play-socket.service';
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
 import { Character } from '@common/character';
 import { getGameSizeConfig } from '@common/constants/game-config-constants';
@@ -25,6 +26,7 @@ import { Subscription } from 'rxjs';
 })
 export class GameViewComponent implements OnInit, OnDestroy {
   gameSessionSocketService = inject(GameSessionSocketService);
+  gamePlaySocketService = inject(GamePlaySocketService);
   private router = inject(Router);
   private dialog = inject(MatDialog);
   private injector = inject(Injector);
@@ -47,23 +49,23 @@ export class GameViewComponent implements OnInit, OnDestroy {
     const socketId = this.gameSessionSocketService.getSocketId();
     return this.gameSessionSocketService.currentSession()?.players.find(p => p.socketId === socketId) ?? null;
   });
-  isDebugModeActivated = computed(() => this.gameSessionSocketService.isDebugModeActivated());
+  isDebugModeActivated = computed(() => this.gamePlaySocketService.isDebugModeActivated());
 
   ngOnInit(): void {
-    if (!this.gameSessionSocketService.currentSession() || !this.gameSessionSocketService.mapCopy()) {
+    if (!this.gameSessionSocketService.currentSession() || !this.gamePlaySocketService.mapCopy()) {
       this.router.navigate(['/']);
       return;
     }
 
     effect(() => {
-      const map = this.gameSessionSocketService.mapCopy();
+      const map = this.gamePlaySocketService.mapCopy();
       this.gameData = map ? JSON.parse(JSON.stringify(map)) : null;
     }, { injector: this.injector });
 
     effect(() => {
       this.gameSessionSocketService.currentSession();
-      this.gameSessionSocketService.currentPlayerTurn();
-      if (!this.gameSessionSocketService.canCurrentPlayerAttack()) {
+      this.gamePlaySocketService.currentPlayerTurn();
+      if (!this.gamePlaySocketService.canCurrentPlayerAttack()) {
         this.isAttackSelectionMode.set(false);
       }
     }, { injector: this.injector });
@@ -81,7 +83,7 @@ export class GameViewComponent implements OnInit, OnDestroy {
     }
 
     if (key === KEY_DEBUG && this.gameSessionSocketService.isCurrentUserHost() && !this.isWriting()) {
-      this.gameSessionSocketService.toggleDebugMode();
+      this.gamePlaySocketService.toggleDebugMode();
       return;
     }
 
@@ -89,7 +91,7 @@ export class GameViewComponent implements OnInit, OnDestroy {
     const direction = KEY_DIRECTION_MAP[key];
 
     if (direction) {
-      this.gameSessionSocketService.requestMove(direction);
+      this.gamePlaySocketService.requestMove(direction);
     }
   }
 
@@ -121,7 +123,7 @@ export class GameViewComponent implements OnInit, OnDestroy {
   }
 
   isMyTurn(): boolean {
-    return this.gameSessionSocketService.isMyTurn();
+    return this.gamePlaySocketService.isMyTurn();
   }
 
   isHost(): boolean {
@@ -129,25 +131,25 @@ export class GameViewComponent implements OnInit, OnDestroy {
   }
 
   getCurrentTurnPlayerName(): string {
-    const currentPlayerId = this.gameSessionSocketService.currentPlayerTurn();
+    const currentPlayerId = this.gamePlaySocketService.currentPlayerTurn();
     const player = this.gameSessionSocketService.currentSession()?.players.find(p => p.character.id === currentPlayerId);
     return player?.character.name ?? '';
   }
 
   getTurnTimeRemaining(): number {
-    return this.gameSessionSocketService.turnTimeRemaining();
+    return this.gamePlaySocketService.turnTimeRemaining();
   }
 
   getInterTurnTimeRemaining(): number {
-    return this.gameSessionSocketService.interTurnTimeRemaining();
+    return this.gamePlaySocketService.interTurnTimeRemaining();
   }
 
   isTurnStarting(): boolean {
-    return this.gameSessionSocketService.turnStarting();
+    return this.gamePlaySocketService.turnStarting();
   }
 
   endTurn(): void {
-    this.gameSessionSocketService.endTurn();
+    this.gamePlaySocketService.endTurn();
   }
 
   abandonGame(): void {
@@ -178,7 +180,7 @@ export class GameViewComponent implements OnInit, OnDestroy {
   }
 
   canAttackSelectedTarget(): boolean {
-    return this.gameSessionSocketService.canCurrentPlayerAttack();
+    return this.gamePlaySocketService.canCurrentPlayerAttack();
   }
 
   attackSelectedTarget(): void {
@@ -189,11 +191,11 @@ export class GameViewComponent implements OnInit, OnDestroy {
   }
 
   onAttackTargetSelected(target: Character): void {
-    if (!this.gameSessionSocketService.canAttackTarget(target)) {
+    if (!this.gamePlaySocketService.canAttackTarget(target)) {
       return;
     }
 
-    this.gameSessionSocketService.requestCombat(target.id);
+    this.gamePlaySocketService.requestCombat(target.id);
     this.isAttackSelectionMode.set(false);
   }
 
