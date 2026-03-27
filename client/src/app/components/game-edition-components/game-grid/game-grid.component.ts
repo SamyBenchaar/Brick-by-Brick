@@ -35,10 +35,11 @@ export class GameGridComponent implements OnInit, OnChanges {
   @Input() isViewMode: boolean = false;
   @Input() players: Character[] = [];
   @Input() reachableTiles: Position[] = [];
-  @Input() isAttackSelectionMode: boolean = false;
+  @Input() isActionSelectionMode: boolean = false;
   @ViewChild('gridContainer') gridContainer!: ElementRef<HTMLElement>;
 
   @Output() attackTargetSelected = new EventEmitter<Character>();
+  @Output() actionTargetSelected = new EventEmitter<{tile: Tile, position: Position}>();
 
   readonly gridSize = GRID_SIZE;
   readonly objectDescriptions = OBJECT_DESCRIPTIONS;
@@ -120,8 +121,13 @@ export class GameGridComponent implements OnInit, OnChanges {
 
   onTileMouseDown(position: Position, event: MouseEvent): void {
     if (this.isViewMode) {
-      if (event.button === ClickEvent.Left && this.isAttackSelectionMode) {
-        this.handleAttackTargetSelection(position);
+      if (event.button === ClickEvent.Left && this.isActionSelectionMode) {
+        const playerAtPos = this.getPlayerAtPosition(position);
+        if (playerAtPos) {
+          this.handleAttackTargetSelection(position);
+        } else {
+          this.handleActionTargetSelection(position);
+        }
       }
       return;
     }
@@ -348,6 +354,12 @@ export class GameGridComponent implements OnInit, OnChanges {
 
     const playerData = session.players.find(p => p.socketId === socketId);
     return playerData?.character ?? null;
+  }
+
+  private handleActionTargetSelection(position: Position): void {
+    const target = this.getTile(position);
+    if (!target) return;
+    this.actionTargetSelected.emit({tile: target, position});
   }
 
   private handleAttackTargetSelection(position: Position): void {

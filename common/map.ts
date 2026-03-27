@@ -34,10 +34,11 @@ export const MIN_TERRAIN_COVERAGE = 0.5;
 
 export const PERCENTAGE_MULTIPLIER = 100;
 
-export const PLAYABLE_TYPES = [TileType.Base, TileType.Ice, TileType.Water];
+export const PLAYABLE_TYPES = [TileType.Base, TileType.Ice, TileType.Water, TileType.Door];
 
 export const TILE_COST: Partial<Record<TileType, number>> = {
   [TileType.Base]: 1,
   [TileType.Water]: 2,
   [TileType.Ice]: 0,
+  [TileType.Door]: 1,
 };

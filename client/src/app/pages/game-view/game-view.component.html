@@ -41,9 +41,9 @@
             <app-player-board [players]="playerList()" [leftPlayers]="leftPlayerList()" [host]="hostPlayer()"></app-player-board>
                 <app-player-sign
                     [player]="currentPlayer()"
-                    [canAttack]="canAttackSelectedTarget()"
-                    [selectedTargetName]="getSelectedAttackTargetName()"
-                    (attack)="attackSelectedTarget()">
+                    [canAct]="canAttackSelectedTarget() || canInteract()"
+                    [selectedTargetName]="getSelectedTarget()"
+                    (attack)="onActionClick()">
                 </app-player-sign>
         </aside>
 
@@ -62,8 +62,9 @@
                     [isViewMode]="true"
                     [players]="getPlayers()"
                     [reachableTiles]="gamePlaySocketService.reachableTiles()"
-                    [isAttackSelectionMode]="isAttackSelectionMode()"
-                    (attackTargetSelected)="onAttackTargetSelected($event)">
+                    [isActionSelectionMode]="isActionSelectionMode()"
+                    (attackTargetSelected)="onAttackTargetSelected($event)"
+                    (actionTargetSelected)="onActionTargetSelected($event)">
                 </app-game-grid>
                 }
             </div>
