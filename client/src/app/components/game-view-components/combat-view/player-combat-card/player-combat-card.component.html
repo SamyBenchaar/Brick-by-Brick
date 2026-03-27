@@ -1,0 +1,24 @@
+<div class="player-info">
+    <div class="player-name">{{ name }}</div>
+    <img class="avatar" [src]="avatar" [alt]="name">
+    <div class="player-life">Vie: {{ life }}/{{ maxLife }}</div>
+
+    <div class="stats-container">
+        <div class="stat-box">
+            <div class="section-title">Attaque</div>
+            <div>Valeur: </div>
+            <div>Dé:</div>
+            <div>Pénalité:</div>
+            <div class="attack-score">Total attaque:</div>
+        </div>
+
+
+        <div class="stat-box">
+            <div class="section-title">Défense</div>
+            <div>Valeur:</div>
+            <div>Dé:</div>
+            <div>Pénalité:</div>
+            <div class="defense-score">Total défense:</div>
+        </div>
+    </div>
+</div>

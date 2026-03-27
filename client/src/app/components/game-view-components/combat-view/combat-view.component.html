@@ -1,0 +1,18 @@
+<div class="backdrop"></div>
+
+<div class="combat-container">
+    Combat en cours entre x et x
+
+    <div class="combat-players">
+        <app-player-combat-card></app-player-combat-card>
+           
+        <div class="vs-text">VS</div>
+        <app-player-combat-card></app-player-combat-card>
+    </div>
+
+        <div class="combat-actions" [class.hidden]="!isMyCombatTurn()">
+            <button (click)="setPosture(Posture.Defensive)" class="button defensive brick-green">Défense</button>
+            <button (click)="setPosture(Posture.Offensive)" class="button offensive brick-red">Attaque</button>
+        </div>
+
+</div>

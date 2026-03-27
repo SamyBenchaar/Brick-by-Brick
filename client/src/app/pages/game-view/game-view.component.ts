@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { ChatComponent } from '@app/components/chat/chat.component';
 import { AppDialogComponent } from '@app/components/game-edition-components/app-dialog/app-dialog.component';
 import { GameGridComponent } from '@app/components/game-edition-components/game-grid/game-grid.component';
+import { CombatViewComponent } from '@app/components/game-view-components/combat-view/combat-view.component';
 import { PlayerBoardComponent } from '@app/components/game-view-components/player-board/player-board/player-board.component';
 import { PlayerSignComponent } from '@app/components/game-view-components/player-sign/player-sign/player-sign.component';
 import { AVATARS } from '@app/constants/character-constants';
@@ -20,7 +21,7 @@ import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-game-view',
-  imports: [CommonModule, GameGridComponent, ChatComponent, PlayerBoardComponent, PlayerSignComponent],
+  imports: [CommonModule, GameGridComponent, ChatComponent, PlayerBoardComponent, PlayerSignComponent, CombatViewComponent],
   templateUrl: './game-view.component.html',
   styleUrl: './game-view.component.scss',
 })
@@ -128,6 +129,11 @@ export class GameViewComponent implements OnInit, OnDestroy {
 
   isHost(): boolean {
     return this.gameSessionSocketService.isCurrentUserHost();
+  }
+
+  isInCombat(): boolean {
+    //to do, le mettre a true pour afficher la modale de combat
+    return false;
   }
 
   getCurrentTurnPlayerName(): string {
