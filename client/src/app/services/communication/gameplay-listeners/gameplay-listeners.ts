@@ -191,4 +191,8 @@ export function setupGameplayEventListeners(
             }, gameSessionSocketService.endGameDelay);
         },
     );
+
+    socketService.on<{ isDebugModeActivated: boolean }>(GameSessionEvents.ToggleDebugMode, (data) => {
+        service.isDebugModeActivated.set(data.isDebugModeActivated);
+    });
 }

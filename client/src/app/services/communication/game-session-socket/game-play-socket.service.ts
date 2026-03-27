@@ -31,7 +31,6 @@ export class GamePlaySocketService {
         if (!this.socketService.isConnected()) {
             this.socketService.connect();
         }
-        this.setupEventListeners();
     }
 
     disconnect(): void {
@@ -43,14 +42,6 @@ export class GamePlaySocketService {
         this.socketService.off(GameSessionEvents.TurnEnded);
         this.socketService.off(GameSessionEvents.MoveExecuted);
         this.socketService.off(GameSessionEvents.CombatResult);
-    }
-
-    private setupEventListeners(): void {
-        this.socketService.on<{ isDebugModeActivated: boolean }>(GameSessionEvents.ToggleDebugMode, (data) => {
-            this.isDebugModeActivated.set(data.isDebugModeActivated);
-        });
-
-
     }
 
     resetGameplayState(): void {
