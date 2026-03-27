@@ -185,7 +185,8 @@ export class GamePlayGateway implements OnGatewayInit {
                 defenderNewPosition: gameSession.players.find(p => p.character.id === payload.defenderId)?.character.position,
                 remainingActions: currentPlayer.remainingActions,
             });
-
+            
+            this.emitReachableTiles(gameSession);
             const winner = this.gameSessionService.checkGameWinner(gameSession);
             if (winner) {
                 this.handleGameEnd(gameSession, winner);
