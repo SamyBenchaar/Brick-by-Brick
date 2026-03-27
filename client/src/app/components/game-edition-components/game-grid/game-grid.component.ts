@@ -10,6 +10,7 @@ import { ClickEvent } from '@app/constants/click-event-constants';
 import { GameSize } from '@app/constants/game-size.enum';
 import { OBJECT_DESCRIPTIONS } from '@app/constants/object-descriptions';
 import { Game } from '@app/interfaces/game';
+import { GamePlaySocketService } from '@app/services/communication/game-session-socket/game-play-socket.service';
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
 import { MapEditorService } from '@app/services/map-editor/map-editor.service';
 import { ObjectCounterService } from '@app/services/object-counter/object-counter.service';
@@ -46,6 +47,7 @@ export class GameGridComponent implements OnInit, OnChanges {
   private mapEditorService = inject(MapEditorService);
   private objectCounterService = inject(ObjectCounterService);
   private gameSessionSocketService = inject(GameSessionSocketService);
+  private gamePlaySocketService = inject(GamePlaySocketService);
   private dialog = inject(MatDialog);
   private isDrawing = false;
   private isDeleting = false;
@@ -186,13 +188,13 @@ export class GameGridComponent implements OnInit, OnChanges {
   }
 
   private tryDebugTeleport(position: Position, tile: Tile | null, player: Character | null): boolean {
-    const isDebug = this.gameSessionSocketService.isDebugModeActivated();
-    const isMyTurn = this.gameSessionSocketService.isMyTurn();
+    const isDebug = this.gamePlaySocketService.isDebugModeActivated();
+    const isMyTurn = this.gamePlaySocketService.isMyTurn();
 
     if (!isDebug || !isMyTurn) return false;
     if (!this.isTileValidForTeleport(tile, player)) return false;
 
-    this.gameSessionSocketService.requestAssignPosition(position);
+    this.gamePlaySocketService.requestAssignPosition(position);
     return true;
   }
 
@@ -354,7 +356,7 @@ export class GameGridComponent implements OnInit, OnChanges {
       return;
     }
 
-    if (!this.gameSessionSocketService.canAttackTarget(target)) {
+    if (!this.gamePlaySocketService.canAttackTarget(target)) {
       return;
     }
 

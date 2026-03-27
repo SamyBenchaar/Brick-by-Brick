@@ -61,7 +61,7 @@
                     [gameData]="gameData" 
                     [isViewMode]="true"
                     [players]="getPlayers()"
-                    [reachableTiles]="gameSessionSocketService.reachableTiles()"
+                    [reachableTiles]="gamePlaySocketService.reachableTiles()"
                     [isAttackSelectionMode]="isAttackSelectionMode()"
                     (attackTargetSelected)="onAttackTargetSelected($event)">
                 </app-game-grid>
