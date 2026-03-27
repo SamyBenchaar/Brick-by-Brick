@@ -1,10 +1,12 @@
 import { Injectable, Injector, WritableSignal, inject, signal } from '@angular/core';
 import { Game } from '@app/interfaces/game';
+import {Tile} from '@app/classes/tile/tile';
 import { Character } from '@common/character';
 import { GameSessionEvents } from '@common/game.events';
 import { Position } from '@common/position';
 import { SocketService } from '@app/services/communication/socket/socket.service';
 import { GameSessionSocketService } from './game-session-socket.service';
+import { TileType } from '@common/map';
 
 @Injectable({
     providedIn: 'root',
@@ -90,6 +92,13 @@ export class GamePlaySocketService {
         }
     }
 
+    requestInteract(position: Position): void {
+        const currentRoomId = this.getRoomId();
+        if (currentRoomId) {
+            this.socketService.emit(GameSessionEvents.RequestInteract, { roomId: currentRoomId, position });
+        }
+    }
+
     endTurn(): void {
         const currentRoomId = this.getRoomId();
         if (currentRoomId) {
@@ -127,6 +136,32 @@ export class GamePlaySocketService {
                 character.id !== currentPlayer.id && character.position !== undefined &&
                 this.areAdjacent(currentPlayer.position as Position, character.position),
             ) ?? null;
+    }
+    
+    canInteractWithTarget(target: Tile, position: Position): boolean {
+        const currentPlayer = this.getCurrentPlayerCharacter();
+        return (this.isMyTurn() &&
+        currentPlayer?.position !== undefined &&
+        currentPlayer.remainingActions !== undefined &&
+        currentPlayer.remainingActions > 0 &&
+        this.areAdjacent(currentPlayer.position, position) &&
+        target.type === TileType.Door
+        );
+    }
+
+    canPlayerInteractDoor(): boolean {
+        const currentPlayer = this.getCurrentPlayerCharacter();
+        if (!this.isMyTurn() || !currentPlayer?.position || (currentPlayer.remainingActions ?? 0) <= 0) return false;
+        const map = this.mapCopy();
+        if (!map) return false;
+        const { x, y } = currentPlayer.position;
+        const adjacentPos :Position[] = [
+            { x: x - 1, y },
+            { x: x + 1, y },
+            { x, y: y - 1 },
+            { x, y: y + 1 },
+        ];
+        return adjacentPos.some(pos => map.mapConfig.tiles[pos.y]?.[pos.x]?.type === 'door');
     }
 
     canAttackTarget(target: Character | null): boolean {

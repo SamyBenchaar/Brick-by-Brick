@@ -12,7 +12,7 @@ import { Player } from '@common/player';
 })
 export class PlayerSignComponent {
   @Input() player: Player | null = null;
-  @Input() canAttack = false;
+  @Input() canAct = false;
   @Input() selectedTargetName: string | null = null;
   @Output() attack = new EventEmitter<void>();
   readonly name = 'statistiques';
@@ -23,8 +23,8 @@ export class PlayerSignComponent {
     return AVATARS.find(a => a.id === this.player?.character.avatarId);
   }
 
-  onAttackClick(): void {
-    if (!this.canAttack) {
+  onActionClick(): void {
+    if (!this.canAct) {
       return;
     }
     this.attack.emit();

@@ -127,6 +127,25 @@ export function setupGameplayEventListeners(
         }
     });
 
+    socketService.on<{position: Position, newDoorState: string, remainingActions: number}>(GameSessionEvents.InteractResult, (data) => {
+        const currentMap = service.mapCopy();
+        if (currentMap) {
+            currentMap.mapConfig.tiles[data.position.y][data.position.x].doorState = data.newDoorState;
+            service.mapCopy.set({ ...currentMap });
+        }
+
+        const session = gameSessionSocketService.currentSession();
+        if (session) {
+            const currentPlayerId = service.currentPlayerTurn();
+            const player = session.players.find(p => p.character.id === currentPlayerId);
+            if (player) {
+                player.character.remainingActions = data.remainingActions;
+                gameSessionSocketService.currentSession.set({ ...session });
+                
+            }
+        }
+    });
+
     socketService.on<{ playerId: string; mapCopyTiles: Tile[][] }>(GameSessionEvents.PlayerAbandoned, (data) => {
         const session = service.currentSession();
         if (session) {

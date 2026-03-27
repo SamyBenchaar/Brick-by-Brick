@@ -32,8 +32,8 @@
             </div>
         </div>
 
-        <button class="attack-button" type="button" [disabled]="!canAttack" (click)="onAttackClick()">
-            {{ selectedTargetName ? 'Attaquer ' + selectedTargetName : 'Attaquer' }}
+        <button class="action-button" type="button" [disabled]="!canAct " (click)="onActionClick()">
+            {{ selectedTargetName ? 'interagir avec ' + selectedTargetName : 'Action' }}
         </button>
     </div>
 </app-base-sign>
