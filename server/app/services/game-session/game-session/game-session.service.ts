@@ -4,6 +4,7 @@ import { CombatService } from '@app/services/game-session/combat.service';
 import { MovementService } from '@app/services/game-session/movement.service';
 import { StartingPointService } from '@app/services/game-session/starting-point.service';
 import { TurnManagementService } from '@app/services/game-session/turn-management.service';
+import { VirtualPlayerService } from '@app/services/game-session/virtual-player.service';
 import { GameService } from '@app/services/game/game.service';
 import { Character } from '@common/character';
 import { AVATAR_IDS } from '@common/constants/avatar-constants';
@@ -35,6 +36,7 @@ export class GameSessionService {
         private turnManagementService: TurnManagementService,
         private movementService: MovementService,
         private combatService: CombatService,
+        private virtualPlayerService: VirtualPlayerService,
         @Inject(forwardRef(() => GameService))
         private gameService: GameService,
     ) {}
@@ -141,6 +143,17 @@ export class GameSessionService {
             },
             onTickCallback,
         );
+
+        //À SUPPRIMER test test test test
+        const fullCurrentPlayer = gameSession.players.find(p => p.character.id === currentPlayer.id);
+        if (fullCurrentPlayer?.virtualProfile) {
+            this.virtualPlayerService.playTurn(gameSession, fullCurrentPlayer).then(() => {
+                this.endCurrentTurn(gameSession);
+                if (onTurnEndCallback) {
+                    onTurnEndCallback(endedPlayerId);
+                }
+            });
+        }
     }
 
     endCurrentTurn(gameSession: GameSession): void {
