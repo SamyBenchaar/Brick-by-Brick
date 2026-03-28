@@ -17,6 +17,11 @@ export enum ObjectType {
     CombatSanctuary = 'combatsanctuary',
 }
 
+export const MULTI_TILE_OBJECTS = [
+    ObjectType.HealingSanctuary,
+    ObjectType.CombatSanctuary,
+];
+
 export enum MapSize {
     Small = 10,
     Medium = 15,
