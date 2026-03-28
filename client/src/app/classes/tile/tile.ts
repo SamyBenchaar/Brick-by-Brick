@@ -12,6 +12,8 @@ export class Tile {
     static readonly editableObjects: ObjectType[] =
         [
             ObjectType.StartingPoint,
+            ObjectType.HealingSanctuary,
+            ObjectType.CombatSanctuary,
         ];
     type: TileType;
     object: ObjectType | undefined;

@@ -8,14 +8,26 @@ export class ObjectCounterService {
   private counts: Record<ObjectType, number> = {
 
     [ObjectType.StartingPoint]: 0,
+    [ObjectType.HealingSanctuary]: 0,
+    [ObjectType.CombatSanctuary]: 0,
   };
   private maxCounts: Record<ObjectType, number> = {
 
     [ObjectType.StartingPoint]: 2,
+    [ObjectType.HealingSanctuary]: 1,
+    [ObjectType.CombatSanctuary]: 1,
   };
 
   set startPoint(number: number) {
     this.maxCounts[ObjectType.StartingPoint] = number;
+  }
+
+  set healingSanctuary(number: number) {
+    this.maxCounts[ObjectType.HealingSanctuary] = number;
+  }
+
+  set combatSanctuary(number: number) {
+    this.maxCounts[ObjectType.CombatSanctuary] = number;
   }
 
   canPlace(object: ObjectType): boolean {

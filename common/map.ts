@@ -12,7 +12,9 @@ export enum DoorState {
 }
 
 export enum ObjectType {
-    StartingPoint = 'startingpoint'
+    StartingPoint = 'startingpoint',
+    HealingSanctuary = 'healingsanctuary',
+    CombatSanctuary = 'combatsanctuary',
 }
 
 export enum MapSize {
