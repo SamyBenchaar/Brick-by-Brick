@@ -325,7 +325,6 @@ export class GameGridComponent implements OnInit, OnChanges {
         this.mapEditorService.setObject(pos, null);
       });
     } else {
-      this.objectCounterService.remove(objectType);
       tile.object = undefined;
       this.mapEditorService.setObject(position, null);
     }
