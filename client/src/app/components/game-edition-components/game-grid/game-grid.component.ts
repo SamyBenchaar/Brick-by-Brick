@@ -7,10 +7,8 @@ import { AppDialogComponent } from '@app/components/game-edition-components/app-
 import { AVATARS } from '@app/constants/character-constants';
 import { ClickEvent } from '@app/constants/click-event-constants';
 import { GameSize } from '@app/constants/game-size.enum';
-import { OBJECT_DESCRIPTIONS } from '@app/constants/object-descriptions';
 import { Game } from '@app/interfaces/game';
 import { GamePlaySocketService } from '@app/services/communication/game-session-socket/game-play-socket.service';
-import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
 import { MapEditorService } from '@app/services/map-editor/map-editor.service';
 import { ObjectCounterService } from '@app/services/object-counter/object-counter.service';
 import { Character } from '@common/character';
@@ -41,12 +39,10 @@ export class GameGridComponent implements OnInit, OnChanges {
   @Output() actionTargetSelected = new EventEmitter<{ tile: Tile, position: Position }>();
 
   readonly gridSize = GRID_SIZE;
-  readonly objectDescriptions = OBJECT_DESCRIPTIONS;
 
   gameMap!: GameMap;
   private mapEditorService = inject(MapEditorService);
   private objectCounterService = inject(ObjectCounterService);
-  private gameSessionSocketService = inject(GameSessionSocketService);
   private gamePlaySocketService = inject(GamePlaySocketService);
   private dialog = inject(MatDialog);
   private isDrawing = false;
@@ -98,7 +94,15 @@ export class GameGridComponent implements OnInit, OnChanges {
           }
           if (tileData.object) {
             tile.object = tileData.object.type as ObjectType;
-            this.objectCounterService.place(tile.object);
+            if (tileData.isOrigin) {
+              this.objectCounterService.place(tile.object);
+              [[0,0],[1,0],[0,1],[1,1]].forEach(([dx, dy]) => {
+                  const t = this.gameMap.getTile({ x: x + dx, y: y + dy });
+                  if (t) t.sanctuaryOrigin = { x, y };
+              });
+            } else if (!this.isMultiTileObject(tile.object)) {
+              this.objectCounterService.place(tile.object);
+          }
           }
         }
       }
@@ -299,6 +303,7 @@ export class GameGridComponent implements OnInit, OnChanges {
         this.mapEditorService.setObject(positions[i], selectedObject);
       });
       this.objectCounterService.place(selectedObject);
+      this.mapEditorService.setOrigin(position, true);
     } else {
       tile.object = selectedObject;
       this.objectCounterService.place(selectedObject);
@@ -323,6 +328,7 @@ export class GameGridComponent implements OnInit, OnChanges {
           t.sanctuaryOrigin = undefined;
         }
         this.mapEditorService.setObject(pos, null);
+        this.mapEditorService.setOrigin(pos, false);
       });
     } else {
       tile.object = undefined;
@@ -379,14 +385,14 @@ export class GameGridComponent implements OnInit, OnChanges {
     return AVATARS.find(a => a.id === avatarId)?.image ?? 'assets/images/lily.jpg';
   }
 
-  getCurrentPlayer(): Character | null {
-    const socketId = this.gameSessionSocketService.getSocketId();
-    const session = this.gameSessionSocketService.currentSession();
-    if (!session) return null;
+  // getCurrentPlayer(): Character | null {
+  //   const socketId = this.gameSessionSocketService.getSocketId();
+  //   const session = this.gameSessionSocketService.currentSession();
+  //   if (!session) return null;
 
-    const playerData = session.players.find(p => p.socketId === socketId);
-    return playerData?.character ?? null;
-  }
+  //   const playerData = session.players.find(p => p.socketId === socketId);
+  //   return playerData?.character ?? null;
+  // }
 
   private handleActionTargetSelection(position: Position): void {
     const target = this.getTile(position);
