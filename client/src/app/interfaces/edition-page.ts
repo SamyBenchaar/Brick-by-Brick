@@ -10,6 +10,7 @@ export interface GridDimensions {
 export interface TileData {
     type: string;
     object?: { type: string };
+    isOrigin?: boolean;
 }
 
 export interface GameCreationData {

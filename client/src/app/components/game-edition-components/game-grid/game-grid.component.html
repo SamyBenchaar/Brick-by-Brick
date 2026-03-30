@@ -11,12 +11,13 @@
             (mousedown)="onTileMouseDown(position, $event)"
             (mouseenter)="onTileMouseEnter(position)"
             (contextmenu)="onTileRightClick(position, $event)"
-            [matTooltip]="tile.object ? objectDescriptions[tile.object] : ''"
-            matTooltipShowDelay="0"
-            matTooltipClass="description-tooltip"
             >
             @if(tile.object) {
-            <img [src]="getObjectPath(tile.object)" class="tile-object-image"/>
+                @if(isSanctuaryOriginTile(tile, position)) {
+                    <img [src]="getObjectPath(tile.object)" class="tile-object-multi"/>
+                } @else if (!isMultiTileObject(tile.object)) {
+                    <img [src]="getObjectPath(tile.object)" class="tile-object-image"/>
+                }
             }
             @if(playerAtPos) {
             <div class="player-avatar">

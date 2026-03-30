@@ -109,7 +109,9 @@ export class MapValidationService {
 
                 // Vérifier si la tuile est jouable
                 const tile = tiles[newY][newX];
-                if (!PLAYABLE_TYPES.includes(tile.type as TileType)) {
+                const objectType = tile.object?.type;
+                if (!PLAYABLE_TYPES.includes(tile.type as TileType) 
+                    || objectType === ObjectType.HealingSanctuary || objectType === ObjectType.CombatSanctuary) {
                     continue;
                 }
 
@@ -148,7 +150,9 @@ export class MapValidationService {
 
         for (const row of tiles) {
             for (const tile of row) {
-                if (PLAYABLE_TYPES.includes(tile.type as TileType)) {
+                const objectType = tile.object?.type;
+                if (PLAYABLE_TYPES.includes(tile.type as TileType) 
+                    && objectType !== ObjectType.HealingSanctuary && objectType !== ObjectType.CombatSanctuary) {
                     count++;
                 }
             }
