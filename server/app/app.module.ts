@@ -1,8 +1,8 @@
 import { GameController } from '@app/controllers/game/game.controller';
 import { ChatGateway } from '@app/gateways/chat/chat.gateway';
-import { GameGateway } from '@app/gateways/game/game.gateway';
 import { GamePlayGateway } from '@app/gateways/game-session/game-play/game-play.gateway';
 import { GameSessionGateway } from '@app/gateways/game-session/game-session/game-session.gateway';
+import { GameGateway } from '@app/gateways/game/game.gateway';
 import { Game, gameSchema } from '@app/model/game';
 import { CombatService } from '@app/services/game-session/combat.service';
 import { MovementService } from '@app/services/game-session/movement.service';

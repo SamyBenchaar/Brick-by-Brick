@@ -19,4 +19,6 @@ export interface GameSession {
     startingPoints: Map<string, Position>;
     isTurnStarting: boolean;
     isDebugModeActivated: boolean;
+    gameMode?: string;
+    playerTeams?: Map<string, 'team1' | 'team2'>;
 }

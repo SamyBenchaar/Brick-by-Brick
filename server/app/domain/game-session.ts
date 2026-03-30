@@ -1,12 +1,14 @@
 import { GameMap } from '@app/interfaces/game-map-interfaces';
 import { Character } from '@common/character';
 import { MAX_PLAYER, ROOM_ID_LENGTH } from '@common/constants/game-config-constants';
+import { EXPIRED_FLAG_TIME, SHUFFLE_FACTOR } from '@common/map';
 import { Player } from '@common/player';
 import { Position } from '@common/position';
 import { SessionStatus } from '@common/session.status';
 
 
 export class GameSession {
+
     players: Player[] = [];
     leftPlayers: Player[] = [];
     status: SessionStatus = SessionStatus.Waiting;
@@ -25,7 +27,6 @@ export class GameSession {
     isTurnStarting: boolean = false;
     isDebugModeActivated = false;
 
-    // CTF-specific properties
     gameMode: string = 'classic';
     playerTeams: Map<string, 'team1' | 'team2'> = new Map();
     flagPosition: Position | null = null;
@@ -74,7 +75,6 @@ export class GameSession {
         this.playerOrder = this.playerOrder.filter((id) => id !== removedPlayer.character.id);
         this.startingPoints.delete(removedPlayer.character.id);
 
-        // CTF cleanup
         this.playerTeams.delete(removedPlayer.character.id);
         if (this.flagHolderId === removedPlayer.character.id) {
             this.flagHolderId = null;
@@ -210,13 +210,12 @@ export class GameSession {
         this.status = status;
     }
 
-    // CTF-specific methods
     assignTeams(): void {
         if (this.gameMode !== 'ctf' || this.players.length % 2 !== 0) {
             return;
         }
 
-        const shuffledPlayers = [...this.players].sort(() => Math.random() - 0.5);
+        const shuffledPlayers = [...this.players].sort(() => Math.random() - SHUFFLE_FACTOR);
         const midpoint = shuffledPlayers.length / 2;
 
         shuffledPlayers.slice(0, midpoint).forEach(p => {
@@ -280,7 +279,11 @@ export class GameSession {
         if (!request) return false;
 
         this.flagTransferRequests.delete(playerId);
-        this.setFlagHolder(playerId);
+        
+        const currentFlagHolder = this.getFlagHolder();
+        const newFlagHolder = currentFlagHolder === request.from ? request.to : request.from;
+        
+        this.setFlagHolder(newFlagHolder);
         return true;
     }
 
@@ -288,7 +291,7 @@ export class GameSession {
         this.flagTransferRequests.delete(playerId);
     }
 
-    clearExpiredFlagTransfers(expiryTimeMs: number = 30000): void {
+    clearExpiredFlagTransfers(expiryTimeMs: number = EXPIRED_FLAG_TIME): void {
         const now = Date.now();
         const expiredRequests: string[] = [];
 
