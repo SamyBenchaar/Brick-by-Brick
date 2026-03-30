@@ -12,8 +12,15 @@ export enum DoorState {
 }
 
 export enum ObjectType {
-    StartingPoint = 'startingpoint'
+    StartingPoint = 'startingpoint',
+    HealingSanctuary = 'healingsanctuary',
+    CombatSanctuary = 'combatsanctuary',
 }
+
+export const MULTI_TILE_OBJECTS = [
+    ObjectType.HealingSanctuary,
+    ObjectType.CombatSanctuary,
+];
 
 export enum MapSize {
     Small = 10,

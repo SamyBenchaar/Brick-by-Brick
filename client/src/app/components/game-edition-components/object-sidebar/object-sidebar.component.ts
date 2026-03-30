@@ -25,6 +25,8 @@ export class ObjectSidebarComponent implements OnInit {
     const size = this.route.snapshot.queryParams.size;
     const config = getGameSizeConfig(size);
     this.objectCounterService.startPoint = config.maxPlayers;
+    this.objectCounterService.healingSanctuary = 2**((config.maxPlayers-2)/2);
+    this.objectCounterService.combatSanctuary = 2**((config.maxPlayers-2)/2);
   }
 
 
