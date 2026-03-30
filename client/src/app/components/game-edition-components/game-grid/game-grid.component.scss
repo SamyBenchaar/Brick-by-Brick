@@ -98,11 +98,15 @@
 
 .flag-on-player {
   position: absolute;
-  top: -10%;
-  right: -10%;
-  font-size: 24px;
-  z-index: 20;
-  animation: pulse-flag 1.5s ease-in-out infinite;
+  top: -5px;
+  right: -5px;
+  font-size: 40px;
+  
+  img {
+    width: 34px;
+    height: 34px;
+    object-fit: contain;
+  }
 }
 
 @keyframes pulse-flag {

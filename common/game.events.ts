@@ -62,11 +62,6 @@ export enum GameSessionEvents {
     RequestInteract = 'requestInteract',
     InteractResult = 'interactResult',
 
-    RequestFlagTransfer = 'requestFlagTransfer',
-    FlagTransferRequest = 'flagTransferRequest',
-    FlagTransferResponse = 'flagTransferResponse',
-    FlagPickup = 'flagPickup',
-    FlagDropped = 'flagDropped',
 
     PlayerAbandoned = 'playerAbandoned',
     GameEnded = 'gameEnded',
