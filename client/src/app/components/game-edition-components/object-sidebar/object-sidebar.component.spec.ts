@@ -15,7 +15,7 @@ describe('ObjectSidebarComponent', () => {
   let objectCounterServiceSpy: jasmine.SpyObj<ObjectCounterService>;
 
   beforeEach(async () => {
-    mapEditorServiceSpy = jasmine.createSpyObj('MapEditorService', ['selectObject', 'getSelectedObject']);
+    mapEditorServiceSpy = jasmine.createSpyObj('MapEditorService', ['selectObject', 'getSelectedObject', 'getCurrentGame']);
     objectCounterServiceSpy = jasmine.createSpyObj('ObjectCounterService', ['canPlace', 'getRemainingCount'], { startPoint: undefined });
 
     await TestBed.configureTestingModule({

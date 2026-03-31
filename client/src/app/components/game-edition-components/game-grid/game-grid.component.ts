@@ -341,6 +341,9 @@ export class GameGridComponent implements OnInit, OnChanges {
   }
 
   getObjectPath(object: ObjectType): string {
+    if (object === ObjectType.Flag) {
+      return `./assets/images/flag.svg`;
+    }
     return `./assets/images/${object}.png`;
   }
 
