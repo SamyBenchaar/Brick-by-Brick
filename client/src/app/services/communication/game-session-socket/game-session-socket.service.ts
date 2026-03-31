@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { AppDialogComponent } from '@app/components/game-edition-components/app-dialog/app-dialog.component';
 import { Game } from '@app/interfaces/game';
 import { GameSession } from '@app/interfaces/game-session';
+import { FlagTransferSocketService } from '@app/services/communication/game-session-socket/flag-transfer-socket.service';
 import { setupGameplayEventListeners } from '@app/services/communication/gameplay-listeners/gameplay-listeners';
 import { SocketService } from '@app/services/communication/socket/socket.service';
 import { Character } from '@common/character';
@@ -36,6 +37,10 @@ export class GameSessionSocketService {
 
     private get gamePlaySocketService(): GamePlaySocketService {
         return this.injector.get(GamePlaySocketService);
+    }
+
+    private get flagTransferSocketService(): FlagTransferSocketService {
+        return this.injector.get(FlagTransferSocketService);
     }
 
     connect(): void {
@@ -196,7 +201,14 @@ export class GameSessionSocketService {
             this.router.navigate(['/game-view'], { queryParams: { roomId } });
         });
 
-        setupGameplayEventListeners(this.gamePlaySocketService, this, this.socketService, this.router, this.dialog);
+        setupGameplayEventListeners({
+            gamePlaySocketService: this.gamePlaySocketService,
+            gameSessionSocketService: this,
+            socketService: this.socketService,
+            router: this.router,
+            dialog: this.dialog,
+            flagTransferService: this.flagTransferSocketService,
+        });
 
         this.socketService.on<number[]>(GameSessionEvents.AvatarTakenUpdated, (avatarIds) => {
             this.takenAvatars.set(avatarIds);

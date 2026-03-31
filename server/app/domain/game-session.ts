@@ -246,6 +246,16 @@ export class GameSession {
             .map(p => p.character);
     }
 
+    getTotalPlayersInTeam(team: 'team1' | 'team2'): number {
+        return this.players.filter(p => this.playerTeams.get(p.character.id) === team).length;
+    }
+
+    getTeamPlayers(team: 'team1' | 'team2'): Character[] {
+        return this.players
+            .filter(p => this.playerTeams.get(p.character.id) === team)
+            .map(p => p.character);
+    }
+
     setFlagPosition(position: Position): void {
         this.flagPosition = position;
     }
@@ -300,6 +310,18 @@ export class GameSession {
 
     rejectFlagTransfer(playerId: string): void {
         this.flagTransferRequests.delete(playerId);
+    }
+
+    rejectPendingFlagTransfersFromPlayer(playerId: string): void {
+        const requestsToReject: string[] = [];
+
+        this.flagTransferRequests.forEach((request, toPlayerId) => {
+            if (request.from === playerId) {
+                requestsToReject.push(toPlayerId);
+            }
+        });
+
+        requestsToReject.forEach(toPlayerId => this.flagTransferRequests.delete(toPlayerId));
     }
 
     clearExpiredFlagTransfers(expiryTimeMs: number = EXPIRED_FLAG_TIME): void {
