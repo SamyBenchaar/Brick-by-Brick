@@ -1,7 +1,7 @@
 <div class="edition-container">
     <div class="sidebar-container">
         <app-tile-type-sidebar></app-tile-type-sidebar>
-        <app-object-sidebar></app-object-sidebar>
+        <app-object-sidebar [gameMode]="gameMode"></app-object-sidebar>
     </div>
     <div class="edition-layout">
         <app-game-grid class="game-grid" [mapSize]="getMapSize()" [gameData]="this.mapEditorService.getCurrentGame()"></app-game-grid>

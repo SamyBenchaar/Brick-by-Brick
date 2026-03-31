@@ -112,24 +112,37 @@ export class GameSessionSocketService {
         });
 
         this.socketService.on<string>(GameSessionEvents.GameSessionJoinError, (message) => {
-            const dialogRef = this.dialog.open(AppDialogComponent, {
-                data: {
-                    title: 'Erreur de jointure',
-                    message,
-                    type: 'warning',
-                    confirmText: 'Réessayer',
-                    cancelText: "Retour a l'accueil",
-                },
-                disableClose: true,
-            });
+            const isOddPlayersWarning = message.includes('nombre pair de joueurs');
 
-            dialogRef.afterClosed().subscribe((retry) => {
-                if (retry && this.lastJoinPlayer && this.lastJoinRoomId) {
-                    this.joinGameSession(this.lastJoinRoomId, this.lastJoinPlayer);
-                } else {
-                    this.router.navigate(['/']);
-                }
-            });
+            if (isOddPlayersWarning) {
+                this.dialog.open(AppDialogComponent, {
+                    data: {
+                        title: 'Attention',
+                        message,
+                        type: 'info',
+                        confirmText: 'OK',
+                    },
+                });
+            } else {
+                const dialogRef = this.dialog.open(AppDialogComponent, {
+                    data: {
+                        title: 'Erreur de jointure',
+                        message,
+                        type: 'warning',
+                        confirmText: 'Réessayer',
+                        cancelText: "Retour a l'accueil",
+                    },
+                    disableClose: true,
+                });
+
+                dialogRef.afterClosed().subscribe((retry) => {
+                    if (retry && this.lastJoinPlayer && this.lastJoinRoomId) {
+                        this.joinGameSession(this.lastJoinRoomId, this.lastJoinPlayer);
+                    } else {
+                        this.router.navigate(['/']);
+                    }
+                });
+            }
         });
 
         this.socketService.on<{ message: string }>(GameSessionEvents.PlayerKicked, (data) => {
@@ -285,5 +298,12 @@ export class GameSessionSocketService {
     canStartGame(): boolean {
         const session = this.currentSession();
         return this.isCurrentUserHost() && (session?.players?.length ?? 0) >= 2;
+    }
+
+    requestFlagTransfer(targetPlayerId: string): void {
+        const currentRoomId = this.getRoomId();
+        if (currentRoomId) {
+            this.socketService.emit(GameSessionEvents.RequestFlagTransfer, { roomId: currentRoomId, toPlayerId: targetPlayerId });
+        }
     }
 }

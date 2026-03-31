@@ -43,7 +43,7 @@ export class GameSessionService {
         const originalGame = await this.gameService.findOne(mapId);
         const mapCopy = JSON.parse(JSON.stringify(originalGame));
 
-        const newGameSession = new GameSession(player, mapId);
+        const newGameSession = new GameSession(player, mapId, originalGame.gameMode);
         newGameSession.mapCopy = mapCopy;
         newGameSession.maxPlayers = getGameSizeConfig(mapCopy.mapConfig.size).maxPlayers;
 

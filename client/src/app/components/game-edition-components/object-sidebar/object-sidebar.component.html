@@ -2,6 +2,7 @@
     <h3 class="sidebar-title">Outil placement d'objets</h3>
     <div class="object-list">
         @for (type of editableObjects; track type){
+            @if (shouldShowObject(type)) {
             <div class="object-item"
                 [class.selected]="isSelected(type)"
                 [class.disabled]="isDisabled(type)"
@@ -11,6 +12,7 @@
                 <span class="object-counter">{{getRemainingCount(type)}}</span>
                 <span class="object-description">{{getObjectDescription(type)}}</span>
             </div>
+            }
         }
     </div>
 </div>

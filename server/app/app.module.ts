@@ -1,8 +1,13 @@
 import { GameController } from '@app/controllers/game/game.controller';
 import { ChatGateway } from '@app/gateways/chat/chat.gateway';
-import { GameGateway } from '@app/gateways/game/game.gateway';
+import { GamePlayCombatHandler } from '@app/gateways/game-session/game-play/game-play-combat.handler';
+import { GamePlayCtfHandler } from '@app/gateways/game-session/game-play/game-play-ctf.handler';
+import { GamePlayHandlersProvider } from '@app/gateways/game-session/game-play/game-play-handlers.provider';
+import { GamePlayMovementHandler } from '@app/gateways/game-session/game-play/game-play-movement.handler';
+import { GamePlayTurnHandler } from '@app/gateways/game-session/game-play/game-play-turn.handler';
 import { GamePlayGateway } from '@app/gateways/game-session/game-play/game-play.gateway';
 import { GameSessionGateway } from '@app/gateways/game-session/game-session/game-session.gateway';
+import { GameGateway } from '@app/gateways/game/game.gateway';
 import { Game, gameSchema } from '@app/model/game';
 import { CombatService } from '@app/services/game-session/combat.service';
 import { MovementService } from '@app/services/game-session/movement.service';
@@ -36,6 +41,11 @@ import { GameService } from './services/game/game.service';
         GameGateway,
         GameSessionGateway,
         GamePlayGateway,
+        GamePlayCombatHandler,
+        GamePlayMovementHandler,
+        GamePlayCtfHandler,
+        GamePlayTurnHandler,
+        GamePlayHandlersProvider,
         ChatGateway,
         GameSessionService,
         StartingPointService,
