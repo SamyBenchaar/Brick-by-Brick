@@ -15,13 +15,22 @@
             @if(tile.object) {
                 @if(isSanctuaryOriginTile(tile, position)) {
                     <img [src]="getObjectPath(tile.object)" class="tile-object-multi"/>
-                } @else if (!isMultiTileObject(tile.object)) {
+                } @else if (!isMultiTileObject(tile.object) && isFlagVisible(tile)) {
                     <img [src]="getObjectPath(tile.object)" class="tile-object-image"/>
                 }
             }
             @if(playerAtPos) {
-            <div class="player-avatar">
+            <div class="player-avatar" [ngClass]="getPlayerTeamClass(playerAtPos)">
                 <img [src]="getAvatarImage(playerAtPos.avatarId)" [alt]="playerAtPos.name" />
+                @if (gameMode === 'ctf' && playerAtPos.hasFlag) {
+                    <div class="flag-on-player">
+                        <img src="./assets/images/flag.png" alt="Flag" />
+                    </div>
+                }
+            </div>
+            } @else if (isFlagAtPosition(position)) {
+            <div class="flag-on-ground">
+                <img src="./assets/images/flag.png" alt="Flag" />
             </div>
             }
         </div>

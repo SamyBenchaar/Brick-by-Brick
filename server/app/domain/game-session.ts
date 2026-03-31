@@ -76,9 +76,13 @@ export class GameSession {
         this.startingPoints.delete(removedPlayer.character.id);
 
         this.playerTeams.delete(removedPlayer.character.id);
-        if (this.flagHolderId === removedPlayer.character.id) {
+
+        if (this.flagHolderId === removedPlayer.character.id && this.gameMode === 'ctf') {
+            this.dropFlag(removedPlayer.character.position);
+        } else if (this.flagHolderId === removedPlayer.character.id) {
             this.flagHolderId = null;
         }
+
         this.flagTransferRequests.delete(removedPlayer.character.id);
 
         if (removedOrderIndex !== -1 && removedOrderIndex < this.currentPlayerIndex) {
@@ -266,6 +270,13 @@ export class GameSession {
         return this.players.find(p => p.character.id === this.flagHolderId)?.character;
     }
 
+    dropFlag(position: Position): void {
+        if (this.flagHolderId) {
+            this.flagPosition = position;
+            this.setFlagHolder(null);
+        }
+    }
+
     createFlagTransferRequest(fromId: string, toId: string): void {
         this.flagTransferRequests.set(toId, { from: fromId, to: toId, timestamp: Date.now() });
     }
@@ -279,10 +290,10 @@ export class GameSession {
         if (!request) return false;
 
         this.flagTransferRequests.delete(playerId);
-        
+
         const currentFlagHolder = this.getFlagHolder();
         const newFlagHolder = currentFlagHolder === request.from ? request.to : request.from;
-        
+
         this.setFlagHolder(newFlagHolder);
         return true;
     }

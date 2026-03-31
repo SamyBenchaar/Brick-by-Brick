@@ -43,6 +43,10 @@ export class CombatService {
 
         const isGameWon = attacker.victories >= this.victoriesToWin;
 
+        if (defender.hasFlag && gameSession.gameMode === 'ctf') {
+            gameSession.dropFlag(defender.position);
+        }
+
         const newPosition = this.getDefenderRespawnPosition(
             gameSession,
             defender,
