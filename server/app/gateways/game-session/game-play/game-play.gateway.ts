@@ -6,6 +6,7 @@ import { GameDataForInit } from '@app/interfaces/game-map-interfaces';
 import { GameSessionService } from '@app/services/game-session/game-session/game-session.service';
 import { Character } from '@common/character';
 import { GameSessionEvents } from '@common/game.events';
+import { Player } from '@common/player';
 import { Position } from '@common/position';
 import { SessionStatus } from '@common/session.status';
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
@@ -169,6 +170,7 @@ export class GamePlayGateway implements OnGatewayInit {
         const abandoningPlayer = gameSession.players.find(p => p.socketId === socket.id);
         const wasCurrentPlayer = currentPlayer && abandoningPlayer && currentPlayer.id === abandoningPlayer.character.id;
 
+        this.handleAbandonedPlayerFlagPlacement(gameSession, abandoningPlayer);
         this.gameSessionService.removePlayer(payload.roomId, socket.id);
 
         this.server.to(payload.roomId).emit(GameSessionEvents.PlayerAbandoned, {
@@ -176,25 +178,61 @@ export class GamePlayGateway implements OnGatewayInit {
             mapCopyTiles: gameSession.mapCopy?.tiles,
         });
 
-        const winner = this.gameSessionService.checkGameWinner(gameSession);
-        if (winner) {
-            this.handleGameEnd(gameSession, winner);
+        if (!this.handleAbandonedPlayerTeamCheck(gameSession)) {
             return;
         }
 
-        if (gameSession.playerOrder.length === 1) {
-            this.handleGameEnd(gameSession, null);
+        if (!this.handleAbandonedPlayerWinnerCheck(gameSession)) {
             return;
         }
 
-        if (gameSession.playerOrder.length === 0) {
-            this.handleGameEnd(gameSession, null);
+        if (this.handleAbandonedPlayerEmptyGame(gameSession)) {
             return;
         }
 
         if (wasCurrentPlayer) {
             this.handleTurnEnd(gameSession);
         }
+    }
+
+    private handleAbandonedPlayerFlagPlacement(gameSession: GameSession, abandoningPlayer: Player | undefined): void {
+        if (gameSession.gameMode === 'ctf' && abandoningPlayer?.character.hasFlag && abandoningPlayer.character.position) {
+            const freeTile = this.gameSessionService.findNearestFreeTile(gameSession, abandoningPlayer.character.position);
+            if (freeTile) {
+                gameSession.setFlagPosition(freeTile);
+                gameSession.setFlagHolder(null);
+            }
+        }
+    }
+
+    private handleAbandonedPlayerTeamCheck(gameSession: GameSession): boolean {
+        if (gameSession.gameMode === 'ctf') {
+            const team1Count = gameSession.getTotalPlayersInTeam('team1');
+            const team2Count = gameSession.getTotalPlayersInTeam('team2');
+
+            if (team1Count === 0 || team2Count === 0) {
+                this.handleGameEndCanceled(gameSession);
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private handleAbandonedPlayerWinnerCheck(gameSession: GameSession): boolean {
+        const winner = this.gameSessionService.checkGameWinner(gameSession);
+        if (winner) {
+            this.handleGameEnd(gameSession, winner);
+            return false;
+        }
+        return true;
+    }
+
+    private handleAbandonedPlayerEmptyGame(gameSession: GameSession): boolean {
+        if (gameSession.playerOrder.length <= 1) {
+            this.handleGameEnd(gameSession, null);
+            return true;
+        }
+        return false;
     }
 
     private startGameTurn(gameSession: GameSession): void {
@@ -215,9 +253,27 @@ export class GamePlayGateway implements OnGatewayInit {
     private handleGameEnd(gameSession: GameSession, winner: Character | null): void {
         this.gameSessionService.cleanupTurnTimers(gameSession.roomId);
 
+        const winningTeam = winner && gameSession.gameMode === 'ctf' ? gameSession.getPlayerTeam(winner.id) : null;
+
         this.server.to(gameSession.roomId).emit(GameSessionEvents.GameEnded, {
             winner: winner ? { id: winner.id, name: winner.name, avatarId: winner.avatarId } : null,
+            winningTeam,
+            gameMode: gameSession.gameMode,
             reason: winner ? 'victory' : 'noPlayers',
+        });
+
+        setTimeout(() => {
+            this.gameSessionGateway.cleanUpRoom(gameSession.roomId);
+        }, this.gameEndCleanupDelay);
+    }
+
+    private handleGameEndCanceled(gameSession: GameSession): void {
+        this.gameSessionService.cleanupTurnTimers(gameSession.roomId);
+
+        this.server.to(gameSession.roomId).emit(GameSessionEvents.GameEnded, {
+            winner: null,
+            reason: 'canceled',
+            gameMode: gameSession.gameMode,
         });
 
         setTimeout(() => {
@@ -248,8 +304,12 @@ export class GamePlayGateway implements OnGatewayInit {
         for (let y = 0; y < tiles.length; y++) {
             for (let x = 0; x < tiles[y].length; x++) {
                 if (tiles[y][x].object?.type === 'flag') {
-                    gameSession.setFlagPosition({ x, y });
-                    return;
+                    const position = { x, y };
+                    const tile = tiles[y][x];
+                    if (tile.type !== 'door' || tile.doorState !== 'opened') {
+                        gameSession.setFlagPosition(position);
+                        return;
+                    }
                 }
             }
         }

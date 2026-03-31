@@ -29,8 +29,9 @@ export class GamePlayCtfHandler {
 
         const currentPlayer = gameSession.getCurrentPlayer();
         if (!currentPlayer) return;
-        const isCurrentTeam = fromPlayer.character.team === currentPlayer.team;
-        if (!isCurrentTeam) return;
+        if (fromPlayer.character.id !== currentPlayer.id) return;
+
+        if ((currentPlayer.remainingActions ?? 0) <= 0) return;
 
         gameSession.createFlagTransferRequest(fromPlayer.character.id, toPlayer.character.id);
         context.server.to(toPlayer.socketId).emit(GameSessionEvents.RequestFlagTransfer, {
@@ -50,12 +51,26 @@ export class GamePlayCtfHandler {
         const toPlayer = gameSession.players.find(p => p.socketId === socket.id);
         if (!toPlayer) return;
 
+        const flagTransferRequest = gameSession.getFlagTransferRequest(toPlayer.character.id);
+        if (!flagTransferRequest) return;
+
         if (payload.accepted) {
             gameSession.acceptFlagTransfer(toPlayer.character.id);
+
+            const fromPlayer = gameSession.players.find(p => p.character.id === payload.fromPlayerId);
+            if (fromPlayer && fromPlayer.character.remainingActions !== undefined) {
+                fromPlayer.character.remainingActions -= 1;
+            }
+
+            context.server.to(payload.roomId).emit(GameSessionEvents.GameSessionUpdated, gameSession);
+
+            const fromCurrentPlayer = gameSession.getCurrentPlayer();
+            if (fromCurrentPlayer?.id === payload.fromPlayerId && !this.gameSessionService.canPlayerTakeAction(gameSession)) {
+                this.gameSessionService.endCurrentTurn(gameSession);
+            }
         } else {
             gameSession.rejectFlagTransfer(toPlayer.character.id);
+            context.server.to(payload.roomId).emit(GameSessionEvents.GameSessionUpdated, gameSession);
         }
-
-        context.server.to(payload.roomId).emit(GameSessionEvents.GameSessionUpdated, gameSession);
     }
 }

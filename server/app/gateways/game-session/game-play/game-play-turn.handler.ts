@@ -86,6 +86,13 @@ export class GamePlayTurnHandler {
             playerId: currentPlayer?.id,
         });
 
+        if (currentPlayer?.id) {
+            gameSession.rejectPendingFlagTransfersFromPlayer(currentPlayer.id);
+            if (gameSession.gameMode === 'ctf') {
+                context.server.to(gameSession.roomId).emit(GameSessionEvents.GameSessionUpdated, gameSession);
+            }
+        }
+
         const winner = this.gameSessionService.checkGameWinner(gameSession);
         if (winner) {
             context.onGameEnd(gameSession, winner);
