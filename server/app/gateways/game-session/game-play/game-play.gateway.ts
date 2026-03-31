@@ -1,9 +1,11 @@
 import { GameSession } from '@app/domain/game-session';
 import { GameSessionGateway } from '@app/gateways/game-session/game-session/game-session.gateway';
+import { CombatService } from '@app/services/game-session/combat.service';
 import { GameSessionService } from '@app/services/game-session/game-session/game-session.service';
 import { MovementService } from '@app/services/game-session/movement.service';
 import { TurnManagementService } from '@app/services/game-session/turn-management.service';
 import { Character } from '@common/character';
+import { CombatPosture, CombatResultPayload, CombatState } from '@common/combat';
 import { GameSessionEvents } from '@common/game.events';
 import { Position } from '@common/position';
 import { SessionStatus } from '@common/session.status';
@@ -21,6 +23,7 @@ export class GamePlayGateway implements OnGatewayInit {
     private readonly gameEndCleanupDelay = 5000;
     private readonly toMllisecondsFactor = 1000;
     private readonly interTurnTime = 3;
+    private readonly combatTimers = new Map<string, NodeJS.Timeout>();
 
     constructor(
         private readonly logger: Logger,
@@ -31,6 +34,7 @@ export class GamePlayGateway implements OnGatewayInit {
         private movementService: MovementService,
         @Inject(forwardRef(() => TurnManagementService))
         private turnManagementService: TurnManagementService,
+        private combatService: CombatService,
     ) {}
 
     afterInit() {
@@ -86,11 +90,7 @@ export class GamePlayGateway implements OnGatewayInit {
     @SubscribeMessage(GameSessionEvents.EndTurnRequest)
     handleEndTurnRequest(socket: Socket, payload: { roomId: string }) {
         const gameSession = this.gameSessionService.getGameSession(payload.roomId);
-        if (!gameSession) {
-            return;
-        }
-
-        if (gameSession.isTurnStarting) {
+        if (!gameSession || gameSession.isTurnStarting || gameSession.combat) {
             return;
         }
 
@@ -107,11 +107,7 @@ export class GamePlayGateway implements OnGatewayInit {
     @SubscribeMessage(GameSessionEvents.RequestMove)
     handleRequestMove(socket: Socket, payload: { roomId: string; direction: string }) {
         const gameSession = this.gameSessionService.getGameSession(payload.roomId);
-        if (!gameSession) {
-            return;
-        }
-
-        if (gameSession.isTurnStarting) {
+        if (!gameSession || gameSession.isTurnStarting || gameSession.combat) {
             return;
         }
 
@@ -145,8 +141,10 @@ export class GamePlayGateway implements OnGatewayInit {
     @SubscribeMessage(GameSessionEvents.RequestAssignPosition)
     handleRequestAssignPosition(socket: Socket, payload: { roomId: string; position: Position }) {
         const gameSession = this.gameSessionService.getGameSession(payload.roomId);
+        if (!gameSession || gameSession.isTurnStarting || gameSession.combat) return;
 
         const currentPlayer = gameSession.getCurrentPlayer();
+        if (!currentPlayer) return;
         this.movementService.assignPosition(currentPlayer, gameSession, payload.position);
         this.server.to(payload.roomId).emit(GameSessionEvents.MoveExecuted, {
             playerId: currentPlayer.id,
@@ -160,49 +158,36 @@ export class GamePlayGateway implements OnGatewayInit {
     @SubscribeMessage(GameSessionEvents.RequestCombat)
     handleRequestCombat(socket: Socket, payload: { roomId: string; defenderId: string }) {
         const gameSession = this.gameSessionService.getGameSession(payload.roomId);
-        if (!gameSession) {
+        if (!gameSession || gameSession.isTurnStarting || gameSession.combat) return;
+
+        const attacker = gameSession.getCurrentPlayer();
+        const defender = gameSession.players.find((player) => player.character.id === payload.defenderId)?.character;
+        const requester = gameSession.players.find((player) => player.socketId === socket.id);
+
+        if (!attacker || !defender || !requester || attacker.id !== requester.character.id || !this.combatService.canFight(attacker, defender)) {
             return;
         }
 
-        if (gameSession.isTurnStarting) {
-            return;
-        }
+        this.gameSessionService.cleanupTurnTimers(gameSession.roomId);
+        gameSession.combat = this.combatService.startCombat(gameSession, attacker, defender);
+        this.emitCombatState(gameSession, GameSessionEvents.CombatStarted);
+        this.startCombatTimer(gameSession);
+    }
 
-        const currentPlayer = gameSession.getCurrentPlayer();
-        const requestingPlayer = gameSession.players.find(p => p.socketId === socket.id);
+    @SubscribeMessage(GameSessionEvents.CombatChoosePosture)
+    handleCombatChoice(socket: Socket, payload: { roomId: string; posture: CombatPosture }) {
+        const gameSession = this.gameSessionService.getGameSession(payload.roomId);
+        const combat = gameSession?.combat;
+        if (!gameSession || !combat) return;
 
-        if (!currentPlayer || !requestingPlayer || currentPlayer.id !== requestingPlayer.character.id) {
-            return;
-        }
+        const playerId = gameSession.players.find((player) => player.socketId === socket.id)?.character.id;
+        if (!playerId || ![combat.attacker.id, combat.defender.id].includes(playerId)) return;
 
-        try {
-            const result = this.gameSessionService.executeCombat(gameSession, payload.defenderId);
+        this.combatService.submitChoice(combat, playerId, payload.posture);
+        this.emitCombatState(gameSession, GameSessionEvents.CombatUpdated);
 
-            this.server.to(payload.roomId).emit(GameSessionEvents.CombatResult, {
-                winner: result.winner,
-                loser: result.loser,
-                attackerVictories: result.attackerVictories,
-                defenderNewPosition: gameSession.players.find(p => p.character.id === payload.defenderId)?.character.position,
-                remainingActions: currentPlayer.remainingActions,
-            });
-
-            const winner = this.gameSessionService.checkGameWinner(gameSession);
-            if (winner) {
-                this.handleGameEnd(gameSession, winner);
-                return;
-            }
-
-            if (result.loser === currentPlayer.id) {
-                this.gameSessionService.endCurrentTurn(gameSession);
-                this.handleTurnEnd(gameSession);
-            } else {
-                if (!this.gameSessionService.canPlayerTakeAction(gameSession)) {
-                    this.gameSessionService.endCurrentTurn(gameSession);
-                    this.handleTurnEnd(gameSession);
-                }
-            }
-        } catch (error) {
-            this.logger.error(`Combat error: ${error.message}`);
+        if (this.combatService.bothPlayersReady(combat)) {
+            this.resolveCombatRound(gameSession);
         }
     }
 
@@ -220,6 +205,15 @@ export class GamePlayGateway implements OnGatewayInit {
         const currentPlayer = gameSession.getCurrentPlayer();
         const abandoningPlayer = gameSession.players.find(p => p.socketId === socket.id);
         const wasCurrentPlayer = currentPlayer && abandoningPlayer && currentPlayer.id === abandoningPlayer.character.id;
+
+        let combatResult: CombatResultPayload | null = null;
+
+        if (gameSession.combat && abandoningPlayer) {
+            combatResult = this.combatService.resolveAbandon(gameSession, gameSession.combat, abandoningPlayer.character.id);
+            this.clearCombatTimer(gameSession.roomId);
+            gameSession.combat = null;
+            if (combatResult) this.emitCombatResult(gameSession, combatResult);
+        }
 
         this.gameSessionService.removePlayer(payload.roomId, socket.id);
 
@@ -247,6 +241,8 @@ export class GamePlayGateway implements OnGatewayInit {
         if (wasCurrentPlayer) {
             this.handleTurnEnd(gameSession);
         }
+
+        if (combatResult?.activePlayerWon && !wasCurrentPlayer) return this.resumeCurrentTurn(gameSession);
     }
 
     private startGameTurn(gameSession: GameSession): void {
@@ -329,6 +325,8 @@ export class GamePlayGateway implements OnGatewayInit {
 
     private handleGameEnd(gameSession: GameSession, winner: Character | null): void {
         this.gameSessionService.cleanupTurnTimers(gameSession.roomId);
+        this.clearCombatTimer(gameSession.roomId);
+        gameSession.combat = null;
 
         this.server.to(gameSession.roomId).emit(GameSessionEvents.GameEnded, {
             winner: winner ? { id: winner.id, name: winner.name, avatarId: winner.avatarId } : null,
@@ -338,6 +336,85 @@ export class GamePlayGateway implements OnGatewayInit {
         setTimeout(() => {
             this.gameSessionGateway.cleanUpRoom(gameSession.roomId);
         }, this.gameEndCleanupDelay);
+    }
+
+    private startCombatTimer(gameSession: GameSession): void {
+        this.clearCombatTimer(gameSession.roomId);
+
+        const timer = setInterval(() => {
+            const combat = gameSession.combat;
+            if (!combat) return this.clearCombatTimer(gameSession.roomId);
+
+            const timeRemaining = this.combatService.tickCombat(combat);
+            this.emitCombatState(gameSession, GameSessionEvents.CombatUpdated);
+
+            if (timeRemaining <= 0) this.resolveCombatRound(gameSession);
+        }, 1000);
+
+        this.combatTimers.set(gameSession.roomId, timer);
+    }
+
+    private resolveCombatRound(gameSession: GameSession): void {
+        this.clearCombatTimer(gameSession.roomId);
+
+        const combat = gameSession.combat;
+        if (!combat) return;
+
+        const { result } = this.combatService.resolveRound(gameSession, combat, gameSession.isDebugModeActivated);
+
+        if (!result) {
+            this.emitCombatState(gameSession, GameSessionEvents.CombatUpdated);
+            return this.startCombatTimer(gameSession);
+        }
+
+        gameSession.combat = null;
+        this.emitCombatResult(gameSession, result);
+
+        const winner = this.gameSessionService.checkGameWinner(gameSession);
+        if (winner) return this.handleGameEnd(gameSession, winner);
+
+        if (result.activePlayerWon) return this.resumeCurrentTurn(gameSession);
+
+        this.gameSessionService.endCurrentTurn(gameSession);
+        this.handleTurnEnd(gameSession);
+    }
+
+    private resumeCurrentTurn(gameSession: GameSession): void {
+        this.turnManagementService.startTurnTimer(
+            gameSession,
+            () => {
+                this.gameSessionService.endCurrentTurn(gameSession);
+                this.handleTurnEnd(gameSession);
+            },
+            (timeRemaining) => this.server.to(gameSession.roomId).emit(GameSessionEvents.TurnTimeUpdate, { timeRemaining }),
+        );
+
+        this.emitReachableTiles(gameSession);
+    }
+
+    private emitCombatState(gameSession: GameSession, event: GameSessionEvents.CombatStarted | GameSessionEvents.CombatUpdated): void {
+        const combat = gameSession.combat;
+        if (!combat) return;
+
+        this.participantSockets(gameSession, combat).forEach((socketId) => {
+            this.server.to(socketId).emit(event, combat);
+        });
+    }
+
+    private emitCombatResult(gameSession: GameSession, result: CombatResultPayload): void {
+        this.server.to(gameSession.roomId).emit(GameSessionEvents.CombatResult, result);
+    }
+
+    private participantSockets(gameSession: GameSession, combat: CombatState): string[] {
+        return gameSession.players
+            .filter((player) => [combat.attacker.id, combat.defender.id].includes(player.character.id))
+            .map((player) => player.socketId);
+    }
+
+    private clearCombatTimer(roomId: string): void {
+        const timer = this.combatTimers.get(roomId);
+        if (timer) clearInterval(timer);
+        this.combatTimers.delete(roomId);
     }
 
     private emitReachableTiles(gameSession: GameSession): void {
