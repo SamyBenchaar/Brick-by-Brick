@@ -176,7 +176,6 @@ export class GamePlayGateway implements OnGatewayInit {
             mapCopyTiles: gameSession.mapCopy?.tiles,
         });
 
-        // Check if a team has been eliminated in CTF mode
         if (gameSession.gameMode === 'ctf') {
             const team1Count = gameSession.getTotalPlayersInTeam('team1');
             const team2Count = gameSession.getTotalPlayersInTeam('team2');

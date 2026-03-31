@@ -42,3 +42,4 @@ export function getGameSizeConfig(sizeId: string) {
 export const VICTORIES_TO_WIN = 3;
 export const ROOM_ID_LENGTH = 8;
 export const MAX_PLAYER = 6;
+export const CTF_VICTORY_ANNOUNCE_DELAY = 500;

@@ -6,6 +6,7 @@ import { GameSession } from '@app/interfaces/game-session';
 import { GamePlaySocketService } from '@app/services/communication/game-session-socket/game-play-socket.service';
 import type { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
 import { SocketService } from '@app/services/communication/socket/socket.service';
+import { CTF_VICTORY_ANNOUNCE_DELAY } from '@common/constants/game-config-constants';
 import { GameSessionEvents } from '@common/game.events';
 import { Position } from '@common/position';
 
@@ -211,7 +212,7 @@ export function setupGameplayEventListeners(
                 message = 'La partie est terminée.';
             }
 
-            const delay = data.gameMode === 'ctf' && data.reason === 'victory' ? 500 : gameSessionSocketService.endGameDelay;
+            const delay = data.gameMode === 'ctf' && data.reason === 'victory' ? CTF_VICTORY_ANNOUNCE_DELAY : gameSessionSocketService.endGameDelay;
 
             setTimeout(() => {
                 router.navigate(['/']).then(() => {
