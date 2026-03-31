@@ -25,7 +25,7 @@
     @if (data.type === 'warning' || (data.confirmText || data.cancelText)) {
         @if (data.cancelText) {
           <button mat-button class="cancel-button" [mat-dialog-close]="false">
-            {{ data.cancelText }}
+            {{ data.cancelText || 'Annuler' }}
           </button>
         }
         <button mat-raised-button [ngClass]="data.type + '-button'" [mat-dialog-close]="true">
