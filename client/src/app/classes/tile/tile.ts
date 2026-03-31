@@ -1,4 +1,5 @@
-import { ObjectType, TileType, DoorState } from '@common/map';
+import { DoorState, ObjectType, TileType } from '@common/map';
+import { Position } from '@common/position';
 
 export class Tile {
 
@@ -12,10 +13,14 @@ export class Tile {
     static readonly editableObjects: ObjectType[] =
         [
             ObjectType.StartingPoint,
+            ObjectType.HealingSanctuary,
+            ObjectType.CombatSanctuary,
+            ObjectType.Flag,
         ];
     type: TileType;
     object: ObjectType | undefined;
     doorState?: DoorState;
+    sanctuaryOrigin?: Position;
 
     constructor(type: TileType = TileType.Base) {
         this.type = type;

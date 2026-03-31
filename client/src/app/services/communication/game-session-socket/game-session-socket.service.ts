@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { AppDialogComponent } from '@app/components/game-edition-components/app-dialog/app-dialog.component';
 import { Game } from '@app/interfaces/game';
 import { GameSession } from '@app/interfaces/game-session';
+import { FlagTransferSocketService } from '@app/services/communication/game-session-socket/flag-transfer-socket.service';
 import { setupGameplayEventListeners } from '@app/services/communication/gameplay-listeners/gameplay-listeners';
 import { SocketService } from '@app/services/communication/socket/socket.service';
 import { Character } from '@common/character';
@@ -36,6 +37,10 @@ export class GameSessionSocketService {
 
     private get gamePlaySocketService(): GamePlaySocketService {
         return this.injector.get(GamePlaySocketService);
+    }
+
+    private get flagTransferSocketService(): FlagTransferSocketService {
+        return this.injector.get(FlagTransferSocketService);
     }
 
     connect(): void {
@@ -112,24 +117,37 @@ export class GameSessionSocketService {
         });
 
         this.socketService.on<string>(GameSessionEvents.GameSessionJoinError, (message) => {
-            const dialogRef = this.dialog.open(AppDialogComponent, {
-                data: {
-                    title: 'Erreur de jointure',
-                    message,
-                    type: 'warning',
-                    confirmText: 'Réessayer',
-                    cancelText: "Retour a l'accueil",
-                },
-                disableClose: true,
-            });
+            const isOddPlayersWarning = message.includes('nombre pair de joueurs');
 
-            dialogRef.afterClosed().subscribe((retry) => {
-                if (retry && this.lastJoinPlayer && this.lastJoinRoomId) {
-                    this.joinGameSession(this.lastJoinRoomId, this.lastJoinPlayer);
-                } else {
-                    this.router.navigate(['/']);
-                }
-            });
+            if (isOddPlayersWarning) {
+                this.dialog.open(AppDialogComponent, {
+                    data: {
+                        title: 'Attention',
+                        message,
+                        type: 'info',
+                        confirmText: 'OK',
+                    },
+                });
+            } else {
+                const dialogRef = this.dialog.open(AppDialogComponent, {
+                    data: {
+                        title: 'Erreur de jointure',
+                        message,
+                        type: 'warning',
+                        confirmText: 'Réessayer',
+                        cancelText: "Retour a l'accueil",
+                    },
+                    disableClose: true,
+                });
+
+                dialogRef.afterClosed().subscribe((retry) => {
+                    if (retry && this.lastJoinPlayer && this.lastJoinRoomId) {
+                        this.joinGameSession(this.lastJoinRoomId, this.lastJoinPlayer);
+                    } else {
+                        this.router.navigate(['/']);
+                    }
+                });
+            }
         });
 
         this.socketService.on<{ message: string }>(GameSessionEvents.PlayerKicked, (data) => {
@@ -183,7 +201,14 @@ export class GameSessionSocketService {
             this.router.navigate(['/game-view'], { queryParams: { roomId } });
         });
 
-        setupGameplayEventListeners(this.gamePlaySocketService, this, this.socketService, this.router, this.dialog);
+        setupGameplayEventListeners({
+            gamePlaySocketService: this.gamePlaySocketService,
+            gameSessionSocketService: this,
+            socketService: this.socketService,
+            router: this.router,
+            dialog: this.dialog,
+            flagTransferService: this.flagTransferSocketService,
+        });
 
         this.socketService.on<number[]>(GameSessionEvents.AvatarTakenUpdated, (avatarIds) => {
             this.takenAvatars.set(avatarIds);
@@ -285,5 +310,12 @@ export class GameSessionSocketService {
     canStartGame(): boolean {
         const session = this.currentSession();
         return this.isCurrentUserHost() && (session?.players?.length ?? 0) >= 2;
+    }
+
+    requestFlagTransfer(targetPlayerId: string): void {
+        const currentRoomId = this.getRoomId();
+        if (currentRoomId) {
+            this.socketService.emit(GameSessionEvents.RequestFlagTransfer, { roomId: currentRoomId, toPlayerId: targetPlayerId });
+        }
     }
 }

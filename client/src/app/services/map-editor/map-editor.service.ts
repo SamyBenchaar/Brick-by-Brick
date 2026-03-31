@@ -67,6 +67,14 @@ export class MapEditorService {
     }
   }
 
+  setOrigin(position: Position, isOrigin: boolean): void {
+    const game = this.currentGame();
+    if (game) {
+      game.mapConfig.tiles[position.y][position.x].isOrigin = isOrigin;
+      this.currentGame.set(game);
+    }
+  }
+
   setTitle(title: string): void {
     const game = this.currentGame();
     if (game) {

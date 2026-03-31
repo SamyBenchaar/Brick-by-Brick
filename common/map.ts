@@ -12,8 +12,16 @@ export enum DoorState {
 }
 
 export enum ObjectType {
-    StartingPoint = 'startingpoint'
+    StartingPoint = 'startingpoint',
+    HealingSanctuary = 'healingsanctuary',
+    CombatSanctuary = 'combatsanctuary',
+    Flag = 'flag',
 }
+
+export const MULTI_TILE_OBJECTS = [
+    ObjectType.HealingSanctuary,
+    ObjectType.CombatSanctuary,
+];
 
 export enum MapSize {
     Small = 10,
@@ -31,6 +39,8 @@ export const GRID_SIZE = 750;
 
 // Constantes pour la validation
 export const MIN_TERRAIN_COVERAGE = 0.5;
+export const SHUFFLE_FACTOR = 0.5;
+export const EXPIRED_FLAG_TIME = 30000; 
 
 export const PERCENTAGE_MULTIPLIER = 100;
 

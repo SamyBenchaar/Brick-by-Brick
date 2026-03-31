@@ -7,6 +7,7 @@ export interface Tile {
     type: string;
     doorState?: string;
     object?: MapObject;
+    isOrigin?: boolean;
 }
 
 export interface MapObject {
