@@ -2,11 +2,12 @@ import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { AppDialogComponent } from '@app/components/game-edition-components/app-dialog/app-dialog.component';
 import { Tile } from '@app/interfaces/game';
-import { GameSessionEvents } from '@common/game.events';
-import { Position } from '@common/position';
+import { GameSession } from '@app/interfaces/game-session';
+import { GamePlaySocketService } from '@app/services/communication/game-session-socket/game-play-socket.service';
 import type { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
 import { SocketService } from '@app/services/communication/socket/socket.service';
-import { GamePlaySocketService } from '@app/services/communication/game-session-socket/game-play-socket.service';
+import { GameSessionEvents } from '@common/game.events';
+import { Position } from '@common/position';
 
 export function setupGameplayEventListeners(
     service: GamePlaySocketService,
@@ -127,7 +128,7 @@ export function setupGameplayEventListeners(
         }
     });
 
-    socketService.on<{position: Position, newDoorState: string, remainingActions: number}>(GameSessionEvents.InteractResult, (data) => {
+    socketService.on<{ position: Position, newDoorState: string, remainingActions: number }>(GameSessionEvents.InteractResult, (data) => {
         const currentMap = service.mapCopy();
         if (currentMap) {
             currentMap.mapConfig.tiles[data.position.y][data.position.x].doorState = data.newDoorState;
@@ -141,7 +142,7 @@ export function setupGameplayEventListeners(
             if (player) {
                 player.character.remainingActions = data.remainingActions;
                 gameSessionSocketService.currentSession.set({ ...session });
-                
+
             }
         }
     });
@@ -213,5 +214,34 @@ export function setupGameplayEventListeners(
 
     socketService.on<{ isDebugModeActivated: boolean }>(GameSessionEvents.ToggleDebugMode, (data) => {
         service.isDebugModeActivated.set(data.isDebugModeActivated);
+    });
+
+    socketService.on<{ fromPlayerId: string; fromPlayerName: string }>(GameSessionEvents.RequestFlagTransfer, (data) => {
+        const mySocketId = service.getSocketId();
+        const session = gameSessionSocketService.currentSession();
+        if (!session) return;
+
+        const toPlayer = session.players.find(p => p.socketId === mySocketId);
+        if (!toPlayer) return;
+
+        const dialogRef = dialog.open(AppDialogComponent, {
+            data: {
+                title: 'Demande de transfert de drapeau',
+                message: `${data.fromPlayerName} veut vous transférer le drapeau. Acceptez-vous?`,
+                type: 'warning',
+                confirmText: 'Accepter',
+                cancelText: 'Refuser',
+            },
+        });
+
+        dialogRef.afterClosed().subscribe((accepted: boolean) => {
+            service.respondToFlagTransfer(data.fromPlayerId, accepted ?? false);
+        });
+    });
+
+    socketService.on<GameSession>(GameSessionEvents.GameSessionUpdated, (updatedGameSession) => {
+        if (updatedGameSession) {
+            gameSessionSocketService.currentSession.set({ ...updatedGameSession });
+        }
     });
 }

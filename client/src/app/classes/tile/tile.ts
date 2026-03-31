@@ -15,6 +15,7 @@ export class Tile {
             ObjectType.StartingPoint,
             ObjectType.HealingSanctuary,
             ObjectType.CombatSanctuary,
+            ObjectType.Flag,
         ];
     type: TileType;
     object: ObjectType | undefined;

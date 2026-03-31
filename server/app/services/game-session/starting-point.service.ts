@@ -1,8 +1,8 @@
 import { GameSession } from '@app/domain/game-session';
+import { GameMap, MapTile } from '@app/interfaces/game-map-interfaces';
+import { ObjectType, TileType } from '@common/map';
 import { Position } from '@common/position';
 import { Injectable } from '@nestjs/common';
-import { MapTile, GameMap } from '@app/interfaces/game-map-interfaces';
-import { ObjectType, TileType } from '@common/map';
 
 @Injectable()
 export class StartingPointService {
@@ -90,6 +90,41 @@ export class StartingPointService {
         }
 
         return closestPoint ?? startingPoint;
+    }
+
+    getClosestAvailableTileForFlag(
+        centerPoint: Position,
+        mapConfig: GameMap,
+        occupiedPositions: Position[],
+    ): Position {
+        const occupied = new Set(occupiedPositions.map((p) => `${p.x},${p.y}`));
+        let closestPoint: Position | null = null;
+        let minDistance = Infinity;
+
+        for (let y = 0; y < mapConfig.tiles.length; y++) {
+            for (let x = 0; x < mapConfig.tiles[y].length; x++) {
+                const tile = mapConfig.tiles[y][x];
+                const posKey = `${x},${y}`;
+
+                if (occupied.has(posKey)) {
+                    continue;
+                }
+
+                if (tile.type === TileType.Wall || tile.type === TileType.Door) {
+                    continue;
+                }
+
+                const candidate = { x, y };
+                const distance = this.calculateDistance(centerPoint, candidate);
+
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    closestPoint = candidate;
+                }
+            }
+        }
+
+        return closestPoint ?? centerPoint;
     }
 
     private calculateDistance(pos1: Position, pos2: Position): number {

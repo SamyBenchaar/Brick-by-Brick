@@ -1,3 +1,4 @@
+import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { BaseSignComponent } from '@app/components/game-view-components/base-sign/base-sign.component';
 import { AVATARS } from '@app/constants/character-constants';
@@ -6,7 +7,7 @@ import { Player } from '@common/player';
 
 @Component({
   selector: 'app-player-sign',
-  imports: [BaseSignComponent],
+  imports: [CommonModule, BaseSignComponent],
   templateUrl: './player-sign.component.html',
   styleUrl: './player-sign.component.scss',
 })

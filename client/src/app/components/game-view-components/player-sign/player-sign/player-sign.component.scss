@@ -23,12 +23,21 @@
     border-bottom: 2px solid #6b4c2a;
 }
 
-.player-avatar {
+.player-avatar-wrapper {
     width: 48px;
     height: 48px;
-    object-fit: cover;
-    border: 2px solid #6b4c2a;
     border-radius: 3px;
+    border: 2px solid #6b4c2a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.player-avatar {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
     image-rendering: pixelated;
 }
 
