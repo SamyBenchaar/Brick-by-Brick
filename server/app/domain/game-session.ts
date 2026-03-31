@@ -312,6 +312,18 @@ export class GameSession {
         this.flagTransferRequests.delete(playerId);
     }
 
+    rejectPendingFlagTransfersFromPlayer(playerId: string): void {
+        const requestsToReject: string[] = [];
+
+        this.flagTransferRequests.forEach((request, toPlayerId) => {
+            if (request.from === playerId) {
+                requestsToReject.push(toPlayerId);
+            }
+        });
+
+        requestsToReject.forEach(toPlayerId => this.flagTransferRequests.delete(toPlayerId));
+    }
+
     clearExpiredFlagTransfers(expiryTimeMs: number = EXPIRED_FLAG_TIME): void {
         const now = Date.now();
         const expiredRequests: string[] = [];

@@ -46,7 +46,6 @@ export class FlagTransferSocketService {
     clearAllPendingFlagTransfers(): void {
         this.pendingFlagTransferDialogs.forEach((data) => {
             data.dialogRef.close(false);
-            this.respondToFlagTransfer('', data.fromPlayerId, false);
         });
         this.pendingFlagTransferDialogs.clear();
 
@@ -54,6 +53,10 @@ export class FlagTransferSocketService {
             clearTimeout(timeout);
         });
         this.pendingFlagTransferTimeouts.clear();
+    }
+
+    getPendingFlagTransferDialogs(): [string, { dialogRef: MatDialogRef<AppDialogComponent>; fromPlayerId: string }][] {
+        return Array.from(this.pendingFlagTransferDialogs.entries());
     }
 
     setPendingFlagTransferDialog(

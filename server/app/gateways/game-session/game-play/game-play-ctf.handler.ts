@@ -50,6 +50,9 @@ export class GamePlayCtfHandler {
         const toPlayer = gameSession.players.find(p => p.socketId === socket.id);
         if (!toPlayer) return;
 
+        const flagTransferRequest = gameSession.getFlagTransferRequest(toPlayer.character.id);
+        if (!flagTransferRequest) return;
+
         if (payload.accepted) {
             gameSession.acceptFlagTransfer(toPlayer.character.id);
         } else {
