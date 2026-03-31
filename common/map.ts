@@ -15,6 +15,7 @@ export enum ObjectType {
     StartingPoint = 'startingpoint',
     HealingSanctuary = 'healingsanctuary',
     CombatSanctuary = 'combatsanctuary',
+    Flag = 'flag',
 }
 
 export const MULTI_TILE_OBJECTS = [
