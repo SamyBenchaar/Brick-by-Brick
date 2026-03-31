@@ -1,7 +1,9 @@
 import { GameSession } from '@app/domain/game-session';
+import { TileDto } from '@app/dto/tile.dto';
 import { GamePlayHandlerContext } from '@app/gateways/game-session/game-play/game-play-handler.context';
 import { GameSessionService } from '@app/services/game-session/game-session/game-session.service';
 import { MovementService } from '@app/services/game-session/movement.service';
+import { Character } from '@common/character';
 import { GameSessionEvents } from '@common/game.events';
 import { Position } from '@common/position';
 import { Injectable } from '@nestjs/common';
@@ -120,22 +122,71 @@ export class GamePlayMovementHandler {
         if ((currentPlayer.remainingActions ?? 0) <= 0) return;
 
         const tile = gameSession.mapCopy?.tiles[payload.position.y]?.[payload.position.x];
-        if (!tile || tile.type !== 'door') return;
-        tile.doorState = tile.doorState === 'opened' ? 'closed' : 'opened';
+        if (!tile) return;
 
-        currentPlayer.remainingActions -= 1;
-
-        context.server.to(payload.roomId).emit(GameSessionEvents.InteractResult, {
-            position: payload.position,
-            newDoorState: tile.doorState,
-            remainingActions: currentPlayer.remainingActions,
-        });
+        if (tile.type === 'door') {
+            this.handleDoorInteraction(gameSession, tile, payload.position, currentPlayer, context);
+        } else if (tile.type === 'base' && tile.object) {
+            this.handleObjectInteraction(gameSession, tile, payload.position, currentPlayer, context);
+        } else {
+            return;
+        }
 
         context.emitReachableTiles(gameSession);
 
         if (!this.gameSessionService.canPlayerTakeAction(gameSession)) {
             this.gameSessionService.endCurrentTurn(gameSession);
             context.onTurnEnd(gameSession);
+        }
+    }
+
+    private handleDoorInteraction(
+        gameSession: GameSession,
+        tile: TileDto,
+        position: Position,
+        currentPlayer: Character,
+        context: GamePlayHandlerContext,
+    ): void {
+        tile.doorState = tile.doorState === 'opened' ? 'closed' : 'opened';
+        currentPlayer.remainingActions -= 1;
+
+        context.server.to(gameSession.roomId).emit(GameSessionEvents.InteractResult, {
+            position,
+            interactionType: 'door',
+            newDoorState: tile.doorState,
+            remainingActions: currentPlayer.remainingActions,
+        });
+    }
+
+    private handleObjectInteraction(
+        gameSession: GameSession,
+        tile: TileDto,
+        position: Position,
+        currentPlayer: Character,
+        context: GamePlayHandlerContext,
+    ): void {
+        const objectType = tile.object?.type;
+
+        if (objectType === 'healingsanctuary') {
+            currentPlayer.life = Math.min(currentPlayer.life + 2, currentPlayer.maxLife);
+            currentPlayer.remainingActions -= 1;
+
+            context.server.to(gameSession.roomId).emit(GameSessionEvents.InteractResult, {
+                position,
+                interactionType: 'healingsanctuary',
+                newLife: currentPlayer.life,
+                remainingActions: currentPlayer.remainingActions,
+            });
+        } else if (objectType === 'combatsanctuary') {
+            currentPlayer.attack += 1;
+            currentPlayer.remainingActions -= 1;
+
+            context.server.to(gameSession.roomId).emit(GameSessionEvents.InteractResult, {
+                position,
+                interactionType: 'combatsanctuary',
+                newAttack: currentPlayer.attack,
+                remainingActions: currentPlayer.remainingActions,
+            });
         }
     }
 }
