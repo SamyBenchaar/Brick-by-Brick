@@ -255,6 +255,9 @@ export class GameSession {
     }
 
     setFlagHolder(playerId: string | null): void {
+        if (playerId) {
+            this.flagPosition = null;
+        }
         this.flagHolderId = playerId;
         this.players.forEach(p => {
             p.character.hasFlag = p.character.id === playerId;
