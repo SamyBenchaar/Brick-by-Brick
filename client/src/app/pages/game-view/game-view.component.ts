@@ -186,7 +186,7 @@ export class GameViewComponent implements OnInit, OnDestroy {
   }
 
   canInteract(): boolean {
-    return this.gamePlaySocketService.canPlayerInteractDoor();
+    return this.gamePlaySocketService.canPlayerInteractDoor() || this.gamePlaySocketService.canPlayerInteractSanctuary();
   }
 
   onActionClick(): void {

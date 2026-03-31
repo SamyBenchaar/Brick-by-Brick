@@ -4,10 +4,11 @@ import { Game } from '@app/interfaces/game';
 import { SocketService } from '@app/services/communication/socket/socket.service';
 import { Character } from '@common/character';
 import { GameSessionEvents } from '@common/game.events';
-import { TileType } from '@common/map';
+import { ObjectType, TileType } from '@common/map';
 import { Player } from '@common/player';
 import { Position } from '@common/position';
 import { GameSessionSocketService } from './game-session-socket.service';
+import { ADJACENT_POSITIONS } from '@app/constants/adjacent-position';
 
 @Injectable({
     providedIn: 'root',
@@ -148,8 +149,22 @@ export class GamePlaySocketService {
             currentPlayer.remainingActions !== undefined &&
             currentPlayer.remainingActions > 0 &&
             this.areAdjacent(currentPlayer.position, position) &&
-            target.type === TileType.Door
+            (target.type === TileType.Door
+            || target.object === ObjectType.HealingSanctuary
+            || target.object === ObjectType.CombatSanctuary)
         );
+    }
+
+    canPlayerInteractSanctuary(): boolean {
+        const currentPlayer = this.getCurrentPlayerCharacter();
+        if (!this.isMyTurn() || !currentPlayer?.position || (currentPlayer.remainingActions ?? 0) <= 0) return false;
+        const map = this.mapCopy();
+        if (!map) return false;
+        const { x, y } = currentPlayer.position;
+        return ADJACENT_POSITIONS.some(offset => {
+            const tile = map.mapConfig.tiles[y + offset.y]?.[x + offset.x];
+            return tile?.object?.type === ObjectType.HealingSanctuary|| tile?.object?.type === ObjectType.CombatSanctuary;
+        });
     }
 
     canPlayerInteractDoor(): boolean {
@@ -158,13 +173,7 @@ export class GamePlaySocketService {
         const map = this.mapCopy();
         if (!map) return false;
         const { x, y } = currentPlayer.position;
-        const adjacentPos: Position[] = [
-            { x: x - 1, y },
-            { x: x + 1, y },
-            { x, y: y - 1 },
-            { x, y: y + 1 },
-        ];
-        return adjacentPos.some(pos => map.mapConfig.tiles[pos.y]?.[pos.x]?.type === 'door');
+        return ADJACENT_POSITIONS.some(offset => map.mapConfig.tiles[y + offset.y]?.[x + offset.x]?.type === 'door');
     }
 
     canAttackTarget(target: Character | null): boolean {
