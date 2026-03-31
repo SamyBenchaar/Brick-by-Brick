@@ -147,12 +147,16 @@ export class GameSessionService {
         //À SUPPRIMER test test test test
         const fullCurrentPlayer = gameSession.players.find(p => p.character.id === currentPlayer.id);
         if (fullCurrentPlayer?.virtualProfile) {
-            this.virtualPlayerService.playTurn(gameSession, fullCurrentPlayer).then(() => {
-                this.endCurrentTurn(gameSession);
-                if (onTurnEndCallback) {
-                    onTurnEndCallback(endedPlayerId);
-                }
-            });
+            this.virtualPlayerService.playTurn(gameSession, fullCurrentPlayer)
+                .catch((error: Error) => {
+                    this.logger.error(`Erreur durant le tour JV: ${error.message}`);
+                })
+                .finally(() => {
+                    this.endCurrentTurn(gameSession);
+                    if (onTurnEndCallback) {
+                        onTurnEndCallback(endedPlayerId);
+                    }
+                });
         }
     }
 

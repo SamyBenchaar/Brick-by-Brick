@@ -8,6 +8,7 @@ import { CombatService } from '@app/services/game-session/combat.service';
 import { MovementService } from '@app/services/game-session/movement.service';
 import { StartingPointService } from '@app/services/game-session/starting-point.service';
 import { TurnManagementService } from '@app/services/game-session/turn-management.service';
+import { VirtualPlayerMechanicsService } from '@app/services/game-session/virtual-player-mechanics.service';
 import { VirtualPlayerService } from '@app/services/game-session/virtual-player.service';
 import { GameMetadataValidationService } from '@app/services/validations/game-metadata-validation.service';
 import { MapValidationService } from '@app/services/validations/map-validation.service';
@@ -42,6 +43,7 @@ import { GameService } from './services/game/game.service';
         StartingPointService,
         TurnManagementService,
         MovementService,
+        VirtualPlayerMechanicsService,
         VirtualPlayerService,
         CombatService,
         Logger,
