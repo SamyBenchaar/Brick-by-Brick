@@ -176,6 +176,17 @@ export class GamePlayGateway implements OnGatewayInit {
             mapCopyTiles: gameSession.mapCopy?.tiles,
         });
 
+        // Check if a team has been eliminated in CTF mode
+        if (gameSession.gameMode === 'ctf') {
+            const team1Count = gameSession.getTotalPlayersInTeam('team1');
+            const team2Count = gameSession.getTotalPlayersInTeam('team2');
+
+            if (team1Count === 0 || team2Count === 0) {
+                this.handleGameEndCanceled(gameSession);
+                return;
+            }
+        }
+
         const winner = this.gameSessionService.checkGameWinner(gameSession);
         if (winner) {
             this.handleGameEnd(gameSession, winner);
@@ -215,9 +226,27 @@ export class GamePlayGateway implements OnGatewayInit {
     private handleGameEnd(gameSession: GameSession, winner: Character | null): void {
         this.gameSessionService.cleanupTurnTimers(gameSession.roomId);
 
+        const winningTeam = winner && gameSession.gameMode === 'ctf' ? gameSession.getPlayerTeam(winner.id) : null;
+
         this.server.to(gameSession.roomId).emit(GameSessionEvents.GameEnded, {
             winner: winner ? { id: winner.id, name: winner.name, avatarId: winner.avatarId } : null,
+            winningTeam,
+            gameMode: gameSession.gameMode,
             reason: winner ? 'victory' : 'noPlayers',
+        });
+
+        setTimeout(() => {
+            this.gameSessionGateway.cleanUpRoom(gameSession.roomId);
+        }, this.gameEndCleanupDelay);
+    }
+
+    private handleGameEndCanceled(gameSession: GameSession): void {
+        this.gameSessionService.cleanupTurnTimers(gameSession.roomId);
+
+        this.server.to(gameSession.roomId).emit(GameSessionEvents.GameEnded, {
+            winner: null,
+            reason: 'canceled',
+            gameMode: gameSession.gameMode,
         });
 
         setTimeout(() => {

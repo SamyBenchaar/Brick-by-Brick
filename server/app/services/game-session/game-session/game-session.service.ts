@@ -191,7 +191,7 @@ export class GameSessionService {
         if (!attacker || !defender) {
             throw new Error('Invalid player IDs');
         }
-        if (!this.combatService.canFight(attacker, defender)) {
+        if (!this.combatService.canFight(attacker, defender, gameSession)) {
             throw new Error('Players are not adjacent');
         }
         const result = this.combatService.executeCombat(

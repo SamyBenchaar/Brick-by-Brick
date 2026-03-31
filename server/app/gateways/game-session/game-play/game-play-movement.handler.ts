@@ -1,3 +1,4 @@
+import { GameSession } from '@app/domain/game-session';
 import { GamePlayHandlerContext } from '@app/gateways/game-session/game-play/game-play-handler.context';
 import { GameSessionService } from '@app/services/game-session/game-session/game-session.service';
 import { MovementService } from '@app/services/game-session/movement.service';
@@ -46,12 +47,9 @@ export class GamePlayMovementHandler {
             });
 
             if (gameSession.gameMode === 'ctf') {
-                const flagPos = gameSession.getFlagPosition();
-                if (!gameSession.getFlagHolder()) {
-                    if (flagPos && currentPlayer.position?.x === flagPos.x && currentPlayer.position?.y === flagPos.y) {
-                        gameSession.setFlagHolder(currentPlayer.id);
-                        context.server.to(payload.roomId).emit(GameSessionEvents.GameSessionUpdated, gameSession);
-                    }
+                const ctfGameEnded = this.handleCtfMovement(gameSession, context, payload.roomId);
+                if (ctfGameEnded) {
+                    return;
                 }
             }
 
@@ -62,6 +60,31 @@ export class GamePlayMovementHandler {
                 context.onTurnEnd(gameSession);
             }
         }
+    }
+
+    private handleCtfMovement(
+        gameSession: GameSession,
+        context: GamePlayHandlerContext,
+        roomId: string,
+    ): boolean {
+        const flagPos = gameSession.getFlagPosition();
+        const currentPlayer = gameSession.getCurrentPlayer();
+
+        if (!gameSession.getFlagHolder() && flagPos && currentPlayer.position?.x === flagPos.x && currentPlayer.position?.y === flagPos.y) {
+            gameSession.setFlagHolder(currentPlayer.id);
+            context.server.to(roomId).emit(GameSessionEvents.GameSessionUpdated, gameSession);
+        }
+
+        const flagHolder = gameSession.getFlagHolderCharacter();
+        if (flagHolder) {
+            const flagHolderStarting = gameSession.getStartingPoint(flagHolder.id);
+            if (flagHolderStarting && flagHolder.position?.x === flagHolderStarting.x && flagHolder.position?.y === flagHolderStarting.y) {
+                context.onGameEnd(gameSession, flagHolder);
+                return true;
+            }
+        }
+
+        return false;
     }
 
     handleRequestAssignPosition(

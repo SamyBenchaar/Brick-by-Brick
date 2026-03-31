@@ -171,7 +171,10 @@ export function setupGameplayEventListeners(
         }
     });
 
-    socketService.on<{ winner: { id: string; name: string; avatarId: number } | null; reason: string }>(
+    socketService.on<{
+        winner:
+        { id: string; name: string; avatarId: number } | null; winningTeam?: 'team1' | 'team2'; gameMode?: string; reason: string
+    }>(
         GameSessionEvents.GameEnded,
         (data) => {
             if (gameSessionSocketService.hasAbandoned()) {
@@ -185,19 +188,30 @@ export function setupGameplayEventListeners(
             let title = 'Partie terminée';
 
             if (data.reason === 'victory' && data.winner) {
-                const mySocketId = service.getSocketId();
-                if (data.winner.id === mySocketId) {
+                if (data.gameMode === 'ctf' && data.winningTeam) {
+                    const teamName = data.winningTeam === 'team1' ? 'bleue' : 'rouge';
                     title = 'Victoire!';
-                    message = 'Félicitations! Vous avez gagné la partie avec 3 victoires!';
+                    message = `L'équipe ${teamName} a gagné la partie!`;
                 } else {
-                    title = 'Partie terminée';
-                    message = `${data.winner.name} a gagné la partie avec 3 victoires!`;
+                    const mySocketId = service.getSocketId();
+                    if (data.winner.id === mySocketId) {
+                        title = 'Victoire!';
+                        message = 'Félicitations! Vous avez gagné la partie avec 3 victoires!';
+                    } else {
+                        title = 'Partie terminée';
+                        message = `${data.winner.name} a gagné la partie avec 3 victoires!`;
+                    }
                 }
             } else if (data.reason === 'noPlayers') {
                 message = 'La partie est terminée car tous les autres joueurs ont abandonné.';
+            } else if (data.reason === 'canceled') {
+                title = 'Partie annulée';
+                message = 'La partie a été annulée car une équipe n\'a plus aucun joueur.';
             } else {
                 message = 'La partie est terminée.';
             }
+
+            const delay = data.gameMode === 'ctf' && data.reason === 'victory' ? 500 : gameSessionSocketService.endGameDelay;
 
             setTimeout(() => {
                 router.navigate(['/']).then(() => {
@@ -208,7 +222,7 @@ export function setupGameplayEventListeners(
                     service.gameEnded.set(false);
                     gameSessionSocketService.currentSession.set(null);
                 });
-            }, gameSessionSocketService.endGameDelay);
+            }, delay);
         },
     );
 

@@ -246,6 +246,16 @@ export class GameSession {
             .map(p => p.character);
     }
 
+    getTotalPlayersInTeam(team: 'team1' | 'team2'): number {
+        return this.players.filter(p => this.playerTeams.get(p.character.id) === team).length;
+    }
+
+    getTeamPlayers(team: 'team1' | 'team2'): Character[] {
+        return this.players
+            .filter(p => this.playerTeams.get(p.character.id) === team)
+            .map(p => p.character);
+    }
+
     setFlagPosition(position: Position): void {
         this.flagPosition = position;
     }
