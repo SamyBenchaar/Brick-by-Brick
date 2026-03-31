@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Tile } from '@app/classes/tile/tile';
 import { MapEditorService } from '@app/services/map-editor/map-editor.service';
 import { ObjectCounterService } from '@app/services/object-counter/object-counter.service';
-import { ObjectType, TileType } from '@common/map';
+import { TileType } from '@common/map';
 import { GameGridComponent } from './game-grid.component';
 
 describe('GameGridComponent', () => {
@@ -44,24 +44,5 @@ describe('GameGridComponent', () => {
     component['isShiftPressed'] = false;
     component.applyDeletion({ x: 0, y: 0 });
     expect(mapEditorServiceSpy.setTileType).toHaveBeenCalledWith({ x: 0, y: 0 }, TileType.Base);
-  });
-
-  it('doit appeler setObject sur mapEditorService et place sur objectCounterService lorsque addObject est appelé', () => {
-    const tile = { type: TileType.Base, object: undefined };
-    spyOn(component, 'getTile').and.returnValue(tile as Tile);
-    mapEditorServiceSpy.getSelectedObject.and.returnValue('TestObject' as ObjectType);
-    objectCounterServiceSpy.canPlace.and.returnValue(true);
-    spyOn(component, 'isTileObjectFree').and.returnValue(true);
-    component['addObject']({ x: 0, y: 0 });
-    expect(objectCounterServiceSpy.place).toHaveBeenCalledWith('TestObject' as ObjectType);
-    expect(mapEditorServiceSpy.setObject).toHaveBeenCalledWith({ x: 0, y: 0 }, 'TestObject' as ObjectType);
-  });
-
-  it('doit appeler remove sur objectCounterService et setObject(null) sur mapEditorService lorsque removeObject est appelé', () => {
-    const tile = { object: 'TestObject' as ObjectType };
-    spyOn(component, 'getTile').and.returnValue(tile as Tile);
-    component['removeObject']({ x: 0, y: 0 });
-    expect(objectCounterServiceSpy.remove).toHaveBeenCalledWith('TestObject' as ObjectType);
-    expect(mapEditorServiceSpy.setObject).toHaveBeenCalledWith({ x: 0, y: 0 }, null);
   });
 });

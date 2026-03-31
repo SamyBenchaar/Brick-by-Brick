@@ -119,7 +119,7 @@ export class CharacterCreationPageComponent implements OnInit {
     }
 
     getSelectedAvatarImage(): string {
-        if (!this.avatars?.length) {
+        if (!this.avatars?.length || !this.character) {
             return '';
         }
         const avatar = this.avatars.find(a => a.id === this.character.avatarId);

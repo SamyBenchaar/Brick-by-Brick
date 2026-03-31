@@ -10,12 +10,14 @@ export class ObjectCounterService {
     [ObjectType.StartingPoint]: 0,
     [ObjectType.HealingSanctuary]: 0,
     [ObjectType.CombatSanctuary]: 0,
+    [ObjectType.Flag]: 0,
   };
   private maxCounts: Record<ObjectType, number> = {
 
     [ObjectType.StartingPoint]: 2,
     [ObjectType.HealingSanctuary]: 1,
     [ObjectType.CombatSanctuary]: 1,
+    [ObjectType.Flag]: 1,
   };
 
   set startPoint(number: number) {

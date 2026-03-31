@@ -1,0 +1,118 @@
+import { GamePlayHandlerContext } from '@app/gateways/game-session/game-play/game-play-handler.context';
+import { GameSessionService } from '@app/services/game-session/game-session/game-session.service';
+import { MovementService } from '@app/services/game-session/movement.service';
+import { GameSessionEvents } from '@common/game.events';
+import { Position } from '@common/position';
+import { Injectable } from '@nestjs/common';
+import { Socket } from 'socket.io';
+
+@Injectable()
+export class GamePlayMovementHandler {
+    constructor(
+        private readonly gameSessionService: GameSessionService,
+        private readonly movementService: MovementService,
+    ) {}
+
+    handleRequestMove(
+        socket: Socket,
+        payload: { roomId: string; direction: string },
+        context: GamePlayHandlerContext,
+    ): void {
+        const gameSession = this.gameSessionService.getGameSession(payload.roomId);
+        if (!gameSession) {
+            return;
+        }
+
+        if (gameSession.isTurnStarting) {
+            return;
+        }
+
+        const currentPlayer = gameSession.getCurrentPlayer();
+        const requestingPlayer = gameSession.players.find(p => p.socketId === socket.id);
+
+        if (!currentPlayer || !requestingPlayer || currentPlayer.id !== requestingPlayer.character.id) {
+            return;
+        }
+
+        const direction = payload.direction as 'arrowUp' | 'arrowDown' | 'arrowLeft' | 'arrowRight';
+        const success = this.gameSessionService.executeMove(gameSession, direction);
+
+        if (success) {
+            context.server.to(payload.roomId).emit(GameSessionEvents.MoveExecuted, {
+                playerId: currentPlayer.id,
+                position: currentPlayer.position,
+                remainingMovement: currentPlayer.remainingMovement,
+                remainingActions: currentPlayer.remainingActions,
+            });
+
+            if (gameSession.gameMode === 'ctf') {
+                const flagPos = gameSession.getFlagPosition();
+                if (!gameSession.getFlagHolder()) {
+                    if (flagPos && currentPlayer.position?.x === flagPos.x && currentPlayer.position?.y === flagPos.y) {
+                        gameSession.setFlagHolder(currentPlayer.id);
+                        context.server.to(payload.roomId).emit(GameSessionEvents.GameSessionUpdated, gameSession);
+                    }
+                }
+            }
+
+            context.emitReachableTiles(gameSession);
+
+            if (!this.gameSessionService.canPlayerTakeAction(gameSession)) {
+                this.gameSessionService.endCurrentTurn(gameSession);
+                context.onTurnEnd(gameSession);
+            }
+        }
+    }
+
+    handleRequestAssignPosition(
+        socket: Socket,
+        payload: { roomId: string; position: Position },
+        context: GamePlayHandlerContext,
+    ): void {
+        const gameSession = this.gameSessionService.getGameSession(payload.roomId);
+
+        const currentPlayer = gameSession.getCurrentPlayer();
+        this.movementService.assignPosition(currentPlayer, gameSession, payload.position);
+        context.server.to(payload.roomId).emit(GameSessionEvents.MoveExecuted, {
+            playerId: currentPlayer.id,
+            position: currentPlayer.position,
+            remainingMovement: currentPlayer.remainingMovement,
+            remainingActions: currentPlayer.remainingActions,
+        });
+        context.emitReachableTiles(gameSession);
+    }
+
+    handleRequestInteract(
+        socket: Socket,
+        payload: { roomId: string; position: Position },
+        context: GamePlayHandlerContext,
+    ): void {
+        const gameSession = this.gameSessionService.getGameSession(payload.roomId);
+        if (!gameSession || gameSession.isTurnStarting) return;
+
+        const currentPlayer = gameSession.getCurrentPlayer();
+        const requestingPlayer = gameSession.players.find(p => p.socketId === socket.id);
+
+        if (!currentPlayer || !requestingPlayer || currentPlayer.id !== requestingPlayer.character.id) return;
+        if ((currentPlayer.remainingActions ?? 0) <= 0) return;
+
+        const tile = gameSession.mapCopy?.tiles[payload.position.y]?.[payload.position.x];
+        if (!tile || tile.type !== 'door') return;
+        tile.doorState = tile.doorState === 'opened' ? 'closed' : 'opened';
+
+        currentPlayer.remainingActions -= 1;
+
+        context.server.to(payload.roomId).emit(GameSessionEvents.InteractResult, {
+            position: payload.position,
+            newDoorState: tile.doorState,
+            remainingActions: currentPlayer.remainingActions,
+        });
+
+        context.emitReachableTiles(gameSession);
+
+        if (!this.gameSessionService.canPlayerTakeAction(gameSession)) {
+            this.gameSessionService.endCurrentTurn(gameSession);
+            context.onTurnEnd(gameSession);
+        }
+    }
+}

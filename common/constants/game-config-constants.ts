@@ -3,7 +3,7 @@ export type GameModeValue = 'classic' | 'ctf';
 
 export const GAME_MODES_DISPLAY = [
     { value: 'classic' as const, label: 'Classique', disabled: false },
-    { value: 'ctf' as const, label: 'Capture du drapeau', disabled: true },
+    { value: 'ctf' as const, label: 'Capture du drapeau', disabled: false },
 ];
 
 export const GAME_SIZES_DISPLAY = [

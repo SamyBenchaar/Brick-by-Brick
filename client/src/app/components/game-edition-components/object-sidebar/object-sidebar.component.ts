@@ -1,11 +1,11 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, Input, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Tile } from '@app/classes/tile/tile';
 import { OBJECT_DESCRIPTIONS } from '@app/constants/object-descriptions';
 import { MapEditorService } from '@app/services/map-editor/map-editor.service';
 import { ObjectCounterService } from '@app/services/object-counter/object-counter.service';
-import { getGameSizeConfig } from '@common/constants/game-config-constants';
+import { GameModeValue, getGameSizeConfig } from '@common/constants/game-config-constants';
 import { ObjectType } from '@common/map';
 
 @Component({
@@ -15,6 +15,7 @@ import { ObjectType } from '@common/map';
   styleUrl: './object-sidebar.component.scss',
 })
 export class ObjectSidebarComponent implements OnInit {
+  @Input() gameMode: GameModeValue = 'classic';
   editableObjects = Tile.editableObjects;
   private route = inject(ActivatedRoute);
   private objectCounterService = inject(ObjectCounterService);
@@ -52,5 +53,14 @@ export class ObjectSidebarComponent implements OnInit {
 
   getObjectPath(object: ObjectType): string {
     return `./assets/images/${object}.png`;
+  }
+
+  shouldShowObject(type: ObjectType): boolean {
+    if (type === ObjectType.Flag) {
+      const game = this.mapEditorService.getCurrentGame();
+      const currentMode = game?.gameMode || this.gameMode;
+      return currentMode === 'ctf';
+    }
+    return true;
   }
 }
