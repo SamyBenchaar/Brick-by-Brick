@@ -204,20 +204,6 @@ export class GameSessionService {
         return result;
     }
 
-    ensureFlagPositionValid(gameSession: GameSession): void {
-        if (!gameSession.flagPosition || !gameSession.mapCopy) {
-            return;
-        }
-
-        const tile = gameSession.mapCopy.tiles[gameSession.flagPosition.y]?.[gameSession.flagPosition.x];
-        if (tile && tile.type === 'door' && tile.doorState === 'opened') {
-            const freeTile = this.findNearestFreeTile(gameSession, gameSession.flagPosition);
-            if (freeTile) {
-                gameSession.setFlagPosition(freeTile);
-            }
-        }
-    }
-
     checkGameWinner(gameSession: GameSession): Character | null {
         const players = gameSession.getActivePlayers();
         return this.combatService.checkGameWinCondition(players);

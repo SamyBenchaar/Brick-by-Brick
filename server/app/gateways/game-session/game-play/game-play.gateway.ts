@@ -200,6 +200,7 @@ export class GamePlayGateway implements OnGatewayInit {
             const freeTile = this.gameSessionService.findNearestFreeTile(gameSession, abandoningPlayer.character.position);
             if (freeTile) {
                 gameSession.setFlagPosition(freeTile);
+                gameSession.setFlagHolder(null);
             }
         }
     }

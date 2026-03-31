@@ -62,10 +62,6 @@ export class GamePlayCombatHandler {
     ): void {
         const result = this.gameSessionService.executeCombat(gameSession, defenderId);
 
-        if (gameSession.gameMode === 'ctf') {
-            this.gameSessionService.ensureFlagPositionValid(gameSession);
-        }
-
         context.server.to(gameSession.roomId).emit(GameSessionEvents.CombatResult, {
             winner: result.winner,
             loser: result.loser,
