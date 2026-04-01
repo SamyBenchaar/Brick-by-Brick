@@ -30,13 +30,13 @@ export class GameSessionService {
 
     private logger = new Logger(GameSessionService.name);
     private gameSessions: Map<string, GameSession> = new Map();
+    @Inject() private virtualPlayerService: VirtualPlayerService;
 
     constructor(
         private startingPointService: StartingPointService,
         private turnManagementService: TurnManagementService,
         private movementService: MovementService,
         private combatService: CombatService,
-        private virtualPlayerService: VirtualPlayerService,
         @Inject(forwardRef(() => GameService))
         private gameService: GameService,
     ) {}

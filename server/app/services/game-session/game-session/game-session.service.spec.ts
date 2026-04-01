@@ -5,6 +5,9 @@ import { Player } from '@common/player';
 import { Test, TestingModule } from '@nestjs/testing';
 import { CombatService } from '@app/services/game-session/combat.service';
 import { MovementService } from '@app/services/game-session/movement.service';
+import { VirtualPlayerService } from '@app/services/game-session/virtual-player.service';
+import { VirtualPlayerMechanicsService } from '@app/services/game-session/virtual-player-mechanics.service';
+import { GameGateway } from '@app/gateways/game/game.gateway';
 import { StartingPointService } from '@app/services/game-session/starting-point.service';
 import { TurnManagementService } from '@app/services/game-session/turn-management.service';
 import { GameSessionService } from '@app/services/game-session/game-session/game-session.service';
@@ -63,6 +66,9 @@ describe('GameSessionService', () => {
                 TurnManagementService,
                 MovementService,
                 CombatService,
+                VirtualPlayerMechanicsService,
+                VirtualPlayerService,
+                { provide: GameGateway, useValue: { notifyRoomEvent: jest.fn() } },
                 { provide: GameService, useValue: mockGameService },
             ],
         }).compile();

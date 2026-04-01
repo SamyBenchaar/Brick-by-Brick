@@ -1,4 +1,6 @@
 import { GameSession } from '@app/domain/game-session';
+import { GameGateway } from '@app/gateways/game/game.gateway';
+import { GameSessionEvents } from '@common/game.events';
 import { TILE_COST, TileType } from '@common/map';
 import { Player } from '@common/player';
 import { Position } from '@common/position';
@@ -17,6 +19,7 @@ type MoveDirection = 'arrowUp' | 'arrowDown' | 'arrowLeft' | 'arrowRight';
 export class VirtualPlayerMechanicsService {
     @Inject() private readonly combatService: CombatService;
     @Inject() private readonly movementService: MovementService;
+    @Inject() private readonly gameGateway: GameGateway;
 
     private readonly minActionDelayMs = 500;
     private readonly actionDelayRangeMs = 1000;
@@ -48,8 +51,7 @@ export class VirtualPlayerMechanicsService {
         let bestEnemy: Player | null = null;
         let bestCost = Infinity;
 
-        for (let i = 0; i < enemies.length; i++) {
-            const enemy = enemies[i];
+        for (const enemy of enemies) {
             if (!enemy.character.position) {
                 continue;
             }
@@ -58,8 +60,7 @@ export class VirtualPlayerMechanicsService {
                 .filter((position) => this.getMoveCost(session, position, bot) !== Infinity);
 
             let enemyBest = Infinity;
-            for (let j = 0; j < adjacentTiles.length; j++) {
-                const tile = adjacentTiles[j];
+            for (const tile of adjacentTiles) {
                 const cost = distFromBot.get(this.positionKey(tile))?.cost ?? Infinity;
                 if (cost < enemyBest) {
                     enemyBest = cost;
@@ -87,8 +88,7 @@ export class VirtualPlayerMechanicsService {
         let bestDistance = enemyDists.get(this.positionKey(bot.character.position))?.cost ?? 0;
 
         const entries = Array.from(reachable.entries());// On parcourt toutes les positions atteignables par le bot
-        for (let i = 0; i < entries.length; i++) {
-            const [key, node] = entries[i];
+        for (const [key, node] of entries) {
             if (node.cost > (bot.character.remainingMovement ?? 0)) {// Si le coût pour atteindre cette position est supérieur au mouvement restant du bot, on l'ignore
                 continue;
             }
@@ -118,8 +118,7 @@ export class VirtualPlayerMechanicsService {
         let bestTarget: Position | null = null;
         let bestCost = Infinity;
 
-        for (let i = 0; i < candidates.length; i++) {
-            const candidate = candidates[i];
+        for (const candidate of candidates) {
             const pathInfo = this.buildShortestPath(session, bot, candidate);
             if (pathInfo && pathInfo.totalCost < bestCost) {
                 bestTarget = candidate;
@@ -141,8 +140,7 @@ export class VirtualPlayerMechanicsService {
         }
 
         let moved = false;
-        for (let i = 0; i < pathInfo.path.length; i++) {
-            const next = pathInfo.path[i];
+        for (const next of pathInfo.path) {
             if (!this.canMove(bot) || !bot.character.position) {
                 break;
             }
@@ -169,6 +167,13 @@ export class VirtualPlayerMechanicsService {
                 break;
             }
 
+            this.gameGateway.notifyRoomEvent(session.roomId, GameSessionEvents.MoveExecuted, {
+                playerId: bot.character.id,
+                position: bot.character.position,
+                remainingMovement: bot.character.remainingMovement,
+                remainingActions: bot.character.remainingActions,
+            });
+
             moved = true;
         }
 
@@ -191,12 +196,21 @@ export class VirtualPlayerMechanicsService {
         }
 
         await this.randomDelay();
-        this.combatService.executeCombat(
+        const result = this.combatService.executeCombat(
             session,
             bot.character,
             target.character,
             mapCopy,
         );
+
+        this.gameGateway.notifyRoomEvent(session.roomId, GameSessionEvents.CombatResult, {
+            winner: result.winner,
+            loser: result.loser,
+            attackerVictories: result.attackerVictories,
+            defenderNewPosition: target.character.position,
+            remainingActions: bot.character.remainingActions,
+        });
+
         return true;
     }
 
@@ -254,8 +268,7 @@ export class VirtualPlayerMechanicsService {
             visited.add(key);
 
             const neighbors = this.getNeighbors(current.pos);
-            for (let i = 0; i < neighbors.length; i++) {
-                const neighbor = neighbors[i];
+            for (const neighbor of neighbors) {
                 const stepCost = this.getMoveCost(session, neighbor, bot);
                 if (stepCost === Infinity) {
                     continue;
@@ -320,7 +333,6 @@ export class VirtualPlayerMechanicsService {
         if (occupied) {
             return Infinity;
         }
-
         return TILE_COST[tile.type as TileType] ?? 1;
     }
 
@@ -346,7 +358,6 @@ export class VirtualPlayerMechanicsService {
         if (to.x === from.x + 1 && to.y === from.y) {
             return 'arrowRight';
         }
-
         return null;
     }
 
