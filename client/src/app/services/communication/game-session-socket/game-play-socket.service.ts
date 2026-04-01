@@ -9,6 +9,7 @@ import { Player } from '@common/player';
 import { Position } from '@common/position';
 import { GameSessionSocketService } from './game-session-socket.service';
 import { ADJACENT_POSITIONS } from '@app/constants/adjacent-position';
+import { GameSession } from '@app/interfaces/game-session';
 
 @Injectable({
     providedIn: 'root',
@@ -19,6 +20,10 @@ export class GamePlaySocketService {
 
     private get gameSessionSocketService(): GameSessionSocketService {
         return this.injector.get(GameSessionSocketService);
+    }
+
+    private get gameSession(): GameSession | null {
+        return this.gameSessionSocketService.currentSession();
     }
 
     playerSocketId: WritableSignal<string | null> = signal<string | null>(null);
@@ -142,6 +147,10 @@ export class GamePlaySocketService {
             ) ?? null;
     }
 
+    isFlagOnPosition(position: Position): boolean {
+        return this.gameSession?.flagPosition?.x === position.x && this.gameSession?.flagPosition?.y === position.y;
+    }
+    
     canInteractWithTarget(target: Tile, position: Position): boolean {
         const currentPlayer = this.getCurrentPlayerCharacter();
         return (this.isMyTurn() &&
@@ -149,6 +158,8 @@ export class GamePlaySocketService {
             currentPlayer.remainingActions !== undefined &&
             currentPlayer.remainingActions > 0 &&
             this.areAdjacent(currentPlayer.position, position) &&
+            target.type === TileType.Door && 
+            !this.isFlagOnPosition(position) &&
             (target.type === TileType.Door
             || target.object === ObjectType.HealingSanctuary
             || target.object === ObjectType.CombatSanctuary)
@@ -172,6 +183,8 @@ export class GamePlaySocketService {
         if (!this.isMyTurn() || !currentPlayer?.position || (currentPlayer.remainingActions ?? 0) <= 0) return false;
         const map = this.mapCopy();
         if (!map) return false;
+        if (this.areAdjacent(currentPlayer.position,
+             {x: this.gameSession?.flagPosition?.x ?? 0, y: this.gameSession?.flagPosition?.y ?? 0})) return false;
         const { x, y } = currentPlayer.position;
         return ADJACENT_POSITIONS.some(offset => map.mapConfig.tiles[y + offset.y]?.[x + offset.x]?.type === 'door');
     }
