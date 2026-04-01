@@ -148,13 +148,30 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
         }
     });
 
-    socketService.on<{ position: Position, newDoorState: string, remainingActions: number }>(GameSessionEvents.InteractResult, (data) => {
-        const currentMap = service.mapCopy();
-        if (currentMap) {
-            currentMap.mapConfig.tiles[data.position.y][data.position.x].doorState = data.newDoorState;
-            service.mapCopy.set({ ...currentMap });
+    socketService.on<{ position: Position, newDoorState: string, remainingActions: number, interactionType: string }>
+    (GameSessionEvents.InteractResult, (data) => {
+        if (data.interactionType === 'door') {
+            const currentMap = service.mapCopy();
+            if (currentMap) {
+                currentMap.mapConfig.tiles[data.position.y][data.position.x].doorState = data.newDoorState;
+                service.mapCopy.set({ ...currentMap });
+            }
+    
+        } else if (data.interactionType === 'combatsanctuary') {
+            dialog.open(AppDialogComponent, {
+                data: {
+                    title: 'Sanctuaire de combat',
+                    message: 'Vous avez interagi avec un sanctuaire de combat. Vous avez gagné 1 point d\'attaque.',
+                },
+            });
+        } else if (data.interactionType === 'healingsanctuary') {
+            dialog.open(AppDialogComponent, {
+                data: {
+                    title: 'Sanctuaire de soin',
+                    message: 'Vous avez interagi avec un sanctuaire de soin. Vous avez gagné 1 point de vie.',
+                },
+            });
         }
-
         const session = gameSessionSocketService.currentSession();
         if (session) {
             const currentPlayerId = service.currentPlayerTurn();

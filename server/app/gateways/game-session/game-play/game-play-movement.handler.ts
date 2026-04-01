@@ -169,7 +169,8 @@ export class GamePlayMovementHandler {
 
         if (objectType === 'healingsanctuary') {
             currentPlayer.life = Math.min(currentPlayer.life + 2, currentPlayer.maxLife);
-            currentPlayer.remainingActions -= 1;
+            // juste pour tester
+            currentPlayer.remainingActions -= 0;
 
             context.server.to(gameSession.roomId).emit(GameSessionEvents.InteractResult, {
                 position,
@@ -179,7 +180,8 @@ export class GamePlayMovementHandler {
             });
         } else if (objectType === 'combatsanctuary') {
             currentPlayer.attack += 1;
-            currentPlayer.remainingActions -= 1;
+            // juste pour tester
+            currentPlayer.remainingActions -= 0;
 
             context.server.to(gameSession.roomId).emit(GameSessionEvents.InteractResult, {
                 position,

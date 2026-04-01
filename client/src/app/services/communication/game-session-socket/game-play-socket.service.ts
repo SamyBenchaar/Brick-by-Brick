@@ -153,17 +153,21 @@ export class GamePlaySocketService {
     
     canInteractWithTarget(target: Tile, position: Position): boolean {
         const currentPlayer = this.getCurrentPlayerCharacter();
-        return (this.isMyTurn() &&
-            currentPlayer?.position !== undefined &&
-            currentPlayer.remainingActions !== undefined &&
-            currentPlayer.remainingActions > 0 &&
-            this.areAdjacent(currentPlayer.position, position) &&
-            target.type === TileType.Door && 
-            !this.isFlagOnPosition(position) &&
-            (target.type === TileType.Door
-            || target.object === ObjectType.HealingSanctuary
-            || target.object === ObjectType.CombatSanctuary)
-        );
+        const playerPosition = currentPlayer?.position;
+        if (!this.isMyTurn() || !playerPosition || (currentPlayer.remainingActions ?? 0) <= 0) return false;
+
+        if (target.type === TileType.Door) {
+            return this.areAdjacent(playerPosition, position) && !this.isFlagOnPosition(position);
+        }
+
+        if (target.object === ObjectType.HealingSanctuary || target.object === ObjectType.CombatSanctuary) {
+            const origin = target.sanctuaryOrigin ?? position;
+            return [[0, 0], [1, 0], [0, 1], [1, 1]].some(([dx, dy]) =>
+                this.areAdjacent(playerPosition, { x: origin.x + dx, y: origin.y + dy }),
+            );
+        }
+
+        return false;
     }
 
     canPlayerInteractSanctuary(): boolean {
