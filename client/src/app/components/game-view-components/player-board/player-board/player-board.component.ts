@@ -39,6 +39,7 @@ export class PlayerBoardComponent {
 
     const currentPlayer = this.getCurrentPlayerCharacter();
     if (!currentPlayer?.hasFlag) return false;
+    if ((currentPlayer.remainingActions ?? 0) <= 0) return false;
 
     if (currentPlayer.id === targetPlayer.character.id) return false;
     if (currentPlayer.team !== targetPlayer.character.team) return false;
@@ -51,6 +52,7 @@ export class PlayerBoardComponent {
 
     const currentPlayer = this.getCurrentPlayerCharacter();
     if (!currentPlayer) return false;
+    if ((currentPlayer.remainingActions ?? 0) <= 0) return false;
 
     if (!currentPlayer.hasFlag && targetPlayer.character.hasFlag) {
       if (currentPlayer.id !== targetPlayer.character.id && currentPlayer.team === targetPlayer.character.team) {
