@@ -4,6 +4,7 @@ import { GamePlayHandlersProvider } from '@app/gateways/game-session/game-play/g
 import { GameSessionGateway } from '@app/gateways/game-session/game-session/game-session.gateway';
 import { GameDataForInit } from '@app/interfaces/game-map-interfaces';
 import { GameSessionService } from '@app/services/game-session/game-session/game-session.service';
+import { LogService } from '@app/services/log/log.service';
 import { Character } from '@common/character';
 import { GameSessionEvents } from '@common/game.events';
 import { Player } from '@common/player';
@@ -29,6 +30,7 @@ export class GamePlayGateway implements OnGatewayInit {
         @Inject(forwardRef(() => GameSessionGateway))
         private gameSessionGateway: GameSessionGateway,
         private handlersProvider: GamePlayHandlersProvider,
+        private logService: LogService,
     ) {}
 
     afterInit() {
@@ -78,6 +80,8 @@ export class GamePlayGateway implements OnGatewayInit {
             gameSession,
         });
 
+        this.logService.log(payload.roomId, 'La partie a commencé');
+
         this.logger.log(`Partie démarrée dans la salle ${payload.roomId}`);
 
         this.startGameTurn(gameSession);
@@ -95,6 +99,9 @@ export class GamePlayGateway implements OnGatewayInit {
         this.server.to(payload.currentRoomId).emit(GameSessionEvents.ToggleDebugMode, {
             isDebugModeActivated: newIsDebugModeActivated,
         });
+
+        const action = newIsDebugModeActivated ? 'Activation' : 'Désactivation';
+        this.logService.log(payload.currentRoomId, `${action} du mode de débogage`);
     }
 
     @SubscribeMessage(GameSessionEvents.EndTurnRequest)
@@ -177,6 +184,10 @@ export class GamePlayGateway implements OnGatewayInit {
             playerId: abandoningPlayer?.character.id,
             mapCopyTiles: gameSession.mapCopy?.tiles,
         });
+
+        if (abandoningPlayer) {
+            this.logService.log(payload.roomId, `Abandon de partie par ${abandoningPlayer.character.name}`);
+        }
 
         if (!this.handleAbandonedPlayerTeamCheck(gameSession)) {
             return;
@@ -262,6 +273,9 @@ export class GamePlayGateway implements OnGatewayInit {
             reason: winner ? 'victory' : 'noPlayers',
         });
 
+        const activePlayers = gameSession.players.map(p => p.character.name).join(', ');
+        this.logService.log(gameSession.roomId, `Fin de partie. Joueurs actifs: ${activePlayers}`);
+
         setTimeout(() => {
             this.gameSessionGateway.cleanUpRoom(gameSession.roomId);
         }, this.gameEndCleanupDelay);
@@ -318,6 +332,7 @@ export class GamePlayGateway implements OnGatewayInit {
     private createHandlerContext(): GamePlayHandlerContext {
         return {
             server: this.server,
+            logService: this.logService,
             onGameEnd: (gameSession: GameSession, winner: Character | null) => this.handleGameEnd(gameSession, winner),
             onTurnEnd: (gameSession: GameSession) => this.handleTurnEnd(gameSession),
             emitReachableTiles: (gameSession: GameSession) => this.emitReachableTiles(gameSession),

@@ -1,18 +1,20 @@
 <div class="tabs">
     <button 
         class="tab button brick-green" 
-        (click)="activeTab = MessageType.CHAT"
-        [class.active]="activeTab === MessageType.CHAT">
+        (click)="activeTab = messageType.CHAT"
+        [class.active]="activeTab === messageType.CHAT">
         Chat
     </button>
+    @if (gameSessionSocketService.currentSession()?.status === SessionStatus.Playing) {
     <button 
         class="tab button brick-blue" 
-        (click)="activeTab = MessageType.LOG"
-        [class.active]="activeTab === MessageType.LOG">
+        (click)="activeTab = messageType.LOG"
+        [class.active]="activeTab === messageType.LOG">
         Journal
     </button>
+    }
     </div>
- @if (activeTab === MessageType.CHAT) {
+ @if (activeTab === messageType.CHAT) {
     <div class="chat-container">
         <div #messagesContainer class="messages-container">
 
@@ -53,6 +55,6 @@
 }
 @else {
     <div class="log-container">
-        <app-game-log [logs]="logs"></app-game-log>
+        <app-game-log [gameId]="gameId"></app-game-log>
     </div>
 }
