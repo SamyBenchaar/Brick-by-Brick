@@ -23,6 +23,7 @@ export class GamePlayGateway implements OnGatewayInit {
     private readonly gameEndCleanupDelay = 5000;
     private readonly toMllisecondsFactor = 1000;
     private readonly interTurnTime = 3;
+    private readonly combatTickInterval = 1000;
     private readonly combatTimers = new Map<string, NodeJS.Timeout>();
 
     constructor(
@@ -349,7 +350,7 @@ export class GamePlayGateway implements OnGatewayInit {
             this.emitCombatState(gameSession, GameSessionEvents.CombatUpdated);
 
             if (timeRemaining <= 0) this.resolveCombatRound(gameSession);
-        }, 1000);
+        }, this.combatTickInterval);
 
         this.combatTimers.set(gameSession.roomId, timer);
     }
