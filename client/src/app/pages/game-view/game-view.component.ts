@@ -88,7 +88,7 @@ export class GameViewComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (!this.isMyTurn() || this.isWriting()) return;
+    if (!this.isMyTurn() || this.isWriting() || this.isInCombat()) return;
     const direction = KEY_DIRECTION_MAP[key];
 
     if (direction) {
@@ -132,8 +132,15 @@ export class GameViewComponent implements OnInit, OnDestroy {
   }
 
   isInCombat(): boolean {
-    //to do, le mettre a true pour afficher la modale de combat
-    return false;
+    return this.gamePlaySocketService.isCurrentUserInCombat();
+  }
+
+  getCombatNotification(): string | null {
+    return this.gamePlaySocketService.combatNotification();
+  }
+
+  dismissCombatNotification(): void {
+    this.gamePlaySocketService.dismissCombatNotification();
   }
 
   getCurrentTurnPlayerName(): string {
@@ -155,7 +162,7 @@ export class GameViewComponent implements OnInit, OnDestroy {
   }
 
   endTurn(): void {
-    this.gamePlaySocketService.endTurn();
+    if (!this.isInCombat()) this.gamePlaySocketService.endTurn();
   }
 
   abandonGame(): void {
