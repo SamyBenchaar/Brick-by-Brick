@@ -1,10 +1,10 @@
+import { GameMap } from '@app/interfaces/game-map-interfaces';
 import { Character } from '@common/character';
+import { CombatState } from '@common/combat';
+import { MAX_PLAYER, ROOM_ID_LENGTH } from '@common/constants/game-config-constants';
 import { Player } from '@common/player';
 import { Position } from '@common/position';
 import { SessionStatus } from '@common/session.status';
-import { GameMap } from '@app/interfaces/game-map-interfaces';
-import { ROOM_ID_LENGTH, MAX_PLAYER } from '@common/constants/game-config-constants';
-
 
 export class GameSession {
     players: Player[] = [];
@@ -24,6 +24,7 @@ export class GameSession {
     startingPoints: Map<string, Position> = new Map();
     isTurnStarting: boolean = false;
     isDebugModeActivated = false;
+    combat: CombatState | null = null;
 
     constructor(hostplayer: Player, mapId: string) {
         this.host = hostplayer;

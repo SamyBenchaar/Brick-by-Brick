@@ -358,7 +358,6 @@ export class GamePlayGateway implements OnGatewayInit {
         this.clearCombatTimer(gameSession.roomId);
 
         const combat = gameSession.combat;
-        if (!combat) return;
 
         const { result } = this.combatService.resolveRound(gameSession, combat, gameSession.isDebugModeActivated);
 
@@ -419,15 +418,7 @@ export class GamePlayGateway implements OnGatewayInit {
 
     private emitReachableTiles(gameSession: GameSession): void {
         const currentPlayer = gameSession.getCurrentPlayer();
-        if (!currentPlayer) {
-            return;
-        }
-
         const playerData = gameSession.players.find(p => p.character.id === currentPlayer.id);
-        if (!playerData) {
-            return;
-        }
-
         const reachableTiles = this.gameSessionService.getReachableTiles(gameSession);
         this.server.to(playerData.socketId).emit(GameSessionEvents.ReachableTiles, {
             playerId: currentPlayer.id,
