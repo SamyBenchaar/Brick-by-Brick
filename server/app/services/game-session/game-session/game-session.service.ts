@@ -226,6 +226,25 @@ export class GameSessionService {
         return this.combatService.checkGameWinCondition(players);
     }
 
+    checkCtfFlagWinner(gameSession: GameSession): Character | null {
+        if (gameSession.gameMode !== 'ctf') {
+            return null;
+        }
+
+        const flagHolder = gameSession.getFlagHolderCharacter();
+        if (!flagHolder?.position) {
+            return null;
+        }
+
+        const start = gameSession.getStartingPoint(flagHolder.id);
+        if (!start) {
+            return null;
+        }
+
+        const hasReturnedFlag = flagHolder.position.x === start.x && flagHolder.position.y === start.y;
+        return hasReturnedFlag ? flagHolder : null;
+    }
+
     canPlayerTakeAction(gameSession: GameSession): boolean {
         const currentPlayer = gameSession.getCurrentPlayer();
         if (!currentPlayer || !currentPlayer.position) {

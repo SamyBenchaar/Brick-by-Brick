@@ -36,6 +36,10 @@ export class VirtualPlayerMechanicsService {
         return this.canMove(bot) || this.hasAction(bot);
     }
 
+    hasFlag(bot: Player): boolean {
+        return !!bot.character.hasFlag;
+    }
+
     samePosition(a: Position, b: Position): boolean {
         return a.x === b.x && a.y === b.y;
     }
@@ -74,6 +78,100 @@ export class VirtualPlayerMechanicsService {
         }
 
         return bestEnemy;
+    }
+
+    findEnemyFlagHolder(session: GameSession, bot: Player): Player | null {
+        const flagHolderId = session.getFlagHolder();
+        if (!flagHolderId) {
+            return null;
+        }
+
+        const flagHolder = session.players.find((player) => player.character.id === flagHolderId);
+        if (!flagHolder || !flagHolder.character.position) {
+            return null;
+        }
+
+        const botTeam = session.getPlayerTeam(bot.character.id);
+        const holderTeam = session.getPlayerTeam(flagHolder.character.id);
+        if (session.gameMode === 'ctf' && botTeam && holderTeam && botTeam === holderTeam) {
+            return null;
+        }
+
+        return flagHolder;
+    }
+
+    getOwnStartingPoint(session: GameSession, bot: Player): Position | null {
+        const start = session.getStartingPoint(bot.character.id);
+        return start ?? null;
+    }
+
+    getFlagPosition(session: GameSession): Position | null {
+        return session.getFlagPosition();
+    }
+
+    findNearestWalkableTile(session: GameSession, bot: Player, target: Position): Position | null {
+        const queue: Position[] = [target];
+        const visited = new Set<string>([this.positionKey(target)]);
+
+        while (queue.length > 0) {
+            const current = queue.shift();
+            if (!current) {
+                break;
+            }
+
+            if (this.getMoveCost(session, current, bot) !== Infinity) {
+                return current;
+            }
+
+            const neighbors = this.getNeighbors(current);
+            for (const neighbor of neighbors) {
+                const key = this.positionKey(neighbor);
+                if (visited.has(key)) {
+                    continue;
+                }
+                visited.add(key);
+                queue.push(neighbor);
+            }
+        }
+
+        return null;
+    }
+
+    async tryAttackSpecificAdjacent(session: GameSession, bot: Player, target: Player): Promise<boolean> {
+        if (!this.hasAction(bot) || !bot.character.position || !target.character.position) {
+            return false;
+        }
+
+        const distance = Math.abs(target.character.position.x - bot.character.position.x)
+            + Math.abs(target.character.position.y - bot.character.position.y);
+
+        if (distance !== 1) {
+            return false;
+        }
+
+        const mapCopy = session.getMapCopy();
+        if (!mapCopy) {
+            return false;
+        }
+
+        await this.randomDelay();
+        const result = this.combatService.executeCombat(
+            session,
+            bot.character,
+            target.character,
+            mapCopy,
+        );
+
+        this.gameGateway.notifyRoomEvent(session.roomId, GameSessionEvents.CombatResult, {
+            winner: result.winner,
+            loser: result.loser,
+            attackerVictories: result.attackerVictories,
+            defenderNewPosition: target.character.position,
+            remainingActions: bot.character.remainingActions,
+        });
+
+        this.gameGateway.notifyRoomEvent(session.roomId, GameSessionEvents.GameSessionUpdated, session);
+        return true;
     }
 
     findFleeTarget(session: GameSession, bot: Player, enemy: Player): Position | null {
@@ -174,6 +272,8 @@ export class VirtualPlayerMechanicsService {
                 remainingActions: bot.character.remainingActions,
             });
 
+            this.handleCtfFlagPickup(session, bot);
+
             moved = true;
         }
 
@@ -210,6 +310,8 @@ export class VirtualPlayerMechanicsService {
             defenderNewPosition: target.character.position,
             remainingActions: bot.character.remainingActions,
         });
+
+        this.gameGateway.notifyRoomEvent(session.roomId, GameSessionEvents.GameSessionUpdated, session);
 
         return true;
     }
@@ -306,7 +408,42 @@ export class VirtualPlayerMechanicsService {
     }
 
     private getEnemies(session: GameSession, bot: Player): Player[] {
-        return session.players.filter((player) => player.socketId !== bot.socketId && !!player.character.position);
+        const botTeam = session.getPlayerTeam(bot.character.id);
+
+        return session.players.filter((player) => {
+            if (player.socketId === bot.socketId || !player.character.position) {
+                return false;
+            }
+
+            if (session.gameMode !== 'ctf') {
+                return true;
+            }
+
+            const playerTeam = session.getPlayerTeam(player.character.id);
+            if (!botTeam || !playerTeam) {
+                return true;
+            }
+
+            return botTeam !== playerTeam;
+        });
+    }
+
+    private handleCtfFlagPickup(session: GameSession, bot: Player): void {
+        if (session.gameMode !== 'ctf' || !bot.character.position || session.getFlagHolder()) {
+            return;
+        }
+
+        const flagPosition = session.getFlagPosition();
+        if (!flagPosition) {
+            return;
+        }
+
+        if (!this.samePosition(bot.character.position, flagPosition)) {
+            return;
+        }
+
+        session.setFlagHolder(bot.character.id);
+        this.gameGateway.notifyRoomEvent(session.roomId, GameSessionEvents.GameSessionUpdated, session);
     }
 
     private getMoveCost(session: GameSession, to: Position, bot: Player): number {

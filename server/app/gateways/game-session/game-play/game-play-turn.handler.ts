@@ -93,6 +93,12 @@ export class GamePlayTurnHandler {
             }
         }
 
+        const ctfWinner = this.gameSessionService.checkCtfFlagWinner(gameSession);
+        if (ctfWinner) {
+            context.onGameEnd(gameSession, ctfWinner);
+            return;
+        }
+
         const winner = this.gameSessionService.checkGameWinner(gameSession);
         if (winner) {
             context.onGameEnd(gameSession, winner);
