@@ -38,12 +38,12 @@
                     }
                 }
             </div>
-            <app-player-board [players]="playerList()" [leftPlayers]="leftPlayerList()" [host]="hostPlayer()"></app-player-board>
+            <app-player-board [players]="playerList()" [leftPlayers]="leftPlayerList()" [host]="hostPlayer()" [gameMode]="gameSessionSocketService.currentSession()?.gameMode ?? 'classic'"></app-player-board>
                 <app-player-sign
                     [player]="currentPlayer()"
-                    [canAttack]="canAttackSelectedTarget()"
-                    [selectedTargetName]="getSelectedAttackTargetName()"
-                    (attack)="attackSelectedTarget()">
+                    [canAct]="canAttackSelectedTarget() || canInteract()"
+                    [selectedTargetName]="getSelectedTarget()"
+                    (attack)="onActionClick()">
                 </app-player-sign>
         </aside>
 
@@ -61,9 +61,13 @@
                     [gameData]="gameData" 
                     [isViewMode]="true"
                     [players]="getPlayers()"
-                    [reachableTiles]="gameSessionSocketService.reachableTiles()"
-                    [isAttackSelectionMode]="isAttackSelectionMode()"
-                    (attackTargetSelected)="onAttackTargetSelected($event)">
+                    [gameMode]="gameSessionSocketService.currentSession()?.gameMode ?? 'classic'"
+                    [flagHolderId]="gameSessionSocketService.currentSession()?.flagHolderId ?? null"
+                    [flagPosition]="gameSessionSocketService.currentSession()?.flagPosition ?? null"
+                    [reachableTiles]="gamePlaySocketService.reachableTiles()"
+                    [isActionSelectionMode]="isActionSelectionMode()"
+                    (attackTargetSelected)="onAttackTargetSelected($event)"
+                    (actionTargetSelected)="onActionTargetSelected($event)">
                 </app-game-grid>
                 }
             </div>

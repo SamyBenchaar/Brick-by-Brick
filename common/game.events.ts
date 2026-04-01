@@ -59,6 +59,12 @@ export enum GameSessionEvents {
     RequestCombat = 'requestCombat',
     CombatResult = 'combatResult',
 
+    RequestInteract = 'requestInteract',
+    InteractResult = 'interactResult',
+
+    RequestFlagTransfer = 'requestFlagTransfer',
+    FlagTransferResponse = 'flagTransferResponse',
+
     PlayerAbandoned = 'playerAbandoned',
     GameEnded = 'gameEnded',
 

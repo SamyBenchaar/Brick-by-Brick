@@ -1,6 +1,6 @@
 import { GameSession, Position } from '@app/domain/game-session';
 import { Character } from '@common/character';
-import { TileType, TILE_COST } from '@common/map';
+import { TileType, TILE_COST, DoorState } from '@common/map';
 import { Injectable, Logger } from '@nestjs/common';
 import { MovementCost, MapTile } from '@app/interfaces/game-map-interfaces';
 
@@ -32,16 +32,19 @@ export class MovementService {
 
         const tile = mapData[position.y][position.x];
 
-        if (tile.type === TileType.Wall || tile.type === TileType.Door) {
+        if (tile.type === TileType.Wall) {
             return false;
         }
+        if (tile.type === TileType.Door && tile.doorState !== 'opened') return false;
+
 
         const posKey = `${position.x},${position.y}`;
         if (occupiedPositions.has(posKey)) {
             return false;
         }
 
-        return [TileType.Base, TileType.Water, TileType.Ice].includes(tile.type as TileType);
+        return [TileType.Base, TileType.Water, TileType.Ice].includes(tile.type as TileType) ||
+        (tile.type === TileType.Door && tile.doorState === DoorState.Opened);
     }
 
     getReachableTiles(
@@ -174,7 +177,7 @@ export class MovementService {
                 p.character.position?.y === newPosition.y,
         );
 
-        if (occupied || tile.type === TileType.Wall || tile.type === TileType.Door || !!tile.object) {
+        if (occupied || tile.type === TileType.Wall || (tile.type === TileType.Door && tile.doorState !== 'opened') || !!tile.object) {
             return;
         }
 
@@ -204,6 +207,16 @@ export class MovementService {
             (player.position.x !== position.x || player.position.y !== position.y) &&
             this.isAdjacentToPlayer(position, player),
         );
+    }
+
+    isDoorAdjacent(position: Position, gameSession: GameSession): boolean {
+        const adjacentPositions = [
+            { x: position.x - 1, y: position.y },
+            { x: position.x + 1, y: position.y },
+            { x: position.x, y: position.y - 1 },
+            { x: position.x, y: position.y + 1 },
+        ];
+        return adjacentPositions.some(pos => gameSession.getMapCopy()?.tiles?.[pos.y]?.[pos.x]?.type === 'door');
     }
 }
 

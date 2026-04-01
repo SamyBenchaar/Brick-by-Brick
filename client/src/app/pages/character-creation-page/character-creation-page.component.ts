@@ -14,6 +14,7 @@ import {
     RANDOM_NAME_MAX,
 } from '@app/constants/character-constants';
 import { AvatarOption } from '@app/interfaces/avatar';
+import { GamePlaySocketService } from '@app/services/communication/game-session-socket/game-play-socket.service';
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
 import { Character } from '@common/character';
 import { Dice } from '@common/dice';
@@ -30,6 +31,7 @@ const WAITING_ROOM_ACCESS_KEY = 'waitingRoomAccess';
 
 export class CharacterCreationPageComponent implements OnInit {
     private router = inject(Router);
+    private gamePlaySocketService = inject(GamePlaySocketService);
     private gameSessionSocketService = inject(GameSessionSocketService);
     private injector = inject(Injector);
     character!: Character;
@@ -117,7 +119,7 @@ export class CharacterCreationPageComponent implements OnInit {
     }
 
     getSelectedAvatarImage(): string {
-        if (!this.avatars?.length) {
+        if (!this.avatars?.length || !this.character) {
             return '';
         }
         const avatar = this.avatars.find(a => a.id === this.character.avatarId);
@@ -177,7 +179,7 @@ export class CharacterCreationPageComponent implements OnInit {
 
             this.gameSessionSocketService.currentSession.set(null);
             this.gameSessionSocketService.roomId.set('');
-            this.gameSessionSocketService.mapCopy.set(null);
+            this.gamePlaySocketService.mapCopy.set(null);
 
             // Le créateur: créer la session et attendre que le roomId soit reçu du serveur
             this.gameSessionSocketService.createGameSession(this.gameId, this.character);

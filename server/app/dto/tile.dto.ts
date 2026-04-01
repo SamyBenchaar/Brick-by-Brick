@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsEnum, IsOptional, ValidateNested } from 'class-validator';
+import { IsBoolean, IsEnum, IsOptional, ValidateNested } from 'class-validator';
 import { MapObjectsDto } from './map-objects.dto';
 
 export class TileDto {
@@ -18,4 +18,9 @@ export class TileDto {
     @ValidateNested({ message: "L'objet de la tuile est invalide" })
     @Type(() => MapObjectsDto)
     object?: MapObjectsDto;
+
+    @ApiProperty({ description: 'Tuile de départ', required: false })
+    @IsOptional()
+    @IsBoolean({ message: 'La tuile de départ doit être un booléen' })
+    isOrigin?: boolean;
 }
