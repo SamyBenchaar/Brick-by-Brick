@@ -1,9 +1,10 @@
-import { Injectable, Injector, WritableSignal, inject, signal } from '@angular/core';
+import { Injectable, Injector, WritableSignal, computed, inject, signal } from '@angular/core';
 import { Game } from '@app/interfaces/game';
+import { SocketService } from '@app/services/communication/socket/socket.service';
 import { Character } from '@common/character';
+import { CombatPosture, CombatState } from '@common/combat';
 import { GameSessionEvents } from '@common/game.events';
 import { Position } from '@common/position';
-import { SocketService } from '@app/services/communication/socket/socket.service';
 import { GameSessionSocketService } from './game-session-socket.service';
 
 @Injectable({
@@ -26,6 +27,13 @@ export class GamePlaySocketService {
     turnTimeRemaining: WritableSignal<number> = signal<number>(0);
     interTurnTimeRemaining: WritableSignal<number> = signal<number>(0);
     reachableTiles: WritableSignal<Position[]> = signal<Position[]>([]);
+    combatState: WritableSignal<CombatState | null> = signal<CombatState | null>(null);
+    combatNotification: WritableSignal<string | null> = signal<string | null>(null);
+
+    combatParticipantIds = computed(() => {
+        const combat = this.combatState();
+        return combat ? [combat.attacker.id, combat.defender.id] : [];
+    });
 
     connect(): void {
         if (!this.socketService.isConnected()) {
@@ -41,17 +49,23 @@ export class GamePlaySocketService {
         this.socketService.off(GameSessionEvents.TurnStarted);
         this.socketService.off(GameSessionEvents.TurnEnded);
         this.socketService.off(GameSessionEvents.MoveExecuted);
+        this.socketService.off(GameSessionEvents.CombatStarted);
+        this.socketService.off(GameSessionEvents.CombatUpdated);
         this.socketService.off(GameSessionEvents.CombatResult);
+        this.socketService.off(GameSessionEvents.CombatChoosePosture);
     }
 
     resetGameplayState(): void {
         this.currentPlayerTurn.set(null);
         this.turnTimeRemaining.set(0);
+        this.interTurnTimeRemaining.set(0);
         this.reachableTiles.set([]);
         this.gameEnded.set(false);
         this.turnStarting.set(false);
         this.isDebugModeActivated.set(false);
         this.mapCopy.set(null);
+        this.combatState.set(null);
+        this.combatNotification.set(null);
     }
 
     toggleDebugMode(): void {
@@ -88,6 +102,11 @@ export class GamePlaySocketService {
         if (currentRoomId) {
             this.socketService.emit(GameSessionEvents.RequestCombat, { roomId: currentRoomId, defenderId });
         }
+    }
+
+    chooseCombatPosture(posture: CombatPosture): void {
+        const roomId = this.getRoomId();
+        if (roomId) this.socketService.emit(GameSessionEvents.CombatChoosePosture, { roomId, posture });
     }
 
     endTurn(): void {
@@ -133,7 +152,7 @@ export class GamePlaySocketService {
         const currentPlayer = this.getCurrentPlayerCharacter();
 
         return (
-            this.isMyTurn() && currentPlayer?.position !== undefined &&
+            this.isMyTurn() && !this.combatState() && currentPlayer?.position !== undefined &&
             target?.position !== undefined && target.id !== currentPlayer.id &&
             currentPlayer.remainingActions !== undefined && currentPlayer.remainingActions > 0 &&
             this.areAdjacent(currentPlayer.position, target.position)
@@ -142,8 +161,32 @@ export class GamePlaySocketService {
 
     canCurrentPlayerAttack(): boolean {
         const currentPlayer = this.getCurrentPlayerCharacter();
-        return this.isMyTurn() && currentPlayer?.position != null && currentPlayer.remainingActions != null &&
+        return this.isMyTurn() && !this.combatState() && currentPlayer?.position != null && currentPlayer.remainingActions != null &&
             currentPlayer.remainingActions > 0 && this.getAutoAttackTarget() !== null;
+    }
+
+    isCurrentUserInCombat(): boolean {
+        const myId = this.getCurrentPlayerCharacter()?.id;
+        return !!myId && this.combatParticipantIds().includes(myId);
+    }
+
+    isMyCombatTurn(): boolean {
+        const myId = this.getCurrentPlayerCharacter()?.id;
+        const combat = this.combatState();
+        if (!myId || !combat) return false;
+
+        const me =
+            combat.attacker.id === myId
+                ? combat.attacker
+                : combat.defender.id === myId
+                    ? combat.defender
+                    : null;
+
+        return !!me && !me.hasChosen;
+    }
+
+    dismissCombatNotification(): void {
+        this.combatNotification.set(null);
     }
 
     private areAdjacent(positionA: Position, positionB: Position): boolean {
