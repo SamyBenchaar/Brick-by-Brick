@@ -1,0 +1,15 @@
+<div class="messages-container">
+  @for (log of filteredLogs; track log._id) {
+    <div class="message log">
+      <div class="message-header">
+        <span class="timestamp">
+          {{ log.timestamp | date: 'HH:mm:ss' }}
+        </span>
+      </div>
+
+      <div class="message-content">
+        {{ log.content }}
+      </div>
+    </div>
+  }
+</div>

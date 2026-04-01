@@ -1,37 +1,58 @@
-<div class="chat-container">
-    <div #messagesContainer class="messages-container">
-        @if (isLoading()) {
-            <div class="loading">Chargement des messages...</div>
-        }
-        @for (message of messages; track message._id) {
-            <div class="message" [class.own]="message.username === username">
-                <div class="message-header">
+<div class="tabs">
+    <button 
+        class="tab button brick-green" 
+        (click)="activeTab = MessageType.CHAT"
+        [class.active]="activeTab === MessageType.CHAT">
+        Chat
+    </button>
+    <button 
+        class="tab button brick-blue" 
+        (click)="activeTab = MessageType.LOG"
+        [class.active]="activeTab === MessageType.LOG">
+        Journal
+    </button>
+    </div>
+ @if (activeTab === MessageType.CHAT) {
+    <div class="chat-container">
+        <div #messagesContainer class="messages-container">
+
+        
+                @for (message of messages; track message._id) {
+                <div class="message" [class.own]="message.username === username">
+                    <div class="message-header">
                     <span class="username">{{ message.username }}</span>
                     <span class="timestamp">{{ message.timestamp | date: 'HH:mm:ss' }}</span>
+                    </div>
+                    <div class="message-content">{{ message.content }}</div>
                 </div>
-                <div class="message-content">{{ message.content }}</div>
-            </div>
-        }
-    </div>
+                }
+            
+        </div>
 
-    <div class="input-container">
-        <input
-            [(ngModel)]="messageInput"
-            (keypress)="onKeyPress($event)"
-            (click)="onFocus()"
-            (focus)="onFocus()"
-            placeholder="Tapez votre message..."
-            class="message-input"
-            [disabled]="isLoading()"
-            [readonly]="!isWriting"
-            maxlength="200"
-            type="text">
+        <div class="input-container">
+            <input
+                [(ngModel)]="messageInput"
+                (keypress)="onKeyPress($event)"
+                (click)="onFocus()"
+                (focus)="onFocus()"
+                placeholder="Tapez votre message..."
+                class="message-input"
+                [disabled]="isLoading()"
+                [readonly]="!isWriting"
+                maxlength="200"
+                type="text">
 
-        <button 
-            (click)="sendMessage()"
-            [disabled]="!messageInput().trim() || isLoading()"
-            class="send-button brick-green button">
-            Envoyer
-        </button>
+            <button 
+                (click)="sendMessage()"
+                [disabled]="!messageInput().trim() || isLoading()"
+                class="send-button brick-green button">
+                Envoyer
+            </button>
+        </div>
     </div>
-</div>
+}
+@else {
+    <div class="log-container">
+        <app-game-log [logs]="logs"></app-game-log>
+    </div>
+}

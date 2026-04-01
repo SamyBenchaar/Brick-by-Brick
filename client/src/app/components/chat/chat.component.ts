@@ -12,12 +12,13 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ChatService } from '@app/services/communication/chat/chat.service';
-import { ChatMessage } from '@common/message';
+import { ChatMessage, LogMessage, MessageType } from '@common/message';
+import { GameLogComponent } from '../game-log/game-log.component';
 
 @Component({
     selector: 'app-chat',
     standalone: true,
-    imports: [CommonModule, FormsModule],
+    imports: [CommonModule, FormsModule, GameLogComponent],
     templateUrl: './chat.component.html',
     styleUrls: ['./chat.component.scss'],
 })
@@ -33,6 +34,10 @@ export class ChatComponent implements OnInit, OnChanges, OnDestroy {
     messages: ChatMessage[] = [];
     messageInput = signal('');
     isLoading = signal(false);
+
+    MessageType = MessageType;
+    activeTab = MessageType.CHAT;
+    logs: LogMessage[] = [];
 
     constructor() {
         effect(() => {
