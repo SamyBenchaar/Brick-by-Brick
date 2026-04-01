@@ -27,10 +27,14 @@ $overlay-color: rgba(222, 236, 255, 0.6);
 
 .header {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
+    position: relative;
 }
 
 .header-title {
+    display: flex;
+    justify-content: center;
+    align-items: center;
     font-size: 35px;
     padding: 20px;
     margin: 0;
@@ -53,6 +57,11 @@ $overlay-color: rgba(222, 236, 255, 0.6);
     font-size: 20px;
     text-transform: uppercase;
     border: none;
+}
+
+.header .button {
+    position: absolute;
+    left: 0;
 }
 
 .button:hover {
