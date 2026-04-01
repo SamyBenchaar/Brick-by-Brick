@@ -177,6 +177,7 @@ export class GamePlayMovementHandler {
                 interactionType: 'healingsanctuary',
                 newLife: currentPlayer.life,
                 remainingActions: currentPlayer.remainingActions,
+                playerId: currentPlayer.id,
             });
         } else if (objectType === 'combatsanctuary') {
             currentPlayer.attack += 1;
@@ -188,6 +189,7 @@ export class GamePlayMovementHandler {
                 interactionType: 'combatsanctuary',
                 newAttack: currentPlayer.attack,
                 remainingActions: currentPlayer.remainingActions,
+                playerId: currentPlayer.id,
             });
         }
     }
