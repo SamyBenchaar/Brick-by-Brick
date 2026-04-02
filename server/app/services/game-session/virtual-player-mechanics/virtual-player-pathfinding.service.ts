@@ -3,13 +3,12 @@ import { TILE_COST, TileType } from '@common/map';
 import { Player } from '@common/player';
 import { Position } from '@common/position';
 import { Injectable } from '@nestjs/common';
+import {KEY_DIRECTION_MAP} from '@common/constants/key-event.constants';
 
 export interface PathNode {
     cost: number;
     from: Position | null;
 }
-
-export type MoveDirection = 'arrowUp' | 'arrowDown' | 'arrowLeft' | 'arrowRight';
 
 @Injectable()
 export class VirtualPlayerPathfindingService {
@@ -26,18 +25,18 @@ export class VirtualPlayerPathfindingService {
         ];
     }
 
-    getDirection(from: Position, to: Position): MoveDirection | null {
+    getDirection(from: Position, to: Position): keyof typeof KEY_DIRECTION_MAP | null {
         if (to.x === from.x && to.y === from.y - 1) {
-            return 'arrowUp';
+            return KEY_DIRECTION_MAP.w;
         }
         if (to.x === from.x && to.y === from.y + 1) {
-            return 'arrowDown';
+            return KEY_DIRECTION_MAP.s;
         }
         if (to.x === from.x - 1 && to.y === from.y) {
-            return 'arrowLeft';
+            return KEY_DIRECTION_MAP.a  ;
         }
         if (to.x === from.x + 1 && to.y === from.y) {
-            return 'arrowRight';
+            return KEY_DIRECTION_MAP.d;
         }
         return null;
     }
