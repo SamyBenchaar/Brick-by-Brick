@@ -25,6 +25,24 @@ export class GamePlayCtfHandler {
         if (!this.validateFlagTransferRequest(gameSession, fromPlayer, toPlayer)) return;
 
         gameSession.createFlagTransferRequest(fromPlayer.character.id, toPlayer.character.id);
+
+        if (toPlayer.virtualProfile) {
+            gameSession.acceptFlagTransfer(toPlayer.character.id);
+
+            if (fromPlayer.character.remainingActions !== undefined) {
+                fromPlayer.character.remainingActions -= 1;
+            }
+
+            context.server.to(payload.roomId).emit(GameSessionEvents.GameSessionUpdated, gameSession);
+
+            const fromCurrentPlayer = gameSession.getCurrentPlayer();
+            if (fromCurrentPlayer?.id === fromPlayer.character.id && !this.gameSessionService.canPlayerTakeAction(gameSession)) {
+                this.gameSessionService.endCurrentTurn(gameSession);
+                context.onTurnEnd(gameSession);
+            }
+            return;
+        }
+
         context.server.to(toPlayer.socketId).emit(GameSessionEvents.RequestFlagTransfer, {
             fromPlayerId: fromPlayer.character.id,
             fromPlayerName: fromPlayer.character.name,

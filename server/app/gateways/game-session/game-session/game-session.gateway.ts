@@ -267,7 +267,7 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
 
     notifyGameSessionUpdated(gameSession: GameSession): void {
         this.notifyAvatarTakenUpdated(gameSession.roomId, gameSession.getTakenAvatars());
-        this.server.emit(GameSessionEvents.GameSessionUpdated, gameSession);
+        this.server.to(gameSession.roomId).emit(GameSessionEvents.GameSessionUpdated, gameSession);
     }
 
     notifyGameSessionListUpdated() {

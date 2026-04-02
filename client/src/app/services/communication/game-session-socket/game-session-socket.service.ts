@@ -94,6 +94,11 @@ export class GameSessionSocketService {
         });
 
         this.socketService.on<GameSession>(GameSessionEvents.GameSessionUpdated, (updatedSession) => {
+            const currentSession = this.currentSession();
+            if (currentSession && currentSession.roomId !== updatedSession.roomId) {
+                return;
+            }
+
             this.gameSessions.update(current =>
                 current.map(gameSession => gameSession.roomId === updatedSession.roomId ? updatedSession : gameSession));
             const mySocketId = this.socketService.getSocketId();
@@ -117,7 +122,21 @@ export class GameSessionSocketService {
         });
 
         this.socketService.on<string>(GameSessionEvents.GameSessionJoinError, (message) => {
+            const isSessionFull = message.includes('session de jeu est pleine');
             const isOddPlayersWarning = message.includes('nombre pair de joueurs');
+            const isHostInWaitingRoom = !!this.currentSession() && this.isCurrentUserHost();
+
+            if (isSessionFull && isHostInWaitingRoom) {
+                this.dialog.open(AppDialogComponent, {
+                    data: {
+                        title: 'Capacité atteinte',
+                        message: 'La salle est pleine. Vous ne pouvez plus ajouter de joueur virtuel.',
+                        type: 'info',
+                        confirmText: 'OK',
+                    },
+                });
+                return;
+            }
 
             if (isOddPlayersWarning) {
                 this.dialog.open(AppDialogComponent, {
