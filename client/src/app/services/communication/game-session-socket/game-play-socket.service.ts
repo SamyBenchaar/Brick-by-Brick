@@ -8,6 +8,7 @@ import { TileType } from '@common/map';
 import { Player } from '@common/player';
 import { Position } from '@common/position';
 import { GameSessionSocketService } from './game-session-socket.service';
+import { GameSession } from '@app/interfaces/game-session';
 
 @Injectable({
     providedIn: 'root',
@@ -18,6 +19,10 @@ export class GamePlaySocketService {
 
     private get gameSessionSocketService(): GameSessionSocketService {
         return this.injector.get(GameSessionSocketService);
+    }
+
+    private get gameSession(): GameSession | null {
+        return this.gameSessionSocketService.currentSession();
     }
 
     playerSocketId: WritableSignal<string | null> = signal<string | null>(null);
@@ -148,7 +153,8 @@ export class GamePlaySocketService {
             currentPlayer.remainingActions !== undefined &&
             currentPlayer.remainingActions > 0 &&
             this.areAdjacent(currentPlayer.position, position) &&
-            target.type === TileType.Door
+            target.type === TileType.Door && 
+            this.gameSession?.flagPosition?.x !== position.x && this.gameSession?.flagPosition?.y !== position.y
         );
     }
 
@@ -157,6 +163,8 @@ export class GamePlaySocketService {
         if (!this.isMyTurn() || !currentPlayer?.position || (currentPlayer.remainingActions ?? 0) <= 0) return false;
         const map = this.mapCopy();
         if (!map) return false;
+        if (this.areAdjacent(currentPlayer.position,
+             {x: this.gameSession?.flagPosition?.x ?? 0, y: this.gameSession?.flagPosition?.y ?? 0})) return false;
         const { x, y } = currentPlayer.position;
         const adjacentPos: Position[] = [
             { x: x - 1, y },

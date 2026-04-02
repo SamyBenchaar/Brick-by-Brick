@@ -1,6 +1,8 @@
+import { GameSession } from '@app/domain/game-session';
 import { GamePlayHandlerContext } from '@app/gateways/game-session/game-play/game-play-handler.context';
 import { GameSessionService } from '@app/services/game-session/game-session/game-session.service';
 import { GameSessionEvents } from '@common/game.events';
+import { Player } from '@common/player';
 import { Injectable } from '@nestjs/common';
 import { Socket } from 'socket.io';
 
@@ -17,21 +19,10 @@ export class GamePlayCtfHandler {
         if (!gameSession) return;
 
         const fromPlayer = gameSession.players.find(p => p.socketId === socket.id);
-        if (!fromPlayer) return;
-
         const toPlayer = gameSession.players.find(p => p.character.id === payload.toPlayerId);
-        if (!toPlayer || fromPlayer.character.team !== toPlayer.character.team) return;
 
-        const fromHasFlag = fromPlayer.character.hasFlag;
-        const toHasFlag = toPlayer.character.hasFlag;
-
-        if ((fromHasFlag && toHasFlag) || (!fromHasFlag && !toHasFlag)) return;
-
-        const currentPlayer = gameSession.getCurrentPlayer();
-        if (!currentPlayer) return;
-        if (fromPlayer.character.id !== currentPlayer.id) return;
-
-        if ((currentPlayer.remainingActions ?? 0) <= 0) return;
+        if (!fromPlayer || !toPlayer) return;
+        if (!this.validateFlagTransferRequest(gameSession, fromPlayer, toPlayer)) return;
 
         gameSession.createFlagTransferRequest(fromPlayer.character.id, toPlayer.character.id);
 
@@ -56,6 +47,25 @@ export class GamePlayCtfHandler {
             fromPlayerId: fromPlayer.character.id,
             fromPlayerName: fromPlayer.character.name,
         });
+    }
+
+    private validateFlagTransferRequest(gameSession: GameSession, fromPlayer: Player, toPlayer: Player): boolean {
+        if (fromPlayer.character.team !== toPlayer.character.team) return false;
+
+        if (!fromPlayer.character.position || !toPlayer.character.position) return false;
+        const distance = Math.abs(fromPlayer.character.position.x - toPlayer.character.position.x) +
+            Math.abs(fromPlayer.character.position.y - toPlayer.character.position.y);
+        if (distance !== 1) return false;
+
+        const fromHasFlag = fromPlayer.character.hasFlag;
+        const toHasFlag = toPlayer.character.hasFlag;
+        if ((fromHasFlag && toHasFlag) || (!fromHasFlag && !toHasFlag)) return false;
+
+        const currentPlayer = gameSession.getCurrentPlayer();
+        if (!currentPlayer || fromPlayer.character.id !== currentPlayer.id) return false;
+        if ((currentPlayer.remainingActions ?? 0) <= 0) return false;
+
+        return true;
     }
 
     handleFlagTransferResponse(
