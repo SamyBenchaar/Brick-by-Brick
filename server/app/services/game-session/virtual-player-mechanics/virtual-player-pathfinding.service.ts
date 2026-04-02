@@ -53,7 +53,7 @@ export class VirtualPlayerPathfindingService {
         }
 
         const tile = mapData[to.y][to.x];
-        if (tile.type === TileType.Wall || tile.type === TileType.Door) {
+        if (tile.type === TileType.Wall) {
             return Infinity;
         }
 
@@ -100,7 +100,8 @@ export class VirtualPlayerPathfindingService {
             visited.add(key);
 
             const neighbors = this.getNeighbors(current.pos);
-            for (const neighbor of neighbors) {
+            for (let i = 0; i < neighbors.length; i++) {
+                const neighbor = neighbors[i];
                 const stepCost = this.getMoveCost(session, neighbor, bot);
                 if (stepCost === Infinity) {
                     continue;

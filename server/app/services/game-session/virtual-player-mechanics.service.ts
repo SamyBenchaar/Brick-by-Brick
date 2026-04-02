@@ -1,6 +1,7 @@
 import { GameSession } from '@app/domain/game-session';
 import { GameGateway } from '@app/gateways/game/game.gateway';
 import { GameSessionEvents } from '@common/game.events';
+import { DoorState, TileType } from '@common/map';
 import { Player } from '@common/player';
 import { Position } from '@common/position';
 import { Inject, Injectable } from '@nestjs/common';
@@ -113,7 +114,8 @@ export class VirtualPlayerMechanicsService {
         let bestTarget: Position | null = null;
         let bestCost = Infinity;
 
-        for (const candidate of candidates) {
+        for (let i = 0; i < candidates.length; i++) {
+            const candidate = candidates[i];
             const pathInfo = this.pathfinding.buildShortestPath(session, bot, candidate);
             if (pathInfo && pathInfo.totalCost < bestCost) {
                 bestTarget = candidate;
@@ -135,7 +137,8 @@ export class VirtualPlayerMechanicsService {
         }
 
         let moved = false;
-        for (const next of pathInfo.path) {
+        for (let i = 0; i < pathInfo.path.length;) {
+            const next = pathInfo.path[i];
             if (!this.canMove(bot) || !bot.character.position) {
                 break;
             }
@@ -159,6 +162,10 @@ export class VirtualPlayerMechanicsService {
             );
 
             if (!didMove) {
+                const openedDoor = await this.tryOpenDoorAtPosition(session, bot, next);
+                if (openedDoor) {
+                    continue;
+                }
                 break;
             }
 
@@ -172,6 +179,7 @@ export class VirtualPlayerMechanicsService {
             this.handleCtfFlagPickup(session, bot);
 
             moved = true;
+            i++;
         }
 
         return moved;
@@ -229,6 +237,36 @@ export class VirtualPlayerMechanicsService {
 
         session.setFlagHolder(bot.character.id);
         this.gameGateway.notifyRoomEvent(session.roomId, GameSessionEvents.GameSessionUpdated, session);
+    }
+
+    private async tryOpenDoorAtPosition(session: GameSession, bot: Player, doorPosition: Position): Promise<boolean> {
+        if (!this.hasAction(bot) || !bot.character.position) {
+            return false;
+        }
+
+        const distance = Math.abs(bot.character.position.x - doorPosition.x)
+            + Math.abs(bot.character.position.y - doorPosition.y);
+        if (distance !== 1) {
+            return false;
+        }
+
+        const tile = session.getMapCopy()?.tiles?.[doorPosition.y]?.[doorPosition.x];
+        if (!tile || tile.type !== TileType.Door || tile.doorState === DoorState.Opened) {
+            return false;
+        }
+
+        await this.randomDelay();
+        tile.doorState = DoorState.Opened;
+        bot.character.remainingActions = (bot.character.remainingActions ?? 0) - 1;
+
+        this.gameGateway.notifyRoomEvent(session.roomId, GameSessionEvents.InteractResult, {
+            position: doorPosition,
+            interactionType: 'door',
+            newDoorState: tile.doorState,
+            remainingActions: bot.character.remainingActions,
+        });
+
+        return true;
     }
 
     private async randomDelay(): Promise<void> {
