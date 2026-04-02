@@ -3,6 +3,7 @@ import { Tile } from '@app/model/tile';
 import { MapSize, MIN_TERRAIN_COVERAGE, ObjectType, PERCENTAGE_MULTIPLIER, PLAYABLE_TYPES, TileType } from '@common/map';
 import { Injectable } from '@nestjs/common';
 import { Direction, GridPosition } from '@app/interfaces/map-validation-interfaces';
+import { SANCTUARY_ADJACENT_POSITIONS } from '@app/constants/sanctuary-validation-constants';
 
 @Injectable()
 export class MapValidationService {
@@ -21,6 +22,9 @@ export class MapValidationService {
 
         // Validation: Toutes les portes doivent être placées sur les bords de la carte
         errors.push(...this.validateDoors(gameData));
+
+        // Validation: Tous les sanctuaires doivent être accessibles
+        errors.push(...this.validateSanctuaries(gameData));
 
         return errors;
     }
@@ -132,6 +136,13 @@ export class MapValidationService {
         return [];
     }
 
+    private validateSanctuaries(gameData: Partial<Game>): string[] {
+        const tiles = gameData.mapConfig.tiles;
+        if (!this.isSanctuaryAccessible(tiles)) {
+            return [`certains sanctuaires sont inaccessibles.`];
+        }
+        return [];
+    }
 
     private validateDoors(gameData: Partial<Game>): string[] {
         const tiles = gameData.mapConfig.tiles;
@@ -150,7 +161,10 @@ export class MapValidationService {
 
         for (const row of tiles) {
             for (const tile of row) {
-                if (PLAYABLE_TYPES.includes(tile.type as TileType) ) {
+                const objectType = tile.object?.type;
+                if (PLAYABLE_TYPES.includes(tile.type as TileType) 
+                    && objectType !== ObjectType.HealingSanctuary && objectType !== ObjectType.CombatSanctuary
+                ) {
                     count++;
                 }
             }
@@ -178,6 +192,27 @@ export class MapValidationService {
                     if (x === 0 || x === tiles[y].length - 1 || y === 0 || y === tiles.length - 1) {
                         return false;
                     }
+                }
+            }
+        }
+        return true;
+    }
+
+    private isSanctuaryAccessible(tiles: Tile[][]): boolean {
+        for (let y = 0; y < tiles.length; y++) {
+            for (let x = 0; x < tiles[y].length; x++) {
+                const tile = tiles[y][x];
+                if ((tile.object?.type === ObjectType.HealingSanctuary || tile.object?.type === ObjectType.CombatSanctuary) && tile.isOrigin) {
+                    const checkPos = SANCTUARY_ADJACENT_POSITIONS.map(({ dx, dy }) => ({ x: x + dx, y: y + dy }));
+
+                    const hasAccess = checkPos.some(pos =>
+                        pos.x >= 0 && pos.x < tiles[y].length &&
+                        pos.y >= 0 && pos.y < tiles.length &&
+                        PLAYABLE_TYPES.includes(tiles[pos.y][pos.x].type as TileType) &&
+                        tiles[pos.y][pos.x].object?.type !== ObjectType.HealingSanctuary &&
+                        tiles[pos.y][pos.x].object?.type !== ObjectType.CombatSanctuary,
+                    );
+                    if (!hasAccess) return false;
                 }
             }
         }
