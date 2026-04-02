@@ -13,7 +13,7 @@ import { CombatPosture } from '@common/combat';
 export class CombatViewComponent {
   private gamePlaySocketService = inject(GamePlaySocketService);
 
-  Posture = CombatPosture;
+  posture = CombatPosture;
   combat = computed(() => this.gamePlaySocketService.combatState());
 
   isMyCombatTurn(): boolean {

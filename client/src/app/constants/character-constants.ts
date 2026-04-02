@@ -12,6 +12,7 @@ export const DICE_PROBABILITY = 0.5;
 export const DICE_VALUES: Dice[] = [Dice.D4, Dice.D6];
 export const BONUS_ATTRIBUTES = ['life', 'speed'] as const;
 export const AVATAR_SYNC_DELAY_MS = 100;
+export const MS_CONVERSION = 1000;
 
 export const AVATARS: AvatarOption[] = [
     { id: 1, name: 'lily', image: './assets/images/lily.jpg' },

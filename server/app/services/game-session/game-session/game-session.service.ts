@@ -1,4 +1,5 @@
 import { GameSession } from '@app/domain/game-session';
+import { TileDto } from '@app/dto/tile.dto';
 import { CombatResult, GameDataForInit } from '@app/interfaces/game-map-interfaces';
 import { CombatService } from '@app/services/game-session/combat.service';
 import { MovementService } from '@app/services/game-session/movement.service';
@@ -43,7 +44,7 @@ export class GameSessionService {
         const originalGame = await this.gameService.findOne(mapId);
         const mapCopy = JSON.parse(JSON.stringify(originalGame));
 
-        const newGameSession = new GameSession(player, mapId);
+        const newGameSession = new GameSession(player, mapId, originalGame.gameMode);
         newGameSession.mapCopy = mapCopy;
         newGameSession.maxPlayers = getGameSizeConfig(mapCopy.mapConfig.size).maxPlayers;
 
@@ -191,7 +192,7 @@ export class GameSessionService {
         if (!attacker || !defender) {
             throw new Error('Invalid player IDs');
         }
-        if (!this.combatService.canFight(attacker, defender)) {
+        if (!this.combatService.canFight(attacker, defender, gameSession)) {
             throw new Error('Players are not adjacent');
         }
         const result = this.combatService.executeCombat(
@@ -222,9 +223,10 @@ export class GameSessionService {
             gameSession,
             currentPlayer.position,
         );
+        const canInteract = hasRemainingActions && this.movementService.isDoorAdjacent(currentPlayer.position, gameSession);
         const canFight = hasRemainingActions && adjacentPlayers.length > 0;
 
-        return canMove || canFight;
+        return canMove || canFight || canInteract;
     }
 
     removePlayer(roomId: string, playerId: string): void {
@@ -286,5 +288,75 @@ export class GameSessionService {
 
     private pickRandom<T>(items: T[]): T {
         return items[Math.floor(Math.random() * items.length)];
+    }
+
+    findNearestFreeTile(gameSession: GameSession, fromPosition: Position): Position | null {
+        if (!gameSession.mapCopy) {
+            return null;
+        }
+
+        const mapData = gameSession.mapCopy.tiles;
+        const height = mapData.length;
+        const width = mapData[0].length;
+
+        const queue: { pos: Position; distance: number }[] = [{ pos: fromPosition, distance: 0 }];
+        const visited = new Set<string>();
+        visited.add(`${fromPosition.x},${fromPosition.y}`);
+
+        const directions = [
+            { x: 0, y: -1 },
+            { x: 0, y: 1 },
+            { x: -1, y: 0 },
+            { x: 1, y: 0 },
+        ];
+
+        while (queue.length > 0) {
+            const item = queue.shift();
+            if (!item) {
+                break;
+            }
+            const { pos, distance } = item;
+
+            if (this.isFreeTile(gameSession, pos, mapData)) {
+                return pos;
+            }
+
+            for (const dir of directions) {
+                const nextPos = { x: pos.x + dir.x, y: pos.y + dir.y };
+                const key = `${nextPos.x},${nextPos.y}`;
+
+                if (!visited.has(key) && nextPos.x >= 0 && nextPos.x < width && nextPos.y >= 0 && nextPos.y < height) {
+                    visited.add(key);
+                    queue.push({ pos: nextPos, distance: distance + 1 });
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private isFreeTile(gameSession: GameSession, position: Position, mapData: TileDto[][]): boolean {
+        const tile = mapData[position.y][position.x];
+
+        if (tile.type === 'wall') {
+            return false;
+        }
+
+        if (tile.type === 'door' && tile.doorState === 'opened') {
+            return false;
+        }
+
+        if (tile.object) {
+            return false;
+        }
+
+        const hasPlayer = gameSession.players.some(
+            p => p.character.position?.x === position.x && p.character.position?.y === position.y,
+        );
+        if (hasPlayer) {
+            return false;
+        }
+
+        return true;
     }
 }

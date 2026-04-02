@@ -1,11 +1,15 @@
-import { Injectable, Injector, WritableSignal, computed, inject, signal } from '@angular/core';
+import { Injectable, Injector, WritableSignal, inject, signal, computed } from '@angular/core';
+import { Tile } from '@app/classes/tile/tile';
 import { Game } from '@app/interfaces/game';
 import { SocketService } from '@app/services/communication/socket/socket.service';
 import { Character } from '@common/character';
 import { CombatPosture, CombatState } from '@common/combat';
 import { GameSessionEvents } from '@common/game.events';
+import { TileType } from '@common/map';
+import { Player } from '@common/player';
 import { Position } from '@common/position';
 import { GameSessionSocketService } from './game-session-socket.service';
+import { GameSession } from '@app/interfaces/game-session';
 
 @Injectable({
     providedIn: 'root',
@@ -16,6 +20,10 @@ export class GamePlaySocketService {
 
     private get gameSessionSocketService(): GameSessionSocketService {
         return this.injector.get(GameSessionSocketService);
+    }
+
+    private get gameSession(): GameSession | null {
+        return this.gameSessionSocketService.currentSession();
     }
 
     playerSocketId: WritableSignal<string | null> = signal<string | null>(null);
@@ -34,6 +42,8 @@ export class GamePlaySocketService {
         const combat = this.combatState();
         return combat ? [combat.attacker.id, combat.defender.id] : [];
     });
+    pendingFlagTransfers: Map<string, unknown> = new Map();
+    pendingFlagTransferTimeouts: Map<string, ReturnType<typeof setTimeout>> = new Map();
 
     connect(): void {
         if (!this.socketService.isConnected()) {
@@ -108,6 +118,12 @@ export class GamePlaySocketService {
         const roomId = this.getRoomId();
         if (roomId) this.socketService.emit(GameSessionEvents.CombatChoosePosture, { roomId, posture });
     }
+    requestInteract(position: Position): void {
+        const currentRoomId = this.getRoomId();
+        if (currentRoomId) {
+            this.socketService.emit(GameSessionEvents.RequestInteract, { roomId: currentRoomId, position });
+        }
+    }
 
     endTurn(): void {
         const currentRoomId = this.getRoomId();
@@ -120,13 +136,13 @@ export class GamePlaySocketService {
         const currentPlayerId = this.currentPlayerTurn();
         if (!currentPlayerId) return false;
         const mySocketId = this.getSocketId();
-        const myPlayer = this.currentSession()?.players.find(p => p.socketId === mySocketId);
+        const myPlayer = this.currentSession()?.players.find((p: Player) => p.socketId === mySocketId);
         return myPlayer?.character.id === currentPlayerId;
     }
 
     getCurrentPlayerCharacter(): Character | null {
         const mySocketId = this.getSocketId();
-        return this.currentSession()?.players.find(p => p.socketId === mySocketId)?.character ?? null;
+        return this.currentSession()?.players.find((p: Player) => p.socketId === mySocketId)?.character ?? null;
     }
 
     getAutoAttackTarget(): Character | null {
@@ -141,11 +157,40 @@ export class GamePlaySocketService {
         }
 
         return session.players
-            .map(player => player.character)
-            .find(character =>
+            .map((player: Player) => player.character)
+            .find((character: Character) =>
                 character.id !== currentPlayer.id && character.position !== undefined &&
                 this.areAdjacent(currentPlayer.position as Position, character.position),
             ) ?? null;
+    }
+
+    canInteractWithTarget(target: Tile, position: Position): boolean {
+        const currentPlayer = this.getCurrentPlayerCharacter();
+        return (this.isMyTurn() &&
+            currentPlayer?.position !== undefined &&
+            currentPlayer.remainingActions !== undefined &&
+            currentPlayer.remainingActions > 0 &&
+            this.areAdjacent(currentPlayer.position, position) &&
+            target.type === TileType.Door && 
+            this.gameSession?.flagPosition?.x !== position.x && this.gameSession?.flagPosition?.y !== position.y
+        );
+    }
+
+    canPlayerInteractDoor(): boolean {
+        const currentPlayer = this.getCurrentPlayerCharacter();
+        if (!this.isMyTurn() || !currentPlayer?.position || (currentPlayer.remainingActions ?? 0) <= 0) return false;
+        const map = this.mapCopy();
+        if (!map) return false;
+        if (this.areAdjacent(currentPlayer.position,
+             {x: this.gameSession?.flagPosition?.x ?? 0, y: this.gameSession?.flagPosition?.y ?? 0})) return false;
+        const { x, y } = currentPlayer.position;
+        const adjacentPos: Position[] = [
+            { x: x - 1, y },
+            { x: x + 1, y },
+            { x, y: y - 1 },
+            { x, y: y + 1 },
+        ];
+        return adjacentPos.some(pos => map.mapConfig.tiles[pos.y]?.[pos.x]?.type === 'door');
     }
 
     canAttackTarget(target: Character | null): boolean {
@@ -204,7 +249,50 @@ export class GamePlaySocketService {
         return this.gameSessionSocketService.currentSession();
     }
 
+    get currentSessionSignal(): WritableSignal<unknown> {
+        return this.gameSessionSocketService.currentSession;
+    }
+
     isCurrentUserHost(): boolean {
         return this.gameSessionSocketService.isCurrentUserHost();
+    }
+
+    setPendingFlagTransferDialog(toPlayerId: string, dialogRef: unknown, fromPlayerId: string): void {
+        this.pendingFlagTransfers.set(toPlayerId, { dialogRef, fromPlayerId });
+    }
+
+    removePendingFlagTransferDialog(toPlayerId: string): void {
+        this.pendingFlagTransfers.delete(toPlayerId);
+    }
+
+    clearPendingFlagTransfer(playerId: string): void {
+        const timeoutId = this.pendingFlagTransferTimeouts.get(playerId);
+        if (timeoutId !== undefined) {
+            clearTimeout(timeoutId);
+            this.pendingFlagTransferTimeouts.delete(playerId);
+        }
+    }
+
+    clearAllPendingFlagTransfers(): void {
+        this.pendingFlagTransferTimeouts.forEach((timeout) => {
+            clearTimeout(timeout);
+        });
+        this.pendingFlagTransferTimeouts.clear();
+        this.pendingFlagTransfers.clear();
+    }
+
+    setPendingFlagTransferTimeout(fromPlayerId: string, timeoutId: ReturnType<typeof setTimeout>): void {
+        this.pendingFlagTransferTimeouts.set(fromPlayerId, timeoutId);
+    }
+
+    respondToFlagTransfer(fromPlayerId: string, accepted: boolean): void {
+        const currentRoomId = this.getRoomId();
+        if (currentRoomId) {
+            this.socketService.emit(GameSessionEvents.FlagTransferResponse, {
+                roomId: currentRoomId,
+                fromPlayerId,
+                accepted,
+            });
+        }
     }
 }

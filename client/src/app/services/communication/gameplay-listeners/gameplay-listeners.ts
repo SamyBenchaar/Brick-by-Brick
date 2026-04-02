@@ -2,20 +2,37 @@ import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { AppDialogComponent } from '@app/components/game-edition-components/app-dialog/app-dialog.component';
 import { Tile } from '@app/interfaces/game';
+import { GameSession } from '@app/interfaces/game-session';
+import { FlagTransferSocketService } from '@app/services/communication/game-session-socket/flag-transfer-socket.service';
 import { GamePlaySocketService } from '@app/services/communication/game-session-socket/game-play-socket.service';
 import type { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
 import { SocketService } from '@app/services/communication/socket/socket.service';
-import { CombatResultPayload, CombatState } from '@common/combat';
+import { CTF_VICTORY_ANNOUNCE_DELAY } from '@common/constants/game-config-constants';
 import { GameSessionEvents } from '@common/game.events';
 import { Position } from '@common/position';
+import { CombatState, CombatResultPayload } from '@common/combat';
 
-export function setupGameplayEventListeners(
-    service: GamePlaySocketService,
-    gameSessionSocketService: GameSessionSocketService,
-    socketService: SocketService,
-    router: Router,
-    dialog: MatDialog,
-): void {
+interface GameplayListenersContext {
+    gamePlaySocketService: GamePlaySocketService;
+    gameSessionSocketService: GameSessionSocketService;
+    socketService: SocketService;
+    router: Router;
+    dialog: MatDialog;
+    flagTransferService: FlagTransferSocketService;
+}
+
+const TIMEOUT = 3000;
+
+export function setupGameplayEventListeners(context: GameplayListenersContext): void {
+    const {
+        gamePlaySocketService: service,
+        gameSessionSocketService,
+        socketService,
+        router,
+        dialog,
+        flagTransferService,
+    } = context;
+
     const syncCombatSession = (combat: CombatState) => {
         const session = service.currentSession();
         if (!session) return;
@@ -72,6 +89,12 @@ export function setupGameplayEventListeners(
     socketService.on<{ playerId: string }>(GameSessionEvents.TurnEnded, () => {
         service.currentPlayerTurn.set(null);
         service.reachableTiles.set([]);
+        const pendingDialogs = flagTransferService.getPendingFlagTransferDialogs();
+        pendingDialogs.forEach(([, data]) => {
+            data.dialogRef.close(false);
+            service.respondToFlagTransfer(data.fromPlayerId, false);
+        });
+        flagTransferService.clearAllPendingFlagTransfers();
     });
 
     socketService.on<{ playerId: string; position: Position; remainingMovement: number; remainingActions: number }>(
@@ -161,10 +184,29 @@ export function setupGameplayEventListeners(
 
             window.setTimeout(() => {
                 if (service.combatNotification() === message) service.dismissCombatNotification();
-            }, 3000);
+            }, TIMEOUT);
         }
 
         service.combatState.set(null);
+    });
+
+    socketService.on<{ position: Position, newDoorState: string, remainingActions: number }>(GameSessionEvents.InteractResult, (data) => {
+        const currentMap = service.mapCopy();
+        if (currentMap) {
+            currentMap.mapConfig.tiles[data.position.y][data.position.x].doorState = data.newDoorState;
+            service.mapCopy.set({ ...currentMap });
+        }
+
+        const session = gameSessionSocketService.currentSession();
+        if (session) {
+            const currentPlayerId = service.currentPlayerTurn();
+            const player = session.players.find(p => p.character.id === currentPlayerId);
+            if (player) {
+                player.character.remainingActions = data.remainingActions;
+                gameSessionSocketService.currentSession.set({ ...session });
+
+            }
+        }
     });
 
     socketService.on<{ playerId: string; mapCopyTiles: Tile[][] }>(GameSessionEvents.PlayerAbandoned, (data) => {
@@ -191,7 +233,10 @@ export function setupGameplayEventListeners(
         }
     });
 
-    socketService.on<{ winner: { id: string; name: string; avatarId: number } | null; reason: string }>(
+    socketService.on<{
+        winner:
+        { id: string; name: string; avatarId: number } | null; winningTeam?: 'team1' | 'team2'; gameMode?: string; reason: string
+    }>(
         GameSessionEvents.GameEnded,
         (data) => {
             if (gameSessionSocketService.hasAbandoned()) {
@@ -205,19 +250,30 @@ export function setupGameplayEventListeners(
             let title = 'Partie terminée';
 
             if (data.reason === 'victory' && data.winner) {
-                const mySocketId = service.getSocketId();
-                if (data.winner.id === mySocketId) {
+                if (data.gameMode === 'ctf' && data.winningTeam) {
+                    const teamName = data.winningTeam === 'team1' ? 'bleue' : 'rouge';
                     title = 'Victoire!';
-                    message = 'Félicitations! Vous avez gagné la partie avec 3 victoires!';
+                    message = `L'équipe ${teamName} a gagné la partie!`;
                 } else {
-                    title = 'Partie terminée';
-                    message = `${data.winner.name} a gagné la partie avec 3 victoires!`;
+                    const mySocketId = service.getSocketId();
+                    if (data.winner.id === mySocketId) {
+                        title = 'Victoire!';
+                        message = 'Félicitations! Vous avez gagné la partie avec 3 victoires!';
+                    } else {
+                        title = 'Partie terminée';
+                        message = `${data.winner.name} a gagné la partie avec 3 victoires!`;
+                    }
                 }
             } else if (data.reason === 'noPlayers') {
                 message = 'La partie est terminée car tous les autres joueurs ont abandonné.';
+            } else if (data.reason === 'canceled') {
+                title = 'Partie annulée';
+                message = 'La partie a été annulée car une équipe n\'a plus aucun joueur.';
             } else {
                 message = 'La partie est terminée.';
             }
+
+            const delay = data.gameMode === 'ctf' && data.reason === 'victory' ? CTF_VICTORY_ANNOUNCE_DELAY : gameSessionSocketService.endGameDelay;
 
             setTimeout(() => {
                 router.navigate(['/']).then(() => {
@@ -228,11 +284,43 @@ export function setupGameplayEventListeners(
                     service.gameEnded.set(false);
                     gameSessionSocketService.currentSession.set(null);
                 });
-            }, gameSessionSocketService.endGameDelay);
+            }, delay);
         },
     );
 
     socketService.on<{ isDebugModeActivated: boolean }>(GameSessionEvents.ToggleDebugMode, (data) => {
         service.isDebugModeActivated.set(data.isDebugModeActivated);
+    });
+
+    socketService.on<{ fromPlayerId: string; fromPlayerName: string }>(GameSessionEvents.RequestFlagTransfer, (data) => {
+        const mySocketId = service.getSocketId();
+        const session = gameSessionSocketService.currentSession();
+        if (!session) return;
+
+        const toPlayer = session.players.find(p => p.socketId === mySocketId);
+        if (!toPlayer) return;
+
+        const dialogRef = dialog.open(AppDialogComponent, {
+            data: {
+                title: 'Demande de transfert de drapeau',
+                message: `${data.fromPlayerName} veut vous transférer le drapeau. Acceptez-vous?`,
+                type: 'warning',
+                confirmText: 'Accepter',
+                cancelText: 'Refuser',
+            },
+        });
+
+        flagTransferService.setPendingFlagTransferDialog(toPlayer.character.id, dialogRef, data.fromPlayerId);
+
+        dialogRef.afterClosed().subscribe((accepted: boolean) => {
+            flagTransferService.removePendingFlagTransferDialog(toPlayer.character.id);
+            service.respondToFlagTransfer(data.fromPlayerId, accepted ?? false);
+        });
+    });
+
+    socketService.on<GameSession>(GameSessionEvents.GameSessionUpdated, (updatedGameSession) => {
+        if (updatedGameSession) {
+            gameSessionSocketService.currentSession.set({ ...updatedGameSession });
+        }
     });
 }

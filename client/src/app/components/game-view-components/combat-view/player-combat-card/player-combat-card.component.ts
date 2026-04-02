@@ -1,5 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { CombatPlayerState, CombatPosture, CombatScoreDetail } from '@common/combat';
+import { Dice } from '@common/dice';
 
 @Component({
   selector: 'app-player-combat-card',
@@ -16,8 +17,8 @@ export class PlayerCombatCardComponent {
     maxLife: 0,
     attack: 0,
     defense: 0,
-    attackDice: 'D4' as any,
-    defenseDice: 'D6' as any,
+    attackDice: 'D4' as Dice,
+    defenseDice: 'D6' as Dice,
     victories: 0,
     posture: CombatPosture.None,
     hasChosen: false,
