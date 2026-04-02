@@ -8,7 +8,7 @@ import { GameGridComponent } from '@app/components/game-edition-components/game-
 import { PlayerBoardComponent } from '@app/components/game-view-components/player-board/player-board/player-board.component';
 import { PlayerSignComponent } from '@app/components/game-view-components/player-sign/player-sign/player-sign.component';
 import { AVATARS } from '@app/constants/character-constants';
-import { KEY_DEBUG, KEY_DIRECTION_MAP, KEY_ENTER } from '@app/constants/key-event.constants';
+import { KEY_DEBUG, KEY_DIRECTION_MAP, KEY_ENTER } from '@common/constants/key-event.constants';
 import { AppDialogData } from '@app/interfaces/dialog-model';
 import { Game } from '@app/interfaces/game';
 import { Tile } from '@app/classes/tile/tile';
