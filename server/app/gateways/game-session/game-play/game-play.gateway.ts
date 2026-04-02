@@ -1,12 +1,12 @@
-import { GameSession } from '@app/domain/game-session';
+﻿import { GameSession } from '@app/domain/game-session';
 import { GamePlayHandlerContext } from '@app/gateways/game-session/game-play/game-play-handler.context';
 import { GamePlayHandlersProvider } from '@app/gateways/game-session/game-play/game-play-handlers.provider';
 import { GameSessionGateway } from '@app/gateways/game-session/game-session/game-session.gateway';
-import { CombatService } from '@app/services/game-session/combat.service';
 import { GameDataForInit } from '@app/interfaces/game-map-interfaces';
+import { CombatService } from '@app/services/game-session/combat.service';
 import { GameSessionService } from '@app/services/game-session/game-session/game-session.service';
 import { Character } from '@common/character';
-import { CombatPosture, CombatResultPayload, CombatState } from '@common/combat';
+import { CombatPosture, CombatResultPayload } from '@common/combat';
 import { GameSessionEvents } from '@common/game.events';
 import { Player } from '@common/player';
 import { Position } from '@common/position';
@@ -121,20 +121,12 @@ export class GamePlayGateway implements OnGatewayInit {
 
     @SubscribeMessage(GameSessionEvents.RequestMove)
     handleRequestMove(socket: Socket, payload: { roomId: string; direction: string }) {
-        this.handlersProvider.movementHandler.handleRequestMove(
-            socket,
-            payload,
-            this.createHandlerContext(),
-        );
+        this.handlersProvider.movementHandler.handleRequestMove(socket, payload, this.createHandlerContext());
     }
 
     @SubscribeMessage(GameSessionEvents.RequestAssignPosition)
     handleRequestAssignPosition(socket: Socket, payload: { roomId: string; position: Position }) {
-        this.handlersProvider.movementHandler.handleRequestAssignPosition(
-            socket,
-            payload,
-            this.createHandlerContext(),
-        );
+        this.handlersProvider.movementHandler.handleRequestAssignPosition(socket, payload, this.createHandlerContext());
     }
 
     @SubscribeMessage(GameSessionEvents.RequestCombat)
@@ -175,28 +167,17 @@ export class GamePlayGateway implements OnGatewayInit {
 
     @SubscribeMessage(GameSessionEvents.RequestInteract)
     handleRequestInteract(socket: Socket, payload: { roomId: string; position: Position }) {
-        this.handlersProvider.movementHandler.handleRequestInteract(
-            socket,
-            payload,
-            this.createHandlerContext(),
-        );
+        this.handlersProvider.movementHandler.handleRequestInteract(socket, payload, this.createHandlerContext());
     }
-
 
     @SubscribeMessage(GameSessionEvents.PlayerAbandoned)
     handlePlayerAbandoned(socket: Socket, payload: { roomId: string }) {
         const gameSession = this.gameSessionService.getGameSession(payload.roomId);
-        if (!gameSession) {
-            return;
-        }
-
-        if (gameSession.status !== SessionStatus.Playing) {
-            return;
-        }
+        if (!this.canHandlePlayerAbandon(gameSession)) return;
 
         const currentPlayer = gameSession.getCurrentPlayer();
         const abandoningPlayer = gameSession.players.find(p => p.socketId === socket.id);
-        const wasCurrentPlayer = currentPlayer && abandoningPlayer && currentPlayer.id === abandoningPlayer.character.id;
+        const wasCurrentPlayer = this.isCurrentPlayerAbandoning(currentPlayer, abandoningPlayer);
 
         let combatResult: CombatResultPayload | null = null;
 
@@ -215,19 +196,29 @@ export class GamePlayGateway implements OnGatewayInit {
             mapCopyTiles: gameSession.mapCopy?.tiles,
         });
 
-
-        const shouldStop =
-            !this.handleAbandonedPlayerTeamCheck(gameSession) ||
-            !this.handleAbandonedPlayerWinnerCheck(gameSession) ||
-            this.handleAbandonedPlayerEmptyGame(gameSession);
-
-        if (shouldStop) return;
+        if (this.shouldStopAfterPlayerAbandon(gameSession)) return;
 
         if (wasCurrentPlayer) {
             this.handleTurnEnd(gameSession);
         }
 
-        if (combatResult?.activePlayerWon && !wasCurrentPlayer) return this.resumeCurrentTurn(gameSession);
+        if (combatResult?.activePlayerWon && !wasCurrentPlayer) this.startGameTurn(gameSession);
+    }
+
+    private canHandlePlayerAbandon(gameSession: GameSession | undefined): gameSession is GameSession {
+        return Boolean(gameSession && gameSession.status !== SessionStatus.Playing);
+    }
+
+    private isCurrentPlayerAbandoning(currentPlayer: Character | null, abandoningPlayer: Player | undefined): boolean {
+        return Boolean(currentPlayer && abandoningPlayer && currentPlayer.id === abandoningPlayer.character.id);
+    }
+
+    private shouldStopAfterPlayerAbandon(gameSession: GameSession): boolean {
+        return (
+            !this.handleAbandonedPlayerTeamCheck(gameSession) ||
+            !this.handleAbandonedPlayerWinnerCheck(gameSession) ||
+            this.handleAbandonedPlayerEmptyGame(gameSession)
+        );
     }
 
     private handleAbandonedPlayerFlagPlacement(gameSession: GameSession, abandoningPlayer: Player | undefined): void {
@@ -338,33 +329,26 @@ export class GamePlayGateway implements OnGatewayInit {
         const winner = this.gameSessionService.checkGameWinner(gameSession);
         if (winner) return this.handleGameEnd(gameSession, winner);
 
-        if (result.activePlayerWon) return this.resumeCurrentTurn(gameSession);
+        if (result.activePlayerWon) return this.startGameTurn(gameSession);
 
         this.gameSessionService.endCurrentTurn(gameSession);
         this.handleTurnEnd(gameSession);
-    }
-
-    private resumeCurrentTurn(gameSession: GameSession): void {
-        this.startGameTurn(gameSession);
     }
 
     private emitCombatState(gameSession: GameSession, event: GameSessionEvents.CombatStarted | GameSessionEvents.CombatUpdated): void {
         const combat = gameSession.combat;
         if (!combat) return;
 
-        this.participantSockets(gameSession, combat).forEach((socketId) => {
-            this.server.to(socketId).emit(event, combat);
-        });
+        gameSession.players
+            .filter((player) => [combat.attacker.id, combat.defender.id].includes(player.character.id))
+            .map((player) => player.socketId)
+            .forEach((socketId) => {
+                this.server.to(socketId).emit(event, combat);
+            });
     }
 
     private emitCombatResult(gameSession: GameSession, result: CombatResultPayload): void {
         this.server.to(gameSession.roomId).emit(GameSessionEvents.CombatResult, result);
-    }
-
-    private participantSockets(gameSession: GameSession, combat: CombatState): string[] {
-        return gameSession.players
-            .filter((player) => [combat.attacker.id, combat.defender.id].includes(player.character.id))
-            .map((player) => player.socketId);
     }
 
     private clearCombatTimer(roomId: string): void {
@@ -372,7 +356,7 @@ export class GamePlayGateway implements OnGatewayInit {
         if (timer) clearInterval(timer);
         this.combatTimers.delete(roomId);
     }
-    
+
     private handleGameEndCanceled(gameSession: GameSession): void {
         this.gameSessionService.cleanupTurnTimers(gameSession.roomId);
 
@@ -424,19 +408,11 @@ export class GamePlayGateway implements OnGatewayInit {
 
     @SubscribeMessage(GameSessionEvents.RequestFlagTransfer)
     handleRequestFlagTransfer(socket: Socket, payload: { roomId: string; toPlayerId: string }) {
-        this.handlersProvider.ctfHandler.handleRequestFlagTransfer(
-            socket,
-            payload,
-            this.createHandlerContext(),
-        );
+        this.handlersProvider.ctfHandler.handleRequestFlagTransfer(socket, payload, this.createHandlerContext());
     }
 
     @SubscribeMessage(GameSessionEvents.FlagTransferResponse)
     handleFlagTransferResponse(socket: Socket, payload: { roomId: string; fromPlayerId: string; accepted: boolean }) {
-        this.handlersProvider.ctfHandler.handleFlagTransferResponse(
-            socket,
-            payload,
-            this.createHandlerContext(),
-        );
+        this.handlersProvider.ctfHandler.handleFlagTransferResponse(socket, payload, this.createHandlerContext());
     }
 }

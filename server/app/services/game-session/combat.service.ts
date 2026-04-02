@@ -12,13 +12,13 @@ import {
 import { VICTORIES_TO_WIN } from '@common/constants/game-config-constants';
 import { Dice } from '@common/dice';
 import { TileType } from '@common/map';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { StartingPointService } from './starting-point.service';
-
 
 @Injectable()
 export class CombatService {
-    private logger = new Logger(CombatService.name);
+    private static readonly d4Max = 4;
+    private static readonly d6Max = 6;
     private readonly victoriesToWin = VICTORIES_TO_WIN;
     private readonly combatTurnDuration = 10;
     private readonly postureBonus = 2;
@@ -71,7 +71,8 @@ export class CombatService {
         return combat.timeRemaining;
     }
 
-    resolveRound(gameSession: GameSession, combat: CombatState, isDebugModeActivated: boolean): { combat: CombatState; result?: CombatResultPayload } {
+    resolveRound(gameSession: GameSession, combat: CombatState, isDebugModeActivated: boolean): 
+    { combat: CombatState; result?: CombatResultPayload } {
         const attacker = this.findCharacter(gameSession, combat.attacker.id);
         const defender = this.findCharacter(gameSession, combat.defender.id);
         if (!attacker || !defender) throw new Error('Combat participants not found');
@@ -142,25 +143,12 @@ export class CombatService {
     }
 
     resolveAbandon(gameSession: GameSession, combat: CombatState, leavingPlayerId: string): CombatResultPayload | null {
-        const winner = this.findCharacter(gameSession, combat.attacker.id === leavingPlayerId ? combat.defender.id : combat.attacker.id);
+        const winnerId = combat.attacker.id === leavingPlayerId ? combat.defender.id : combat.attacker.id;
+        const winner = this.findCharacter(gameSession, winnerId);
         if (!winner) return null;
 
         winner.victories = (winner.victories ?? 0) + 1;
-
-        return {
-            attackerId: combat.attacker.id,
-            defenderId: combat.defender.id,
-            winnerId: winner.id,
-            loserIds: [leavingPlayerId],
-            attackerVictories: this.findCharacter(gameSession, combat.attacker.id)?.victories ?? 0,
-            defenderVictories: this.findCharacter(gameSession, combat.defender.id)?.victories ?? 0,
-            attackerLife: this.findCharacter(gameSession, combat.attacker.id)?.life ?? combat.attacker.life,
-            defenderLife: this.findCharacter(gameSession, combat.defender.id)?.life ?? combat.defender.life,
-            attackerPosition: this.findCharacter(gameSession, combat.attacker.id)?.position,
-            defenderPosition: this.findCharacter(gameSession, combat.defender.id)?.position,
-            activePlayerWon: winner.id === combat.activePlayerId,
-            remainingActions: this.findCharacter(gameSession, combat.activePlayerId)?.remainingActions ?? 0,
-        };
+        return this.buildAbandonResultPayload(gameSession, combat, winner, leavingPlayerId);
     }
 
     executeCombat(
@@ -181,11 +169,7 @@ export class CombatService {
             gameSession.dropFlag(defender.position);
         }
 
-        const newPosition = this.getDefenderRespawnPosition(
-            gameSession,
-            defender,
-            mapConfig,
-        );
+        const newPosition = this.getDefenderRespawnPosition(gameSession, defender, mapConfig);
 
         defender.position = newPosition;
 
@@ -233,12 +217,7 @@ export class CombatService {
     }
 
     checkGameWinCondition(players: Character[]): Character | null {
-        for (const player of players) {
-            if ((player.victories ?? 0) >= this.victoriesToWin) {
-                return player;
-            }
-        }
-        return null;
+        return players.find((player) => (player.victories ?? 0) >= this.victoriesToWin) ?? null;
     }
 
     getCombatInfo(attacker: Character, defender: Character): CombatInfo {
@@ -283,38 +262,40 @@ export class CombatService {
         defender: Character,
         debugMode: boolean,
     ): CombatRoundDetail {
-        const attackerAttack = this.score(
-            attacker.attack,
-            combat.attacker.posture === CombatPosture.Offensive,
-            attacker.attackDice,
-            this.getPenalty(gameSession, attacker.id),
+        const attackerPenalty = this.getPenalty(gameSession, attacker.id);
+        const defenderPenalty = this.getPenalty(gameSession, defender.id);
+        const attackerAttack = this.score({
+            base: attacker.attack,
+            getsPostureBonus: combat.attacker.posture === CombatPosture.Offensive,
+            dice: attacker.attackDice,
+            penalty: attackerPenalty,
             debugMode,
-            true,
-        );
-        const attackerDefense = this.score(
-            attacker.defense,
-            combat.attacker.posture === CombatPosture.Defensive,
-            attacker.defenseDice,
-            this.getPenalty(gameSession, attacker.id),
+            isInstigatorSide: true,
+        });
+        const attackerDefense = this.score({
+            base: attacker.defense,
+            getsPostureBonus: combat.attacker.posture === CombatPosture.Defensive,
+            dice: attacker.defenseDice,
+            penalty: attackerPenalty,
             debugMode,
-            true,
-        );
-        const defenderAttack = this.score(
-            defender.attack,
-            combat.defender.posture === CombatPosture.Offensive,
-            defender.attackDice,
-            this.getPenalty(gameSession, defender.id),
+            isInstigatorSide: true,
+        });
+        const defenderAttack = this.score({
+            base: defender.attack,
+            getsPostureBonus: combat.defender.posture === CombatPosture.Offensive,
+            dice: defender.attackDice,
+            penalty: defenderPenalty,
             debugMode,
-            false,
-        );
-        const defenderDefense = this.score(
-            defender.defense,
-            combat.defender.posture === CombatPosture.Defensive,
-            defender.defenseDice,
-            this.getPenalty(gameSession, defender.id),
+            isInstigatorSide: false,
+        });
+        const defenderDefense = this.score({
+            base: defender.defense,
+            getsPostureBonus: combat.defender.posture === CombatPosture.Defensive,
+            dice: defender.defenseDice,
+            penalty: defenderPenalty,
             debugMode,
-            false,
-        );
+            isInstigatorSide: false,
+        });
 
         return {
             attackerAttack,
@@ -326,23 +307,47 @@ export class CombatService {
         };
     }
 
-    private score(
-        base: number,
-        getsPostureBonus: boolean,
-        dice: Dice,
-        penalty: number,
-        debugMode: boolean,
-        isInstigatorSide: boolean,
-    ): CombatScoreDetail {
+    private score(params: {
+        base: number;
+        getsPostureBonus: boolean;
+        dice: Dice;
+        penalty: number;
+        debugMode: boolean;
+        isInstigatorSide: boolean;
+    }): CombatScoreDetail {
+        const { base, getsPostureBonus, dice, penalty, debugMode, isInstigatorSide } = params;
         const diceValue = this.rollDice(dice, debugMode, isInstigatorSide);
         const postureBonus = getsPostureBonus ? this.postureBonus : 0;
         return { base, postureBonus, dice: diceValue, penalty, total: base + postureBonus + diceValue + penalty };
     }
 
     private rollDice(dice: Dice, debugMode: boolean, isInstigatorSide: boolean): number {
-        const max = dice === Dice.D4 ? 4 : 6;
+        const max = dice === Dice.D4 ? CombatService.d4Max : CombatService.d6Max;
         if (debugMode) return isInstigatorSide ? max : 1;
         return Math.floor(Math.random() * max) + 1;
+    }
+
+    private buildAbandonResultPayload(
+        gameSession: GameSession, combat: CombatState, winner: Character, leavingPlayerId: string,
+    ): CombatResultPayload {
+        const attacker = this.findCharacter(gameSession, combat.attacker.id);
+        const defender = this.findCharacter(gameSession, combat.defender.id);
+        const activePlayer = this.findCharacter(gameSession, combat.activePlayerId);
+
+        return {
+            attackerId: combat.attacker.id,
+            defenderId: combat.defender.id,
+            winnerId: winner.id,
+            loserIds: [leavingPlayerId],
+            attackerVictories: attacker?.victories ?? 0,
+            defenderVictories: defender?.victories ?? 0,
+            attackerLife: attacker?.life ?? combat.attacker.life,
+            defenderLife: defender?.life ?? combat.defender.life,
+            attackerPosition: attacker?.position,
+            defenderPosition: defender?.position,
+            activePlayerWon: winner.id === combat.activePlayerId,
+            remainingActions: activePlayer?.remainingActions ?? 0,
+        };
     }
 
     private getPenalty(gameSession: GameSession, playerId: string): number {
@@ -374,11 +379,7 @@ export class CombatService {
     }
 
     private getCombatPlayer(combat: CombatState, playerId: string): CombatPlayerState | undefined {
-        return combat.attacker.id === playerId
-            ? combat.attacker
-            : combat.defender.id === playerId
-                ? combat.defender
-                : undefined;
+        return combat.attacker.id === playerId ? combat.attacker : combat.defender.id === playerId ? combat.defender : undefined;
     }
 
     private findCharacter(gameSession: GameSession, playerId: string): Character | undefined {
