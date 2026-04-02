@@ -72,6 +72,12 @@ export class GamePlayCombatHandler {
             flagHolder: gameSession.gameMode === 'ctf' ? gameSession.getFlagHolder() : null,
         });
 
+        const winnerPlayer = gameSession.players.find(p => p.character.id === result.winner)?.character;
+        const loserPlayer = gameSession.players.find(p => p.character.id === result.loser)?.character;
+        if (winnerPlayer && loserPlayer) {
+            context.logService.log(gameSession.roomId, `Résultat du combat: ${winnerPlayer.name} a gagné contre ${loserPlayer.name}`);
+        }
+
         if (gameSession.gameMode === 'ctf') {
             context.server.to(gameSession.roomId).emit(GameSessionEvents.GameSessionUpdated, gameSession);
         }
