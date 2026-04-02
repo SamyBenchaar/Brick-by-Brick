@@ -5,6 +5,7 @@ import { GamePlayCombatHandler } from '@app/gateways/game-session/game-play/game
 import { GamePlayCtfHandler } from '@app/gateways/game-session/game-play/game-play-ctf.handler';
 import { GamePlayHandlersProvider } from '@app/gateways/game-session/game-play/game-play-handlers.provider';
 import { GamePlayMovementHandler } from '@app/gateways/game-session/game-play/game-play-movement.handler';
+import { GamePlaySanctuaryHandler } from '@app/gateways/game-session/game-play/game-play-sanctuary.handler';
 import { GamePlayTurnHandler } from '@app/gateways/game-session/game-play/game-play-turn.handler';
 import { GamePlayGateway } from '@app/gateways/game-session/game-play/game-play.gateway';
 import { GameSessionGateway } from '@app/gateways/game-session/game-session/game-session.gateway';
@@ -53,6 +54,7 @@ import { GameService } from './services/game/game.service';
         GamePlayCtfHandler,
         GamePlayTurnHandler,
         GamePlayHandlersProvider,
+        GamePlaySanctuaryHandler,
         ChatGateway,
         LogGateway,
         LogService,

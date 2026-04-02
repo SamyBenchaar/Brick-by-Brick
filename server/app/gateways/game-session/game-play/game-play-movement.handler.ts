@@ -126,8 +126,6 @@ export class GamePlayMovementHandler {
 
         if (tile.type === 'door') {
             this.handleDoorInteraction(gameSession, tile, payload.position, currentPlayer, context);
-        } else if (tile.type === 'base' && tile.object) {
-            this.handleObjectInteraction(gameSession, tile, payload.position, currentPlayer, context);
         } else {
             return;
         }
@@ -159,41 +157,5 @@ export class GamePlayMovementHandler {
 
         const action = tile.doorState === 'opened' ? 'Ouverture' : 'Fermeture';
         context.logService.log(gameSession.roomId, `${action} d'une porte par ${currentPlayer.name}`);
-    }
-
-    private handleObjectInteraction(
-        gameSession: GameSession,
-        tile: TileDto,
-        position: Position,
-        currentPlayer: Character,
-        context: GamePlayHandlerContext,
-    ): void {
-        const objectType = tile.object?.type;
-
-        if (objectType === 'healingsanctuary') {
-            currentPlayer.life = Math.min(currentPlayer.life + 2, currentPlayer.maxLife);
-            currentPlayer.remainingActions -= 1;
-
-            context.server.to(gameSession.roomId).emit(GameSessionEvents.InteractResult, {
-                position,
-                interactionType: 'healingsanctuary',
-                newLife: currentPlayer.life,
-                remainingActions: currentPlayer.remainingActions,
-            });
-
-            context.logService.log(gameSession.roomId, `Utilisation d'un sanctuaire de soin par ${currentPlayer.name}`);
-        } else if (objectType === 'combatsanctuary') {
-            currentPlayer.attack += 1;
-            currentPlayer.remainingActions -= 1;
-
-            context.server.to(gameSession.roomId).emit(GameSessionEvents.InteractResult, {
-                position,
-                interactionType: 'combatsanctuary',
-                newAttack: currentPlayer.attack,
-                remainingActions: currentPlayer.remainingActions,
-            });
-
-            context.logService.log(gameSession.roomId, `Utilisation d'un sanctuaire de combat par ${currentPlayer.name}`);
-        }
     }
 }
