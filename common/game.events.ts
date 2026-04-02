@@ -57,6 +57,9 @@ export enum GameSessionEvents {
     ReachableTiles = 'reachableTiles',
 
     RequestCombat = 'requestCombat',
+    CombatStarted = 'combatStarted',
+    CombatUpdated = 'combatUpdated',
+    CombatChoosePosture = 'combatChoosePosture',
     CombatResult = 'combatResult',
 
     RequestInteract = 'requestInteract',

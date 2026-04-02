@@ -1,0 +1,35 @@
+@if (combat(); as currentCombat) {
+<div class="backdrop"></div>
+
+<div class="combat-container">
+    <div class="combat-header">
+        Combat en cours entre {{ currentCombat.attacker.name }} et {{ currentCombat.defender.name }}
+        <div>Manche {{ currentCombat.round }} - {{ currentCombat.timeRemaining }}s</div>
+    </div>
+
+    <div class="combat-players">
+        <app-player-combat-card
+            [player]="currentCombat.attacker"
+            [avatar]="getAvatar(currentCombat.attacker.avatarId)"
+            [attack]="currentCombat.lastRound?.attackerAttack ?? null"
+            [defense]="currentCombat.lastRound?.attackerDefense ?? null"
+            [damage]="currentCombat.lastRound?.damageToAttacker ?? 0">
+        </app-player-combat-card>
+
+        <div class="vs-text">VS</div>
+
+        <app-player-combat-card
+            [player]="currentCombat.defender"
+            [avatar]="getAvatar(currentCombat.defender.avatarId)"
+            [attack]="currentCombat.lastRound?.defenderAttack ?? null"
+            [defense]="currentCombat.lastRound?.defenderDefense ?? null"
+            [damage]="currentCombat.lastRound?.damageToDefender ?? 0">
+        </app-player-combat-card>
+    </div>
+
+    <div class="combat-actions" [class.hidden]="!isMyCombatTurn()">
+        <button (click)="setPosture(posture.Defensive)" class="button defensive brick-green">Défense</button>
+        <button (click)="setPosture(posture.Offensive)" class="button offensive brick-red">Attaque</button>
+    </div>
+</div>
+}

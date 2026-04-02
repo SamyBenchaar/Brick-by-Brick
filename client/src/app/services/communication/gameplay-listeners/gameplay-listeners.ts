@@ -10,6 +10,7 @@ import { SocketService } from '@app/services/communication/socket/socket.service
 import { CTF_VICTORY_ANNOUNCE_DELAY } from '@common/constants/game-config-constants';
 import { GameSessionEvents } from '@common/game.events';
 import { Position } from '@common/position';
+import { CombatState, CombatResultPayload } from '@common/combat';
 
 interface GameplayListenersContext {
     gamePlaySocketService: GamePlaySocketService;
@@ -20,6 +21,8 @@ interface GameplayListenersContext {
     flagTransferService: FlagTransferSocketService;
 }
 
+const TIMEOUT = 3000;
+
 export function setupGameplayEventListeners(context: GameplayListenersContext): void {
     const {
         gamePlaySocketService: service,
@@ -29,6 +32,19 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
         dialog,
         flagTransferService,
     } = context;
+
+    const syncCombatSession = (combat: CombatState) => {
+        const session = service.currentSession();
+        if (!session) return;
+
+        const attacker = session.players.find((player) => player.character.id === combat.attacker.id)?.character;
+        const defender = session.players.find((player) => player.character.id === combat.defender.id)?.character;
+
+        if (attacker) attacker.life = combat.attacker.life;
+        if (defender) defender.life = combat.defender.life;
+
+        gameSessionSocketService.currentSession.set({ ...session });
+    };
 
     socketService.on<{ playerId: string; playerName: string; delay: number }>(
         GameSessionEvents.TurnStarting,
@@ -127,26 +143,52 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
         },
     );
 
-    socketService.on<{
-        winner: string;
-        loser: string;
-        attackerVictories: number;
-        defenderNewPosition: Position;
-        remainingActions: number;
-    }>(GameSessionEvents.CombatResult, (data) => {
+    socketService.on<CombatState>(GameSessionEvents.CombatStarted, (combat) => {
+        service.combatState.set(combat);
+        syncCombatSession(combat);
+    });
+
+    socketService.on<CombatState>(GameSessionEvents.CombatUpdated, (combat) => {
+        service.combatState.set(combat);
+        syncCombatSession(combat);
+    });
+
+    socketService.on<CombatResultPayload>(GameSessionEvents.CombatResult, (data) => {
         const session = service.currentSession();
+
         if (session) {
-            const attacker = session.players.find(p => p.character.id === data.winner);
-            const defender = session.players.find(p => p.character.id === data.loser);
+            const attacker = session.players.find((player) => player.character.id === data.attackerId);
+            const defender = session.players.find((player) => player.character.id === data.defenderId);
+
             if (attacker) {
                 attacker.character.victories = data.attackerVictories;
+                attacker.character.life = data.attackerLife;
+                attacker.character.position = data.attackerPosition;
                 attacker.character.remainingActions = data.remainingActions;
             }
+
             if (defender) {
-                defender.character.position = data.defenderNewPosition;
+                defender.character.victories = data.defenderVictories;
+                defender.character.life = data.defenderLife;
+                defender.character.position = data.defenderPosition;
             }
+
             gameSessionSocketService.currentSession.set({ ...session });
         }
+
+        const myId = service.getCurrentPlayerCharacter()?.id;
+        const wasParticipant = !!myId && service.combatParticipantIds().includes(myId);
+
+        if (wasParticipant) {
+            const message = !data.winnerId ? 'Égalité' : data.winnerId === myId ? 'Victoire' : 'Défaite';
+            service.combatNotification.set(message);
+
+            window.setTimeout(() => {
+                if (service.combatNotification() === message) service.dismissCombatNotification();
+            }, TIMEOUT);
+        }
+
+        service.combatState.set(null);
     });
 
     socketService.on<{

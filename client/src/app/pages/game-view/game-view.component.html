@@ -48,6 +48,13 @@
         </aside>
 
         <div class="map-zone">
+            @if (getCombatNotification()) {
+                <div class="combat-notification">
+                    <span>Résultat du combat: {{ getCombatNotification() }}</span>
+                    <button type="button" (click)="dismissCombatNotification()">x</button>
+                </div>
+            }
+
             @if (isTurnStarting()) {
                 <div class="turn-notification">
                     <p>Tour de {{ getCurrentTurnPlayerName() }} dans {{ getInterTurnTimeRemaining() }}</p>
@@ -87,3 +94,6 @@
         </div>      
     </div>
 </div>
+@if(isInCombat()) {
+    <app-combat-view></app-combat-view>
+}

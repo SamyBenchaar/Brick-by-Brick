@@ -1,11 +1,11 @@
 import { GameMap } from '@app/interfaces/game-map-interfaces';
 import { Character } from '@common/character';
+import { CombatState } from '@common/combat';
 import { MAX_PLAYER, ROOM_ID_LENGTH } from '@common/constants/game-config-constants';
-import { EXPIRED_FLAG_TIME, SHUFFLE_FACTOR } from '@common/map';
 import { Player } from '@common/player';
 import { Position } from '@common/position';
 import { SessionStatus } from '@common/session.status';
-
+import { EXPIRED_FLAG_TIME, SHUFFLE_FACTOR } from '@common/map';
 
 export class GameSession {
 
@@ -26,6 +26,7 @@ export class GameSession {
     startingPoints: Map<string, Position> = new Map();
     isTurnStarting: boolean = false;
     isDebugModeActivated = false;
+    combat: CombatState | null = null;
 
     gameMode: string = 'classic';
     playerTeams: Map<string, 'team1' | 'team2'> = new Map();

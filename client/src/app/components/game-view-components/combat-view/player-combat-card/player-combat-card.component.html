@@ -1,0 +1,29 @@
+<div class="player-info">
+    <div class="player-name">{{ player.name }}</div>
+    <img class="avatar" [src]="avatar" [alt]="player.name">
+    <div class="player-life">Vie: {{ player.life }}/{{ player.maxLife }}</div>
+    <div>Posture: {{ player.posture === 'none' ? 'Aucune' : player.posture }}</div>
+
+    <div class="stats-container">
+        <div class="stat-box">
+            <div class="section-title">Attaque</div>
+            <div>Valeur: {{ attack?.base ?? '-' }}</div>
+            <div>Bonus: {{ attack?.postureBonus ?? '-' }}</div>
+            <div>Dé: {{ attack?.dice ?? '-' }}</div>
+            <div>Pénalité: {{ attack?.penalty ?? '-' }}</div>
+            <div class="attack-score">Total: {{ attack?.total ?? '-' }}</div>
+        </div>
+
+
+        <div class="stat-box">
+            <div class="section-title">Défense</div>
+            <div>Valeur: {{ defense?.base ?? '-' }}</div>
+            <div>Bonus: {{ defense?.postureBonus ?? '-' }}</div>
+            <div>Dé: {{ defense?.dice ?? '-' }}</div>
+            <div>Pénalité: {{ defense?.penalty ?? '-' }}</div>
+            <div class="defense-score">Total: {{ defense?.total ?? '-' }}</div>
+        </div>
+    </div>
+
+    <div class="damage-line">Dégâts subis: {{ damage }}</div>
+</div>

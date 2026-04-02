@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { ChatComponent } from '@app/components/chat/chat.component';
 import { AppDialogComponent } from '@app/components/game-edition-components/app-dialog/app-dialog.component';
 import { GameGridComponent } from '@app/components/game-edition-components/game-grid/game-grid.component';
+import { CombatViewComponent } from '@app/components/game-view-components/combat-view/combat-view.component';
 import { PlayerBoardComponent } from '@app/components/game-view-components/player-board/player-board/player-board.component';
 import { PlayerSignComponent } from '@app/components/game-view-components/player-sign/player-sign/player-sign.component';
 import { AVATARS } from '@app/constants/character-constants';
@@ -22,7 +23,7 @@ import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-game-view',
-  imports: [CommonModule, GameGridComponent, ChatComponent, PlayerBoardComponent, PlayerSignComponent],
+  imports: [CommonModule, GameGridComponent, ChatComponent, PlayerBoardComponent, PlayerSignComponent, CombatViewComponent],
   templateUrl: './game-view.component.html',
   styleUrl: './game-view.component.scss',
 })
@@ -89,7 +90,7 @@ export class GameViewComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (!this.isMyTurn() || this.isWriting() || this.dialog.openDialogs.length > 0) return;
+    if (!this.isMyTurn() || this.isWriting() || this.isInCombat() || this.dialog.openDialogs.length > 0) return;
     const direction = KEY_DIRECTION_MAP[key];
 
     if (direction) {
@@ -132,6 +133,18 @@ export class GameViewComponent implements OnInit, OnDestroy {
     return this.gameSessionSocketService.isCurrentUserHost();
   }
 
+  isInCombat(): boolean {
+    return this.gamePlaySocketService.isCurrentUserInCombat();
+  }
+
+  getCombatNotification(): string | null {
+    return this.gamePlaySocketService.combatNotification();
+  }
+
+  dismissCombatNotification(): void {
+    this.gamePlaySocketService.dismissCombatNotification();
+  }
+
   getCurrentTurnPlayerName(): string {
     const currentPlayerId = this.gamePlaySocketService.currentPlayerTurn();
     const player = this.gameSessionSocketService.currentSession()?.players.find(p => p.character.id === currentPlayerId);
@@ -151,7 +164,7 @@ export class GameViewComponent implements OnInit, OnDestroy {
   }
 
   endTurn(): void {
-    this.gamePlaySocketService.endTurn();
+    if (!this.isInCombat()) this.gamePlaySocketService.endTurn();
   }
 
   abandonGame(): void {
