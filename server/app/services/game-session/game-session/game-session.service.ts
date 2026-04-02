@@ -134,18 +134,31 @@ export class GameSessionService {
 
         const endedPlayerId = currentPlayer.id;
 
+        const endTurnSafely = () => {
+            const activePlayer = gameSession.getCurrentPlayer();
+            if (!activePlayer || activePlayer.id !== endedPlayerId) {
+                return;
+            }
+
+            this.endCurrentTurn(gameSession);
+            if (onTurnEndCallback) {
+                onTurnEndCallback(endedPlayerId);
+            }
+        };
+
+        // The turn may already be ended in onStartCallback (for example when no action is possible).
+        if (gameSession.getCurrentPlayer()?.id !== endedPlayerId) {
+            return;
+        }
+
         this.turnManagementService.startTurnTimer(
             gameSession,
             () => {
-                this.endCurrentTurn(gameSession);
-                if (onTurnEndCallback) {
-                    onTurnEndCallback(endedPlayerId);
-                }
+                endTurnSafely();
             },
             onTickCallback,
         );
 
-        //À SUPPRIMER test test test test
         const fullCurrentPlayer = gameSession.players.find(p => p.character.id === currentPlayer.id);
         if (fullCurrentPlayer?.virtualProfile) {
             this.virtualPlayerService.playTurn(gameSession, fullCurrentPlayer)
@@ -153,10 +166,7 @@ export class GameSessionService {
                     this.logger.error(`Erreur durant le tour JV: ${error.message}`);
                 })
                 .finally(() => {
-                    this.endCurrentTurn(gameSession);
-                    if (onTurnEndCallback) {
-                        onTurnEndCallback(endedPlayerId);
-                    }
+                    endTurnSafely();
                 });
         }
     }

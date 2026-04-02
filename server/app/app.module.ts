@@ -15,6 +15,8 @@ import { StartingPointService } from '@app/services/game-session/starting-point.
 import { TurnManagementService } from '@app/services/game-session/turn-management.service';
 import { VirtualPlayerCtfService } from '@app/services/game-session/virtual-player-ctf.service';
 import { VirtualPlayerMechanicsService } from '@app/services/game-session/virtual-player-mechanics.service';
+import { VirtualPlayerPathfindingService } from '@app/services/game-session/virtual-player-mechanics/virtual-player-pathfinding.service';
+import { VirtualPlayerTargetingService } from '@app/services/game-session/virtual-player-mechanics/virtual-player-targeting.service';
 import { VirtualPlayerService } from '@app/services/game-session/virtual-player.service';
 import { GameMetadataValidationService } from '@app/services/validations/game-metadata-validation.service';
 import { MapValidationService } from '@app/services/validations/map-validation.service';
@@ -54,6 +56,8 @@ import { GameService } from './services/game/game.service';
         StartingPointService,
         TurnManagementService,
         MovementService,
+        VirtualPlayerPathfindingService,
+        VirtualPlayerTargetingService,
         VirtualPlayerCtfService,
         VirtualPlayerMechanicsService,
         VirtualPlayerService,

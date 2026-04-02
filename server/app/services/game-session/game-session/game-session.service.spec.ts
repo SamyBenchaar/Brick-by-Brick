@@ -6,6 +6,8 @@ import { StartingPointService } from '@app/services/game-session/starting-point.
 import { TurnManagementService } from '@app/services/game-session/turn-management.service';
 import { VirtualPlayerCtfService } from '@app/services/game-session/virtual-player-ctf.service';
 import { VirtualPlayerMechanicsService } from '@app/services/game-session/virtual-player-mechanics.service';
+import { VirtualPlayerPathfindingService } from '@app/services/game-session/virtual-player-mechanics/virtual-player-pathfinding.service';
+import { VirtualPlayerTargetingService } from '@app/services/game-session/virtual-player-mechanics/virtual-player-targeting.service';
 import { VirtualPlayerService } from '@app/services/game-session/virtual-player.service';
 import { GameService } from '@app/services/game/game.service';
 import { Character } from '@common/character';
@@ -67,6 +69,8 @@ describe('GameSessionService', () => {
                 TurnManagementService,
                 MovementService,
                 CombatService,
+                VirtualPlayerPathfindingService,
+                VirtualPlayerTargetingService,
                 VirtualPlayerMechanicsService,
                 VirtualPlayerCtfService,
                 VirtualPlayerService,

@@ -60,6 +60,11 @@ export class VirtualPlayerService {
     }
 
     private async defensiveStep(session: GameSession, bot: Player): Promise<VirtualPlayerStepOutcome> {
+        const attackedAdjacent = await this.virtualPlayerMechanicsService.tryAttackAdjacent(session, bot);
+        if (attackedAdjacent) {
+            return 'stop';
+        }
+
         if (this.virtualPlayerMechanicsService.canMove(bot)) {
             const nearestEnemy = this.virtualPlayerMechanicsService.findNearestEnemy(session, bot);
             if (nearestEnemy?.character.position) {
@@ -71,11 +76,6 @@ export class VirtualPlayerService {
                     }
                 }
             }
-        }
-
-        const attacked = await this.virtualPlayerMechanicsService.tryAttackAdjacent(session, bot);
-        if (attacked) {
-            return 'stop';
         }
 
         return 'stop';
