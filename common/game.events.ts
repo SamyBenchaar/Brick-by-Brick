@@ -81,5 +81,11 @@ export enum ChatEvents {
     LoadChatHistory = 'loadChatHistory',
     ChatHistory = 'chatHistory',
     ClearChatHistory = 'clearChatHistory',
+}
 
+export enum LogEvents {
+    ReceiveLogMessage = 'receiveLogMessage',
+    LoadLogHistory = 'loadLogHistory',
+    LogHistory = 'logHistory',
+    ClearLogHistory = 'clearLogHistory',
 }

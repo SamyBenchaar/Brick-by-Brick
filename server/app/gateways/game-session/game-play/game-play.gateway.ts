@@ -5,6 +5,7 @@ import { GameSessionGateway } from '@app/gateways/game-session/game-session/game
 import { GameDataForInit } from '@app/interfaces/game-map-interfaces';
 import { CombatService } from '@app/services/game-session/combat.service';
 import { GameSessionService } from '@app/services/game-session/game-session/game-session.service';
+import { LogService } from '@app/services/log/log.service';
 import { Character } from '@common/character';
 import { CombatPosture, CombatResultPayload } from '@common/combat';
 import { GameSessionEvents } from '@common/game.events';
@@ -34,6 +35,7 @@ export class GamePlayGateway implements OnGatewayInit {
         private gameSessionGateway: GameSessionGateway,
         private combatService: CombatService,
         private handlersProvider: GamePlayHandlersProvider,
+        private logService: LogService,
     ) {}
 
     afterInit() {
@@ -83,6 +85,8 @@ export class GamePlayGateway implements OnGatewayInit {
             gameSession,
         });
 
+        this.logService.log(payload.roomId, 'La partie a commencé');
+
         this.logger.log(`Partie démarrée dans la salle ${payload.roomId}`);
 
         this.startGameTurn(gameSession);
@@ -100,6 +104,9 @@ export class GamePlayGateway implements OnGatewayInit {
         this.server.to(payload.currentRoomId).emit(GameSessionEvents.ToggleDebugMode, {
             isDebugModeActivated: newIsDebugModeActivated,
         });
+
+        const action = newIsDebugModeActivated ? 'Activation' : 'Désactivation';
+        this.logService.log(payload.currentRoomId, `${action} du mode de débogage`);
     }
 
     @SubscribeMessage(GameSessionEvents.EndTurnRequest)
@@ -165,11 +172,6 @@ export class GamePlayGateway implements OnGatewayInit {
         }
     }
 
-    @SubscribeMessage(GameSessionEvents.RequestInteract)
-    handleRequestInteract(socket: Socket, payload: { roomId: string; position: Position }) {
-        this.handlersProvider.movementHandler.handleRequestInteract(socket, payload, this.createHandlerContext());
-    }
-
     @SubscribeMessage(GameSessionEvents.PlayerAbandoned)
     handlePlayerAbandoned(socket: Socket, payload: { roomId: string }) {
         const gameSession = this.gameSessionService.getGameSession(payload.roomId);
@@ -219,6 +221,19 @@ export class GamePlayGateway implements OnGatewayInit {
             !this.handleAbandonedPlayerWinnerCheck(gameSession) ||
             this.handleAbandonedPlayerEmptyGame(gameSession)
         );
+    }
+
+    @SubscribeMessage(GameSessionEvents.RequestInteract)
+    handleRequestInteract(socket: Socket, payload: { roomId: string; position: Position; mode: 'normal' | 'double' }) {
+        const gameSession = this.gameSessionService.getGameSession(payload.roomId);
+        if (!gameSession) return;
+        const tile = gameSession.mapCopy?.tiles[payload.position.y]?.[payload.position.x];
+        if (!tile) return;
+        if (tile.type === 'door') {
+            this.handlersProvider.movementHandler.handleRequestInteract(socket, payload, this.createHandlerContext());
+        } else if (tile.object?.type === 'healingsanctuary' || tile.object?.type === 'combatsanctuary') {
+            this.handlersProvider.sanctuaryHandler.handleRequestInteract(socket, payload, this.createHandlerContext());
+        }
     }
 
     private handleAbandonedPlayerFlagPlacement(gameSession: GameSession, abandoningPlayer: Player | undefined): void {
@@ -289,6 +304,9 @@ export class GamePlayGateway implements OnGatewayInit {
             gameMode: gameSession.gameMode,
             reason: winner ? 'victory' : 'noPlayers',
         });
+
+        const activePlayers = gameSession.players.map(p => p.character.name).join(', ');
+        this.logService.log(gameSession.roomId, `Fin de partie. Joueurs actifs: ${activePlayers}`);
 
         setTimeout(() => {
             this.gameSessionGateway.cleanUpRoom(gameSession.roomId);
@@ -400,6 +418,7 @@ export class GamePlayGateway implements OnGatewayInit {
     private createHandlerContext(): GamePlayHandlerContext {
         return {
             server: this.server,
+            logService: this.logService,
             onGameEnd: (gameSession: GameSession, winner: Character | null) => this.handleGameEnd(gameSession, winner),
             onTurnEnd: (gameSession: GameSession) => this.handleTurnEnd(gameSession),
             emitReachableTiles: (gameSession: GameSession) => this.emitReachableTiles(gameSession),

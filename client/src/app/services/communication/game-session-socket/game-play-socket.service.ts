@@ -5,10 +5,11 @@ import { SocketService } from '@app/services/communication/socket/socket.service
 import { Character } from '@common/character';
 import { CombatPosture, CombatState } from '@common/combat';
 import { GameSessionEvents } from '@common/game.events';
-import { TileType } from '@common/map';
+import { ObjectType, TileType } from '@common/map';
 import { Player } from '@common/player';
 import { Position } from '@common/position';
 import { GameSessionSocketService } from './game-session-socket.service';
+import { ADJACENT_POSITIONS, ADJACENT_TO_ORIGIN_POSITION } from '@app/constants/adjacent-position';
 import { GameSession } from '@app/interfaces/game-session';
 
 @Injectable({
@@ -118,10 +119,11 @@ export class GamePlaySocketService {
         const roomId = this.getRoomId();
         if (roomId) this.socketService.emit(GameSessionEvents.CombatChoosePosture, { roomId, posture });
     }
-    requestInteract(position: Position): void {
+    
+    requestInteract(position: Position, mode: 'normal' | 'double'): void {
         const currentRoomId = this.getRoomId();
         if (currentRoomId) {
-            this.socketService.emit(GameSessionEvents.RequestInteract, { roomId: currentRoomId, position });
+            this.socketService.emit(GameSessionEvents.RequestInteract, { roomId: currentRoomId, position, mode });
         }
     }
 
@@ -164,16 +166,39 @@ export class GamePlaySocketService {
             ) ?? null;
     }
 
+    isFlagOnPosition(position: Position): boolean {
+        return this.gameSession?.flagPosition?.x === position.x && this.gameSession?.flagPosition?.y === position.y;
+    }
+    
     canInteractWithTarget(target: Tile, position: Position): boolean {
         const currentPlayer = this.getCurrentPlayerCharacter();
-        return (this.isMyTurn() &&
-            currentPlayer?.position !== undefined &&
-            currentPlayer.remainingActions !== undefined &&
-            currentPlayer.remainingActions > 0 &&
-            this.areAdjacent(currentPlayer.position, position) &&
-            target.type === TileType.Door && 
-            this.gameSession?.flagPosition?.x !== position.x && this.gameSession?.flagPosition?.y !== position.y
-        );
+        const playerPosition = currentPlayer?.position;
+        if (!this.isMyTurn() || !playerPosition || (currentPlayer.remainingActions ?? 0) <= 0) return false;
+
+        if (target.type === TileType.Door) {
+            return this.areAdjacent(playerPosition, position) && !this.isFlagOnPosition(position);
+        }
+
+        if (target.object === ObjectType.HealingSanctuary || target.object === ObjectType.CombatSanctuary) {
+            const origin = target.sanctuaryOrigin ?? position;
+            return ADJACENT_TO_ORIGIN_POSITION.some(([dx, dy]) =>
+                this.areAdjacent(playerPosition, { x: origin.x + dx, y: origin.y + dy }),
+            );
+        }
+
+        return false;
+    }
+
+    canPlayerInteractSanctuary(): boolean {
+        const currentPlayer = this.getCurrentPlayerCharacter();
+        if (!this.isMyTurn() || !currentPlayer?.position || (currentPlayer.remainingActions ?? 0) <= 0) return false;
+        const map = this.mapCopy();
+        if (!map) return false;
+        const { x, y } = currentPlayer.position;
+        return ADJACENT_POSITIONS.some(offset => {
+            const tile = map.mapConfig.tiles[y + offset.y]?.[x + offset.x];
+            return tile?.object?.type === ObjectType.HealingSanctuary|| tile?.object?.type === ObjectType.CombatSanctuary;
+        });
     }
 
     canPlayerInteractDoor(): boolean {
@@ -184,13 +209,7 @@ export class GamePlaySocketService {
         if (this.areAdjacent(currentPlayer.position,
              {x: this.gameSession?.flagPosition?.x ?? 0, y: this.gameSession?.flagPosition?.y ?? 0})) return false;
         const { x, y } = currentPlayer.position;
-        const adjacentPos: Position[] = [
-            { x: x - 1, y },
-            { x: x + 1, y },
-            { x, y: y - 1 },
-            { x, y: y + 1 },
-        ];
-        return adjacentPos.some(pos => map.mapConfig.tiles[pos.y]?.[pos.x]?.type === 'door');
+        return ADJACENT_POSITIONS.some(offset => map.mapConfig.tiles[y + offset.y]?.[x + offset.x]?.type === 'door');
     }
 
     canAttackTarget(target: Character | null): boolean {

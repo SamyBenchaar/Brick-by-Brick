@@ -6,4 +6,5 @@ export interface AppDialogData {
   type: DialogType;
   confirmText?: string;
   cancelText?: string;
+  thirdOptionText?: string;
 }
