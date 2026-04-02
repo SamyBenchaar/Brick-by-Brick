@@ -145,14 +145,14 @@ export class GamePlayGateway implements OnGatewayInit {
         );
     }
 
-    @SubscribeMessage(GameSessionEvents.RequestInteract)
-    handleRequestInteract(socket: Socket, payload: { roomId: string; position: Position }) {
-        this.handlersProvider.movementHandler.handleRequestInteract(
-            socket,
-            payload,
-            this.createHandlerContext(),
-        );
-    }
+    // @SubscribeMessage(GameSessionEvents.RequestInteract)
+    // handleRequestInteract(socket: Socket, payload: { roomId: string; position: Position }) {
+    //     this.handlersProvider.movementHandler.handleRequestInteract(
+    //         socket,
+    //         payload,
+    //         this.createHandlerContext(),
+    //     );
+    // }
 
 
     @SubscribeMessage(GameSessionEvents.PlayerAbandoned)
@@ -192,6 +192,19 @@ export class GamePlayGateway implements OnGatewayInit {
 
         if (wasCurrentPlayer) {
             this.handleTurnEnd(gameSession);
+        }
+    }
+
+    @SubscribeMessage(GameSessionEvents.RequestInteract)
+    handleRequestInteract(socket: Socket, payload: { roomId: string; position: Position; mode: 'normal' | 'double' }) {
+        const gameSession = this.gameSessionService.getGameSession(payload.roomId);
+        if (!gameSession) return;
+        const tile = gameSession.mapCopy?.tiles[payload.position.y]?.[payload.position.x];
+        if (!tile) return;
+        if (tile.type === 'door') {
+            this.handlersProvider.movementHandler.handleRequestInteract(socket, payload, this.createHandlerContext());
+        } else if (tile.object?.type === 'healingsanctuary' || tile.object?.type === 'combatsanctuary') {
+            this.handlersProvider.sanctuaryHandler.handleRequestInteract(socket, payload, this.createHandlerContext());
         }
     }
 

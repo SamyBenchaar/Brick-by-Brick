@@ -16,7 +16,7 @@ import { GamePlaySocketService } from '@app/services/communication/game-session-
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
 import { Character } from '@common/character';
 import { getGameSizeConfig } from '@common/constants/game-config-constants';
-import { MapSize } from '@common/map';
+import { MapSize, ObjectType } from '@common/map';
 import { Position } from '@common/position';
 import { Subscription } from 'rxjs';
 
@@ -89,7 +89,7 @@ export class GameViewComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (!this.isMyTurn() || this.isWriting()) return;
+    if (!this.isMyTurn() || this.isWriting() || this.dialog.openDialogs.length > 0) return;
     const direction = KEY_DIRECTION_MAP[key];
 
     if (direction) {
@@ -196,7 +196,29 @@ export class GameViewComponent implements OnInit, OnDestroy {
 
   onActionTargetSelected(event: {tile: Tile, position: Position}): void {
     if (!this.gamePlaySocketService.canInteractWithTarget(event.tile, event.position)) return;
-    this.gamePlaySocketService.requestInteract(event.position);
+    
+    const isSanctuary = event.tile.object === ObjectType.HealingSanctuary || event.tile.object === ObjectType.CombatSanctuary;
+    if (isSanctuary) {
+      const ref = this.dialog.open(AppDialogComponent, {
+        id: 'sanctuary-dialog',
+        data: {
+            title: event.tile.object === ObjectType.HealingSanctuary
+                ? 'Sanctuaire de soin' : 'Sanctuaire de combat',
+            message: 'Choisissez votre mode d\'interaction.',
+            type: 'info',
+            confirmText: 'Normal',
+            cancelText: 'Double ou rien',
+            thirdOptionText: 'Annuler',
+        },
+    });
+    ref.afterClosed().subscribe((result) => {
+        if (result === true) this.gamePlaySocketService.requestInteract(event.position, 'normal');
+        else if (result === false) this.gamePlaySocketService.requestInteract(event.position, 'double');
+    });
+    this.isActionSelectionMode.set(false);
+    return;
+    }
+    this.gamePlaySocketService.requestInteract(event.position, 'normal');
     this.isActionSelectionMode.set(false);
   }
 

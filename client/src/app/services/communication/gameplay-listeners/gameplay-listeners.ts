@@ -73,6 +73,7 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
     socketService.on<{ playerId: string }>(GameSessionEvents.TurnEnded, () => {
         service.currentPlayerTurn.set(null);
         service.reachableTiles.set([]);
+        dialog.getDialogById('sanctuary-dialog')?.close('dismiss');
         const pendingDialogs = flagTransferService.getPendingFlagTransferDialogs();
         pendingDialogs.forEach(([, data]) => {
             data.dialogRef.close(false);
@@ -148,7 +149,9 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
         }
     });
 
-    socketService.on<{ position: Position, newDoorState: string, remainingActions: number, interactionType: string, playerId: string }>
+    socketService.on<{
+         position: Position, newDoorState: string, remainingActions: number, interactionType: string,
+         newLife?: number, newAttack?: number, newDefense?: number }>
     (GameSessionEvents.InteractResult, (data) => {
         const session = gameSessionSocketService.currentSession();
         if (data.interactionType === 'door') {
@@ -157,34 +160,21 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
                 currentMap.mapConfig.tiles[data.position.y][data.position.x].doorState = data.newDoorState;
                 service.mapCopy.set({ ...currentMap });
             }
-        } else if (data.interactionType === 'combatsanctuary') {
-            const socketId = service.getSocketId();
-            const currentPlayer = session?.players.find(p => p.socketId === socketId);
-            if (currentPlayer?.character.id === data.playerId) {
-                dialog.open(AppDialogComponent, {
-                    data: {
-                        title: 'Sanctuaire de combat',
-                        message: 'Vous avez interagi avec un sanctuaire de combat. Vous avez gagné 1 point d\'attaque.',
-                    },
-                });
-            }
-        } else if (data.interactionType === 'healingsanctuary') {
-            const socketId = service.getSocketId();
-            const currentPlayer = session?.players.find(p => p.socketId === socketId);
-            if (currentPlayer?.character.id === data.playerId) {
-                dialog.open(AppDialogComponent, {
-                    data: {
-                        title: 'Sanctuaire de soin',
-                        message: 'Vous avez interagi avec un sanctuaire de soin. Vous avez gagné 1 point de vie.',
-                    },
-                });
-            }
-        }
+        } 
         if (session) {
             const currentPlayerId = service.currentPlayerTurn();
             const player = session.players.find(p => p.character.id === currentPlayerId);
             if (player) {
                 player.character.remainingActions = data.remainingActions;
+                if (data.newLife !== undefined) {
+                    player.character.life = data.newLife;
+                }
+                if (data.newAttack !== undefined) {
+                    player.character.attack = data.newAttack;
+                }
+                if (data.newDefense !== undefined) {
+                    player.character.defense = data.newDefense;
+                }
                 gameSessionSocketService.currentSession.set({ ...session });
 
             }

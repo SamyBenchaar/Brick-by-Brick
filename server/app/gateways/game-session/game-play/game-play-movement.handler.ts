@@ -126,8 +126,6 @@ export class GamePlayMovementHandler {
 
         if (tile.type === 'door') {
             this.handleDoorInteraction(gameSession, tile, payload.position, currentPlayer, context);
-        } else if (tile.type === 'base' && tile.object) {
-            this.handleObjectInteraction(gameSession, tile, payload.position, currentPlayer, context);
         } else {
             return;
         }
@@ -156,41 +154,5 @@ export class GamePlayMovementHandler {
             newDoorState: tile.doorState,
             remainingActions: currentPlayer.remainingActions,
         });
-    }
-
-    private handleObjectInteraction(
-        gameSession: GameSession,
-        tile: TileDto,
-        position: Position,
-        currentPlayer: Character,
-        context: GamePlayHandlerContext,
-    ): void {
-        const objectType = tile.object?.type;
-
-        if (objectType === 'healingsanctuary') {
-            currentPlayer.life = Math.min(currentPlayer.life + 2, currentPlayer.maxLife);
-            // juste pour tester
-            currentPlayer.remainingActions -= 0;
-
-            context.server.to(gameSession.roomId).emit(GameSessionEvents.InteractResult, {
-                position,
-                interactionType: 'healingsanctuary',
-                newLife: currentPlayer.life,
-                remainingActions: currentPlayer.remainingActions,
-                playerId: currentPlayer.id,
-            });
-        } else if (objectType === 'combatsanctuary') {
-            currentPlayer.attack += 1;
-            // juste pour tester
-            currentPlayer.remainingActions -= 0;
-
-            context.server.to(gameSession.roomId).emit(GameSessionEvents.InteractResult, {
-                position,
-                interactionType: 'combatsanctuary',
-                newAttack: currentPlayer.attack,
-                remainingActions: currentPlayer.remainingActions,
-                playerId: currentPlayer.id,
-            });
-        }
     }
 }

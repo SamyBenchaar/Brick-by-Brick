@@ -101,10 +101,10 @@ export class GamePlaySocketService {
         }
     }
 
-    requestInteract(position: Position): void {
+    requestInteract(position: Position, mode: 'normal' | 'double'): void {
         const currentRoomId = this.getRoomId();
         if (currentRoomId) {
-            this.socketService.emit(GameSessionEvents.RequestInteract, { roomId: currentRoomId, position });
+            this.socketService.emit(GameSessionEvents.RequestInteract, { roomId: currentRoomId, position, mode });
         }
     }
 
