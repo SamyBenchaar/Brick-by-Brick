@@ -46,6 +46,11 @@ export class VirtualPlayerService {
             return 'continue';
         }
 
+        const usedSanctuary = await this.virtualPlayerMechanicsService.tryUseAdjacentSanctuary(session, bot);
+        if (usedSanctuary) {
+            return 'continue';
+        }
+
         if (!this.virtualPlayerMechanicsService.canMove(bot)) {
             return 'stop';
         }
@@ -62,6 +67,11 @@ export class VirtualPlayerService {
     private async defensiveStep(session: GameSession, bot: Player): Promise<VirtualPlayerStepOutcome> {
         const attackedAdjacent = await this.virtualPlayerMechanicsService.tryAttackAdjacent(session, bot);
         if (attackedAdjacent) {
+            return 'continue';
+        }
+
+        const usedSanctuary = await this.virtualPlayerMechanicsService.tryUseAdjacentSanctuary(session, bot);
+        if (usedSanctuary) {
             return 'continue';
         }
 

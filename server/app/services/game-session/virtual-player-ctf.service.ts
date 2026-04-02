@@ -52,6 +52,11 @@ export class VirtualPlayerCtfService {
             return 'continue';
         }
 
+        const usedSanctuary = await this.mechanics.tryUseAdjacentSanctuary(session, bot);
+        if (usedSanctuary) {
+            return 'continue';
+        }
+
         if (!this.mechanics.canMove(bot)) {
             return 'stop';
         }
@@ -93,6 +98,11 @@ export class VirtualPlayerCtfService {
 
         const attackedHolder = await this.mechanics.tryAttackSpecificAdjacent(session, bot, enemyFlagHolder);
         if (attackedHolder) {
+            return 'continue';
+        }
+
+        const usedSanctuary = await this.mechanics.tryUseAdjacentSanctuary(session, bot);
+        if (usedSanctuary) {
             return 'continue';
         }
 

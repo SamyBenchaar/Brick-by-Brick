@@ -1,7 +1,8 @@
 import { GameSession } from '@app/domain/game-session';
 import { GameGateway } from '@app/gateways/game/game.gateway';
+import { COMBAT_SANCTUARY_BONUS, HEALING_SANCTUARY_BONUS } from '@common/constants/santuary-constants';
 import { GameSessionEvents } from '@common/game.events';
-import { DoorState, TileType } from '@common/map';
+import { DoorState, ObjectType, TileType } from '@common/map';
 import { Player } from '@common/player';
 import { Position } from '@common/position';
 import { Inject, Injectable } from '@nestjs/common';
@@ -219,6 +220,73 @@ export class VirtualPlayerMechanicsService {
         this.gameGateway.notifyRoomEvent(session.roomId, GameSessionEvents.GameSessionUpdated, session);
 
         return true;
+    }
+
+    async tryUseAdjacentSanctuary(session: GameSession, bot: Player): Promise<boolean> {
+        if (!this.hasAction(bot) || !bot.character.position) {
+            return false;
+        }
+
+        const sanctuaryPosition = this.findAdjacentSanctuaryTile(session, bot.character.position);
+        if (!sanctuaryPosition) {
+            return false;
+        }
+
+        const tile = session.getMapCopy()?.tiles?.[sanctuaryPosition.y]?.[sanctuaryPosition.x];
+        if (!tile?.object) {
+            return false;
+        }
+
+        if (tile.object.type === ObjectType.CombatSanctuary && bot.character.hasCombatSanctuaryBonus) {
+            return false;
+        }
+
+        if (tile.object.type === ObjectType.HealingSanctuary) {
+            bot.character.life = Math.min(bot.character.life + HEALING_SANCTUARY_BONUS, bot.character.maxLife);
+        } else if (tile.object.type === ObjectType.CombatSanctuary) {
+            bot.character.attack += COMBAT_SANCTUARY_BONUS;
+            bot.character.defense += COMBAT_SANCTUARY_BONUS;
+            bot.character.hasCombatSanctuaryBonus = true;
+            bot.character.combatSanctuaryBonus = COMBAT_SANCTUARY_BONUS;
+        } else {
+            return false;
+        }
+
+        await this.randomDelay();
+        bot.character.remainingActions = (bot.character.remainingActions ?? 0) - 1;
+
+        this.gameGateway.notifyRoomEvent(session.roomId, GameSessionEvents.InteractResult, {
+            position: sanctuaryPosition,
+            interactionType: tile.object.type,
+            playerId: bot.character.id,
+            newLife: bot.character.life,
+            newAttack: bot.character.attack,
+            newDefense: bot.character.defense,
+            remainingActions: bot.character.remainingActions,
+        });
+
+        return true;
+    }
+
+    private findAdjacentSanctuaryTile(session: GameSession, botPosition: Position): Position | null {
+        const tiles = session.getMapCopy()?.tiles;
+        if (!tiles) {
+            return null;
+        }
+
+        const adjacentPositions = this.pathfinding.getNeighbors(botPosition);
+        for (const position of adjacentPositions) {
+            const tile = tiles[position.y]?.[position.x];
+            if (!tile) {
+                continue;
+            }
+
+            if (tile.object?.type === ObjectType.HealingSanctuary || tile.object?.type === ObjectType.CombatSanctuary) {
+                return position;
+            }
+        }
+
+        return null;
     }
 
     private handleCtfFlagPickup(session: GameSession, bot: Player): void {
