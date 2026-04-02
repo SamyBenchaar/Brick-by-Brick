@@ -100,6 +100,13 @@ export class GamePlaySocketService {
         }
     }
 
+    requestFlagTransfer(toPlayerId: string): void {
+        const currentRoomId = this.getRoomId();
+        if (currentRoomId) {
+            this.socketService.emit(GameSessionEvents.RequestFlagTransfer, { roomId: currentRoomId, toPlayerId });
+        }
+    }
+
     requestInteract(position: Position): void {
         const currentRoomId = this.getRoomId();
         if (currentRoomId) {
@@ -190,6 +197,53 @@ export class GamePlaySocketService {
         const currentPlayer = this.getCurrentPlayerCharacter();
         return this.isMyTurn() && currentPlayer?.position != null && currentPlayer.remainingActions != null &&
             currentPlayer.remainingActions > 0 && this.getAutoAttackTarget() !== null;
+    }
+
+    canTransferFlagTo(target: Character | null): boolean {
+        if (this.currentSession()?.gameMode !== 'ctf') return false;
+        if (!target) return false;
+
+        const currentPlayer = this.getCurrentPlayerCharacter();
+        if (!currentPlayer) return false;
+
+        // Allow transfer if: (I have flag and target doesn't) OR (target has flag and I don't)
+        const canTransfer = (
+            currentPlayer.hasFlag === true && target.hasFlag === false
+        ) || (
+                currentPlayer.hasFlag === false && target.hasFlag === true
+            );
+
+        return (
+            canTransfer &&
+            this.isMyTurn() &&
+            this.isValidFlagTransferTarget(currentPlayer, target)
+        );
+    }
+
+    private isValidFlagTransferTarget(currentPlayer: Character, target: Character): boolean {
+        if (currentPlayer.position === undefined || target.position === undefined) {
+            return false;
+        }
+
+        if (target.id === currentPlayer.id) {
+            return false;
+        }
+
+        if (currentPlayer.team !== target.team) {
+            return false;
+        }
+
+        if ((currentPlayer.remainingActions ?? 0) <= 0) {
+            return false;
+        }
+
+        const distance = Math.abs(currentPlayer.position.x - target.position.x) +
+            Math.abs(currentPlayer.position.y - target.position.y);
+        if (distance !== 1) {
+            return false;
+        }
+
+        return true;
     }
 
     private areAdjacent(positionA: Position, positionB: Position): boolean {

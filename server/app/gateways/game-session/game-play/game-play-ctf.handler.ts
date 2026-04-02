@@ -73,12 +73,6 @@ export class GamePlayCtfHandler {
             }
 
             context.server.to(payload.roomId).emit(GameSessionEvents.GameSessionUpdated, gameSession);
-                context.logService.log(payload.roomId, `Transfert de drapeau de ${fromPlayer.character.name} à ${toPlayer.character.name}`);
-
-            const fromCurrentPlayer = gameSession.getCurrentPlayer();
-            if (fromCurrentPlayer?.id === payload.fromPlayerId && !this.gameSessionService.canPlayerTakeAction(gameSession)) {
-                this.gameSessionService.endCurrentTurn(gameSession);
-            }
         } else {
             gameSession.rejectFlagTransfer(toPlayer.character.id);
             context.server.to(payload.roomId).emit(GameSessionEvents.GameSessionUpdated, gameSession);
