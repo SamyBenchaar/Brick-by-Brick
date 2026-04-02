@@ -1,6 +1,6 @@
 import { GameSession, Position } from '@app/domain/game-session';
 import { Character } from '@common/character';
-import { TileType, TILE_COST, DoorState } from '@common/map';
+import { TileType, TILE_COST, DoorState, ObjectType } from '@common/map';
 import { Injectable, Logger } from '@nestjs/common';
 import { MovementCost, MapTile } from '@app/interfaces/game-map-interfaces';
 
@@ -36,6 +36,7 @@ export class MovementService {
             return false;
         }
         if (tile.type === TileType.Door && tile.doorState !== 'opened') return false;
+        if (tile.object?.type === ObjectType.HealingSanctuary || tile.object?.type === ObjectType.CombatSanctuary) return false;
 
 
         const posKey = `${position.x},${position.y}`;
