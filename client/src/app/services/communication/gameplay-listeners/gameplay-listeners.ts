@@ -73,6 +73,7 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
     socketService.on<{ playerId: string }>(GameSessionEvents.TurnEnded, () => {
         service.currentPlayerTurn.set(null);
         service.reachableTiles.set([]);
+        dialog.getDialogById('sanctuary-dialog')?.close('dismiss');
         const pendingDialogs = flagTransferService.getPendingFlagTransferDialogs();
         pendingDialogs.forEach(([, data]) => {
             data.dialogRef.close(false);
@@ -148,19 +149,32 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
         }
     });
 
-    socketService.on<{ position: Position, newDoorState: string, remainingActions: number }>(GameSessionEvents.InteractResult, (data) => {
-        const currentMap = service.mapCopy();
-        if (currentMap) {
-            currentMap.mapConfig.tiles[data.position.y][data.position.x].doorState = data.newDoorState;
-            service.mapCopy.set({ ...currentMap });
-        }
-
+    socketService.on<{
+         position: Position, newDoorState: string, remainingActions: number, interactionType: string,
+         newLife?: number, newAttack?: number, newDefense?: number }>
+    (GameSessionEvents.InteractResult, (data) => {
         const session = gameSessionSocketService.currentSession();
+        if (data.interactionType === 'door') {
+            const currentMap = service.mapCopy();
+            if (currentMap) {
+                currentMap.mapConfig.tiles[data.position.y][data.position.x].doorState = data.newDoorState;
+                service.mapCopy.set({ ...currentMap });
+            }
+        } 
         if (session) {
             const currentPlayerId = service.currentPlayerTurn();
             const player = session.players.find(p => p.character.id === currentPlayerId);
             if (player) {
                 player.character.remainingActions = data.remainingActions;
+                if (data.newLife !== undefined) {
+                    player.character.life = data.newLife;
+                }
+                if (data.newAttack !== undefined) {
+                    player.character.attack = data.newAttack;
+                }
+                if (data.newDefense !== undefined) {
+                    player.character.defense = data.newDefense;
+                }
                 gameSessionSocketService.currentSession.set({ ...session });
 
             }

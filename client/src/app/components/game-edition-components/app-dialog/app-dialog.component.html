@@ -23,6 +23,11 @@
 
   <mat-dialog-actions align="end" class="dialog-actions">
     @if (data.type === 'warning' || (data.confirmText || data.cancelText)) {
+        @if (data.thirdOptionText) {
+          <button mat-button class="cancel-button" [mat-dialog-close]="'dismiss'">
+            {{ data.thirdOptionText || 'Annuler' }}
+          </button>
+        }      
         @if (data.cancelText) {
           <button mat-button class="cancel-button" [mat-dialog-close]="false">
             {{ data.cancelText || 'Annuler' }}
