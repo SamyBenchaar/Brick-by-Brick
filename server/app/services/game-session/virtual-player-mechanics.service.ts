@@ -114,8 +114,7 @@ export class VirtualPlayerMechanicsService {
         let bestTarget: Position | null = null;
         let bestCost = Infinity;
 
-        for (let i = 0; i < candidates.length; i++) {
-            const candidate = candidates[i];
+        for (const candidate of candidates) {
             const pathInfo = this.pathfinding.buildShortestPath(session, bot, candidate);
             if (pathInfo && pathInfo.totalCost < bestCost) {
                 bestTarget = candidate;

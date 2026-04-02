@@ -100,8 +100,7 @@ export class VirtualPlayerPathfindingService {
             visited.add(key);
 
             const neighbors = this.getNeighbors(current.pos);
-            for (let i = 0; i < neighbors.length; i++) {
-                const neighbor = neighbors[i];
+            for (const neighbor of neighbors) {
                 const stepCost = this.getMoveCost(session, neighbor, bot);
                 if (stepCost === Infinity) {
                     continue;

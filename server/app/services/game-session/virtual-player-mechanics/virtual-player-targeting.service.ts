@@ -18,8 +18,7 @@ export class VirtualPlayerTargetingService {
         let bestEnemy: Player | null = null;
         let bestCost = Infinity;
 
-        for (let i = 0; i < enemies.length; i++) {
-            const enemy = enemies[i];
+        for (const enemy of enemies) {
             if (!enemy.character.position) {
                 continue;
             }
@@ -29,8 +28,7 @@ export class VirtualPlayerTargetingService {
                 .filter((position) => this.pathfinding.getMoveCost(session, position, bot) !== Infinity);
 
             let enemyBest = Infinity;
-            for (let j = 0; j < adjacentTiles.length; j++) {
-                const tile = adjacentTiles[j];
+            for (const tile of adjacentTiles) {
                 const cost = distFromBot.get(this.pathfinding.positionKey(tile))?.cost ?? Infinity;
                 if (cost < enemyBest) {
                     enemyBest = cost;
@@ -90,8 +88,7 @@ export class VirtualPlayerTargetingService {
             }
 
             const neighbors = this.pathfinding.getNeighbors(current);
-            for (let i = 0; i < neighbors.length; i++) {
-                const neighbor = neighbors[i];
+            for (const neighbor of neighbors) {
                 const key = this.pathfinding.positionKey(neighbor);
                 if (visited.has(key)) {
                     continue;
@@ -116,8 +113,7 @@ export class VirtualPlayerTargetingService {
         let bestDistance = enemyDists.get(this.pathfinding.positionKey(bot.character.position))?.cost ?? 0;
 
         const entries = Array.from(reachable.entries());
-        for (let i = 0; i < entries.length; i++) {
-            const [key, node] = entries[i];
+        for (const [key, node] of entries) {
             if (node.cost > (bot.character.remainingMovement ?? 0)) {
                 continue;
             }
