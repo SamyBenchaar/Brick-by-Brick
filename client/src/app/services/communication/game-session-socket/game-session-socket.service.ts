@@ -94,8 +94,8 @@ export class GameSessionSocketService {
         });
 
         this.socketService.on<GameSession>(GameSessionEvents.GameSessionUpdated, (updatedSession) => {
-            const current = this.currentSession();
-            if (current && current.roomId !== updatedSession.roomId) {
+            const currentSession = this.currentSession();
+            if (currentSession && currentSession.roomId !== updatedSession.roomId) {
                 return;
             }
 

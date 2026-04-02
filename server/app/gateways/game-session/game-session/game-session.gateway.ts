@@ -132,7 +132,6 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
     @SubscribeMessage(GameSessionEvents.AddVirtualPlayer)
     handleAddVirtualPlayer(socket: Socket, payload: { roomId: string; profile: VirtualPlayerProfile }) {
         const gameSession = this.getSessionOrFail(socket, payload.roomId);
-        console.log('handleAddVirtualPlayer called with payload:', payload);
         if (!gameSession) return;
 
         if (!gameSession.isHost(socket.id)) {
