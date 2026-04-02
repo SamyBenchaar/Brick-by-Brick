@@ -49,7 +49,7 @@ export class VirtualPlayerCtfService {
     ): Promise<VirtualPlayerStepOutcome> {
         const attackedFlagHolder = await this.mechanics.tryAttackSpecificAdjacent(session, bot, enemyFlagHolder);
         if (attackedFlagHolder) {
-            return 'stop';
+            return 'continue';
         }
 
         if (!this.mechanics.canMove(bot)) {
@@ -73,18 +73,26 @@ export class VirtualPlayerCtfService {
         if (
             interceptionTarget &&
             bot.character.position &&
+            this.mechanics.samePosition(interceptionTarget, bot.character.position)
+        ) {
+            return 'stop';
+        }
+
+        if (
+            interceptionTarget &&
+            bot.character.position &&
             !this.mechanics.samePosition(interceptionTarget, bot.character.position) &&
             this.mechanics.canMove(bot)
         ) {
             const movedToIntercept = await this.mechanics.moveTowardPosition(session, bot, interceptionTarget);
             if (movedToIntercept) {
-                return 'continue';
+                return 'stop';
             }
         }
 
         const attackedHolder = await this.mechanics.tryAttackSpecificAdjacent(session, bot, enemyFlagHolder);
         if (attackedHolder) {
-            return 'stop';
+            return 'continue';
         }
 
         return 'none';

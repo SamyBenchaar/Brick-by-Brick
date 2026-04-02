@@ -131,9 +131,10 @@ export class VirtualPlayerMechanicsService {
 
     async moveTowardPosition(session: GameSession, bot: Player, target: Position): Promise<boolean> {
         const pathInfo = this.pathfinding.buildShortestPath(session, bot, target);
-        if (!pathInfo || pathInfo.path.length === 0) {
+        if (!pathInfo) {
             return false;
         }
+
 
         let moved = false;
         for (let i = 0; i < pathInfo.path.length;) {

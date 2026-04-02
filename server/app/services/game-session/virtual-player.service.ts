@@ -43,7 +43,7 @@ export class VirtualPlayerService {
     private async aggressiveStep(session: GameSession, bot: Player): Promise<VirtualPlayerStepOutcome> {
         const attacked = await this.virtualPlayerMechanicsService.tryAttackAdjacent(session, bot);
         if (attacked) {
-            return 'stop';
+            return 'continue';
         }
 
         if (!this.virtualPlayerMechanicsService.canMove(bot)) {
@@ -62,7 +62,7 @@ export class VirtualPlayerService {
     private async defensiveStep(session: GameSession, bot: Player): Promise<VirtualPlayerStepOutcome> {
         const attackedAdjacent = await this.virtualPlayerMechanicsService.tryAttackAdjacent(session, bot);
         if (attackedAdjacent) {
-            return 'stop';
+            return 'continue';
         }
 
         if (this.virtualPlayerMechanicsService.canMove(bot)) {
