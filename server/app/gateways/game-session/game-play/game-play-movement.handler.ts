@@ -154,5 +154,8 @@ export class GamePlayMovementHandler {
             newDoorState: tile.doorState,
             remainingActions: currentPlayer.remainingActions,
         });
+
+        const action = tile.doorState === 'opened' ? 'Ouverture' : 'Fermeture';
+        context.logService.log(gameSession.roomId, `${action} d'une porte par ${currentPlayer.name}`);
     }
 }
