@@ -94,6 +94,11 @@ export class GameSessionSocketService {
         });
 
         this.socketService.on<GameSession>(GameSessionEvents.GameSessionUpdated, (updatedSession) => {
+            const current = this.currentSession();
+            if (current && current.roomId !== updatedSession.roomId) {
+                return;
+            }
+
             this.gameSessions.update(current =>
                 current.map(gameSession => gameSession.roomId === updatedSession.roomId ? updatedSession : gameSession));
             const mySocketId = this.socketService.getSocketId();

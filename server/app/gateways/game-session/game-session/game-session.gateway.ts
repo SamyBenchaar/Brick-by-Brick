@@ -132,6 +132,7 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
     @SubscribeMessage(GameSessionEvents.AddVirtualPlayer)
     handleAddVirtualPlayer(socket: Socket, payload: { roomId: string; profile: VirtualPlayerProfile }) {
         const gameSession = this.getSessionOrFail(socket, payload.roomId);
+        console.log('handleAddVirtualPlayer called with payload:', payload);
         if (!gameSession) return;
 
         if (!gameSession.isHost(socket.id)) {
@@ -267,7 +268,7 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
 
     notifyGameSessionUpdated(gameSession: GameSession): void {
         this.notifyAvatarTakenUpdated(gameSession.roomId, gameSession.getTakenAvatars());
-        this.server.emit(GameSessionEvents.GameSessionUpdated, gameSession);
+        this.server.to(gameSession.roomId).emit(GameSessionEvents.GameSessionUpdated, gameSession);
     }
 
     notifyGameSessionListUpdated() {
