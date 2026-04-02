@@ -5,7 +5,7 @@
         [class.active]="activeTab === messageType.CHAT">
         Chat
     </button>
-    @if (gameSessionSocketService.currentSession()?.status === SessionStatus.Playing) {
+    @if (gameSessionSocketService.currentSession()?.status === sessionStatus.Playing) {
     <button 
         class="tab button brick-blue" 
         (click)="activeTab = messageType.LOG"

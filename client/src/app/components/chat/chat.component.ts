@@ -40,7 +40,7 @@ export class ChatComponent implements OnInit, OnChanges, OnDestroy {
 
     messageType = MessageType;
     activeTab = MessageType.CHAT;
-    SessionStatus = SessionStatus;
+    sessionStatus = SessionStatus;
 
     constructor() {
         effect(() => {
