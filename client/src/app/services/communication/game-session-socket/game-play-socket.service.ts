@@ -8,7 +8,7 @@ import { ObjectType, TileType } from '@common/map';
 import { Player } from '@common/player';
 import { Position } from '@common/position';
 import { GameSessionSocketService } from './game-session-socket.service';
-import { ADJACENT_POSITIONS } from '@app/constants/adjacent-position';
+import { ADJACENT_POSITIONS, ADJACENT_TO_ORIGIN_POSITION } from '@app/constants/adjacent-position';
 import { GameSession } from '@app/interfaces/game-session';
 
 @Injectable({
@@ -162,7 +162,7 @@ export class GamePlaySocketService {
 
         if (target.object === ObjectType.HealingSanctuary || target.object === ObjectType.CombatSanctuary) {
             const origin = target.sanctuaryOrigin ?? position;
-            return [[0, 0], [1, 0], [0, 1], [1, 1]].some(([dx, dy]) =>
+            return ADJACENT_TO_ORIGIN_POSITION.some(([dx, dy]) =>
                 this.areAdjacent(playerPosition, { x: origin.x + dx, y: origin.y + dy }),
             );
         }

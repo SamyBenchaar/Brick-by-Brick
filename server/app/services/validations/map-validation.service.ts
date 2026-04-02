@@ -150,9 +150,7 @@ export class MapValidationService {
 
         for (const row of tiles) {
             for (const tile of row) {
-                const objectType = tile.object?.type;
-                if (PLAYABLE_TYPES.includes(tile.type as TileType) 
-                    && objectType !== ObjectType.HealingSanctuary && objectType !== ObjectType.CombatSanctuary) {
+                if (PLAYABLE_TYPES.includes(tile.type as TileType) ) {
                     count++;
                 }
             }
