@@ -70,6 +70,7 @@ export class VirtualPlayerCtfService {
             ? this.mechanics.findNearestWalkableTile(session, bot, holderStart)
             : null;
 
+
         if (
             interceptionTarget &&
             bot.character.position &&
