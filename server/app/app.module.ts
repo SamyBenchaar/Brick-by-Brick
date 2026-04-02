@@ -1,5 +1,6 @@
 import { GameController } from '@app/controllers/game/game.controller';
 import { ChatGateway } from '@app/gateways/chat/chat.gateway';
+import { LogGateway } from '@app/gateways/log/log.gateway';
 import { GamePlayCombatHandler } from '@app/gateways/game-session/game-play/game-play-combat.handler';
 import { GamePlayCtfHandler } from '@app/gateways/game-session/game-play/game-play-ctf.handler';
 import { GamePlayHandlersProvider } from '@app/gateways/game-session/game-play/game-play-handlers.provider';
@@ -18,6 +19,7 @@ import { VirtualPlayerMechanicsService } from '@app/services/game-session/virtua
 import { VirtualPlayerPathfindingService } from '@app/services/game-session/virtual-player-mechanics/virtual-player-pathfinding.service';
 import { VirtualPlayerTargetingService } from '@app/services/game-session/virtual-player-mechanics/virtual-player-targeting.service';
 import { VirtualPlayerService } from '@app/services/game-session/virtual-player.service';
+import { LogService } from '@app/services/log/log.service';
 import { GameMetadataValidationService } from '@app/services/validations/game-metadata-validation.service';
 import { MapValidationService } from '@app/services/validations/map-validation.service';
 import { Logger, Module } from '@nestjs/common';
@@ -52,6 +54,8 @@ import { GameService } from './services/game/game.service';
         GamePlayTurnHandler,
         GamePlayHandlersProvider,
         ChatGateway,
+        LogGateway,
+        LogService,
         GameSessionService,
         StartingPointService,
         TurnManagementService,

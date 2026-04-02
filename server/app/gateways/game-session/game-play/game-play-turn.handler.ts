@@ -35,6 +35,10 @@ export class GamePlayTurnHandler {
             delay: gameSession.getCurrentInterTurnTime() * this.toMllisecondsFactor,
         });
 
+        if (currentPlayer) {
+            context.logService.log(gameSession.roomId, `Début de tour de ${currentPlayer.name}`);
+        }
+
         this.turnManagementService.startInterTurnCountdown(
             gameSession,
             gameSession.getCurrentInterTurnTime(),

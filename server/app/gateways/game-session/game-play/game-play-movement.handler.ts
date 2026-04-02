@@ -156,6 +156,9 @@ export class GamePlayMovementHandler {
             newDoorState: tile.doorState,
             remainingActions: currentPlayer.remainingActions,
         });
+
+        const action = tile.doorState === 'opened' ? 'Ouverture' : 'Fermeture';
+        context.logService.log(gameSession.roomId, `${action} d'une porte par ${currentPlayer.name}`);
     }
 
     private handleObjectInteraction(
@@ -177,6 +180,8 @@ export class GamePlayMovementHandler {
                 newLife: currentPlayer.life,
                 remainingActions: currentPlayer.remainingActions,
             });
+
+            context.logService.log(gameSession.roomId, `Utilisation d'un sanctuaire de soin par ${currentPlayer.name}`);
         } else if (objectType === 'combatsanctuary') {
             currentPlayer.attack += 1;
             currentPlayer.remainingActions -= 1;
@@ -187,6 +192,8 @@ export class GamePlayMovementHandler {
                 newAttack: currentPlayer.attack,
                 remainingActions: currentPlayer.remainingActions,
             });
+
+            context.logService.log(gameSession.roomId, `Utilisation d'un sanctuaire de combat par ${currentPlayer.name}`);
         }
     }
 }
