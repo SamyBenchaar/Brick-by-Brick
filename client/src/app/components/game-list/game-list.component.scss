@@ -25,14 +25,9 @@
 
     &:hover {
       box-shadow: 0 12px 24px rgba(0,0,0,0.3);
+      background-color: rgba(145, 217, 147, 0.8);
     }
 
-    &.selected {
-      border-color: #060606;
-      border-width: 1px;
-      border-style: solid;
-      background: rgba(145, 217, 147, 0.8);
-    }
   }
 
   .game-content {

@@ -7,17 +7,7 @@
     <div class="content">
         <section class="available-games">
             <h3 class="title">Jeux disponibles</h3>
-            <app-game-list [mode]="gameListMode.CREATION" [showOnlyVisible]="true"> </app-game-list>
+            <app-game-list [mode]="gameListMode.CREATION" [showOnlyVisible]="true" (gameSelected)="createGameSession()"> </app-game-list>
         </section>
-    </div>
-    <div class="footer">
-        <button
-            class="button"
-            style="background-image: url('./assets/images/4x1_green.png')"
-            [disabled]="!canCreateSession"
-            (click)="createGameSession()"
-        >
-            Créer une partie
-        </button>
     </div>
 </div>
