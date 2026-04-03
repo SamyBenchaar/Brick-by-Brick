@@ -1,4 +1,4 @@
-import { GameSession } from '@app/domain/game-session';
+﻿import { GameSession } from '@app/domain/game-session';
 import { GamePlayHandlerContext } from '@app/gateways/game-session/game-play/game-play-handler.context';
 import { GamePlayHandlersProvider } from '@app/gateways/game-session/game-play/game-play-handlers.provider';
 import { GameSessionGateway } from '@app/gateways/game-session/game-session/game-session.gateway';
@@ -101,7 +101,8 @@ export class GamePlayGateway implements OnGatewayInit {
         });
 
         const action = newIsDebugModeActivated ? 'Activation' : 'Désactivation';
-        this.logService.log(payload.currentRoomId, `${action} du mode de débogage`);
+        const hostName = gameSession.host.character.name;
+        this.logService.log(payload.currentRoomId, `${action} du mode de débogage par ${hostName}`);
     }
 
     @SubscribeMessage(GameSessionEvents.EndTurnRequest)

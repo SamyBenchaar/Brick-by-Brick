@@ -1,6 +1,7 @@
 import { GameSession } from '@app/domain/game-session';
 import { GamePlayHandlerContext } from '@app/gateways/game-session/game-play/game-play-handler.context';
 import { GameSessionService } from '@app/services/game-session/game-session/game-session.service';
+import { LogService } from '@app/services/log/log.service';
 import { GameSessionEvents } from '@common/game.events';
 import { Player } from '@common/player';
 import { Injectable } from '@nestjs/common';
@@ -8,7 +9,10 @@ import { Socket } from 'socket.io';
 
 @Injectable()
 export class GamePlayCtfHandler {
-    constructor(private readonly gameSessionService: GameSessionService) {}
+    constructor(
+        private readonly gameSessionService: GameSessionService,
+        private readonly logService: LogService,
+    ) {}
 
     handleRequestFlagTransfer(
         socket: Socket,
@@ -32,7 +36,7 @@ export class GamePlayCtfHandler {
             if (fromPlayer.character.remainingActions !== undefined) {
                 fromPlayer.character.remainingActions -= 1;
             }
-
+            this.logService.log(payload.roomId, `Drapeau transféré par ${fromPlayer.character.name} à ${toPlayer.character.name}`);
             context.server.to(payload.roomId).emit(GameSessionEvents.GameSessionUpdated, gameSession);
 
             const fromCurrentPlayer = gameSession.getCurrentPlayer();
@@ -91,7 +95,7 @@ export class GamePlayCtfHandler {
             }
 
             context.server.to(payload.roomId).emit(GameSessionEvents.GameSessionUpdated, gameSession);
-                context.logService.log(payload.roomId, `Transfert de drapeau de ${fromPlayer.character.name} à ${toPlayer.character.name}`);
+            context.logService.log(payload.roomId, `Transfert de drapeau de ${fromPlayer.character.name} à ${toPlayer.character.name}`);
 
             const fromCurrentPlayer = gameSession.getCurrentPlayer();
             if (fromCurrentPlayer?.id === payload.fromPlayerId && !this.gameSessionService.canPlayerTakeAction(gameSession)) {

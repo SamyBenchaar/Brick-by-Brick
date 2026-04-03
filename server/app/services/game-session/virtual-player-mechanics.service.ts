@@ -19,7 +19,7 @@ export class VirtualPlayerMechanicsService {
     @Inject() private readonly gameGateway: GameGateway;
     @Inject() private readonly pathfinding: VirtualPlayerPathfindingService;
     @Inject() private readonly targeting: VirtualPlayerTargetingService;
-    @Inject() private readonly logService: LogService
+    @Inject() private readonly logService: LogService;
 
     private readonly minActionDelayMs = 500;
     private readonly actionDelayRangeMs = 1000;
