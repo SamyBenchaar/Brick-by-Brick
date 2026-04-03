@@ -10,6 +10,7 @@ import { VirtualPlayerPathfindingService } from '@app/services/game-session/virt
 import { VirtualPlayerTargetingService } from '@app/services/game-session/virtual-player-mechanics/virtual-player-targeting.service';
 import { VirtualPlayerService } from '@app/services/game-session/virtual-player.service';
 import { GameService } from '@app/services/game/game.service';
+import { LogService } from '@app/services/log/log.service';
 import { Character } from '@common/character';
 import { Dice } from '@common/dice';
 import { Player } from '@common/player';
@@ -76,6 +77,7 @@ describe('GameSessionService', () => {
                 VirtualPlayerService,
                 { provide: GameGateway, useValue: { notifyRoomEvent: jest.fn() } },
                 { provide: GameService, useValue: mockGameService },
+                { provide: LogService, useValue: { log: jest.fn() } },
             ],
         }).compile();
 
