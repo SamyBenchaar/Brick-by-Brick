@@ -58,6 +58,14 @@ export enum GameSessionEvents {
 
     RequestCombat = 'requestCombat',
     CombatResult = 'combatResult',
+    CombatStarted = 'combatStarted',
+    CombatTurnStarted = 'combatTurnStarted',
+    CombatTurnTimeUpdate = 'combatTurnTimeUpdate',
+    SubmitCombatChoice = 'submitCombatChoice',
+    CombatChoiceSubmitted = 'combatChoiceSubmitted',
+    CombatRoundResolved = 'combatRoundResolved',
+    CombatEnded = 'combatEnded',
+    TurnResumed = 'turnResumed',
 
     RequestInteract = 'requestInteract',
     InteractResult = 'interactResult',

@@ -1,5 +1,7 @@
 import { GameMap } from '@app/interfaces/game-map-interfaces';
 import { Character } from '@common/character';
+import { ActiveCombat } from '@common/combat';
+import { COMBAT_TURN_TIME } from '@common/constants/combat-constants';
 import { MAX_PLAYER, ROOM_ID_LENGTH } from '@common/constants/game-config-constants';
 import { EXPIRED_FLAG_TIME, SHUFFLE_FACTOR } from '@common/map';
 import { Player } from '@common/player';
@@ -23,6 +25,8 @@ export class GameSession {
     currentPlayerIndex: number = 0;
     currentTurnTime: number = 30;
     currentInterTurnTime: number = 3;
+    activeCombat: ActiveCombat | null = null;
+    currentCombatTurnTime: number = COMBAT_TURN_TIME;
     startingPoints: Map<string, Position> = new Map();
     isTurnStarting: boolean = false;
     isDebugModeActivated = false;
@@ -175,6 +179,41 @@ export class GameSession {
         if (this.currentTurnTime > 0) {
             this.currentTurnTime--;
         }
+    }
+
+    getActiveCombat(): ActiveCombat | null {
+        return this.activeCombat;
+    }
+
+    setActiveCombat(activeCombat: ActiveCombat | null): void {
+        this.activeCombat = activeCombat;
+    }
+
+    getCurrentCombatTurnTime(): number {
+        return this.currentCombatTurnTime;
+    }
+
+    setCurrentCombatTurnTime(time: number): void {
+        this.currentCombatTurnTime = time;
+    }
+
+    decrementCombatTurnTime(): void {
+        if (this.currentCombatTurnTime > 0) {
+            this.currentCombatTurnTime--;
+        }
+    }
+
+    clearActiveCombat(): void {
+        this.activeCombat = null;
+        this.currentCombatTurnTime = COMBAT_TURN_TIME;
+    }
+
+    isPlayerInActiveCombat(playerId: string): boolean {
+        if (!this.activeCombat) {
+            return false;
+        }
+
+        return this.activeCombat.attackerId === playerId || this.activeCombat.defenderId === playerId;
     }
 
     setMapCopy(mapData: GameMap): void {

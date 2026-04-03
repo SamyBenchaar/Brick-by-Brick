@@ -12,6 +12,7 @@ import { VirtualPlayerService } from '@app/services/game-session/virtual-player.
 import { GameService } from '@app/services/game/game.service';
 import { LogService } from '@app/services/log/log.service';
 import { Character } from '@common/character';
+import { COMBAT_TURN_TIME } from '@common/constants/combat-constants';
 import { Dice } from '@common/dice';
 import { Player } from '@common/player';
 import { Test, TestingModule } from '@nestjs/testing';
@@ -258,6 +259,40 @@ describe('GameSessionService', () => {
             service.deleteGameSession(session.roomId);
 
             expect(service.getGameSession(session.roomId)).toBeUndefined();
+        });
+    });
+
+    describe('combat state', () => {
+        it('devrait stocker un combat actif dans la session', async () => {
+            const session = await service.createGameSession(createPlayer('host-1', 'Host'), 'map-1');
+
+            session.setActiveCombat({
+                attackerId: 'a1',
+                defenderId: 'd1',
+                initiatorId: 'a1',
+                roundNumber: 1,
+                choices: {},
+            });
+
+            expect(session.getActiveCombat()).not.toBeNull();
+            expect(session.getActiveCombat()?.attackerId).toBe('a1');
+        });
+
+        it('devrait vider le combat actif correctement', async () => {
+            const session = await service.createGameSession(createPlayer('host-1', 'Host'), 'map-1');
+
+            session.setActiveCombat({
+                attackerId: 'a1',
+                defenderId: 'd1',
+                initiatorId: 'a1',
+                roundNumber: 1,
+                choices: {},
+            });
+
+            session.clearActiveCombat();
+
+            expect(session.getActiveCombat()).toBeNull();
+            expect(session.getCurrentCombatTurnTime()).toBe(COMBAT_TURN_TIME);
         });
     });
 
