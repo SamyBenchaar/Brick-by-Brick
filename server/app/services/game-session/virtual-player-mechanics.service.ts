@@ -10,6 +10,7 @@ import { CombatService } from './combat.service';
 import { MovementService } from './movement.service';
 import { VirtualPlayerPathfindingService } from './virtual-player-mechanics/virtual-player-pathfinding.service';
 import { VirtualPlayerTargetingService } from './virtual-player-mechanics/virtual-player-targeting.service';
+import { LogService } from '@app/services/log/log.service';
 
 @Injectable()
 export class VirtualPlayerMechanicsService {
@@ -18,6 +19,7 @@ export class VirtualPlayerMechanicsService {
     @Inject() private readonly gameGateway: GameGateway;
     @Inject() private readonly pathfinding: VirtualPlayerPathfindingService;
     @Inject() private readonly targeting: VirtualPlayerTargetingService;
+    @Inject() private readonly logService: LogService
 
     private readonly minActionDelayMs = 500;
     private readonly actionDelayRangeMs = 1000;
@@ -333,6 +335,7 @@ export class VirtualPlayerMechanicsService {
             newDoorState: tile.doorState,
             remainingActions: bot.character.remainingActions,
         });
+        this.logService.log(session.roomId, `Ouverture d'une porte par ${bot.character.name}`);
 
         return true;
     }
