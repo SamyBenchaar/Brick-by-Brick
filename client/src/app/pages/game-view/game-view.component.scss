@@ -205,9 +205,9 @@ $turn-info-color: #f88400ec;
 }
 
 .left-sidebar {
-    width: 250px;
-    min-width: 200px;
-    max-width: 300px;
+    width: 300px;
+    min-width: 250px;
+    max-width: 350px;
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
@@ -230,14 +230,15 @@ $turn-info-color: #f88400ec;
     app-player-sign {
         display: block;
         width: 100%;
+        flex-shrink: 0;
     }
 }
 
 .chat-sidebar {
     display: flex;
     flex-direction: column;
-    width: 280px;
-    min-width: 280px;
+    width: 390px;
+    min-width: 390px;
     flex-shrink: 0;
     border-right: 2px solid $primary-color;
     transition: width 0.3s ease, min-width 0.3s ease;
