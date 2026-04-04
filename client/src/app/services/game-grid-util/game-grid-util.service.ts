@@ -16,6 +16,7 @@ export class GameGridUtilService {
             data: {
                 title: 'Informations du joueur',
                 message: `Joueur: ${player.name}\nAvatar ID: ${player.avatarId}\nVictoires: ${player.victories}`,
+                image: this.getAvatarImage(player.avatarId),
                 type: 'info',
             },
         });

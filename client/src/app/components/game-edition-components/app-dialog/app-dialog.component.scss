@@ -59,8 +59,17 @@
 .dialog-content {
   padding: 24px;
   color: #555;
-  font-size: 15px;
+  font-size: 20px;
   line-height: 1.6;
+  
+  .dialog-image {
+    max-width: 100%;
+    height: auto;
+    max-height: 100px;
+    margin-bottom: 16px;
+    border-radius: 4px;
+    display: block;
+  }
   
   .message-text {
     margin: 0;
