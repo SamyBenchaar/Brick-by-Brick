@@ -49,12 +49,12 @@ $turn-info-color: #f88400ec;
 .info-label {
     color: $primary-color;
     font-weight: bold;
-    font-size: 20px;
+    font-size: 30px;
 }
 
 .info-value {
     color: white;
-    font-size: 20px;
+    font-size: 30px;
 }
 
 .content-area {
@@ -117,19 +117,18 @@ $turn-info-color: #f88400ec;
 .turn-info {
     border: none;
     background-size: 100% 100%;
-    padding: 1rem 2rem;
     z-index: 10;
     text-align: center;
     color: white;
 
     h3 {
-        margin: 2 0 0.5rem 0;
         color: $primary-color;
-        font-size: 1.3rem;
+        font-size: 26px;
+        margin-bottom: 0;
     }
 
     p {
-        margin: 0.3rem 0;
+        margin: 0.1rem 0;
         font-size: 1rem;
     }
 
@@ -152,7 +151,12 @@ $turn-info-color: #f88400ec;
         &:active {
             transform: scale(0.95);
         }
+
     }
+    .time-left {
+        font-size: 40px;
+    }
+    
 }
 .brick-orange{
     padding: 7px;
@@ -284,7 +288,7 @@ $turn-info-color: #f88400ec;
 .chat-toggle-label {
     color: $primary-color;
     font-weight: bold;
-    font-size: 12px;
+    font-size: 20px;
     text-transform: uppercase;
     letter-spacing: 1px;
     flex: 1;
