@@ -19,10 +19,11 @@ import { getGameSizeConfig } from '@common/constants/game-config-constants';
 import { MapSize, ObjectType } from '@common/map';
 import { Position } from '@common/position';
 import { Subscription } from 'rxjs';
+import { CombatViewComponent } from '@app/components/game-view-components/combat-view/combat-view.component';
 
 @Component({
   selector: 'app-game-view',
-  imports: [CommonModule, GameGridComponent, ChatComponent, PlayerBoardComponent, PlayerSignComponent],
+  imports: [CommonModule, GameGridComponent, ChatComponent, PlayerBoardComponent, PlayerSignComponent, CombatViewComponent],
   templateUrl: './game-view.component.html',
   styleUrl: './game-view.component.scss',
 })
@@ -130,6 +131,11 @@ export class GameViewComponent implements OnInit, OnDestroy {
 
   isHost(): boolean {
     return this.gameSessionSocketService.isCurrentUserHost();
+  }
+
+  isInCombat(): boolean {
+    //to do, le mettre a true pour afficher la modale de combat
+    return true;
   }
 
   getCurrentTurnPlayerName(): string {

@@ -1,0 +1,24 @@
+<div class="player-info">
+    <div class="player-name">{{ character.name }}</div>
+    <img class="avatar" [src]='getAvatarPath(character.avatarId)'  [alt]="character.name">
+    <div class="player-life">Vie: {{ character.life }}/{{ character.maxLife }}</div>
+
+    <div class="stats-container">
+        <div class="stat-box">
+            <div class="section-title">Attaque</div>
+            <div>Valeur: </div>
+            <div>Dé:</div>
+            <div>Pénalité:</div>
+            <div class="attack-score">Total attaque:</div>
+        </div>
+
+
+        <div class="stat-box">
+            <div class="section-title">Défense</div>
+            <div>Valeur:</div>
+            <div>Dé:</div>
+            <div>Pénalité:</div>
+            <div class="defense-score">Total défense:</div>
+        </div>
+    </div>
+</div>
