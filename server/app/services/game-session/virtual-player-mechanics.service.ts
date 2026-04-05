@@ -246,48 +246,26 @@ export class VirtualPlayerMechanicsService {
     }
 
     async tryUseAdjacentSanctuary(session: GameSession, bot: Player): Promise<boolean> {
-        if (!this.isBotCurrentPlayer(session, bot) || !this.hasAction(bot) || !bot.character.position) {
+        if (!this.canStartSanctuaryUse(session, bot)) {
             return false;
         }
 
-        const sanctuaryPosition = this.findAdjacentSanctuaryTile(session, bot.character.position);
-        if (!sanctuaryPosition) {
+        const sanctuaryData = this.findUsableAdjacentSanctuary(session, bot);
+        if (!sanctuaryData) {
             return false;
         }
 
-        const tile = session.getMapCopy()?.tiles?.[sanctuaryPosition.y]?.[sanctuaryPosition.x];
-        if (!tile?.object) {
-            return false;
-        }
-
-        if (tile.object.type === ObjectType.CombatSanctuary && bot.character.hasCombatSanctuaryBonus) {
-            return false;
-        }
-
-        if (tile.object.type === ObjectType.HealingSanctuary && bot.character.life >= bot.character.maxLife) {
-            return false;
-        }
-
-        if (tile.object.type === ObjectType.HealingSanctuary) {
-            bot.character.life = Math.min(bot.character.life + HEALING_SANCTUARY_BONUS, bot.character.maxLife);
-        } else if (tile.object.type === ObjectType.CombatSanctuary) {
-            bot.character.attack += COMBAT_SANCTUARY_BONUS;
-            bot.character.defense += COMBAT_SANCTUARY_BONUS;
-            bot.character.hasCombatSanctuaryBonus = true;
-            bot.character.combatSanctuaryBonus = COMBAT_SANCTUARY_BONUS;
-        } else {
-            return false;
-        }
+        this.applySanctuaryEffect(bot, sanctuaryData.type);
 
         await this.randomDelay();
-        if (!this.isBotCurrentPlayer(session, bot) || !this.hasAction(bot)) {
+        if (!this.canFinalizeSanctuaryUse(session, bot)) {
             return false;
         }
         bot.character.remainingActions = (bot.character.remainingActions ?? 0) - 1;
 
         this.gameGateway.notifyRoomEvent(session.roomId, GameSessionEvents.InteractResult, {
-            position: sanctuaryPosition,
-            interactionType: tile.object.type,
+            position: sanctuaryData.position,
+            interactionType: sanctuaryData.type,
             playerId: bot.character.id,
             newLife: bot.character.life,
             newAttack: bot.character.attack,
@@ -296,6 +274,65 @@ export class VirtualPlayerMechanicsService {
         });
 
         return true;
+    }
+
+    private canStartSanctuaryUse(session: GameSession, bot: Player): boolean {
+        return this.isBotCurrentPlayer(session, bot) && this.hasAction(bot) && !!bot.character.position;
+    }
+
+    private canFinalizeSanctuaryUse(session: GameSession, bot: Player): boolean {
+        return this.isBotCurrentPlayer(session, bot) && this.hasAction(bot);
+    }
+
+    private findUsableAdjacentSanctuary(
+        session: GameSession,
+        bot: Player,
+    ): { position: Position; type: ObjectType.HealingSanctuary | ObjectType.CombatSanctuary } | null {
+        const botPosition = bot.character.position;
+        if (!botPosition) {
+            return null;
+        }
+
+        const sanctuaryPosition = this.findAdjacentSanctuaryTile(session, botPosition);
+        if (!sanctuaryPosition) {
+            return null;
+        }
+
+        const tileObject = session.getMapCopy()?.tiles?.[sanctuaryPosition.y]?.[sanctuaryPosition.x]?.object;
+        if (!tileObject) {
+            return null;
+        }
+
+        const sanctuaryType = tileObject.type;
+        if (!this.isSanctuaryTypeUsable(bot, sanctuaryType)) {
+            return null;
+        }
+
+        return { position: sanctuaryPosition, type: sanctuaryType };
+    }
+
+    private isSanctuaryTypeUsable(bot: Player, sanctuaryType: string): sanctuaryType is ObjectType.HealingSanctuary | ObjectType.CombatSanctuary {
+        if (sanctuaryType === ObjectType.HealingSanctuary) {
+            return bot.character.life < bot.character.maxLife;
+        }
+
+        if (sanctuaryType === ObjectType.CombatSanctuary) {
+            return !bot.character.hasCombatSanctuaryBonus;
+        }
+
+        return false;
+    }
+
+    private applySanctuaryEffect(bot: Player, sanctuaryType: ObjectType.HealingSanctuary | ObjectType.CombatSanctuary): void {
+        if (sanctuaryType === ObjectType.HealingSanctuary) {
+            bot.character.life = Math.min(bot.character.life + HEALING_SANCTUARY_BONUS, bot.character.maxLife);
+            return;
+        }
+
+        bot.character.attack += COMBAT_SANCTUARY_BONUS;
+        bot.character.defense += COMBAT_SANCTUARY_BONUS;
+        bot.character.hasCombatSanctuaryBonus = true;
+        bot.character.combatSanctuaryBonus = COMBAT_SANCTUARY_BONUS;
     }
 
     private findAdjacentSanctuaryTile(session: GameSession, botPosition: Position): Position | null {
