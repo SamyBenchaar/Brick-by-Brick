@@ -1,13 +1,20 @@
+import { GameGateway } from '@app/gateways/game/game.gateway';
+import { CombatService } from '@app/services/game-session/combat.service';
+import { GameSessionService } from '@app/services/game-session/game-session/game-session.service';
+import { MovementService } from '@app/services/game-session/movement.service';
+import { StartingPointService } from '@app/services/game-session/starting-point.service';
+import { TurnManagementService } from '@app/services/game-session/turn-management.service';
+import { VirtualPlayerCtfService } from '@app/services/game-session/virtual-player-ctf.service';
+import { VirtualPlayerMechanicsService } from '@app/services/game-session/virtual-player-mechanics.service';
+import { VirtualPlayerPathfindingService } from '@app/services/game-session/virtual-player-mechanics/virtual-player-pathfinding.service';
+import { VirtualPlayerTargetingService } from '@app/services/game-session/virtual-player-mechanics/virtual-player-targeting.service';
+import { VirtualPlayerService } from '@app/services/game-session/virtual-player.service';
 import { GameService } from '@app/services/game/game.service';
+import { LogService } from '@app/services/log/log.service';
 import { Character } from '@common/character';
 import { Dice } from '@common/dice';
 import { Player } from '@common/player';
 import { Test, TestingModule } from '@nestjs/testing';
-import { CombatService } from '@app/services/game-session/combat.service';
-import { MovementService } from '@app/services/game-session/movement.service';
-import { StartingPointService } from '@app/services/game-session/starting-point.service';
-import { TurnManagementService } from '@app/services/game-session/turn-management.service';
-import { GameSessionService } from '@app/services/game-session/game-session/game-session.service';
 
 /**
  * Stratégie de test pour GameSessionService:
@@ -63,7 +70,14 @@ describe('GameSessionService', () => {
                 TurnManagementService,
                 MovementService,
                 CombatService,
+                VirtualPlayerPathfindingService,
+                VirtualPlayerTargetingService,
+                VirtualPlayerMechanicsService,
+                VirtualPlayerCtfService,
+                VirtualPlayerService,
+                { provide: GameGateway, useValue: { notifyRoomEvent: jest.fn() } },
                 { provide: GameService, useValue: mockGameService },
+                { provide: LogService, useValue: { log: jest.fn() } },
             ],
         }).compile();
 

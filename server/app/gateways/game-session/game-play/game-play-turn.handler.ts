@@ -92,9 +92,13 @@ export class GamePlayTurnHandler {
 
         if (currentPlayer?.id) {
             gameSession.rejectPendingFlagTransfersFromPlayer(currentPlayer.id);
-            if (gameSession.gameMode === 'ctf') {
-                context.server.to(gameSession.roomId).emit(GameSessionEvents.GameSessionUpdated, gameSession);
-            }
+            context.server.to(gameSession.roomId).emit(GameSessionEvents.GameSessionUpdated, gameSession);
+        }
+
+        const ctfWinner = this.gameSessionService.checkCtfFlagWinner(gameSession);
+        if (ctfWinner) {
+            context.onGameEnd(gameSession, ctfWinner);
+            return;
         }
 
         const winner = this.gameSessionService.checkGameWinner(gameSession);

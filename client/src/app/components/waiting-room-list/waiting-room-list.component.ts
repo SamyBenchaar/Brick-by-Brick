@@ -46,6 +46,9 @@ export class WaitingRoomListComponent {
     }
 
     openVirtualPlayerDialog(): void {
+        if (this.isSessionFull()) {
+            return;
+        }
         this.isProfileDialogOpen = true;
     }
 
@@ -54,8 +57,19 @@ export class WaitingRoomListComponent {
     }
 
     onAddVirtualPlayer(profile: VirtualPlayerProfile): void {
+        if (this.isSessionFull()) {
+            return;
+        }
         this.gameSessionSocketService.addVirtualPlayer(profile);
         this.closeVirtualPlayerDialog();
+    }
+
+    isSessionFull(): boolean {
+        const session = this.gameSessionSocketService.currentSession();
+        if (!session) {
+            return false;
+        }
+        return session.players.length >= session.maxPlayers;
     }
 
     isVirtualPlayer(player: Player): boolean {

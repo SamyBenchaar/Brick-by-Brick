@@ -5,6 +5,7 @@ import { CombatService } from '@app/services/game-session/combat.service';
 import { MovementService } from '@app/services/game-session/movement.service';
 import { StartingPointService } from '@app/services/game-session/starting-point.service';
 import { TurnManagementService } from '@app/services/game-session/turn-management.service';
+import { VirtualPlayerService } from '@app/services/game-session/virtual-player.service';
 import { GameService } from '@app/services/game/game.service';
 import { Character } from '@common/character';
 import { AVATAR_IDS } from '@common/constants/avatar-constants';
@@ -30,6 +31,7 @@ export class GameSessionService {
 
     private logger = new Logger(GameSessionService.name);
     private gameSessions: Map<string, GameSession> = new Map();
+    @Inject() private virtualPlayerService: VirtualPlayerService;
 
     constructor(
         private startingPointService: StartingPointService,
@@ -132,16 +134,41 @@ export class GameSessionService {
 
         const endedPlayerId = currentPlayer.id;
 
+        const endTurnSafely = () => {
+            const activePlayer = gameSession.getCurrentPlayer();
+            if (!activePlayer || activePlayer.id !== endedPlayerId) {
+                return;
+            }
+
+            this.endCurrentTurn(gameSession);
+            if (onTurnEndCallback) {
+                onTurnEndCallback(endedPlayerId);
+            }
+        };
+
+        // The turn may already be ended in onStartCallback (for example when no action is possible).
+        if (gameSession.getCurrentPlayer()?.id !== endedPlayerId) {
+            return;
+        }
+
         this.turnManagementService.startTurnTimer(
             gameSession,
             () => {
-                this.endCurrentTurn(gameSession);
-                if (onTurnEndCallback) {
-                    onTurnEndCallback(endedPlayerId);
-                }
+                endTurnSafely();
             },
             onTickCallback,
         );
+
+        const fullCurrentPlayer = gameSession.players.find(p => p.character.id === currentPlayer.id);
+        if (fullCurrentPlayer?.virtualProfile) {
+            this.virtualPlayerService.playTurn(gameSession, fullCurrentPlayer)
+                .catch((error: Error) => {
+                    this.logger.error(`Erreur durant le tour JV: ${error.message}`);
+                })
+                .finally(() => {
+                    endTurnSafely();
+                });
+        }
     }
 
     endCurrentTurn(gameSession: GameSession): void {
@@ -207,6 +234,25 @@ export class GameSessionService {
     checkGameWinner(gameSession: GameSession): Character | null {
         const players = gameSession.getActivePlayers();
         return this.combatService.checkGameWinCondition(players);
+    }
+
+    checkCtfFlagWinner(gameSession: GameSession): Character | null {
+        if (gameSession.gameMode !== 'ctf') {
+            return null;
+        }
+
+        const flagHolder = gameSession.getFlagHolderCharacter();
+        if (!flagHolder?.position) {
+            return null;
+        }
+
+        const start = gameSession.getStartingPoint(flagHolder.id);
+        if (!start) {
+            return null;
+        }
+
+        const hasReturnedFlag = flagHolder.position.x === start.x && flagHolder.position.y === start.y;
+        return hasReturnedFlag ? flagHolder : null;
     }
 
     canPlayerTakeAction(gameSession: GameSession): boolean {

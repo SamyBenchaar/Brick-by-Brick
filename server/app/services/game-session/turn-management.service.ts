@@ -72,13 +72,20 @@ export class TurnManagementService {
         const roomId = gameSession.roomId;
 
         this.clearTimer(roomId);
-
         const currentPlayer = gameSession.getCurrentPlayer();
         if (currentPlayer) {
             currentPlayer.remainingMovement = currentPlayer.speed;
             currentPlayer.remainingActions = 1;
+            if (currentPlayer.combatSanctuaryBonus !== undefined) {
+                if (currentPlayer.hasCombatSanctuaryBonus) {
+                    currentPlayer.hasCombatSanctuaryBonus = false;
+                } else {
+                    currentPlayer.attack -= currentPlayer.combatSanctuaryBonus;
+                    currentPlayer.defense -= currentPlayer.combatSanctuaryBonus;
+                    currentPlayer.combatSanctuaryBonus = undefined;
+                }
+            }
         }
-
         gameSession.advanceToNextPlayer();
     }
 

@@ -1,0 +1,9 @@
+export const HEALING_SANCTUARY_BONUS = 2;
+export const COMBAT_SANCTUARY_BONUS = 1;
+export const DOUBLE_SANCTUARY_BONUS = 2;
+export const DOUBLE_SANCTUARY_BONUS_CHANCE = 0.5;
+
+export const SANCTUARYLABEL: Record<string, string> = {
+    combatsanctuary: 'sanctuaire de combat',
+    healingsanctuary: 'sanctuaire de soin',
+};

@@ -1,4 +1,4 @@
-import { GameSession } from '@app/domain/game-session';
+﻿import { GameSession } from '@app/domain/game-session';
 import { GamePlayHandlerContext } from '@app/gateways/game-session/game-play/game-play-handler.context';
 import { GamePlayHandlersProvider } from '@app/gateways/game-session/game-play/game-play-handlers.provider';
 import { GameSessionGateway } from '@app/gateways/game-session/game-session/game-session.gateway';
@@ -101,7 +101,8 @@ export class GamePlayGateway implements OnGatewayInit {
         });
 
         const action = newIsDebugModeActivated ? 'Activation' : 'Désactivation';
-        this.logService.log(payload.currentRoomId, `${action} du mode de débogage`);
+        const hostName = gameSession.host.character.name;
+        this.logService.log(payload.currentRoomId, `${action} du mode de débogage par ${hostName}`);
     }
 
     @SubscribeMessage(GameSessionEvents.EndTurnRequest)
@@ -152,14 +153,14 @@ export class GamePlayGateway implements OnGatewayInit {
         );
     }
 
-    @SubscribeMessage(GameSessionEvents.RequestInteract)
-    handleRequestInteract(socket: Socket, payload: { roomId: string; position: Position }) {
-        this.handlersProvider.movementHandler.handleRequestInteract(
-            socket,
-            payload,
-            this.createHandlerContext(),
-        );
-    }
+    // @SubscribeMessage(GameSessionEvents.RequestInteract)
+    // handleRequestInteract(socket: Socket, payload: { roomId: string; position: Position }) {
+    //     this.handlersProvider.movementHandler.handleRequestInteract(
+    //         socket,
+    //         payload,
+    //         this.createHandlerContext(),
+    //     );
+    // }
 
 
     @SubscribeMessage(GameSessionEvents.PlayerAbandoned)
@@ -179,6 +180,8 @@ export class GamePlayGateway implements OnGatewayInit {
 
         this.handleAbandonedPlayerFlagPlacement(gameSession, abandoningPlayer);
         this.gameSessionService.removePlayer(payload.roomId, socket.id);
+        socket.leave(payload.roomId);
+        this.gameSessionGateway.clearSocketRoomTracking(socket.id);
 
         this.server.to(payload.roomId).emit(GameSessionEvents.PlayerAbandoned, {
             playerId: abandoningPlayer?.character.id,
@@ -187,6 +190,12 @@ export class GamePlayGateway implements OnGatewayInit {
 
         if (abandoningPlayer) {
             this.logService.log(payload.roomId, `Abandon de partie par ${abandoningPlayer.character.name}`);
+        }
+
+        const hasHumanPlayersRemaining = gameSession.players.some((player) => !player.virtualProfile);
+        if (!hasHumanPlayersRemaining) {
+            this.handleGameEnd(gameSession, null);
+            return;
         }
 
         if (!this.handleAbandonedPlayerTeamCheck(gameSession)) {
@@ -203,6 +212,19 @@ export class GamePlayGateway implements OnGatewayInit {
 
         if (wasCurrentPlayer) {
             this.handleTurnEnd(gameSession);
+        }
+    }
+
+    @SubscribeMessage(GameSessionEvents.RequestInteract)
+    handleRequestInteract(socket: Socket, payload: { roomId: string; position: Position; mode: 'normal' | 'double' }) {
+        const gameSession = this.gameSessionService.getGameSession(payload.roomId);
+        if (!gameSession) return;
+        const tile = gameSession.mapCopy?.tiles[payload.position.y]?.[payload.position.x];
+        if (!tile) return;
+        if (tile.type === 'door') {
+            this.handlersProvider.movementHandler.handleRequestInteract(socket, payload, this.createHandlerContext());
+        } else if (tile.object?.type === 'healingsanctuary' || tile.object?.type === 'combatsanctuary') {
+            this.handlersProvider.sanctuaryHandler.handleRequestInteract(socket, payload, this.createHandlerContext());
         }
     }
 
