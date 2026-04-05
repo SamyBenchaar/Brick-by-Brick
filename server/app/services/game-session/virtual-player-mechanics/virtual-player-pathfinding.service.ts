@@ -1,9 +1,9 @@
 import { GameSession } from '@app/domain/game-session';
-import { TILE_COST, TileType } from '@common/map';
+import { KEY_DIRECTION_MAP } from '@common/constants/key-event.constants';
+import { ObjectType, TILE_COST, TileType } from '@common/map';
 import { Player } from '@common/player';
 import { Position } from '@common/position';
 import { Injectable } from '@nestjs/common';
-import {KEY_DIRECTION_MAP} from '@common/constants/key-event.constants';
 
 export interface PathNode {
     cost: number;
@@ -33,7 +33,7 @@ export class VirtualPlayerPathfindingService {
             return KEY_DIRECTION_MAP.s;
         }
         if (to.x === from.x - 1 && to.y === from.y) {
-            return KEY_DIRECTION_MAP.a  ;
+            return KEY_DIRECTION_MAP.a;
         }
         if (to.x === from.x + 1 && to.y === from.y) {
             return KEY_DIRECTION_MAP.d;
@@ -53,6 +53,10 @@ export class VirtualPlayerPathfindingService {
 
         const tile = mapData[to.y][to.x];
         if (tile.type === TileType.Wall) {
+            return Infinity;
+        }
+
+        if (tile.object?.type === ObjectType.HealingSanctuary || tile.object?.type === ObjectType.CombatSanctuary) {
             return Infinity;
         }
 

@@ -1,5 +1,6 @@
 import { GameSession } from '@app/domain/game-session';
 import { GameGateway } from '@app/gateways/game/game.gateway';
+import { LogService } from '@app/services/log/log.service';
 import { COMBAT_SANCTUARY_BONUS, HEALING_SANCTUARY_BONUS } from '@common/constants/santuary-constants';
 import { GameSessionEvents } from '@common/game.events';
 import { DoorState, ObjectType, TileType } from '@common/map';
@@ -18,9 +19,14 @@ export class VirtualPlayerMechanicsService {
     @Inject() private readonly gameGateway: GameGateway;
     @Inject() private readonly pathfinding: VirtualPlayerPathfindingService;
     @Inject() private readonly targeting: VirtualPlayerTargetingService;
+    @Inject() private readonly logService: LogService;
 
     private readonly minActionDelayMs = 500;
     private readonly actionDelayRangeMs = 1000;
+
+    isBotCurrentPlayer(session: GameSession, bot: Player): boolean {
+        return session.getCurrentPlayer()?.id === bot.character.id;
+    }
 
     canMove(bot: Player): boolean {
         return (bot.character.remainingMovement ?? 0) > 0;
@@ -63,7 +69,7 @@ export class VirtualPlayerMechanicsService {
     }
 
     async tryAttackSpecificAdjacent(session: GameSession, bot: Player, target: Player): Promise<boolean> {
-        if (!this.hasAction(bot) || !bot.character.position || !target.character.position) {
+        if (!this.isBotCurrentPlayer(session, bot) || !this.hasAction(bot) || !bot.character.position || !target.character.position) {
             return false;
         }
 
@@ -80,6 +86,9 @@ export class VirtualPlayerMechanicsService {
         }
 
         await this.randomDelay();
+        if (!this.isBotCurrentPlayer(session, bot) || !this.hasAction(bot)) {
+            return false;
+        }
         const result = this.combatService.executeCombat(
             session,
             bot.character,
@@ -104,6 +113,10 @@ export class VirtualPlayerMechanicsService {
     }
 
     async moveTowardEnemy(session: GameSession, bot: Player, enemy: Player): Promise<boolean> {
+        if (!this.isBotCurrentPlayer(session, bot)) {
+            return false;
+        }
+
         const candidates = this.pathfinding.getNeighbors(enemy.character.position)
             .filter((position) => this.pathfinding.getMoveCost(session, position, bot) !== Infinity)
             .filter((position) => !this.samePosition(position, bot.character.position));
@@ -131,6 +144,10 @@ export class VirtualPlayerMechanicsService {
     }
 
     async moveTowardPosition(session: GameSession, bot: Player, target: Position): Promise<boolean> {
+        if (!this.isBotCurrentPlayer(session, bot)) {
+            return false;
+        }
+
         const pathInfo = this.pathfinding.buildShortestPath(session, bot, target);
         if (!pathInfo) {
             return false;
@@ -140,7 +157,7 @@ export class VirtualPlayerMechanicsService {
         let moved = false;
         for (let i = 0; i < pathInfo.path.length;) {
             const next = pathInfo.path[i];
-            if (!this.canMove(bot) || !bot.character.position) {
+            if (!this.isBotCurrentPlayer(session, bot) || !this.canMove(bot) || !bot.character.position) {
                 break;
             }
 
@@ -150,6 +167,9 @@ export class VirtualPlayerMechanicsService {
             }
 
             await this.randomDelay();
+            if (!this.isBotCurrentPlayer(session, bot) || !this.canMove(bot) || !bot.character.position) {
+                break;
+            }
             const mapData = session.getMapCopy()?.tiles;
             if (!mapData) {
                 return moved;
@@ -187,7 +207,7 @@ export class VirtualPlayerMechanicsService {
     }
 
     async tryAttackAdjacent(session: GameSession, bot: Player): Promise<boolean> {
-        if (!this.hasAction(bot)) {
+        if (!this.isBotCurrentPlayer(session, bot) || !this.hasAction(bot)) {
             return false;
         }
 
@@ -202,6 +222,9 @@ export class VirtualPlayerMechanicsService {
         }
 
         await this.randomDelay();
+        if (!this.isBotCurrentPlayer(session, bot) || !this.hasAction(bot)) {
+            return false;
+        }
         const result = this.combatService.executeCombat(
             session,
             bot.character,
@@ -223,41 +246,26 @@ export class VirtualPlayerMechanicsService {
     }
 
     async tryUseAdjacentSanctuary(session: GameSession, bot: Player): Promise<boolean> {
-        if (!this.hasAction(bot) || !bot.character.position) {
+        if (!this.canStartSanctuaryUse(session, bot)) {
             return false;
         }
 
-        const sanctuaryPosition = this.findAdjacentSanctuaryTile(session, bot.character.position);
-        if (!sanctuaryPosition) {
+        const sanctuaryData = this.findUsableAdjacentSanctuary(session, bot);
+        if (!sanctuaryData) {
             return false;
         }
 
-        const tile = session.getMapCopy()?.tiles?.[sanctuaryPosition.y]?.[sanctuaryPosition.x];
-        if (!tile?.object) {
-            return false;
-        }
-
-        if (tile.object.type === ObjectType.CombatSanctuary && bot.character.hasCombatSanctuaryBonus) {
-            return false;
-        }
-
-        if (tile.object.type === ObjectType.HealingSanctuary) {
-            bot.character.life = Math.min(bot.character.life + HEALING_SANCTUARY_BONUS, bot.character.maxLife);
-        } else if (tile.object.type === ObjectType.CombatSanctuary) {
-            bot.character.attack += COMBAT_SANCTUARY_BONUS;
-            bot.character.defense += COMBAT_SANCTUARY_BONUS;
-            bot.character.hasCombatSanctuaryBonus = true;
-            bot.character.combatSanctuaryBonus = COMBAT_SANCTUARY_BONUS;
-        } else {
-            return false;
-        }
+        this.applySanctuaryEffect(bot, sanctuaryData.type);
 
         await this.randomDelay();
+        if (!this.canFinalizeSanctuaryUse(session, bot)) {
+            return false;
+        }
         bot.character.remainingActions = (bot.character.remainingActions ?? 0) - 1;
 
         this.gameGateway.notifyRoomEvent(session.roomId, GameSessionEvents.InteractResult, {
-            position: sanctuaryPosition,
-            interactionType: tile.object.type,
+            position: sanctuaryData.position,
+            interactionType: sanctuaryData.type,
             playerId: bot.character.id,
             newLife: bot.character.life,
             newAttack: bot.character.attack,
@@ -266,6 +274,65 @@ export class VirtualPlayerMechanicsService {
         });
 
         return true;
+    }
+
+    private canStartSanctuaryUse(session: GameSession, bot: Player): boolean {
+        return this.isBotCurrentPlayer(session, bot) && this.hasAction(bot) && !!bot.character.position;
+    }
+
+    private canFinalizeSanctuaryUse(session: GameSession, bot: Player): boolean {
+        return this.isBotCurrentPlayer(session, bot) && this.hasAction(bot);
+    }
+
+    private findUsableAdjacentSanctuary(
+        session: GameSession,
+        bot: Player,
+    ): { position: Position; type: ObjectType.HealingSanctuary | ObjectType.CombatSanctuary } | null {
+        const botPosition = bot.character.position;
+        if (!botPosition) {
+            return null;
+        }
+
+        const sanctuaryPosition = this.findAdjacentSanctuaryTile(session, botPosition);
+        if (!sanctuaryPosition) {
+            return null;
+        }
+
+        const tileObject = session.getMapCopy()?.tiles?.[sanctuaryPosition.y]?.[sanctuaryPosition.x]?.object;
+        if (!tileObject) {
+            return null;
+        }
+
+        const sanctuaryType = tileObject.type;
+        if (!this.isSanctuaryTypeUsable(bot, sanctuaryType)) {
+            return null;
+        }
+
+        return { position: sanctuaryPosition, type: sanctuaryType };
+    }
+
+    private isSanctuaryTypeUsable(bot: Player, sanctuaryType: string): sanctuaryType is ObjectType.HealingSanctuary | ObjectType.CombatSanctuary {
+        if (sanctuaryType === ObjectType.HealingSanctuary) {
+            return bot.character.life < bot.character.maxLife;
+        }
+
+        if (sanctuaryType === ObjectType.CombatSanctuary) {
+            return !bot.character.hasCombatSanctuaryBonus;
+        }
+
+        return false;
+    }
+
+    private applySanctuaryEffect(bot: Player, sanctuaryType: ObjectType.HealingSanctuary | ObjectType.CombatSanctuary): void {
+        if (sanctuaryType === ObjectType.HealingSanctuary) {
+            bot.character.life = Math.min(bot.character.life + HEALING_SANCTUARY_BONUS, bot.character.maxLife);
+            return;
+        }
+
+        bot.character.attack += COMBAT_SANCTUARY_BONUS;
+        bot.character.defense += COMBAT_SANCTUARY_BONUS;
+        bot.character.hasCombatSanctuaryBonus = true;
+        bot.character.combatSanctuaryBonus = COMBAT_SANCTUARY_BONUS;
     }
 
     private findAdjacentSanctuaryTile(session: GameSession, botPosition: Position): Position | null {
@@ -308,7 +375,7 @@ export class VirtualPlayerMechanicsService {
     }
 
     private async tryOpenDoorAtPosition(session: GameSession, bot: Player, doorPosition: Position): Promise<boolean> {
-        if (!this.hasAction(bot) || !bot.character.position) {
+        if (!this.isBotCurrentPlayer(session, bot) || !this.hasAction(bot) || !bot.character.position) {
             return false;
         }
 
@@ -324,6 +391,9 @@ export class VirtualPlayerMechanicsService {
         }
 
         await this.randomDelay();
+        if (!this.isBotCurrentPlayer(session, bot) || !this.hasAction(bot)) {
+            return false;
+        }
         tile.doorState = DoorState.Opened;
         bot.character.remainingActions = (bot.character.remainingActions ?? 0) - 1;
 
@@ -333,6 +403,7 @@ export class VirtualPlayerMechanicsService {
             newDoorState: tile.doorState,
             remainingActions: bot.character.remainingActions,
         });
+        this.logService.log(session.roomId, `Ouverture d'une porte par ${bot.character.name}`);
 
         return true;
     }

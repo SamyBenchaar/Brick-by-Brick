@@ -15,16 +15,7 @@
             @if (isCtfMode() && getTeamLabel(player)) {
             <span class="player-team" [class]="'team-badge-' + player.character.team">{{ getTeamLabel(player) }}</span>
             }
-            @if (canTransferFlagTo(player)) {
-            <button class="btn-transfer-flag" title="Transférer le drapeau" (click)="requestFlagTransfer(player)">
-                <span class="material-icons">send</span>
-            </button>
-            }
-            @if (canRequestFlagFrom(player)) {
-            <button class="btn-request-flag" title="Demander le drapeau" (click)="requestFlagTransfer(player)">
-                <span class="material-icons">call_received</span>
-            </button>
-            }
+
             <span class="player-wins">{{ player.character.victories }} victoires</span>
         </div>
         } @for (player of leftPlayers; track player.character.id) {

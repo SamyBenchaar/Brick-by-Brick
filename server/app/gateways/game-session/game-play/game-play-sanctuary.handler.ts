@@ -10,12 +10,15 @@ import { DOUBLE_SANCTUARY_BONUS_CHANCE,
         DOUBLE_SANCTUARY_BONUS,
         COMBAT_SANCTUARY_BONUS,
         HEALING_SANCTUARY_BONUS,
-        SANCTUARY_COOLDOWN_TURNS } from '@common/constants/santuary-constants';
+        SANCTUARY_COOLDOWN_TURNS,
+        SANCTUARYLABEL } from '@common/constants/santuary-constants';
+import { LogService } from '@app/services/log/log.service';
 
 @Injectable()
 export class GamePlaySanctuaryHandler {
     constructor(
-    private readonly gameSessionService: GameSessionService) {}
+    private readonly gameSessionService: GameSessionService,
+    private readonly logService: LogService) {}
 
     handleRequestInteract(socket: Socket,payload: { roomId: string; position: Position; mode: 'normal' | 'double' },
         context: GamePlayHandlerContext): void {
@@ -41,6 +44,8 @@ export class GamePlaySanctuaryHandler {
                 newDefense: currentPlayer.defense,
                 remainingActions: currentPlayer.remainingActions,
             });
+            const sanctuaryType = SANCTUARYLABEL[interactionType] ?? 'sanctuaire inconnu';
+            this.logService.log(gameSession.roomId, `Utilisation d'un ${sanctuaryType} par ${currentPlayer.name}`);
             
             if (!this.gameSessionService.canPlayerTakeAction(gameSession)) {
                 this.gameSessionService.endCurrentTurn(gameSession);

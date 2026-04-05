@@ -31,3 +31,8 @@ export const SANCTUARY_TILE_OFFSETS = [
     { dx: 0, dy: 1 },
     { dx: 1, dy: 1 },
 ];
+
+export const SANCTUARYLABEL: Record<string, string> = {
+    combatsanctuary: 'sanctuaire de combat',
+    healingsanctuary: 'sanctuaire de soin',
+};
