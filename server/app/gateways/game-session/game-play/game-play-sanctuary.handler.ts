@@ -5,10 +5,12 @@ import { GameSessionEvents } from '@common/game.events';
 import { Position } from '@common/position';
 import { Injectable } from '@nestjs/common';
 import { Socket } from 'socket.io';
+import {MapTile} from '@app/interfaces/game-map-interfaces';
 import { DOUBLE_SANCTUARY_BONUS_CHANCE,
         DOUBLE_SANCTUARY_BONUS,
         COMBAT_SANCTUARY_BONUS,
-        HEALING_SANCTUARY_BONUS } from '@common/constants/santuary-constants';
+        HEALING_SANCTUARY_BONUS,
+        SANCTUARY_COOLDOWN_TURNS } from '@common/constants/santuary-constants';
 
 @Injectable()
 export class GamePlaySanctuaryHandler {
@@ -26,18 +28,13 @@ export class GamePlaySanctuaryHandler {
             if (!currentPlayer || !requestingPlayer || currentPlayer.id !== requestingPlayer.character.id) return;
             if ((currentPlayer.remainingActions ?? 0) <= 0) return;
 
-            const tile = gameSession.mapCopy?.tiles[payload.position.y]?.[payload.position.x];
-            if (!tile?.object) return;
-            const objectType = tile.object.type;
-
-            const applied = this.applyEffect(currentPlayer, objectType, payload.mode);
-            if (!applied) return;
-        
+            const interactionType = this.processInteraction(gameSession.mapCopy?.tiles, currentPlayer, payload.position, payload.mode);
+            if (!interactionType) return;
 
             currentPlayer.remainingActions -= 1;
             context.server.to(gameSession.roomId).emit(GameSessionEvents.InteractResult, {
                 position: payload.position,
-                interactionType: objectType,
+                interactionType,
                 playerId: currentPlayer.id,
                 newLife: currentPlayer.life,
                 newAttack: currentPlayer.attack,
@@ -51,6 +48,25 @@ export class GamePlaySanctuaryHandler {
             }
         }
 
+        private processInteraction(tiles: MapTile[][] | undefined, player: Character, position: Position, mode: 'normal' | 'double'): string | null {
+            if (!tiles) return null;
+
+            const tile = tiles[position.y]?.[position.x];
+            if (!tile?.object) return null;
+
+            const objectType = tile.object.type;
+            const origin = tile.sanctuaryOrigin;
+            if (!origin) return null;
+
+            const originTile = tiles[origin.y]?.[origin.x];
+            if (!originTile || (originTile.sanctuaryCooldown ?? 0) > 0) return null;
+
+            const applied = this.applyEffect(player, objectType, mode);
+            if (!applied) return null;
+
+            originTile.sanctuaryCooldown = SANCTUARY_COOLDOWN_TURNS;
+            return objectType;
+        }
 
         private applyEffect(player: Character, objectType: string, mode: 'normal' | 'double'): boolean {
             if (objectType === 'healingsanctuary') {
@@ -58,7 +74,7 @@ export class GamePlaySanctuaryHandler {
                 return true;
             }
             if (objectType === 'combatsanctuary') {
-                if (player.hasCombatSanctuaryBonus) return false;
+                if (player.combatSanctuaryBonus !== undefined) return false;
                 this.handleCombatSanctuary(player, mode);
                 return true;
             }

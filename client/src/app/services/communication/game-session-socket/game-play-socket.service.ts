@@ -1,15 +1,16 @@
 import { Injectable, Injector, WritableSignal, inject, signal } from '@angular/core';
 import { Tile } from '@app/classes/tile/tile';
 import { Game } from '@app/interfaces/game';
+import { GameSession } from '@app/interfaces/game-session';
 import { SocketService } from '@app/services/communication/socket/socket.service';
 import { Character } from '@common/character';
+import { ADJACENT_POSITIONS, ADJACENT_TO_ORIGIN_POSITION, ORIGIN_CANDIDATES, SANCTUARY_TILE_OFFSETS } from '@common/constants/santuary-constants';
 import { GameSessionEvents } from '@common/game.events';
 import { ObjectType, TileType } from '@common/map';
 import { Player } from '@common/player';
 import { Position } from '@common/position';
 import { GameSessionSocketService } from './game-session-socket.service';
-import { ADJACENT_POSITIONS, ADJACENT_TO_ORIGIN_POSITION } from '@app/constants/adjacent-position';
-import { GameSession } from '@app/interfaces/game-session';
+
 
 @Injectable({
     providedIn: 'root',
@@ -150,7 +151,7 @@ export class GamePlaySocketService {
     isFlagOnPosition(position: Position): boolean {
         return this.gameSession?.flagPosition?.x === position.x && this.gameSession?.flagPosition?.y === position.y;
     }
-    
+
     canInteractWithTarget(target: Tile, position: Position): boolean {
         const currentPlayer = this.getCurrentPlayerCharacter();
         const playerPosition = currentPlayer?.position;
@@ -161,25 +162,59 @@ export class GamePlaySocketService {
         }
 
         if (target.object === ObjectType.HealingSanctuary || target.object === ObjectType.CombatSanctuary) {
-            const origin = target.sanctuaryOrigin ?? position;
-            return ADJACENT_TO_ORIGIN_POSITION.some(([dx, dy]) =>
-                this.areAdjacent(playerPosition, { x: origin.x + dx, y: origin.y + dy }),
-            );
+            return this.canInteractWithSanctuary(currentPlayer, playerPosition, target, position);
         }
 
         return false;
     }
 
+    private findSanctuaryOrigin(position: Position): Position | undefined {
+        const tiles = this.mapCopy()?.mapConfig.tiles;
+        if (!tiles) return undefined;
+        return ORIGIN_CANDIDATES
+            .map(({ dx, dy }) => ({ x: position.x + dx, y: position.y + dy }))
+            .find(candidate =>
+                SANCTUARY_TILE_OFFSETS.every(({ dx, dy }) => {
+                    const t = tiles[candidate.y + dy]?.[candidate.x + dx];
+                    return t?.object?.type === ObjectType.HealingSanctuary || t?.object?.type === ObjectType.CombatSanctuary;
+                }),
+            );
+    }
+
+    private canInteractWithSanctuary(player: Character, playerPosition: Position, target: Tile, position: Position): boolean {
+        if (player.combatSanctuaryBonus !== undefined && target.object === ObjectType.CombatSanctuary) return false;
+        const originPos = this.findSanctuaryOrigin(position);
+        if (!originPos) return false;
+        const originTile = this.mapCopy()?.mapConfig.tiles[originPos.y]?.[originPos.x];
+        if ((originTile?.sanctuaryCooldown ?? 0) > 0) return false;
+        return ADJACENT_TO_ORIGIN_POSITION.some(([dx, dy]) =>
+            this.areAdjacent(playerPosition, { x: originPos.x + dx, y: originPos.y + dy }),
+        );
+    }
+
     canPlayerInteractSanctuary(): boolean {
         const currentPlayer = this.getCurrentPlayerCharacter();
+        const hasBonus = (currentPlayer?.combatSanctuaryBonus !== undefined);
         if (!this.isMyTurn() || !currentPlayer?.position || (currentPlayer.remainingActions ?? 0) <= 0) return false;
         const map = this.mapCopy();
         if (!map) return false;
         const { x, y } = currentPlayer.position;
         return ADJACENT_POSITIONS.some(offset => {
-            const tile = map.mapConfig.tiles[y + offset.y]?.[x + offset.x];
-            return tile?.object?.type === ObjectType.HealingSanctuary|| tile?.object?.type === ObjectType.CombatSanctuary;
+            const tileX = x + offset.x;
+            const tileY = y + offset.y;
+            const tile = map.mapConfig.tiles[tileY]?.[tileX];
+            const isSanctuary = this.isSanctuary(tile?.object?.type);
+            if (hasBonus && this.isSanctuary(tile?.object?.type)) return false;
+            if (!isSanctuary) return false;
+            const originPos = this.findSanctuaryOrigin({ x: tileX, y: tileY });
+            if (!originPos) return false;
+            return (map.mapConfig.tiles[originPos.y]?.[originPos.x]?.sanctuaryCooldown ?? 0) === 0;
         });
+    }
+
+    isSanctuary(object: string | undefined): boolean {
+        return object === ObjectType.HealingSanctuary
+            || object === ObjectType.CombatSanctuary;
     }
 
     canPlayerInteractDoor(): boolean {
@@ -188,7 +223,7 @@ export class GamePlaySocketService {
         const map = this.mapCopy();
         if (!map) return false;
         if (this.areAdjacent(currentPlayer.position,
-             {x: this.gameSession?.flagPosition?.x ?? 0, y: this.gameSession?.flagPosition?.y ?? 0})) return false;
+            { x: this.gameSession?.flagPosition?.x ?? 0, y: this.gameSession?.flagPosition?.y ?? 0 })) return false;
         const { x, y } = currentPlayer.position;
         return ADJACENT_POSITIONS.some(offset => map.mapConfig.tiles[y + offset.y]?.[x + offset.x]?.type === 'door');
     }
