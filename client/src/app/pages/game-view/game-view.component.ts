@@ -230,6 +230,12 @@ export class GameViewComponent implements OnInit, OnDestroy {
   }
 
   onAttackTargetSelected(target: Character): void {
+    if (this.gamePlaySocketService.canTransferFlagTo(target)) {
+      this.gamePlaySocketService.requestFlagTransfer(target.id);
+      this.isActionSelectionMode.set(false);
+      return;
+    }
+
     if (!this.gamePlaySocketService.canAttackTarget(target)) {
       return;
     }
