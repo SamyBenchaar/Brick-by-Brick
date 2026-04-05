@@ -4,10 +4,10 @@
     Combat en cours entre vous ({{self()?.name}}) et {{other()?.name}}
 
     <div class="combat-players">
-        <app-player-combat-card [character]='self()!'></app-player-combat-card>
+        <app-player-combat-card [character]='self()!' [currentHp]='selfHp()' [attackDetail]='selfAttackDetail()' [defenseDetail]='selfDefenseDetail()'></app-player-combat-card>
         
         <div class="vs-text">VS</div>
-        <app-player-combat-card [character]='other()!'></app-player-combat-card>
+        <app-player-combat-card [character]='other()!' [currentHp]='otherHp()' [attackDetail]='otherAttackDetail()' [defenseDetail]='otherDefenseDetail()'></app-player-combat-card>
     </div>
 
     <div class="combat-actions" [class.hidden]="hasChosen()">
@@ -16,7 +16,8 @@
     </div>
 
     @if (hasChosen()) {
-        <div class="combat-waiting">Choix envoyé, en attente du choix adverse...</div>
+        <div class="combat-waiting">Posture {{combatPosture.OFFENSIVE === posture() ? 'offensive' : combatPosture.DEFENSIVE === posture() ? 'défensive' : 'aucune'}} 
+            choisie, en attente du choix adverse      </div>
     }
     
 </div>

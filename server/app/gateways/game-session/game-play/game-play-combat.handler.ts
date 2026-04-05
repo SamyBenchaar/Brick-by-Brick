@@ -2,7 +2,7 @@ import { GameSession } from '@app/domain/game-session';
 import { GamePlayHandlerContext } from '@app/gateways/game-session/game-play/game-play-handler.context';
 import { GameSessionService } from '@app/services/game-session/game-session/game-session.service';
 import { Character } from '@common/character';
-import { ActiveCombat, COMBAT_POSTURE } from '@common/combat';
+import { ActiveCombat, COMBAT_POSTURE, CombatRoundResolvedPayload, CombatValueDetail } from '@common/combat';
 import { Dice, DICE_FACES_MAP } from '@common/dice';
 import { CombatEvents, GameSessionEvents } from '@common/game.events';
 import { TileType } from '@common/map';
@@ -118,14 +118,14 @@ export class GamePlayCombatHandler {
         const defender = gameSession.getCharacterById(combat.defenderId);
         if (!attacker || !defender) return;
 
-        const attackerAttackScore = this.calculateCombatScore(gameSession, attacker, combat, true, true);
-        const attackerDefenseScore = this.calculateCombatScore(gameSession, attacker, combat, false, true);
+        const attackerAttackDetail = this.calculateCombatScore(gameSession, attacker, combat, true, true);
+        const attackerDefenseDetail = this.calculateCombatScore(gameSession, attacker, combat, false, true);
 
-        const defenderAttackScore = this.calculateCombatScore(gameSession, defender, combat, true, false);
-        const defenderDefenseScore = this.calculateCombatScore(gameSession, defender, combat, false, false);
+        const defenderAttackDetail = this.calculateCombatScore(gameSession, defender, combat, true, false);
+        const defenderDefenseDetail = this.calculateCombatScore(gameSession, defender, combat, false, false);
 
-        const damageToDefender = Math.max(attackerAttackScore - defenderDefenseScore, 0);
-        const damageToAttacker = Math.max(defenderAttackScore - attackerDefenseScore, 0);
+        const damageToDefender = Math.max(attackerAttackDetail.total - defenderDefenseDetail.total, 0);
+        const damageToAttacker = Math.max(defenderAttackDetail.total - attackerDefenseDetail.total, 0);
 
         combat.attackerHp = Math.max(combat.attackerHp - damageToAttacker, 0);
         combat.defenderHp = Math.max(combat.defenderHp - damageToDefender, 0);
@@ -140,12 +140,32 @@ export class GamePlayCombatHandler {
                 this.endCombat(gameSession, winner, loser, context);
             }
         } else {
+            const payload: CombatRoundResolvedPayload = {
+                roundNumber: combat.roundNumber,
+                attackerId: combat.attackerId,
+                defenderId: combat.defenderId,
+                attackerChoice: combat.attackerPosture || COMBAT_POSTURE.NONE,
+                defenderChoice: combat.defenderPosture || COMBAT_POSTURE.NONE,
+                attackerStrike: {
+                    attack: attackerAttackDetail,
+                    defense: defenderDefenseDetail,
+                    damage: damageToDefender
+                },
+                defenderStrike: {
+                    attack: defenderAttackDetail,
+                    defense: attackerDefenseDetail,
+                    damage: damageToAttacker
+                },
+                attackerLife: combat.attackerHp,
+                defenderLife: combat.defenderHp
+            };
+
             combat.roundNumber += 1;
             combat.attackerPosture = undefined;
             combat.defenderPosture = undefined;
 
             if (context) {
-                context.server.to(gameSession.roomId).emit(CombatEvents.CombatRoundResolved, combat);
+                context.server.to(gameSession.roomId).emit(CombatEvents.CombatRoundResolved, payload);
             }
         }
     }
@@ -206,7 +226,7 @@ export class GamePlayCombatHandler {
     }
 
     private calculateCombatScore(gameSession: GameSession, character: Character, combat: ActiveCombat,
-        isAttackMode: boolean, isAttacker: boolean): number {
+        isAttackMode: boolean, isAttacker: boolean): CombatValueDetail {
 
         const posture = isAttacker ? combat.attackerPosture : combat.defenderPosture;
         const attackBonus = posture === COMBAT_POSTURE.OFFENSIVE ? 2 : 0;
@@ -221,7 +241,15 @@ export class GamePlayCombatHandler {
             ? this.rollDice(character.attackDice, isAttacker, gameSession.isDebugModeActivated)
             : this.rollDice(character.defenseDice, isAttacker, gameSession.isDebugModeActivated)
 
-        return baseStat + postureBonus - tilePenalty + diceRoll;
+        const total = baseStat + postureBonus - tilePenalty + diceRoll;
+
+        return {
+            base: baseStat,
+            postureBonus,
+            dice: diceRoll,
+            tilePenalty,
+            total
+        };
     }
 
     private getTilePenalty(gameSession: GameSession, player: Character): number {

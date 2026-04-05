@@ -1,3 +1,4 @@
+import { CombatRoundResolvedPayload } from '@common/combat';
 import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { AppDialogComponent } from '@app/components/game-edition-components/app-dialog/app-dialog.component';
@@ -141,19 +142,19 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
         defenderHp: number;
     }>(CombatEvents.CombatStarted, (data) => {
         combatSocketService.activeCombat.set(data);
+        combatSocketService.latestRound.set(null);
     });
 
-    socketService.on<{
-        attackerId: string;
-        defenderId: string;
-        initiatorId: string;
-        roundNumber: number;
-        attackerPosture?: string;
-        defenderPosture?: string;
-        attackerHp: number;
-        defenderHp: number;
-    }>(CombatEvents.CombatRoundResolved, (data) => {
-        combatSocketService.activeCombat.set(data);
+    socketService.on<CombatRoundResolvedPayload>(CombatEvents.CombatRoundResolved, (data) => {
+        combatSocketService.latestRound.set(data);
+        combatSocketService.activeCombat.update(current => current ? { 
+            ...current, 
+            attackerHp: data.attackerLife, 
+            defenderHp: data.defenderLife,
+            roundNumber: data.roundNumber,
+            attackerPosture: undefined,
+            defenderPosture: undefined
+        } : null);
     });
 
     socketService.on<{
@@ -164,6 +165,7 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
         remainingActions: number;
     }>(CombatEvents.CombatResult, (data) => {
         combatSocketService.activeCombat.set(null);
+        combatSocketService.latestRound.set(null);
         const session = service.currentSession();
         if (session) {
             const attacker = session.players.find(p => p.character.id === data.winner);

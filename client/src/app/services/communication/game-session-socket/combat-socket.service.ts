@@ -1,5 +1,5 @@
 import { Injectable, signal, computed, WritableSignal, inject } from '@angular/core';
-import { ActiveCombat } from '@common/combat';
+import { ActiveCombat, CombatRoundResolvedPayload } from '@common/combat';
 import { GamePlaySocketService } from './game-play-socket.service';
 import { Character } from '@common/character';
     
@@ -9,6 +9,7 @@ export class CombatSocketService {
 
     activeCombat: WritableSignal<ActiveCombat | null> = signal<ActiveCombat | null>(null);
     combatNotification: WritableSignal<string | null> = signal<string | null>(null);
+    latestRound: WritableSignal<CombatRoundResolvedPayload | null> = signal<CombatRoundResolvedPayload | null>(null);
 
     combatParticipantIds = computed(() => {
         const combat = this.activeCombat();
@@ -18,6 +19,20 @@ export class CombatSocketService {
     self = computed(() => this.getSelf());
 
     other = computed(() => this.getOther());
+
+    selfHp = computed(() => {
+        const combat = this.activeCombat();
+        const self = this.getSelf();
+        if (!combat || !self) return self?.life ?? 0;
+        return combat.attackerId === self.id ? combat.attackerHp : combat.defenderHp;
+    });
+
+    otherHp = computed(() => {
+        const combat = this.activeCombat();
+        const other = this.getOther();
+        if (!combat || !other) return other?.life ?? 0;
+        return combat.attackerId === other.id ? combat.attackerHp : combat.defenderHp;
+    });
 
     getSelf(): Character | null{
         return this.gamePlaySocketService.getCurrentPlayerCharacter();
