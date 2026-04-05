@@ -108,7 +108,7 @@ export class GamePlaySocketService {
         }
     }
 
-    requestInteract(position: Position): void {
+    requestInteract(position: Position, mode: string): void {
         const currentRoomId = this.getRoomId();
         if (currentRoomId) {
             this.socketService.emit(GameSessionEvents.RequestInteract, { roomId: currentRoomId, position, mode });
