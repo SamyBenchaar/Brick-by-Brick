@@ -6,7 +6,7 @@ import { GameDataForInit } from '@app/interfaces/game-map-interfaces';
 import { GameSessionService } from '@app/services/game-session/game-session/game-session.service';
 import { LogService } from '@app/services/log/log.service';
 import { Character } from '@common/character';
-import { GameSessionEvents } from '@common/game.events';
+import { GameSessionEvents, CombatEvents } from '@common/game.events';
 import { Player } from '@common/player';
 import { Position } from '@common/position';
 import { SessionStatus } from '@common/session.status';
@@ -144,7 +144,7 @@ export class GamePlayGateway implements OnGatewayInit {
         );
     }
 
-    @SubscribeMessage(GameSessionEvents.RequestCombat)
+    @SubscribeMessage(CombatEvents.RequestCombat)
     handleRequestCombat(socket: Socket, payload: { roomId: string; defenderId: string }) {
         this.handlersProvider.combatHandler.handleRequestCombat(
             socket,

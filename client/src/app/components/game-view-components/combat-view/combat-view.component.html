@@ -10,7 +10,7 @@
         <app-player-combat-card [character]='other'></app-player-combat-card>
     </div>
 
-        <div class="combat-actions" [class.hidden]="!isMyCombatTurn()">
+        <div class="combat-actions" [class.hidden]="!hasChosen()">
             <button (click)="setPosture(combatPosture.DEFENSIVE)" class="button defensive brick-green">Défense</button>
             <button (click)="setPosture(combatPosture.OFFENSIVE)" class="button offensive brick-red">Attaque</button>
         </div>

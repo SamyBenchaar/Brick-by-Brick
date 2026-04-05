@@ -1,14 +1,25 @@
 import { Position } from './position';
 
-export type CombatPosture = 'none' | 'offensive' | 'defensive';
+export const COMBAT_POSTURE = {
+  NONE: 'none',
+  OFFENSIVE: 'offensive',
+  DEFENSIVE: 'defensive',
+}
+
 export type CombatOutcome = 'attacker' | 'defender' | 'draw';
 
 export interface ActiveCombat {
     attackerId: string;
     defenderId: string;
     initiatorId: string;
+
     roundNumber: number;
-    choices: Record<string, CombatPosture>;
+
+    attackerPosture?: string;
+    defenderPosture?: string;
+
+    attackerHp: number;
+    defenderHp: number;
 }
 
 export interface CombatValueDetail {
@@ -36,8 +47,8 @@ export interface CombatRoundResolvedPayload {
     roundNumber: number;
     attackerId: string;
     defenderId: string;
-    attackerChoice: CombatPosture;
-    defenderChoice: CombatPosture;
+    attackerChoice: string;
+    defenderChoice: string;
     attackerStrike: CombatStrikeDetail;
     defenderStrike: CombatStrikeDetail;
     attackerLife: number;
@@ -62,5 +73,5 @@ export interface CombatEndedPayload {
 
 export interface SubmitCombatChoicePayload {
     roomId: string;
-    posture: CombatPosture;
+    posture: string;
 }

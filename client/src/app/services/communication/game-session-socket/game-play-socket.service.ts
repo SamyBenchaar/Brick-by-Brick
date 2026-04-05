@@ -3,7 +3,7 @@ import { Tile } from '@app/classes/tile/tile';
 import { Game } from '@app/interfaces/game';
 import { SocketService } from '@app/services/communication/socket/socket.service';
 import { Character } from '@common/character';
-import { GameSessionEvents } from '@common/game.events';
+import { GameSessionEvents, CombatEvents } from '@common/game.events';
 import { ObjectType, TileType } from '@common/map';
 import { Player } from '@common/player';
 import { Position } from '@common/position';
@@ -52,7 +52,7 @@ export class GamePlaySocketService {
         this.socketService.off(GameSessionEvents.TurnStarted);
         this.socketService.off(GameSessionEvents.TurnEnded);
         this.socketService.off(GameSessionEvents.MoveExecuted);
-        this.socketService.off(GameSessionEvents.CombatResult);
+        this.socketService.off(CombatEvents.CombatResult);
     }
 
     resetGameplayState(): void {
@@ -97,9 +97,15 @@ export class GamePlaySocketService {
     requestCombat(defenderId: string): void {
         const currentRoomId = this.getRoomId();
         if (currentRoomId) {
-            this.socketService.emit(GameSessionEvents.RequestCombat, { roomId: currentRoomId, defenderId });
+            this.socketService.emit(CombatEvents.RequestCombat, { roomId: currentRoomId, defenderId });
         }
     }
+
+    chooseCombatPosture(posture: string): void {
+        const roomId = this.getRoomId();
+        if (roomId) this.socketService.emit(CombatEvents.SubmitCombatPosture, { roomId, posture });
+    }
+
 
     requestInteract(position: Position, mode: 'normal' | 'double'): void {
         const currentRoomId = this.getRoomId();

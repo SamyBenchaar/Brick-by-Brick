@@ -8,7 +8,7 @@ import { GamePlaySocketService } from '@app/services/communication/game-session-
 import type { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
 import { SocketService } from '@app/services/communication/socket/socket.service';
 import { CTF_VICTORY_ANNOUNCE_DELAY } from '@common/constants/game-config-constants';
-import { GameSessionEvents } from '@common/game.events';
+import { GameSessionEvents, CombatEvents } from '@common/game.events';
 import { Position } from '@common/position';
 
 interface GameplayListenersContext {
@@ -133,7 +133,7 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
         attackerVictories: number;
         defenderNewPosition: Position;
         remainingActions: number;
-    }>(GameSessionEvents.CombatResult, (data) => {
+    }>(CombatEvents.CombatResult, (data) => {
         const session = service.currentSession();
         if (session) {
             const attacker = session.players.find(p => p.character.id === data.winner);

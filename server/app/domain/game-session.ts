@@ -244,6 +244,10 @@ export class GameSession {
         return (this.currentPlayerIndex + 1) % this.playerOrder.length;
     }
 
+    getCharacterById(id: string): Character | undefined {
+        return this.players.find(p => p.character.id === id)?.character;
+    }
+
     advanceToNextPlayer(): void {
         this.currentPlayerIndex = this.getNextPlayerIndex();
         this.currentTurnTime = 30;
