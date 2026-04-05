@@ -1,5 +1,6 @@
 import { GameSession } from '@app/domain/game-session';
 import { GameGateway } from '@app/gateways/game/game.gateway';
+import { LogService } from '@app/services/log/log.service';
 import { COMBAT_SANCTUARY_BONUS, HEALING_SANCTUARY_BONUS } from '@common/constants/santuary-constants';
 import { GameSessionEvents } from '@common/game.events';
 import { DoorState, ObjectType, TileType } from '@common/map';
@@ -10,7 +11,6 @@ import { CombatService } from './combat.service';
 import { MovementService } from './movement.service';
 import { VirtualPlayerPathfindingService } from './virtual-player-mechanics/virtual-player-pathfinding.service';
 import { VirtualPlayerTargetingService } from './virtual-player-mechanics/virtual-player-targeting.service';
-import { LogService } from '@app/services/log/log.service';
 
 @Injectable()
 export class VirtualPlayerMechanicsService {
@@ -23,6 +23,10 @@ export class VirtualPlayerMechanicsService {
 
     private readonly minActionDelayMs = 500;
     private readonly actionDelayRangeMs = 1000;
+
+    isBotCurrentPlayer(session: GameSession, bot: Player): boolean {
+        return session.getCurrentPlayer()?.id === bot.character.id;
+    }
 
     canMove(bot: Player): boolean {
         return (bot.character.remainingMovement ?? 0) > 0;
@@ -65,7 +69,7 @@ export class VirtualPlayerMechanicsService {
     }
 
     async tryAttackSpecificAdjacent(session: GameSession, bot: Player, target: Player): Promise<boolean> {
-        if (!this.hasAction(bot) || !bot.character.position || !target.character.position) {
+        if (!this.isBotCurrentPlayer(session, bot) || !this.hasAction(bot) || !bot.character.position || !target.character.position) {
             return false;
         }
 
@@ -82,6 +86,9 @@ export class VirtualPlayerMechanicsService {
         }
 
         await this.randomDelay();
+        if (!this.isBotCurrentPlayer(session, bot) || !this.hasAction(bot)) {
+            return false;
+        }
         const result = this.combatService.executeCombat(
             session,
             bot.character,
@@ -106,6 +113,10 @@ export class VirtualPlayerMechanicsService {
     }
 
     async moveTowardEnemy(session: GameSession, bot: Player, enemy: Player): Promise<boolean> {
+        if (!this.isBotCurrentPlayer(session, bot)) {
+            return false;
+        }
+
         const candidates = this.pathfinding.getNeighbors(enemy.character.position)
             .filter((position) => this.pathfinding.getMoveCost(session, position, bot) !== Infinity)
             .filter((position) => !this.samePosition(position, bot.character.position));
@@ -133,6 +144,10 @@ export class VirtualPlayerMechanicsService {
     }
 
     async moveTowardPosition(session: GameSession, bot: Player, target: Position): Promise<boolean> {
+        if (!this.isBotCurrentPlayer(session, bot)) {
+            return false;
+        }
+
         const pathInfo = this.pathfinding.buildShortestPath(session, bot, target);
         if (!pathInfo) {
             return false;
@@ -142,7 +157,7 @@ export class VirtualPlayerMechanicsService {
         let moved = false;
         for (let i = 0; i < pathInfo.path.length;) {
             const next = pathInfo.path[i];
-            if (!this.canMove(bot) || !bot.character.position) {
+            if (!this.isBotCurrentPlayer(session, bot) || !this.canMove(bot) || !bot.character.position) {
                 break;
             }
 
@@ -152,6 +167,9 @@ export class VirtualPlayerMechanicsService {
             }
 
             await this.randomDelay();
+            if (!this.isBotCurrentPlayer(session, bot) || !this.canMove(bot) || !bot.character.position) {
+                break;
+            }
             const mapData = session.getMapCopy()?.tiles;
             if (!mapData) {
                 return moved;
@@ -189,7 +207,7 @@ export class VirtualPlayerMechanicsService {
     }
 
     async tryAttackAdjacent(session: GameSession, bot: Player): Promise<boolean> {
-        if (!this.hasAction(bot)) {
+        if (!this.isBotCurrentPlayer(session, bot) || !this.hasAction(bot)) {
             return false;
         }
 
@@ -204,6 +222,9 @@ export class VirtualPlayerMechanicsService {
         }
 
         await this.randomDelay();
+        if (!this.isBotCurrentPlayer(session, bot) || !this.hasAction(bot)) {
+            return false;
+        }
         const result = this.combatService.executeCombat(
             session,
             bot.character,
@@ -225,7 +246,7 @@ export class VirtualPlayerMechanicsService {
     }
 
     async tryUseAdjacentSanctuary(session: GameSession, bot: Player): Promise<boolean> {
-        if (!this.hasAction(bot) || !bot.character.position) {
+        if (!this.isBotCurrentPlayer(session, bot) || !this.hasAction(bot) || !bot.character.position) {
             return false;
         }
 
@@ -243,6 +264,10 @@ export class VirtualPlayerMechanicsService {
             return false;
         }
 
+        if (tile.object.type === ObjectType.HealingSanctuary && bot.character.life >= bot.character.maxLife) {
+            return false;
+        }
+
         if (tile.object.type === ObjectType.HealingSanctuary) {
             bot.character.life = Math.min(bot.character.life + HEALING_SANCTUARY_BONUS, bot.character.maxLife);
         } else if (tile.object.type === ObjectType.CombatSanctuary) {
@@ -255,6 +280,9 @@ export class VirtualPlayerMechanicsService {
         }
 
         await this.randomDelay();
+        if (!this.isBotCurrentPlayer(session, bot) || !this.hasAction(bot)) {
+            return false;
+        }
         bot.character.remainingActions = (bot.character.remainingActions ?? 0) - 1;
 
         this.gameGateway.notifyRoomEvent(session.roomId, GameSessionEvents.InteractResult, {
@@ -310,7 +338,7 @@ export class VirtualPlayerMechanicsService {
     }
 
     private async tryOpenDoorAtPosition(session: GameSession, bot: Player, doorPosition: Position): Promise<boolean> {
-        if (!this.hasAction(bot) || !bot.character.position) {
+        if (!this.isBotCurrentPlayer(session, bot) || !this.hasAction(bot) || !bot.character.position) {
             return false;
         }
 
@@ -326,6 +354,9 @@ export class VirtualPlayerMechanicsService {
         }
 
         await this.randomDelay();
+        if (!this.isBotCurrentPlayer(session, bot) || !this.hasAction(bot)) {
+            return false;
+        }
         tile.doorState = DoorState.Opened;
         bot.character.remainingActions = (bot.character.remainingActions ?? 0) - 1;
 
