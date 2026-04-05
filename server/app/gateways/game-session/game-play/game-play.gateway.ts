@@ -180,6 +180,8 @@ export class GamePlayGateway implements OnGatewayInit {
 
         this.handleAbandonedPlayerFlagPlacement(gameSession, abandoningPlayer);
         this.gameSessionService.removePlayer(payload.roomId, socket.id);
+        socket.leave(payload.roomId);
+        this.gameSessionGateway.clearSocketRoomTracking(socket.id);
 
         this.server.to(payload.roomId).emit(GameSessionEvents.PlayerAbandoned, {
             playerId: abandoningPlayer?.character.id,
@@ -188,6 +190,12 @@ export class GamePlayGateway implements OnGatewayInit {
 
         if (abandoningPlayer) {
             this.logService.log(payload.roomId, `Abandon de partie par ${abandoningPlayer.character.name}`);
+        }
+
+        const hasHumanPlayersRemaining = gameSession.players.some((player) => !player.virtualProfile);
+        if (!hasHumanPlayersRemaining) {
+            this.handleGameEnd(gameSession, null);
+            return;
         }
 
         if (!this.handleAbandonedPlayerTeamCheck(gameSession)) {

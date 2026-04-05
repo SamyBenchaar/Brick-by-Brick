@@ -19,8 +19,11 @@ export class VirtualPlayerService {
             return;
         }
 
-        while (this.virtualPlayerMechanicsService.canContinueTurn(bot)) {
+        while (this.virtualPlayerMechanicsService.isBotCurrentPlayer(session, bot) && this.virtualPlayerMechanicsService.canContinueTurn(bot)) {
             const ctfOutcome = await this.virtualPlayerCtfService.handleStep(session, bot, bot.virtualProfile);
+            if (!this.virtualPlayerMechanicsService.isBotCurrentPlayer(session, bot)) {
+                return;
+            }
             if (ctfOutcome === 'continue') {
                 continue;
             }
