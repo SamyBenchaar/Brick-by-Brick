@@ -153,6 +153,15 @@ export class GamePlayGateway implements OnGatewayInit {
         );
     }
 
+    @SubscribeMessage(CombatEvents.SubmitCombatPosture)
+    handleSubmitCombatPosture(socket: Socket, payload: { roomId: string; posture: string }) {
+        this.handlersProvider.combatHandler.handlePostureChosen(
+            socket,
+            payload,
+            this.createHandlerContext(),
+        );
+    }
+
     // @SubscribeMessage(GameSessionEvents.RequestInteract)
     // handleRequestInteract(socket: Socket, payload: { roomId: string; position: Position }) {
     //     this.handlersProvider.movementHandler.handleRequestInteract(
@@ -179,6 +188,17 @@ export class GamePlayGateway implements OnGatewayInit {
         const wasCurrentPlayer = currentPlayer && abandoningPlayer && currentPlayer.id === abandoningPlayer.character.id;
 
         this.handleAbandonedPlayerFlagPlacement(gameSession, abandoningPlayer);
+
+        const combat = gameSession.getActiveCombat();
+        const abandonedPlayerId = abandoningPlayer?.character.id;
+        if (combat && abandonedPlayerId && gameSession.isPlayerInActiveCombat(abandonedPlayerId)) {
+            gameSession.clearActiveCombat();
+            this.server.to(payload.roomId).emit(CombatEvents.CombatEnded, {
+                reason: 'playerLeft',
+                abandonedPlayerId,
+            });
+        }
+
         this.gameSessionService.removePlayer(payload.roomId, socket.id);
 
         this.server.to(payload.roomId).emit(GameSessionEvents.PlayerAbandoned, {

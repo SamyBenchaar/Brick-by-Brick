@@ -3,12 +3,13 @@ import { Router } from '@angular/router';
 import { AppDialogComponent } from '@app/components/game-edition-components/app-dialog/app-dialog.component';
 import { Tile } from '@app/interfaces/game';
 import { GameSession } from '@app/interfaces/game-session';
+import { CombatSocketService } from '@app/services/communication/game-session-socket/combat-socket.service';
 import { FlagTransferSocketService } from '@app/services/communication/game-session-socket/flag-transfer-socket.service';
 import { GamePlaySocketService } from '@app/services/communication/game-session-socket/game-play-socket.service';
 import type { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
 import { SocketService } from '@app/services/communication/socket/socket.service';
 import { CTF_VICTORY_ANNOUNCE_DELAY } from '@common/constants/game-config-constants';
-import { GameSessionEvents, CombatEvents } from '@common/game.events';
+import { CombatEvents, GameSessionEvents } from '@common/game.events';
 import { Position } from '@common/position';
 
 interface GameplayListenersContext {
@@ -18,6 +19,7 @@ interface GameplayListenersContext {
     router: Router;
     dialog: MatDialog;
     flagTransferService: FlagTransferSocketService;
+    combatSocketService: CombatSocketService;
 }
 
 export function setupGameplayEventListeners(context: GameplayListenersContext): void {
@@ -28,6 +30,7 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
         router,
         dialog,
         flagTransferService,
+        combatSocketService,
     } = context;
 
     socketService.on<{ playerId: string; playerName: string; delay: number }>(
@@ -128,12 +131,39 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
     );
 
     socketService.on<{
+        attackerId: string;
+        defenderId: string;
+        initiatorId: string;
+        roundNumber: number;
+        attackerPosture?: string;
+        defenderPosture?: string;
+        attackerHp: number;
+        defenderHp: number;
+    }>(CombatEvents.CombatStarted, (data) => {
+        combatSocketService.activeCombat.set(data);
+    });
+
+    socketService.on<{
+        attackerId: string;
+        defenderId: string;
+        initiatorId: string;
+        roundNumber: number;
+        attackerPosture?: string;
+        defenderPosture?: string;
+        attackerHp: number;
+        defenderHp: number;
+    }>(CombatEvents.CombatRoundResolved, (data) => {
+        combatSocketService.activeCombat.set(data);
+    });
+
+    socketService.on<{
         winner: string;
         loser: string;
         attackerVictories: number;
         defenderNewPosition: Position;
         remainingActions: number;
     }>(CombatEvents.CombatResult, (data) => {
+        combatSocketService.activeCombat.set(null);
         const session = service.currentSession();
         if (session) {
             const attacker = session.players.find(p => p.character.id === data.winner);
@@ -149,37 +179,42 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
         }
     });
 
-    socketService.on<{
-         position: Position, newDoorState: string, remainingActions: number, interactionType: string,
-         newLife?: number, newAttack?: number, newDefense?: number }>
-    (GameSessionEvents.InteractResult, (data) => {
-        const session = gameSessionSocketService.currentSession();
-        if (data.interactionType === 'door') {
-            const currentMap = service.mapCopy();
-            if (currentMap) {
-                currentMap.mapConfig.tiles[data.position.y][data.position.x].doorState = data.newDoorState;
-                service.mapCopy.set({ ...currentMap });
-            }
-        } 
-        if (session) {
-            const currentPlayerId = service.currentPlayerTurn();
-            const player = session.players.find(p => p.character.id === currentPlayerId);
-            if (player) {
-                player.character.remainingActions = data.remainingActions;
-                if (data.newLife !== undefined) {
-                    player.character.life = data.newLife;
-                }
-                if (data.newAttack !== undefined) {
-                    player.character.attack = data.newAttack;
-                }
-                if (data.newDefense !== undefined) {
-                    player.character.defense = data.newDefense;
-                }
-                gameSessionSocketService.currentSession.set({ ...session });
-
-            }
-        }
+    socketService.on<any>(CombatEvents.CombatEnded, () => {
+        combatSocketService.activeCombat.set(null);
     });
+
+    socketService.on<{
+        position: Position, newDoorState: string, remainingActions: number, interactionType: string,
+        newLife?: number, newAttack?: number, newDefense?: number
+    }>
+        (GameSessionEvents.InteractResult, (data) => {
+            const session = gameSessionSocketService.currentSession();
+            if (data.interactionType === 'door') {
+                const currentMap = service.mapCopy();
+                if (currentMap) {
+                    currentMap.mapConfig.tiles[data.position.y][data.position.x].doorState = data.newDoorState;
+                    service.mapCopy.set({ ...currentMap });
+                }
+            }
+            if (session) {
+                const currentPlayerId = service.currentPlayerTurn();
+                const player = session.players.find(p => p.character.id === currentPlayerId);
+                if (player) {
+                    player.character.remainingActions = data.remainingActions;
+                    if (data.newLife !== undefined) {
+                        player.character.life = data.newLife;
+                    }
+                    if (data.newAttack !== undefined) {
+                        player.character.attack = data.newAttack;
+                    }
+                    if (data.newDefense !== undefined) {
+                        player.character.defense = data.newDefense;
+                    }
+                    gameSessionSocketService.currentSession.set({ ...session });
+
+                }
+            }
+        });
 
     socketService.on<{ playerId: string; mapCopyTiles: Tile[][] }>(GameSessionEvents.PlayerAbandoned, (data) => {
         const session = service.currentSession();
@@ -201,6 +236,7 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
                     });
                 }
             }
+            combatSocketService.activeCombat.set(null);
             gameSessionSocketService.currentSession.set({ ...session });
         }
     });

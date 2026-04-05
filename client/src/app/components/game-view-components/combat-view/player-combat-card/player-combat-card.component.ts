@@ -17,7 +17,8 @@ export class PlayerCombatCardComponent {
   hasChosen: boolean = false;
 
   getAvatarPath(avatarId: number): string {
-    return AVATARS[avatarId].image;
+    const avatar = AVATARS.find(a => a.id === avatarId);
+    return avatar ? avatar.image : './assets/images/lily.jpg';
   }
 
 }

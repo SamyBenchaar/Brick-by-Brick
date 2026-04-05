@@ -134,6 +134,12 @@ export class GamePlaySocketService {
         return this.currentSession()?.players.find((p: Player) => p.socketId === mySocketId)?.character ?? null;
     }
 
+    getCharacter(characterId: string): Character | null {
+        const session = this.currentSession();
+        if (!session) return null;
+        return session.players.find((p: Player) => p.character.id === characterId)?.character ?? null;
+    }
+
     getAutoAttackTarget(): Character | null {
         const currentPlayer = this.getCurrentPlayerCharacter();
         if (!currentPlayer?.position) {

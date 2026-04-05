@@ -10,6 +10,7 @@ import { SocketService } from '@app/services/communication/socket/socket.service
 import { Character } from '@common/character';
 import { GameSessionEvents } from '@common/game.events';
 import { VirtualPlayerProfile } from '@common/virtual.player.profile';
+import { CombatSocketService } from './combat-socket.service';
 import { GamePlaySocketService } from './game-play-socket.service';
 
 @Injectable({
@@ -43,6 +44,10 @@ export class GameSessionSocketService {
         return this.injector.get(FlagTransferSocketService);
     }
 
+    private get combatSocketService(): CombatSocketService {
+        return this.injector.get(CombatSocketService);
+    }
+
     connect(): void {
         if (!this.socketService.isConnected()) {
             this.socketService.connect();
@@ -70,6 +75,7 @@ export class GameSessionSocketService {
         this.socketService.off(GameSessionEvents.GameEnded);
         this.socketService.off(GameSessionEvents.AvatarTakenUpdated);
 
+        this.combatSocketService.activeCombat.set(null);
         this.gamePlaySocketService.resetGameplayState();
         this.currentSession.set(null);
         this.takenAvatars.set([]);
@@ -114,6 +120,7 @@ export class GameSessionSocketService {
             this.gameSessions.update(current =>
                 current.filter(gameSession => gameSession.roomId !== deletedRoomId));
             if (this.currentSession()?.roomId === deletedRoomId) {
+                this.combatSocketService.activeCombat.set(null);
                 this.currentSession.set(null);
                 this.gamePlaySocketService.resetGameplayState();
                 this.hasAbandoned.set(false);
@@ -213,6 +220,7 @@ export class GameSessionSocketService {
             }
 
             this.hasAbandoned.set(false);
+            this.combatSocketService.activeCombat.set(null);
             this.gamePlaySocketService.resetGameplayState();
 
             this.currentSession.set(gameSession);
@@ -227,6 +235,7 @@ export class GameSessionSocketService {
             router: this.router,
             dialog: this.dialog,
             flagTransferService: this.flagTransferSocketService,
+            combatSocketService: this.combatSocketService,
         });
 
         this.socketService.on<number[]>(GameSessionEvents.AvatarTakenUpdated, (avatarIds) => {
@@ -275,6 +284,7 @@ export class GameSessionSocketService {
             this.socketService.emit(GameSessionEvents.LeaveGameSession, { roomId: currentRoomId });
         }
 
+        this.combatSocketService.activeCombat.set(null);
         this.currentSession.set(null);
         this.takenAvatars.set([]);
         this.hasAbandoned.set(false);
@@ -299,6 +309,7 @@ export class GameSessionSocketService {
             this.socketService.emit(GameSessionEvents.PlayerAbandoned, { roomId: currentRoomId });
         }
 
+        this.combatSocketService.activeCombat.set(null);
         this.currentSession.set(null);
         this.takenAvatars.set([]);
         this.gamePlaySocketService.resetGameplayState();

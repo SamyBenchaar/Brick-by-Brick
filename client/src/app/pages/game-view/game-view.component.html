@@ -84,9 +84,9 @@
                  [isWriting]="isWriting()" (isWritingChange)="handleWritingChange($event)"></app-chat>
             </div>
             }
-        </div>      
+        </div>
     </div>
 </div>
 @if(isInCombat()) {
-    <app-combat-view [self]="getPlayers()[0]" [other]="getPlayers()[1]"></app-combat-view>
+    <app-combat-view></app-combat-view>
 }
