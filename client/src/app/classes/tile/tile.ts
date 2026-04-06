@@ -21,6 +21,7 @@ export class Tile {
     object: ObjectType | undefined;
     doorState?: DoorState;
     sanctuaryOrigin?: Position;
+    sanctuaryCooldown?: number;
 
     constructor(type: TileType = TileType.Base) {
         this.type = type;

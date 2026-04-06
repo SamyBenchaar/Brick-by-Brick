@@ -42,7 +42,10 @@ export class GameGridUtilService {
         return MULTI_TILE_OBJECTS.includes(object);
     }
 
-    getObjectPath(object: ObjectType): string {
+    getObjectPath(object: ObjectType, sanctuaryCooldown?: number): string {
+        const isOnCooldown=  (sanctuaryCooldown ?? 0) > 0;
+        if (isOnCooldown && object === ObjectType.HealingSanctuary) return './assets/images/offhealingsanctuary.png';
+        if (isOnCooldown && object === ObjectType.CombatSanctuary) return './assets/images/offcombatsanctuary.png';
         return `./assets/images/${object}.png`;
     }
 
