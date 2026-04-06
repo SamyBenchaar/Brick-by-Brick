@@ -41,6 +41,7 @@ export class GamePlayCombatHandler {
 
         try {
             this.initiateActiveCombat(gameSession, payload.defenderId, currentPlayer, context);
+            context.logService.log(gameSession.roomId, `Début de combat: ${requestingPlayer.character.name} attaque ${defender.name}`);
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';
             this.logger.error(`Combat error: ${errorMessage}`);
@@ -200,7 +201,7 @@ export class GamePlayCombatHandler {
             flagHolder: gameSession.gameMode === 'ctf' ? gameSession.getFlagHolder() : null,
         });
 
-        context.logService.log(gameSession.roomId, `Résultat du combat: ${winner.name} a gagné contre ${loser.name}`);
+        context.logService.log(gameSession.roomId, `Fin du combat: ${winner.name} a gagné contre ${loser.name}`);
 
         if (gameSession.gameMode === 'ctf') {
             context.server.to(gameSession.roomId).emit(GameSessionEvents.GameSessionUpdated, gameSession);

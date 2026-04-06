@@ -9,27 +9,27 @@ $overlay-color: rgba(222, 236, 255);
     pointer-events: none;
 }
 
-.backdrop {
-    position: absolute;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.2);
-    backdrop-filter: blur(0.5px);
-    pointer-events: none;
-}
+// .backdrop {
+//     position: absolute;
+//     inset: 0;
+//     background: rgba(0, 0, 0, 0.2);
+//     backdrop-filter: blur(0.5px);
+//     pointer-events: none;
+// }
 
 .combat-container {
     position: absolute;
     top: 50%;
-    left: 50%;
+    left: 40%;
     transform: translate(-50%, -50%);
     
-    width: 700px;
-    max-width: 90vw;
-    aspect-ratio: 16 / 9;
-    padding: 30px;
+    width: 120vmin;
+    aspect-ratio: 16 / 11;
+    padding: 7vmin;
 
     pointer-events: all;
 
+    box-sizing: border-box;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -38,6 +38,8 @@ $overlay-color: rgba(222, 236, 255);
     border: 3px solid black;
     border-radius: 12px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+
+    font-size: 2rem;
 }
 
 .vs-text{
