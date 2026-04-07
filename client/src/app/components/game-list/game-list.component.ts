@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, Input, OnInit, signal } from '@angular/core';
+import { Component, computed, EventEmitter, inject, Input, OnInit, Output, signal } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { RouterLink } from '@angular/router';
 import { AppDialogComponent } from '@app/components/game-edition-components/app-dialog/app-dialog.component';
@@ -18,6 +18,7 @@ import { getGameModeLabel, getGameSizeLabel } from '@common/constants/game-confi
 export class GameListComponent implements OnInit {
     @Input() mode: GameListMode = GameListMode.CREATION;
     @Input() showOnlyVisible = true;
+    @Output() gameSelected = new EventEmitter<string>();
 
     private communicationService = inject(CommunicationService);
     private gameSocketService = inject(GameSocketService);
@@ -52,6 +53,7 @@ export class GameListComponent implements OnInit {
             return;
         }
         this.selectedGameId.set(gameId);
+        this.gameSelected.emit(gameId);
     }
 
     getSelectedGameId(): string | null {

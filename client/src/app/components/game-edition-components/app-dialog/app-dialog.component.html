@@ -9,6 +9,9 @@
   </div>
 
   <mat-dialog-content class="dialog-content">
+    @if (data.image) {
+      <img [src]="data.image" alt="Dialog image" class="dialog-image">
+    }
     @if (isArray) {
       <ul class="error-list">
         @for (err of data.message; track $index) {
