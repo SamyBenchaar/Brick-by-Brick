@@ -56,6 +56,19 @@ export class GameViewComponent implements OnInit, OnDestroy {
   });
   isDebugModeActivated = computed(() => this.gamePlaySocketService.isDebugModeActivated());
 
+  displayedTurnTimer = computed(() => {
+    const activeCombat = this.combatSocketService.activeCombat();
+    if (!activeCombat) {
+      return `${this.getTurnTimeRemaining()}s`;
+    }
+
+    if (!this.combatSocketService.isCurrentUserInCombat()) {
+      return '--';
+    }
+
+    const combatTime = this.combatSocketService.combatTurnTimeRemaining();
+    return combatTime === null ? '--' : `${combatTime}s`;
+  });
   ngOnInit(): void {
     if (!this.gameSessionSocketService.currentSession() || !this.gamePlaySocketService.mapCopy()) {
       this.router.navigate(['/']);
@@ -68,8 +81,15 @@ export class GameViewComponent implements OnInit, OnDestroy {
     }, { injector: this.injector });
 
     effect(() => {
+      const activeCombat = this.combatSocketService.activeCombat();
       this.gameSessionSocketService.currentSession();
       this.gamePlaySocketService.currentPlayerTurn();
+
+      if (activeCombat) {
+        this.isActionSelectionMode.set(false);
+        return;
+      }
+
       if (!this.gamePlaySocketService.canCurrentPlayerAttack()) {
         this.isActionSelectionMode.set(false);
       }

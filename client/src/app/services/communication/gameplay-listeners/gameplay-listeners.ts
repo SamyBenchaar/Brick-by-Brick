@@ -1,4 +1,3 @@
-import { CombatRoundResolvedPayload } from '@common/combat';
 import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { AppDialogComponent } from '@app/components/game-edition-components/app-dialog/app-dialog.component';
@@ -9,6 +8,7 @@ import { FlagTransferSocketService } from '@app/services/communication/game-sess
 import { GamePlaySocketService } from '@app/services/communication/game-session-socket/game-play-socket.service';
 import type { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
 import { SocketService } from '@app/services/communication/socket/socket.service';
+import { CombatRoundResolvedPayload } from '@common/combat';
 import { CTF_VICTORY_ANNOUNCE_DELAY } from '@common/constants/game-config-constants';
 import { CombatEvents, GameSessionEvents } from '@common/game.events';
 import { Position } from '@common/position';
@@ -141,15 +141,24 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
         attackerHp: number;
         defenderHp: number;
     }>(CombatEvents.CombatStarted, (data) => {
+        service.reachableTiles.set([]);
         combatSocketService.activeCombat.set(data);
         combatSocketService.latestRound.set(null);
     });
 
+    socketService.on<{ timeRemaining: number }>(CombatEvents.CombatTurnStarted, (payload) => {
+        combatSocketService.combatTurnTimeRemaining.set(payload.timeRemaining);
+    });
+
+    socketService.on<{ timeRemaining: number }>(CombatEvents.CombatTurnTimeUpdate, (payload) => {
+        combatSocketService.combatTurnTimeRemaining.set(payload.timeRemaining);
+    });
+
     socketService.on<CombatRoundResolvedPayload>(CombatEvents.CombatRoundResolved, (data) => {
         combatSocketService.latestRound.set(data);
-        combatSocketService.activeCombat.update(current => current ? { 
-            ...current, 
-            attackerHp: data.attackerLife, 
+        combatSocketService.activeCombat.update(current => current ? {
+            ...current,
+            attackerHp: data.attackerLife,
             defenderHp: data.defenderLife,
             roundNumber: data.roundNumber,
             attackerPosture: undefined,
@@ -164,8 +173,10 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
         defenderNewPosition: Position;
         remainingActions: number;
     }>(CombatEvents.CombatResult, (data) => {
+        service.reachableTiles.set([]);
         combatSocketService.activeCombat.set(null);
         combatSocketService.latestRound.set(null);
+        combatSocketService.combatTurnTimeRemaining.set(null);
         const session = service.currentSession();
         if (session) {
             const attacker = session.players.find(p => p.character.id === data.winner);
@@ -182,7 +193,10 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
     });
 
     socketService.on<any>(CombatEvents.CombatEnded, () => {
+        service.reachableTiles.set([]);
         combatSocketService.activeCombat.set(null);
+        combatSocketService.latestRound.set(null);
+        combatSocketService.combatTurnTimeRemaining.set(null);
     });
 
     socketService.on<{

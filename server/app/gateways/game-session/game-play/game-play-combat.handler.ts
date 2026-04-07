@@ -1,8 +1,10 @@
 import { GameSession } from '@app/domain/game-session';
 import { GamePlayHandlerContext } from '@app/gateways/game-session/game-play/game-play-handler.context';
 import { GameSessionService } from '@app/services/game-session/game-session/game-session.service';
+import { TurnManagementService } from '@app/services/game-session/turn-management.service';
 import { Character } from '@common/character';
 import { ActiveCombat, COMBAT_POSTURE, CombatRoundResolvedPayload, CombatValueDetail } from '@common/combat';
+import { COMBAT_TURN_TIME } from '@common/constants/combat-constants';
 import { Dice, DICE_FACES_MAP } from '@common/dice';
 import { CombatEvents, GameSessionEvents } from '@common/game.events';
 import { TileType } from '@common/map';
@@ -15,6 +17,7 @@ export class GamePlayCombatHandler {
     constructor(
         private readonly logger: Logger,
         private readonly gameSessionService: GameSessionService,
+        private readonly turnManagementService: TurnManagementService,
     ) {}
 
     handleRequestCombat(
@@ -79,9 +82,17 @@ export class GamePlayCombatHandler {
             defenderHp: gameSession.players.find(p => p.character.id === defenderId)?.character.life ?? 0,
         };
 
+        attacker.remainingActions = Math.max((attacker.remainingActions ?? 1) - 1, 0);
         gameSession.setActiveCombat(activeCombat);
+        this.turnManagementService.pauseTurnTimer(gameSession.roomId);
+        gameSession.setCurrentCombatTurnTime(COMBAT_TURN_TIME);
 
-        context.server.to(gameSession.roomId).emit(CombatEvents.CombatStarted, activeCombat);
+        context.server.to(gameSession.roomId).emit(CombatEvents.CombatStarted, {
+            ...activeCombat,
+            remainingTurnTime: gameSession.getCurrentTurnTime(),
+        });
+
+        this.startCombatTurnTimer(gameSession, context);
     }
 
     handlePostureChosen(
@@ -107,8 +118,18 @@ export class GamePlayCombatHandler {
         }
 
         if (combat.attackerPosture && combat.defenderPosture) {
+            this.turnManagementService.stopCombatTimer(gameSession.roomId);
             this.resolveCombatRound(gameSession, context);
         }
+    }
+
+    private handleCombatTimeout(gameSession: GameSession, context: GamePlayHandlerContext): void {
+        const combat = gameSession.getActiveCombat();
+        if (!combat) {
+            return;
+        }
+
+        this.resolveCombatRound(gameSession, context);
     }
 
     private resolveCombatRound(gameSession: GameSession, context?: GamePlayHandlerContext): void {
@@ -167,17 +188,20 @@ export class GamePlayCombatHandler {
 
             if (context) {
                 context.server.to(gameSession.roomId).emit(CombatEvents.CombatRoundResolved, payload);
+                gameSession.setCurrentCombatTurnTime(COMBAT_TURN_TIME);
+                this.startCombatTurnTimer(gameSession, context);
             }
         }
     }
 
     private endCombat(gameSession: GameSession, winnerId: string, loserId: string, context: GamePlayHandlerContext): void {
+        this.turnManagementService.stopCombatTimer(gameSession.roomId);
+
         const winner = gameSession.getCharacterById(winnerId);
         const loser = gameSession.getCharacterById(loserId);
 
         if (!winner || !loser) return;
 
-        winner.remainingActions = (winner.remainingActions ?? 1) - 1;
         winner.victories = (winner.victories ?? 0) + 1;
 
         if (loser.hasFlag && gameSession.gameMode === 'ctf') {
@@ -215,15 +239,57 @@ export class GamePlayCombatHandler {
             return;
         }
 
-        if (loser.id === gameSession.getCurrentPlayer()?.id) {
+        const currentPlayer = gameSession.getCurrentPlayer();
+        const shouldResumeTurn = currentPlayer?.id === winner.id && (currentPlayer.remainingMovement ?? 0) > 0;
+
+        if (shouldResumeTurn) {
+            this.turnManagementService.resumeTurnTimer(
+                gameSession,
+                () => {
+                    this.gameSessionService.endCurrentTurn(gameSession);
+                    context.onTurnEnd(gameSession);
+                },
+                (timeRemaining: number) => {
+                    context.server.to(gameSession.roomId).emit(GameSessionEvents.TurnTimeUpdate, {
+                        timeRemaining,
+                    });
+                },
+            );
+            context.server.to(gameSession.roomId).emit(GameSessionEvents.TurnStarted, {
+                playerId: currentPlayer?.id,
+                playerName: currentPlayer?.name,
+                turnTime: gameSession.getCurrentTurnTime(),
+                remainingMovement: currentPlayer?.remainingMovement,
+                remainingActions: currentPlayer?.remainingActions,
+            });
+            return;
+        }
+
+        if (loser.id === currentPlayer?.id) {
             this.gameSessionService.endCurrentTurn(gameSession);
             context.onTurnEnd(gameSession);
         } else {
-            if (!this.gameSessionService.canPlayerTakeAction(gameSession)) {
-                this.gameSessionService.endCurrentTurn(gameSession);
-                context.onTurnEnd(gameSession);
-            }
+            this.gameSessionService.endCurrentTurn(gameSession);
+            context.onTurnEnd(gameSession);
         }
+    }
+
+    private startCombatTurnTimer(gameSession: GameSession, context: GamePlayHandlerContext): void {
+        context.server.to(gameSession.roomId).emit(CombatEvents.CombatTurnStarted, {
+            timeRemaining: gameSession.getCurrentCombatTurnTime(),
+        });
+
+        this.turnManagementService.startCombatTimer(
+            gameSession,
+            () => {
+                this.handleCombatTimeout(gameSession, context);
+            },
+            (timeRemaining: number) => {
+                context.server.to(gameSession.roomId).emit(CombatEvents.CombatTurnTimeUpdate, {
+                    timeRemaining,
+                });
+            },
+        );
     }
 
     private calculateCombatScore(gameSession: GameSession, character: Character, combat: ActiveCombat,

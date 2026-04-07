@@ -1,8 +1,8 @@
-import { Injectable, signal, computed, WritableSignal, inject } from '@angular/core';
+import { computed, inject, Injectable, signal, WritableSignal } from '@angular/core';
+import { Character } from '@common/character';
 import { ActiveCombat, CombatRoundResolvedPayload } from '@common/combat';
 import { GamePlaySocketService } from './game-play-socket.service';
-import { Character } from '@common/character';
-    
+
 @Injectable({ providedIn: 'root' })
 export class CombatSocketService {
     private gamePlaySocketService = inject(GamePlaySocketService);
@@ -10,6 +10,7 @@ export class CombatSocketService {
     activeCombat: WritableSignal<ActiveCombat | null> = signal<ActiveCombat | null>(null);
     combatNotification: WritableSignal<string | null> = signal<string | null>(null);
     latestRound: WritableSignal<CombatRoundResolvedPayload | null> = signal<CombatRoundResolvedPayload | null>(null);
+    readonly combatTurnTimeRemaining = signal<number | null>(null);
 
     combatParticipantIds = computed(() => {
         const combat = this.activeCombat();
@@ -34,7 +35,7 @@ export class CombatSocketService {
         return combat.attackerId === other.id ? combat.attackerHp : combat.defenderHp;
     });
 
-    getSelf(): Character | null{
+    getSelf(): Character | null {
         return this.gamePlaySocketService.getCurrentPlayerCharacter();
     }
 

@@ -21,6 +21,7 @@ export class CombatViewComponent {
 
   selfHp = this.combatSocketService.selfHp;
   otherHp = this.combatSocketService.otherHp;
+  combatTurnTimeRemaining = this.combatSocketService.combatTurnTimeRemaining;
 
   hasChosen = signal<boolean>(false);
   posture = signal<string>(COMBAT_POSTURE.NONE);
