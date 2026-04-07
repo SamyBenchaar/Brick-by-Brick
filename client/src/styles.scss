@@ -1,6 +1,6 @@
 @font-face {
   font-family: 'MyFont';
-  src: url('./assets/fonts/ByteBounce.ttf') format('truetype');
+  src: url('./assets/fonts/Jersey10-Regular.ttf') format('truetype');
   font-style: normal;
 }
 
@@ -8,6 +8,7 @@ body {
     cursor: url('./assets/images/lego_hand.png');
     margin: 0;
     font-family: 'MyFont';
+    letter-spacing: 0.9px;
 }
 
 $overlay-color: rgba(222, 236, 255, 0.6);

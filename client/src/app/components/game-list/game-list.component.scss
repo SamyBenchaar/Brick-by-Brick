@@ -1,6 +1,6 @@
 @font-face {
   font-family: 'MyFont';
-  src: url('../../../assets/fonts/ByteBounce.ttf') format('truetype');
+  src: url('../../../assets/fonts/Jersey10-Regular.ttf') format('truetype');
   font-style: normal;
 }
 
@@ -98,16 +98,21 @@
   }
 
   .game-name {
-    font-size: 40px;
+    font-size: 18px;
     margin: 0 0 0.3rem 0;
-    padding: 5px 10px;
-    background-size: contain;
+    padding: 6px 10px;
+    background-size: 100% 100%;
     background-image: url('../../../assets/images/3x1_orange.png');
     font-weight: bold;
     color: #333;
     word-break: break-word;
     overflow-wrap: anywhere;
     white-space: normal;
+    min-height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    letter-spacing: 0.9px;
   }
 
   .game-size,
