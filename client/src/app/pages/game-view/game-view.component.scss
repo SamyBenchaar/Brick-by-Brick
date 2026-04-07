@@ -29,11 +29,6 @@ $turn-info-color: #f88400ec;
     font-size: 20px;
 }
 
-.return-button    {
-    height: 50px;
-    padding: 14px 20px;
- }
-
 .info-panel {
     font-size: 20px;
     display: flex;
@@ -259,9 +254,6 @@ $turn-info-color: #f88400ec;
             font-size: 15px;
         }
 
-        .chat-toggle-arrow {
-            font-size: 10px;
-        }
     }
 }
 
@@ -297,7 +289,7 @@ $turn-info-color: #f88400ec;
 
 .chat-toggle-arrow {
     color: $primary-color;
-    font-size: 11px;
+    font-size: 20px;
     opacity: 0.7;
 }
 

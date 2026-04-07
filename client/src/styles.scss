@@ -77,6 +77,14 @@ button:disabled {
     cursor: not-allowed;
 }
 
+button.button.return-button {
+    height: 50px;
+    width: 150px;
+    padding: 14px 20px;
+    background-size: cover;
+    font-size: 20px;
+}
+
 .return-button {
     background-image: url('./assets/images/red_large_brick.png');
     background-repeat: no-repeat;
