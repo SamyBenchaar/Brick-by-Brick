@@ -73,7 +73,7 @@ export class GamePlayCombatHandler {
     ): void {
         const activeCombat: ActiveCombat = {
             attackerId: attacker.id,
-            defenderId: defenderId,
+            defenderId,
             initiatorId: attacker.id,
             roundNumber: 1,
             attackerPosture: undefined,
@@ -171,15 +171,15 @@ export class GamePlayCombatHandler {
                 attackerStrike: {
                     attack: attackerAttackDetail,
                     defense: defenderDefenseDetail,
-                    damage: damageToDefender
+                    damage: damageToDefender,
                 },
                 defenderStrike: {
                     attack: defenderAttackDetail,
                     defense: attackerDefenseDetail,
-                    damage: damageToAttacker
+                    damage: damageToAttacker,
                 },
                 attackerLife: combat.attackerHp,
-                defenderLife: combat.defenderHp
+                defenderLife: combat.defenderHp,
             };
 
             combat.roundNumber += 1;
@@ -202,6 +202,12 @@ export class GamePlayCombatHandler {
 
         if (!winner || !loser) return;
 
+        const attacker = gameSession.getCharacterById(gameSession.getActiveCombat()?.attackerId ?? '');
+        if (!attacker) {
+            return;
+        }
+
+        attacker.remainingActions = Math.max((attacker.remainingActions ?? 1) - 1, 0);
         winner.victories = (winner.victories ?? 0) + 1;
 
         if (loser.hasFlag && gameSession.gameMode === 'ctf') {
@@ -220,7 +226,7 @@ export class GamePlayCombatHandler {
             loser: loserId,
             attackerVictories: winner.victories,
             defenderNewPosition: loser.position,
-            remainingActions: winner.remainingActions,
+            remainingActions: attacker.remainingActions,
             flagPosition: gameSession.gameMode === 'ctf' ? gameSession.getFlagPosition() : null,
             flagHolder: gameSession.gameMode === 'ctf' ? gameSession.getFlagHolder() : null,
         });
@@ -306,7 +312,7 @@ export class GamePlayCombatHandler {
 
         const diceRoll = isAttackMode
             ? this.rollDice(character.attackDice, isAttacker, gameSession.isDebugModeActivated)
-            : this.rollDice(character.defenseDice, isAttacker, gameSession.isDebugModeActivated)
+            : this.rollDice(character.defenseDice, isAttacker, gameSession.isDebugModeActivated);
 
         const total = baseStat + postureBonus - tilePenalty + diceRoll;
 
@@ -315,7 +321,7 @@ export class GamePlayCombatHandler {
             postureBonus,
             dice: diceRoll,
             tilePenalty,
-            total
+            total,
         };
     }
 
