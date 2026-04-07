@@ -8,7 +8,7 @@ import { GameGridComponent } from '@app/components/game-edition-components/game-
 import { PlayerBoardComponent } from '@app/components/game-view-components/player-board/player-board/player-board.component';
 import { PlayerSignComponent } from '@app/components/game-view-components/player-sign/player-sign/player-sign.component';
 import { AVATARS } from '@app/constants/character-constants';
-import { KEY_DEBUG, KEY_DIRECTION_MAP, KEY_ENTER } from '@app/constants/key-event.constants';
+import { KEY_DEBUG, KEY_DIRECTION_MAP, KEY_ENTER } from '@common/constants/key-event.constants';
 import { AppDialogData } from '@app/interfaces/dialog-model';
 import { Game } from '@app/interfaces/game';
 import { Tile } from '@app/classes/tile/tile';
@@ -16,7 +16,7 @@ import { GamePlaySocketService } from '@app/services/communication/game-session-
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
 import { Character } from '@common/character';
 import { getGameSizeConfig } from '@common/constants/game-config-constants';
-import { MapSize } from '@common/map';
+import { MapSize, ObjectType } from '@common/map';
 import { Position } from '@common/position';
 import { Subscription } from 'rxjs';
 
@@ -89,7 +89,7 @@ export class GameViewComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (!this.isMyTurn() || this.isWriting()) return;
+    if (!this.isMyTurn() || this.isWriting() || this.dialog.openDialogs.length > 0) return;
     const direction = KEY_DIRECTION_MAP[key];
 
     if (direction) {
@@ -186,7 +186,7 @@ export class GameViewComponent implements OnInit, OnDestroy {
   }
 
   canInteract(): boolean {
-    return this.gamePlaySocketService.canPlayerInteractDoor();
+    return this.gamePlaySocketService.canPlayerInteractDoor() || this.gamePlaySocketService.canPlayerInteractSanctuary();
   }
 
   onActionClick(): void {
@@ -196,11 +196,39 @@ export class GameViewComponent implements OnInit, OnDestroy {
 
   onActionTargetSelected(event: {tile: Tile, position: Position}): void {
     if (!this.gamePlaySocketService.canInteractWithTarget(event.tile, event.position)) return;
-    this.gamePlaySocketService.requestInteract(event.position);
+    
+    const isSanctuary = event.tile.object === ObjectType.HealingSanctuary || event.tile.object === ObjectType.CombatSanctuary;
+    if (isSanctuary) {
+      const ref = this.dialog.open(AppDialogComponent, {
+        id: 'sanctuary-dialog',
+        data: {
+            title: event.tile.object === ObjectType.HealingSanctuary
+                ? 'Sanctuaire de soin' : 'Sanctuaire de combat',
+            message: 'Choisissez votre mode d\'interaction.',
+            type: 'info',
+            confirmText: 'Normal',
+            cancelText: 'Double ou rien',
+            thirdOptionText: 'Annuler',
+        },
+    });
+    ref.afterClosed().subscribe((result) => {
+        if (result === true) this.gamePlaySocketService.requestInteract(event.position, 'normal');
+        else if (result === false) this.gamePlaySocketService.requestInteract(event.position, 'double');
+    });
+    this.isActionSelectionMode.set(false);
+    return;
+    }
+    this.gamePlaySocketService.requestInteract(event.position, 'normal');
     this.isActionSelectionMode.set(false);
   }
 
   onAttackTargetSelected(target: Character): void {
+    if (this.gamePlaySocketService.canTransferFlagTo(target)) {
+      this.gamePlaySocketService.requestFlagTransfer(target.id);
+      this.isActionSelectionMode.set(false);
+      return;
+    }
+
     if (!this.gamePlaySocketService.canAttackTarget(target)) {
       return;
     }

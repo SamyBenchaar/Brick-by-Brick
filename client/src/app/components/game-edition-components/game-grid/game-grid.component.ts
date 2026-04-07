@@ -103,6 +103,7 @@ export class GameGridComponent implements OnInit, OnChanges {
                 const t = this.gameMap.getTile({ x: x + dx, y: y + dy });
                 if (t) t.sanctuaryOrigin = { x, y };
               });
+              tile.sanctuaryCooldown = tileData.sanctuaryCooldown;
             } else if (!this.isMultiTileObject(tile.object)) {
               this.objectCounterService.place(tile.object);
             }
@@ -240,6 +241,7 @@ export class GameGridComponent implements OnInit, OnChanges {
     const tile = this.getTile(position);
     if (tile && selectedType) {
       if (selectedType === TileType.Wall && tile.object) this.removeObject(position);
+      if (selectedType === TileType.Door && tile.object) this.removeObject(position);
       if (selectedType === TileType.Door) {
         tile.doorState = tile.doorState === DoorState.Closed ? DoorState.Opened : DoorState.Closed;
       } else {
@@ -268,8 +270,8 @@ export class GameGridComponent implements OnInit, OnChanges {
     return this.gameGridUtilService.isMultiTileObject(object);
   }
 
-  getObjectPath(object: ObjectType): string {
-    return this.gameGridUtilService.getObjectPath(object);
+  getObjectPath(object: ObjectType, sanctuaryCooldown?: number): string {
+    return this.gameGridUtilService.getObjectPath(object, sanctuaryCooldown);
   }
 
   isSanctuaryOriginTile(tile: Tile, position: Position): boolean {

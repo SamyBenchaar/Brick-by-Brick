@@ -21,6 +21,8 @@ export interface Character {
   remainingActions?: number;
   victories?: number;
   startPosition?: Position;
+  hasCombatSanctuaryBonus?: boolean;
+  combatSanctuaryBonus?: number;
   team?: 'team1' | 'team2';
   hasFlag?: boolean;
 }

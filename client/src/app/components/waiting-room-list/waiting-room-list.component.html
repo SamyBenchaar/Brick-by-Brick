@@ -42,10 +42,13 @@
     <div class="list-footer">
         <div class="footer-left">
             @if (isCurrentUserHost()) {
-            <button class="button add-virtual brick-yellow" (click)="openVirtualPlayerDialog()">
+            <button class="button add-virtual brick-yellow" [disabled]="isSessionFull()" [title]="isSessionFull() ? 'Capacité maximale atteinte' : ''" (click)="openVirtualPlayerDialog()">
                 <span class="material-icons">smart_toy</span>
                 Ajouter JV
             </button>
+            @if (isSessionFull()) {
+            <span class="hint-start">Capacité maximale atteinte pour les joueurs virtuels.</span>
+            }
             }
         </div>
 
@@ -66,9 +69,12 @@
     <div class="profile-dialog">
         <h4>Ajouter un joueur virtuel</h4>
         <p>Choisissez un profil :</p>
+        @if (isSessionFull()) {
+        <p class="capacity-hint">La salle est pleine.</p>
+        }
         <div class="profile-actions">
-            <button class="button profile-aggressive" (click)="onAddVirtualPlayer(virtualPlayerProfile.Aggressive)">Agressif</button>
-            <button class="button profile-defensive" (click)="onAddVirtualPlayer(virtualPlayerProfile.Defensive)">Défensif</button>
+            <button class="button profile-aggressive" [disabled]="isSessionFull()" (click)="onAddVirtualPlayer(virtualPlayerProfile.Aggressive)">Agressif</button>
+            <button class="button profile-defensive" [disabled]="isSessionFull()" (click)="onAddVirtualPlayer(virtualPlayerProfile.Defensive)">Défensif</button>
             <button class="button profile-cancel" (click)="closeVirtualPlayerDialog()">Annuler</button>
         </div>
     </div>

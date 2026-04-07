@@ -28,6 +28,11 @@
     .material-icons {
         font-size: 1.1rem;
     }
+
+    &:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+    }
 }
 
 .hint-start {
@@ -234,7 +239,17 @@
         padding: 0.4rem 0.8rem;
         font-size: 1.7rem;
         cursor: pointer;
+
+        &:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+        }
     }
+}
+
+.capacity-hint {
+    color: #c62828;
+    font-weight: 600;
 }
 
 .profile-aggressive {

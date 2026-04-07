@@ -9,6 +9,7 @@ import { TurnManagementService } from '@app/services/game-session/turn-managemen
 import { GameSessionEvents } from '@common/game.events';
 import { Logger } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { LogService } from '@app/services/log/log.service';
 
 /**
  * Stratégie de test (portée: démarrer une partie) pour GamePlayGateway:
@@ -61,6 +62,12 @@ describe('GamePlayGateway - handleStartGame', () => {
             turnHandler: {},
         };
 
+        const mockLogService = {
+            addLog: {}, 
+            getLogs: {},
+            log: jest.fn(),
+        };
+
         const module: TestingModule = await Test.createTestingModule({
             providers: [
                 GamePlayGateway,
@@ -71,6 +78,7 @@ describe('GamePlayGateway - handleStartGame', () => {
                 { provide: MovementService, useValue: mockMovementService },
                 { provide: TurnManagementService, useValue: mockTurnManagementService },
                 { provide: GamePlayHandlersProvider, useValue: mockGamePlayHandlersProvider },
+                { provide: LogService, useValue: mockLogService },
             ],
         }).compile();
 

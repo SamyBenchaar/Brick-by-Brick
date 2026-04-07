@@ -35,6 +35,10 @@ export class GamePlayTurnHandler {
             delay: gameSession.getCurrentInterTurnTime() * this.toMllisecondsFactor,
         });
 
+        if (currentPlayer) {
+            context.logService.log(gameSession.roomId, `Début de tour de ${currentPlayer.name}`);
+        }
+
         this.turnManagementService.startInterTurnCountdown(
             gameSession,
             gameSession.getCurrentInterTurnTime(),
@@ -88,9 +92,13 @@ export class GamePlayTurnHandler {
 
         if (currentPlayer?.id) {
             gameSession.rejectPendingFlagTransfersFromPlayer(currentPlayer.id);
-            if (gameSession.gameMode === 'ctf') {
-                context.server.to(gameSession.roomId).emit(GameSessionEvents.GameSessionUpdated, gameSession);
-            }
+            context.server.to(gameSession.roomId).emit(GameSessionEvents.GameSessionUpdated, gameSession);
+        }
+
+        const ctfWinner = this.gameSessionService.checkCtfFlagWinner(gameSession);
+        if (ctfWinner) {
+            context.onGameEnd(gameSession, ctfWinner);
+            return;
         }
 
         const winner = this.gameSessionService.checkGameWinner(gameSession);

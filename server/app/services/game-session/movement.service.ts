@@ -1,8 +1,9 @@
 import { GameSession, Position } from '@app/domain/game-session';
+import { MapTile, MovementCost } from '@app/interfaces/game-map-interfaces';
 import { Character } from '@common/character';
-import { TileType, TILE_COST, DoorState } from '@common/map';
+import { KEY_DIRECTION_MAP } from '@common/constants/key-event.constants';
+import { DoorState, ObjectType, TILE_COST, TileType } from '@common/map';
 import { Injectable, Logger } from '@nestjs/common';
-import { MovementCost, MapTile } from '@app/interfaces/game-map-interfaces';
 
 @Injectable()
 export class MovementService {
@@ -36,6 +37,7 @@ export class MovementService {
             return false;
         }
         if (tile.type === TileType.Door && tile.doorState !== 'opened') return false;
+        if (tile.object?.type === ObjectType.HealingSanctuary || tile.object?.type === ObjectType.CombatSanctuary) return false;
 
 
         const posKey = `${position.x},${position.y}`;
@@ -44,7 +46,7 @@ export class MovementService {
         }
 
         return [TileType.Base, TileType.Water, TileType.Ice].includes(tile.type as TileType) ||
-        (tile.type === TileType.Door && tile.doorState === DoorState.Opened);
+            (tile.type === TileType.Door && tile.doorState === DoorState.Opened);
     }
 
     getReachableTiles(
@@ -124,7 +126,7 @@ export class MovementService {
     executeMove(
         gameSession: GameSession,
         player: Character,
-        direction: 'arrowUp' | 'arrowDown' | 'arrowLeft' | 'arrowRight',
+        direction: keyof typeof KEY_DIRECTION_MAP,
         mapData: MapTile[][],
     ): boolean {
         const directionDelta = this.directions[direction];
