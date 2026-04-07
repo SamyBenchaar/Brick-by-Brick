@@ -8,7 +8,7 @@ describe('CombatViewComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [CombatViewComponent]
+      imports: [CombatViewComponent],
     })
     .compileComponents();
 

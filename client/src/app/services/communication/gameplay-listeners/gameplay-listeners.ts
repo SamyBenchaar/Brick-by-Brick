@@ -162,7 +162,7 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
             defenderHp: data.defenderLife,
             roundNumber: data.roundNumber,
             attackerPosture: undefined,
-            defenderPosture: undefined
+            defenderPosture: undefined,
         } : null);
     });
 
@@ -192,7 +192,7 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
         }
     });
 
-    socketService.on<any>(CombatEvents.CombatEnded, () => {
+    socketService.on(CombatEvents.CombatEnded, () => {
         service.reachableTiles.set([]);
         combatSocketService.activeCombat.set(null);
         combatSocketService.latestRound.set(null);
