@@ -80,9 +80,12 @@ button:disabled {
 button.button.return-button {
     height: 50px;
     width: 150px;
-    padding: 14px 20px;
     background-size: cover;
-    font-size: 20px;
+    font-size: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-top: 25px;
 }
 
 .return-button {
