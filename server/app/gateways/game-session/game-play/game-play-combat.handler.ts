@@ -14,6 +14,8 @@ import { Socket } from 'socket.io';
 
 @Injectable()
 export class GamePlayCombatHandler {
+    private readonly iceTilePenalty = -2;
+
     constructor(
         private readonly logger: Logger,
         private readonly gameSessionService: GameSessionService,
@@ -197,16 +199,49 @@ export class GamePlayCombatHandler {
     private endCombat(gameSession: GameSession, winnerId: string, loserId: string, context: GamePlayHandlerContext): void {
         this.turnManagementService.stopCombatTimer(gameSession.roomId);
 
-        const winner = gameSession.getCharacterById(winnerId);
-        const loser = gameSession.getCharacterById(loserId);
-
-        if (!winner || !loser) return;
-
-        const attacker = gameSession.getCharacterById(gameSession.getActiveCombat()?.attackerId ?? '');
-        if (!attacker) {
+        const participants = this.getCombatParticipants(gameSession, winnerId, loserId);
+        if (!participants) {
             return;
         }
 
+        const { winner, loser, attacker } = participants;
+        this.applyCombatOutcome(gameSession, winner, loser, attacker);
+        this.emitCombatOutcome({
+            gameSession,
+            winnerId,
+            loserId,
+            winner,
+            loser,
+            attacker,
+            context,
+        });
+
+        const gameWinner = this.gameSessionService.checkGameWinner(gameSession);
+        if (gameWinner) {
+            context.onGameEnd(gameSession, gameWinner);
+            return;
+        }
+
+        this.resumeOrEndTurn(gameSession, winner, context);
+    }
+
+    private getCombatParticipants(
+        gameSession: GameSession,
+        winnerId: string,
+        loserId: string,
+    ): { winner: Character; loser: Character; attacker: Character } | null {
+        const winner = gameSession.getCharacterById(winnerId);
+        const loser = gameSession.getCharacterById(loserId);
+        const attacker = gameSession.getCharacterById(gameSession.getActiveCombat()?.attackerId ?? '');
+
+        if (!winner || !loser || !attacker) {
+            return null;
+        }
+
+        return { winner, loser, attacker };
+    }
+
+    private applyCombatOutcome(gameSession: GameSession, winner: Character, loser: Character, attacker: Character): void {
         attacker.remainingActions = Math.max((attacker.remainingActions ?? 1) - 1, 0);
         winner.victories = (winner.victories ?? 0) + 1;
 
@@ -220,6 +255,26 @@ export class GamePlayCombatHandler {
         }
 
         gameSession.clearActiveCombat();
+    }
+
+    private emitCombatOutcome(options: {
+        gameSession: GameSession;
+        winnerId: string;
+        loserId: string;
+        winner: Character;
+        loser: Character;
+        attacker: Character;
+        context: GamePlayHandlerContext;
+    }): void {
+        const {
+            gameSession,
+            winnerId,
+            loserId,
+            winner,
+            loser,
+            attacker,
+            context,
+        } = options;
 
         context.server.to(gameSession.roomId).emit(CombatEvents.CombatResult, {
             winner: winnerId,
@@ -238,13 +293,9 @@ export class GamePlayCombatHandler {
         }
 
         context.emitReachableTiles(gameSession);
+    }
 
-        const gameWinner = this.gameSessionService.checkGameWinner(gameSession);
-        if (gameWinner) {
-            context.onGameEnd(gameSession, gameWinner);
-            return;
-        }
-
+    private resumeOrEndTurn(gameSession: GameSession, winner: Character, context: GamePlayHandlerContext): void {
         const currentPlayer = gameSession.getCurrentPlayer();
         const shouldResumeTurn = currentPlayer?.id === winner.id && (currentPlayer.remainingMovement ?? 0) > 0;
 
@@ -261,6 +312,7 @@ export class GamePlayCombatHandler {
                     });
                 },
             );
+
             context.server.to(gameSession.roomId).emit(GameSessionEvents.TurnStarted, {
                 playerId: currentPlayer?.id,
                 playerName: currentPlayer?.name,
@@ -271,13 +323,8 @@ export class GamePlayCombatHandler {
             return;
         }
 
-        if (loser.id === currentPlayer?.id) {
-            this.gameSessionService.endCurrentTurn(gameSession);
-            context.onTurnEnd(gameSession);
-        } else {
-            this.gameSessionService.endCurrentTurn(gameSession);
-            context.onTurnEnd(gameSession);
-        }
+        this.gameSessionService.endCurrentTurn(gameSession);
+        context.onTurnEnd(gameSession);
     }
 
     private startCombatTurnTimer(gameSession: GameSession, context: GamePlayHandlerContext): void {
@@ -328,7 +375,7 @@ export class GamePlayCombatHandler {
     private getTilePenalty(gameSession: GameSession, player: Character): number {
         const tile = gameSession.getMapCopy()?.tiles[player.position.y][player.position.x];
 
-        return tile.type === TileType.Ice ? -2 : 0;
+        return tile.type === TileType.Ice ? this.iceTilePenalty : 0;
     }
 
     private rollDice(dice: Dice, isAttacker: boolean, debugMode: boolean = false): number {

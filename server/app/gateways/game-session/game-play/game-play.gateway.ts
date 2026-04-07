@@ -6,7 +6,7 @@ import { GameDataForInit } from '@app/interfaces/game-map-interfaces';
 import { GameSessionService } from '@app/services/game-session/game-session/game-session.service';
 import { LogService } from '@app/services/log/log.service';
 import { Character } from '@common/character';
-import { GameSessionEvents, CombatEvents } from '@common/game.events';
+import { CombatEvents, GameSessionEvents } from '@common/game.events';
 import { Player } from '@common/player';
 import { Position } from '@common/position';
 import { SessionStatus } from '@common/session.status';
@@ -189,15 +189,7 @@ export class GamePlayGateway implements OnGatewayInit {
 
         this.handleAbandonedPlayerFlagPlacement(gameSession, abandoningPlayer);
 
-        const combat = gameSession.getActiveCombat();
-        const abandonedPlayerId = abandoningPlayer?.character.id;
-        if (combat && abandonedPlayerId && gameSession.isPlayerInActiveCombat(abandonedPlayerId)) {
-            gameSession.clearActiveCombat();
-            this.server.to(payload.roomId).emit(CombatEvents.CombatEnded, {
-                reason: 'playerLeft',
-                abandonedPlayerId,
-            });
-        }
+        this.handleAbandonedPlayerCombatCleanup(gameSession, payload.roomId, abandoningPlayer?.character.id);
 
         this.gameSessionService.removePlayer(payload.roomId, socket.id);
         socket.leave(payload.roomId);
@@ -212,27 +204,42 @@ export class GamePlayGateway implements OnGatewayInit {
             this.logService.log(payload.roomId, `Abandon de partie par ${abandoningPlayer.character.name}`);
         }
 
-        const hasHumanPlayersRemaining = gameSession.players.some((player) => !player.virtualProfile);
-        if (!hasHumanPlayersRemaining) {
-            this.handleGameEnd(gameSession, null);
-            return;
-        }
-
-        if (!this.handleAbandonedPlayerTeamCheck(gameSession)) {
-            return;
-        }
-
-        if (!this.handleAbandonedPlayerWinnerCheck(gameSession)) {
-            return;
-        }
-
-        if (this.handleAbandonedPlayerEmptyGame(gameSession)) {
+        if (this.handleAbandonedPlayerPostRemovalState(gameSession)) {
             return;
         }
 
         if (wasCurrentPlayer) {
             this.handleTurnEnd(gameSession);
         }
+    }
+
+    private handleAbandonedPlayerCombatCleanup(gameSession: GameSession, roomId: string, abandonedPlayerId: string | undefined): void {
+        const combat = gameSession.getActiveCombat();
+        if (combat && abandonedPlayerId && gameSession.isPlayerInActiveCombat(abandonedPlayerId)) {
+            gameSession.clearActiveCombat();
+            this.server.to(roomId).emit(CombatEvents.CombatEnded, {
+                reason: 'playerLeft',
+                abandonedPlayerId,
+            });
+        }
+    }
+
+    private handleAbandonedPlayerPostRemovalState(gameSession: GameSession): boolean {
+        const hasHumanPlayersRemaining = gameSession.players.some((player) => !player.virtualProfile);
+        if (!hasHumanPlayersRemaining) {
+            this.handleGameEnd(gameSession, null);
+            return true;
+        }
+
+        if (!this.handleAbandonedPlayerTeamCheck(gameSession)) {
+            return true;
+        }
+
+        if (!this.handleAbandonedPlayerWinnerCheck(gameSession)) {
+            return true;
+        }
+
+        return this.handleAbandonedPlayerEmptyGame(gameSession);
     }
 
     @SubscribeMessage(GameSessionEvents.RequestInteract)

@@ -32,15 +32,25 @@ export class TurnManagementService {
         return this.turnTimeInSeconds;
     }
 
-    private createTimer(
-        roomId: string,
-        timers: Map<string, NodeJS.Timeout>,
-        clearTimer: (targetRoomId: string) => void,
-        getValue: () => number,
-        decrement: () => void,
-        onTick: (value: number) => void,
-        onFinish: () => void,
-    ): void {
+    private createTimer(options: {
+        roomId: string;
+        timers: Map<string, NodeJS.Timeout>;
+        clearTimer: (targetRoomId: string) => void;
+        getValue: () => number;
+        decrement: () => void;
+        onTick: (value: number) => void;
+        onFinish: () => void;
+    }): void {
+        const {
+            roomId,
+            timers,
+            clearTimer,
+            getValue,
+            decrement,
+            onTick,
+            onFinish,
+        } = options;
+
         clearTimer(roomId);
         onTick(getValue());
 
@@ -61,15 +71,15 @@ export class TurnManagementService {
     startTurnTimer(gameSession: GameSession, onTimeoutCallback: () => void, onTickCallback?: (timeRemaining: number) => void): void {
         const roomId = gameSession.roomId;
 
-        this.createTimer(
+        this.createTimer({
             roomId,
-            this.turnTimers,
-            (targetRoomId) => this.clearTurnTimer(targetRoomId),
-            () => gameSession.getCurrentTurnTime(),
-            () => gameSession.decrementTurnTime(),
-            (time) => onTickCallback?.(time),
-            onTimeoutCallback,
-        );
+            timers: this.turnTimers,
+            clearTimer: (targetRoomId) => this.clearTurnTimer(targetRoomId),
+            getValue: () => gameSession.getCurrentTurnTime(),
+            decrement: () => gameSession.decrementTurnTime(),
+            onTick: (time) => onTickCallback?.(time),
+            onFinish: onTimeoutCallback,
+        });
     }
 
     resumeTurnTimer(
@@ -124,10 +134,18 @@ export class TurnManagementService {
         onFinishCallback: () => void): void {
         let remaining = seconds;
 
-        this.createTimer(gameSession.roomId, this.turnTimers, (targetRoomId) => this.clearTurnTimer(targetRoomId), () => remaining, () => {
-            remaining--;
-            gameSession.setCurrentInterTurnTime(remaining);
-        }, onTickCallback, onFinishCallback);
+        this.createTimer({
+            roomId: gameSession.roomId,
+            timers: this.turnTimers,
+            clearTimer: (targetRoomId) => this.clearTurnTimer(targetRoomId),
+            getValue: () => remaining,
+            decrement: () => {
+                remaining--;
+                gameSession.setCurrentInterTurnTime(remaining);
+            },
+            onTick: onTickCallback,
+            onFinish: onFinishCallback,
+        });
     }
 
     endTurn(gameSession: GameSession): void {
