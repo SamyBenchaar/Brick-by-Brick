@@ -304,3 +304,14 @@ $turn-info-color: #f88400ec;
         height: 100%;
     }
 }
+
+button.return-button {
+    height: 50px;
+    width: 150px;
+    background-size: cover;
+    font-size: 25px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-top: 25px;
+}
