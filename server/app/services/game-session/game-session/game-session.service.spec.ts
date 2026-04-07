@@ -2,6 +2,7 @@ import { GameGateway } from '@app/gateways/game/game.gateway';
 import { CombatService } from '@app/services/game-session/combat.service';
 import { GameSessionService } from '@app/services/game-session/game-session/game-session.service';
 import { MovementService } from '@app/services/game-session/movement.service';
+import { SanctuaryService } from '@app/services/game-session/sanctuary.service';
 import { StartingPointService } from '@app/services/game-session/starting-point.service';
 import { TurnManagementService } from '@app/services/game-session/turn-management.service';
 import { VirtualPlayerCtfService } from '@app/services/game-session/virtual-player-ctf.service';
@@ -66,6 +67,7 @@ describe('GameSessionService', () => {
         const module: TestingModule = await Test.createTestingModule({
             providers: [
                 GameSessionService,
+                SanctuaryService,
                 StartingPointService,
                 TurnManagementService,
                 MovementService,

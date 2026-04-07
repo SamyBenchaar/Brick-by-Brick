@@ -17,6 +17,7 @@ import { Position } from '@common/position';
 import { SessionStatus } from '@common/session.status';
 import { VirtualPlayerProfile } from '@common/virtual.player.profile';
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
+import { SanctuaryService } from '@app/services/game-session/sanctuary.service';
 
 const BASE_LIFE = 6;
 const BASE_SPEED = 6;
@@ -32,6 +33,7 @@ export class GameSessionService {
     private logger = new Logger(GameSessionService.name);
     private gameSessions: Map<string, GameSession> = new Map();
     @Inject() private virtualPlayerService: VirtualPlayerService;
+    @Inject() private sanctuaryService: SanctuaryService;
 
     constructor(
         private startingPointService: StartingPointService,
@@ -111,6 +113,7 @@ export class GameSessionService {
         this.turnManagementService.establishTurnOrder(gameSession);
         const mapConfig = { tiles: mapData.mapConfig.tiles };
         gameSession.setMapCopy(mapConfig);
+        this.sanctuaryService.initializeSanctuaryOrigins(mapConfig.tiles);
         this.startingPointService.assignStartingPoints(gameSession, mapConfig);
         this.startingPointService.cleanupUnusedStartingPoints(gameSession, mapConfig.tiles);
         gameSession.setStatus(SessionStatus.Playing);

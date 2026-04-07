@@ -1,10 +1,12 @@
 import { GameSession } from '@app/domain/game-session';
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import { SanctuaryService } from './sanctuary.service';
 
 @Injectable()
 export class TurnManagementService {
     private logger = new Logger(TurnManagementService.name);
     private turnTimers: Map<string, NodeJS.Timeout> = new Map();
+    @Inject() private sanctuaryService: SanctuaryService;
 
     private readonly randomOffset = 0.5;
     private readonly turnTimeInSeconds = 30;
@@ -85,6 +87,9 @@ export class TurnManagementService {
                     currentPlayer.combatSanctuaryBonus = undefined;
                 }
             }
+        }
+        if (gameSession.mapCopy) {
+            this.sanctuaryService.decrementCooldowns(gameSession.mapCopy.tiles);
         }
         gameSession.advanceToNextPlayer();
     }
