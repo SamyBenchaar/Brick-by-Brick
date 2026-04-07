@@ -82,7 +82,7 @@ export class GameGridDialogService {
         this.dialog.open(AppDialogComponent, {
             data: {
                 title: 'Informations du joueur',
-                message: `Joueur: ${player.name}\nAvatar ID: ${player.avatarId}\nVictoires: ${player.victories}`,
+                message: `Joueur: ${player.name}\nVictoires: ${player.victories}`,
                 type: 'info',
             },
         });
