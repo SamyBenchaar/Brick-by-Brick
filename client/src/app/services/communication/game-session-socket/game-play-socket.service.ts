@@ -1,15 +1,16 @@
 import { Injectable, Injector, WritableSignal, inject, signal } from '@angular/core';
 import { Tile } from '@app/classes/tile/tile';
+import { ADJACENT_POSITIONS, ADJACENT_TO_ORIGIN_POSITION } from '@app/constants/adjacent-position';
 import { Game } from '@app/interfaces/game';
+import { GameSession } from '@app/interfaces/game-session';
 import { SocketService } from '@app/services/communication/socket/socket.service';
 import { Character } from '@common/character';
-import { GameSessionEvents, CombatEvents } from '@common/game.events';
+import { CombatEvents, GameSessionEvents } from '@common/game.events';
 import { ObjectType, TileType } from '@common/map';
 import { Player } from '@common/player';
 import { Position } from '@common/position';
+import { CombatSocketService } from './combat-socket.service';
 import { GameSessionSocketService } from './game-session-socket.service';
-import { ADJACENT_POSITIONS, ADJACENT_TO_ORIGIN_POSITION } from '@app/constants/adjacent-position';
-import { GameSession } from '@app/interfaces/game-session';
 
 @Injectable({
     providedIn: 'root',
@@ -24,6 +25,10 @@ export class GamePlaySocketService {
 
     private get gameSession(): GameSession | null {
         return this.gameSessionSocketService.currentSession();
+    }
+
+    private get combatSocketService(): CombatSocketService {
+        return this.injector.get(CombatSocketService);
     }
 
     playerSocketId: WritableSignal<string | null> = signal<string | null>(null);
@@ -77,6 +82,10 @@ export class GamePlaySocketService {
     }
 
     requestMove(direction: string): void {
+        if (this.combatSocketService.activeCombat()) {
+            return;
+        }
+
         const currentRoomId = this.gameSessionSocketService.getRoomId();
         if (currentRoomId) {
             this.socketService.emit(GameSessionEvents.RequestMove, { roomId: currentRoomId, direction });
@@ -95,6 +104,10 @@ export class GamePlaySocketService {
     }
 
     requestCombat(defenderId: string): void {
+        if (this.combatSocketService.activeCombat()) {
+            return;
+        }
+
         const currentRoomId = this.getRoomId();
         if (currentRoomId) {
             this.socketService.emit(CombatEvents.RequestCombat, { roomId: currentRoomId, defenderId });
@@ -108,6 +121,10 @@ export class GamePlaySocketService {
 
 
     requestFlagTransfer(toPlayerId: string): void {
+        if (this.combatSocketService.activeCombat()) {
+            return;
+        }
+
         const currentRoomId = this.getRoomId();
         if (currentRoomId) {
             this.socketService.emit(GameSessionEvents.RequestFlagTransfer, { roomId: currentRoomId, toPlayerId });
@@ -115,6 +132,10 @@ export class GamePlaySocketService {
     }
 
     requestInteract(position: Position, mode: string): void {
+        if (this.combatSocketService.activeCombat()) {
+            return;
+        }
+
         const currentRoomId = this.getRoomId();
         if (currentRoomId) {
             this.socketService.emit(GameSessionEvents.RequestInteract, { roomId: currentRoomId, position, mode });
@@ -122,6 +143,10 @@ export class GamePlaySocketService {
     }
 
     endTurn(): void {
+        if (this.combatSocketService.activeCombat()) {
+            return;
+        }
+
         const currentRoomId = this.getRoomId();
         if (currentRoomId) {
             this.socketService.emit(GameSessionEvents.EndTurnRequest, { roomId: currentRoomId });
@@ -169,8 +194,12 @@ export class GamePlaySocketService {
     isFlagOnPosition(position: Position): boolean {
         return this.gameSession?.flagPosition?.x === position.x && this.gameSession?.flagPosition?.y === position.y;
     }
-    
+
     canInteractWithTarget(target: Tile, position: Position): boolean {
+        if (this.combatSocketService.activeCombat()) {
+            return false;
+        }
+
         const currentPlayer = this.getCurrentPlayerCharacter();
         const playerPosition = currentPlayer?.position;
         if (!this.isMyTurn() || !playerPosition || (currentPlayer.remainingActions ?? 0) <= 0) return false;
@@ -190,6 +219,10 @@ export class GamePlaySocketService {
     }
 
     canPlayerInteractSanctuary(): boolean {
+        if (this.combatSocketService.activeCombat()) {
+            return false;
+        }
+
         const currentPlayer = this.getCurrentPlayerCharacter();
         if (!this.isMyTurn() || !currentPlayer?.position || (currentPlayer.remainingActions ?? 0) <= 0) return false;
         const map = this.mapCopy();
@@ -197,22 +230,30 @@ export class GamePlaySocketService {
         const { x, y } = currentPlayer.position;
         return ADJACENT_POSITIONS.some(offset => {
             const tile = map.mapConfig.tiles[y + offset.y]?.[x + offset.x];
-            return tile?.object?.type === ObjectType.HealingSanctuary|| tile?.object?.type === ObjectType.CombatSanctuary;
+            return tile?.object?.type === ObjectType.HealingSanctuary || tile?.object?.type === ObjectType.CombatSanctuary;
         });
     }
 
     canPlayerInteractDoor(): boolean {
+        if (this.combatSocketService.activeCombat()) {
+            return false;
+        }
+
         const currentPlayer = this.getCurrentPlayerCharacter();
         if (!this.isMyTurn() || !currentPlayer?.position || (currentPlayer.remainingActions ?? 0) <= 0) return false;
         const map = this.mapCopy();
         if (!map) return false;
         if (this.areAdjacent(currentPlayer.position,
-             {x: this.gameSession?.flagPosition?.x ?? 0, y: this.gameSession?.flagPosition?.y ?? 0})) return false;
+            { x: this.gameSession?.flagPosition?.x ?? 0, y: this.gameSession?.flagPosition?.y ?? 0 })) return false;
         const { x, y } = currentPlayer.position;
         return ADJACENT_POSITIONS.some(offset => map.mapConfig.tiles[y + offset.y]?.[x + offset.x]?.type === 'door');
     }
 
     canAttackTarget(target: Character | null): boolean {
+        if (this.combatSocketService.activeCombat()) {
+            return false;
+        }
+
         const currentPlayer = this.getCurrentPlayerCharacter();
 
         return (
@@ -224,12 +265,17 @@ export class GamePlaySocketService {
     }
 
     canCurrentPlayerAttack(): boolean {
+        if (this.combatSocketService.activeCombat()) {
+            return false;
+        }
+
         const currentPlayer = this.getCurrentPlayerCharacter();
         return this.isMyTurn() && currentPlayer?.position != null && currentPlayer.remainingActions != null &&
             currentPlayer.remainingActions > 0 && this.getAutoAttackTarget() !== null;
     }
 
     canTransferFlagTo(target: Character | null): boolean {
+        if (this.combatSocketService.activeCombat()) return false;
         if (this.currentSession()?.gameMode !== 'ctf') return false;
         if (!target) return false;
 

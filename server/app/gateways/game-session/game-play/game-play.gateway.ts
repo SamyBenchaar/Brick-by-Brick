@@ -112,7 +112,7 @@ export class GamePlayGateway implements OnGatewayInit {
             return;
         }
 
-        if (gameSession.isTurnStarting) {
+        if (gameSession.isTurnStarting || gameSession.getActiveCombat()) {
             return;
         }
 
@@ -239,6 +239,7 @@ export class GamePlayGateway implements OnGatewayInit {
     handleRequestInteract(socket: Socket, payload: { roomId: string; position: Position; mode: 'normal' | 'double' }) {
         const gameSession = this.gameSessionService.getGameSession(payload.roomId);
         if (!gameSession) return;
+        if (gameSession.isTurnStarting || gameSession.getActiveCombat()) return;
         const tile = gameSession.mapCopy?.tiles[payload.position.y]?.[payload.position.x];
         if (!tile) return;
         if (tile.type === 'door') {
