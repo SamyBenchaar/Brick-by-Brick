@@ -12,6 +12,9 @@ import { Player } from '@common/player';
 import { Injectable, Logger } from '@nestjs/common';
 import { Socket } from 'socket.io';
 
+type RoundWinner = 'attacker' | 'defender' | 'tie';
+
+
 @Injectable()
 export class GamePlayCombatHandler {
     private readonly iceTilePenalty = -2;
@@ -155,6 +158,23 @@ export class GamePlayCombatHandler {
         combat.defenderHp = Math.max(combat.defenderHp - damageToDefender, 0);
 
         const combatEnds = combat.attackerHp === 0 || combat.defenderHp === 0;
+        
+        const result = this.determineRoundWinner(damageToAttacker, damageToDefender);
+        let logMessage: string;
+
+        switch(result){
+            case 'tie':
+                logMessage = `Manche ${combat.roundNumber}: Égalité entre ${attacker.name} et ${defender.name}`;
+                break;
+            case 'attacker':
+                logMessage = `Manche ${combat.roundNumber}: ${attacker.name} remporte la manche contre ${defender.name}`;
+                break;
+            case 'defender':
+                logMessage = `Manche ${combat.roundNumber}: ${defender.name} remporte la manche contre ${attacker.name}`;
+                break;
+            }
+        const playersInvolved = [attacker.name, defender.name];
+        context.logService.log(gameSession.roomId, logMessage, 'combat', playersInvolved);
 
         if (combatEnds) {
             const winner = combat.attackerHp > 0 ? combat.attackerId : combat.defenderId;
@@ -194,6 +214,12 @@ export class GamePlayCombatHandler {
                 this.startCombatTurnTimer(gameSession, context);
             }
         }
+    }
+
+    private determineRoundWinner(damageToAttacker: number, damageToDefender: number): RoundWinner {
+        if (damageToDefender > damageToAttacker) return 'attacker';
+        if (damageToAttacker > damageToDefender) return 'defender';
+        return 'tie';
     }
 
     private endCombat(gameSession: GameSession, winnerId: string, loserId: string, context: GamePlayHandlerContext): void {
