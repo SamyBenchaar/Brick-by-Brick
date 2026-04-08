@@ -6,7 +6,7 @@ import { GameDataForInit } from '@app/interfaces/game-map-interfaces';
 import { GameSessionService } from '@app/services/game-session/game-session/game-session.service';
 import { LogService } from '@app/services/log/log.service';
 import { Character } from '@common/character';
-import { GameSessionEvents } from '@common/game.events';
+import { CombatEvents, GameSessionEvents } from '@common/game.events';
 import { Player } from '@common/player';
 import { Position } from '@common/position';
 import { SessionStatus } from '@common/session.status';
@@ -112,7 +112,7 @@ export class GamePlayGateway implements OnGatewayInit {
             return;
         }
 
-        if (gameSession.isTurnStarting) {
+        if (gameSession.isTurnStarting || gameSession.getActiveCombat()) {
             return;
         }
 
@@ -144,9 +144,18 @@ export class GamePlayGateway implements OnGatewayInit {
         );
     }
 
-    @SubscribeMessage(GameSessionEvents.RequestCombat)
+    @SubscribeMessage(CombatEvents.RequestCombat)
     handleRequestCombat(socket: Socket, payload: { roomId: string; defenderId: string }) {
         this.handlersProvider.combatHandler.handleRequestCombat(
+            socket,
+            payload,
+            this.createHandlerContext(),
+        );
+    }
+
+    @SubscribeMessage(CombatEvents.SubmitCombatPosture)
+    handleSubmitCombatPosture(socket: Socket, payload: { roomId: string; posture: string }) {
+        this.handlersProvider.combatHandler.handlePostureChosen(
             socket,
             payload,
             this.createHandlerContext(),
@@ -179,6 +188,9 @@ export class GamePlayGateway implements OnGatewayInit {
         const wasCurrentPlayer = currentPlayer && abandoningPlayer && currentPlayer.id === abandoningPlayer.character.id;
 
         this.handleAbandonedPlayerFlagPlacement(gameSession, abandoningPlayer);
+
+        this.handleAbandonedPlayerCombatCleanup(gameSession, payload.roomId, abandoningPlayer?.character.id);
+
         this.gameSessionService.removePlayer(payload.roomId, socket.id);
         socket.leave(payload.roomId);
         this.gameSessionGateway.clearSocketRoomTracking(socket.id);
@@ -192,21 +204,7 @@ export class GamePlayGateway implements OnGatewayInit {
             this.logService.log(payload.roomId, `Abandon de partie par ${abandoningPlayer.character.name}`);
         }
 
-        const hasHumanPlayersRemaining = gameSession.players.some((player) => !player.virtualProfile);
-        if (!hasHumanPlayersRemaining) {
-            this.handleGameEnd(gameSession, null);
-            return;
-        }
-
-        if (!this.handleAbandonedPlayerTeamCheck(gameSession)) {
-            return;
-        }
-
-        if (!this.handleAbandonedPlayerWinnerCheck(gameSession)) {
-            return;
-        }
-
-        if (this.handleAbandonedPlayerEmptyGame(gameSession)) {
+        if (this.handleAbandonedPlayerPostRemovalState(gameSession)) {
             return;
         }
 
@@ -215,10 +213,40 @@ export class GamePlayGateway implements OnGatewayInit {
         }
     }
 
+    private handleAbandonedPlayerCombatCleanup(gameSession: GameSession, roomId: string, abandonedPlayerId: string | undefined): void {
+        const combat = gameSession.getActiveCombat();
+        if (combat && abandonedPlayerId && gameSession.isPlayerInActiveCombat(abandonedPlayerId)) {
+            gameSession.clearActiveCombat();
+            this.server.to(roomId).emit(CombatEvents.CombatEnded, {
+                reason: 'playerLeft',
+                abandonedPlayerId,
+            });
+        }
+    }
+
+    private handleAbandonedPlayerPostRemovalState(gameSession: GameSession): boolean {
+        const hasHumanPlayersRemaining = gameSession.players.some((player) => !player.virtualProfile);
+        if (!hasHumanPlayersRemaining) {
+            this.handleGameEnd(gameSession, null);
+            return true;
+        }
+
+        if (!this.handleAbandonedPlayerTeamCheck(gameSession)) {
+            return true;
+        }
+
+        if (!this.handleAbandonedPlayerWinnerCheck(gameSession)) {
+            return true;
+        }
+
+        return this.handleAbandonedPlayerEmptyGame(gameSession);
+    }
+
     @SubscribeMessage(GameSessionEvents.RequestInteract)
     handleRequestInteract(socket: Socket, payload: { roomId: string; position: Position; mode: 'normal' | 'double' }) {
         const gameSession = this.gameSessionService.getGameSession(payload.roomId);
         if (!gameSession) return;
+        if (gameSession.isTurnStarting || gameSession.getActiveCombat()) return;
         const tile = gameSession.mapCopy?.tiles[payload.position.y]?.[payload.position.x];
         if (!tile) return;
         if (tile.type === 'door') {

@@ -5,12 +5,12 @@ import { GameSession } from '@app/interfaces/game-session';
 import { SocketService } from '@app/services/communication/socket/socket.service';
 import { Character } from '@common/character';
 import { ADJACENT_POSITIONS, ADJACENT_TO_ORIGIN_POSITION, ORIGIN_CANDIDATES, SANCTUARY_TILE_OFFSETS } from '@common/constants/santuary-constants';
-import { GameSessionEvents } from '@common/game.events';
+import { GameSessionEvents, CombatEvents } from '@common/game.events';
 import { ObjectType, TileType } from '@common/map';
 import { Player } from '@common/player';
 import { Position } from '@common/position';
+import { CombatSocketService } from './combat-socket.service';
 import { GameSessionSocketService } from './game-session-socket.service';
-
 
 @Injectable({
     providedIn: 'root',
@@ -25,6 +25,10 @@ export class GamePlaySocketService {
 
     private get gameSession(): GameSession | null {
         return this.gameSessionSocketService.currentSession();
+    }
+
+    private get combatSocketService(): CombatSocketService {
+        return this.injector.get(CombatSocketService);
     }
 
     playerSocketId: WritableSignal<string | null> = signal<string | null>(null);
@@ -53,7 +57,7 @@ export class GamePlaySocketService {
         this.socketService.off(GameSessionEvents.TurnStarted);
         this.socketService.off(GameSessionEvents.TurnEnded);
         this.socketService.off(GameSessionEvents.MoveExecuted);
-        this.socketService.off(GameSessionEvents.CombatResult);
+        this.socketService.off(CombatEvents.CombatResult);
     }
 
     resetGameplayState(): void {
@@ -78,6 +82,10 @@ export class GamePlaySocketService {
     }
 
     requestMove(direction: string): void {
+        if (this.combatSocketService.activeCombat()) {
+            return;
+        }
+
         const currentRoomId = this.gameSessionSocketService.getRoomId();
         if (currentRoomId) {
             this.socketService.emit(GameSessionEvents.RequestMove, { roomId: currentRoomId, direction });
@@ -96,13 +104,27 @@ export class GamePlaySocketService {
     }
 
     requestCombat(defenderId: string): void {
+        if (this.combatSocketService.activeCombat()) {
+            return;
+        }
+
         const currentRoomId = this.getRoomId();
         if (currentRoomId) {
-            this.socketService.emit(GameSessionEvents.RequestCombat, { roomId: currentRoomId, defenderId });
+            this.socketService.emit(CombatEvents.RequestCombat, { roomId: currentRoomId, defenderId });
         }
     }
 
+    chooseCombatPosture(posture: string): void {
+        const roomId = this.getRoomId();
+        if (roomId) this.socketService.emit(CombatEvents.SubmitCombatPosture, { roomId, posture });
+    }
+
+
     requestFlagTransfer(toPlayerId: string): void {
+        if (this.combatSocketService.activeCombat()) {
+            return;
+        }
+
         const currentRoomId = this.getRoomId();
         if (currentRoomId) {
             this.socketService.emit(GameSessionEvents.RequestFlagTransfer, { roomId: currentRoomId, toPlayerId });
@@ -110,6 +132,10 @@ export class GamePlaySocketService {
     }
 
     requestInteract(position: Position, mode: string): void {
+        if (this.combatSocketService.activeCombat()) {
+            return;
+        }
+
         const currentRoomId = this.getRoomId();
         if (currentRoomId) {
             this.socketService.emit(GameSessionEvents.RequestInteract, { roomId: currentRoomId, position, mode });
@@ -117,6 +143,10 @@ export class GamePlaySocketService {
     }
 
     endTurn(): void {
+        if (this.combatSocketService.activeCombat()) {
+            return;
+        }
+
         const currentRoomId = this.getRoomId();
         if (currentRoomId) {
             this.socketService.emit(GameSessionEvents.EndTurnRequest, { roomId: currentRoomId });
@@ -134,6 +164,12 @@ export class GamePlaySocketService {
     getCurrentPlayerCharacter(): Character | null {
         const mySocketId = this.getSocketId();
         return this.currentSession()?.players.find((p: Player) => p.socketId === mySocketId)?.character ?? null;
+    }
+
+    getCharacter(characterId: string): Character | null {
+        const session = this.currentSession();
+        if (!session) return null;
+        return session.players.find((p: Player) => p.character.id === characterId)?.character ?? null;
     }
 
     getAutoAttackTarget(): Character | null {
@@ -160,6 +196,10 @@ export class GamePlaySocketService {
     }
 
     canInteractWithTarget(target: Tile, position: Position): boolean {
+        if (this.combatSocketService.activeCombat()) {
+            return false;
+        }
+
         const currentPlayer = this.getCurrentPlayerCharacter();
         const playerPosition = currentPlayer?.position;
         if (!this.isMyTurn() || !playerPosition || (currentPlayer.remainingActions ?? 0) <= 0) return false;
@@ -200,6 +240,10 @@ export class GamePlaySocketService {
     }
 
     canPlayerInteractSanctuary(): boolean {
+        if (this.combatSocketService.activeCombat()) {
+            return false;
+        }
+
         const currentPlayer = this.getCurrentPlayerCharacter();
         const hasBonus = (currentPlayer?.combatSanctuaryBonus !== undefined);
         if (!this.isMyTurn() || !currentPlayer?.position || (currentPlayer.remainingActions ?? 0) <= 0) return false;
@@ -225,6 +269,10 @@ export class GamePlaySocketService {
     }
 
     canPlayerInteractDoor(): boolean {
+        if (this.combatSocketService.activeCombat()) {
+            return false;
+        }
+
         const currentPlayer = this.getCurrentPlayerCharacter();
         if (!this.isMyTurn() || !currentPlayer?.position || (currentPlayer.remainingActions ?? 0) <= 0) return false;
         const map = this.mapCopy();
@@ -236,6 +284,10 @@ export class GamePlaySocketService {
     }
 
     canAttackTarget(target: Character | null): boolean {
+        if (this.combatSocketService.activeCombat()) {
+            return false;
+        }
+
         const currentPlayer = this.getCurrentPlayerCharacter();
 
         return (
@@ -247,12 +299,17 @@ export class GamePlaySocketService {
     }
 
     canCurrentPlayerAttack(): boolean {
+        if (this.combatSocketService.activeCombat()) {
+            return false;
+        }
+
         const currentPlayer = this.getCurrentPlayerCharacter();
         return this.isMyTurn() && currentPlayer?.position != null && currentPlayer.remainingActions != null &&
             currentPlayer.remainingActions > 0 && this.getAutoAttackTarget() !== null;
     }
 
     canTransferFlagTo(target: Character | null): boolean {
+        if (this.combatSocketService.activeCombat()) return false;
         if (this.currentSession()?.gameMode !== 'ctf') return false;
         if (!target) return false;
 

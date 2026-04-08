@@ -26,7 +26,7 @@ export class GamePlayMovementHandler {
             return;
         }
 
-        if (gameSession.isTurnStarting) {
+        if (gameSession.isTurnStarting || gameSession.getActiveCombat()) {
             return;
         }
 
@@ -95,8 +95,15 @@ export class GamePlayMovementHandler {
         context: GamePlayHandlerContext,
     ): void {
         const gameSession = this.gameSessionService.getGameSession(payload.roomId);
+        if (!gameSession || gameSession.isTurnStarting || gameSession.getActiveCombat()) {
+            return;
+        }
 
         const currentPlayer = gameSession.getCurrentPlayer();
+        if (!currentPlayer) {
+            return;
+        }
+
         this.movementService.assignPosition(currentPlayer, gameSession, payload.position);
         context.server.to(payload.roomId).emit(GameSessionEvents.MoveExecuted, {
             playerId: currentPlayer.id,
@@ -113,7 +120,7 @@ export class GamePlayMovementHandler {
         context: GamePlayHandlerContext,
     ): void {
         const gameSession = this.gameSessionService.getGameSession(payload.roomId);
-        if (!gameSession || gameSession.isTurnStarting) return;
+        if (!gameSession || gameSession.isTurnStarting || gameSession.getActiveCombat()) return;
 
         const currentPlayer = gameSession.getCurrentPlayer();
         const requestingPlayer = gameSession.players.find(p => p.socketId === socket.id);

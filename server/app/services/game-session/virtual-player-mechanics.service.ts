@@ -2,7 +2,7 @@ import { GameSession } from '@app/domain/game-session';
 import { GameGateway } from '@app/gateways/game/game.gateway';
 import { LogService } from '@app/services/log/log.service';
 import { COMBAT_SANCTUARY_BONUS, HEALING_SANCTUARY_BONUS } from '@common/constants/santuary-constants';
-import { GameSessionEvents } from '@common/game.events';
+import { GameSessionEvents, CombatEvents } from '@common/game.events';
 import { DoorState, ObjectType, TileType } from '@common/map';
 import { Player } from '@common/player';
 import { Position } from '@common/position';
@@ -96,7 +96,7 @@ export class VirtualPlayerMechanicsService {
             mapCopy,
         );
 
-        this.gameGateway.notifyRoomEvent(session.roomId, GameSessionEvents.CombatResult, {
+        this.gameGateway.notifyRoomEvent(session.roomId, CombatEvents.CombatResult, {
             winner: result.winner,
             loser: result.loser,
             attackerVictories: result.attackerVictories,
@@ -232,7 +232,7 @@ export class VirtualPlayerMechanicsService {
             mapCopy,
         );
 
-        this.gameGateway.notifyRoomEvent(session.roomId, GameSessionEvents.CombatResult, {
+        this.gameGateway.notifyRoomEvent(session.roomId, CombatEvents.CombatResult, {
             winner: result.winner,
             loser: result.loser,
             attackerVictories: result.attackerVictories,
