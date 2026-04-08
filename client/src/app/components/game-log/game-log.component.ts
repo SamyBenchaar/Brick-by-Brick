@@ -17,7 +17,7 @@ export class GameLogComponent implements OnInit, OnDestroy {
   filteredLogs = computed(() => {    
     return this.logs().filter(log =>
         log.type === 'global' ||
-        (log.type === 'combat' && log.playersInvolved?.includes(this.username))
+        (log.type === 'combat' && log.playersInvolved?.includes(this.username)),
     );
 });
 
