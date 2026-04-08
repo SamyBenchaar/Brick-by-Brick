@@ -28,6 +28,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { GameSessionService } from './services/game-session/game-session/game-session.service';
 import { GameService } from './services/game/game.service';
+import { SanctuaryService } from './services/game-session/sanctuary.service';
 
 @Module({
     imports: [
@@ -69,6 +70,7 @@ import { GameService } from './services/game/game.service';
         VirtualPlayerService,
         CombatService,
         Logger,
+        SanctuaryService,
         MapValidationService,
         GameMetadataValidationService,
     ],

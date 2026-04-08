@@ -1,0 +1,34 @@
+import {MapTile} from '@app/interfaces/game-map-interfaces';
+import { Injectable } from '@nestjs/common';
+import { Position } from '@common/position';
+import {  SANCTUARY_TILE_OFFSETS } from '@common/constants/santuary-constants';
+
+@Injectable()
+export class SanctuaryService {
+
+    initializeSanctuaryOrigins(tiles: MapTile[][]): void {
+        for (let y = 0; y < tiles.length; y++) {
+            for (let x = 0; x < tiles[y].length; x++) {
+                if (tiles[y][x].isOrigin) {
+                    const origin: Position = { x, y };
+                    SANCTUARY_TILE_OFFSETS.forEach(({ dx, dy }) => {
+                        const t = tiles[y + dy]?.[x + dx];
+                        if (t) t.sanctuaryOrigin = origin;
+                    });
+                }
+            }
+        }
+    }
+
+    decrementCooldowns(tiles: MapTile[][]): void {
+        for (const row of tiles) {
+            for (const tile of row) {
+                if (tile.isOrigin && tile.sanctuaryCooldown && tile.sanctuaryCooldown > 0) {
+                    tile.sanctuaryCooldown--;
+                    if (tile.sanctuaryCooldown === 0) delete tile.sanctuaryCooldown;
+                }
+            }   
+        }
+    }
+
+}

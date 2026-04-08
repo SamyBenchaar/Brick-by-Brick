@@ -12,6 +12,9 @@ import { CombatRoundResolvedPayload } from '@common/combat';
 import { CTF_VICTORY_ANNOUNCE_DELAY } from '@common/constants/game-config-constants';
 import { CombatEvents, GameSessionEvents } from '@common/game.events';
 import { Position } from '@common/position';
+import { SANCTUARY_COOLDOWN_TURNS, SANCTUARY_TILE_OFFSETS, ORIGIN_CANDIDATES } from '@common/constants/santuary-constants';
+import {ObjectType} from '@common/map';
+// import { findSanctuaryOrigin } from '@app/services/game-object/game-object.service';
 
 interface GameplayListenersContext {
     gamePlaySocketService: GamePlaySocketService;
@@ -21,6 +24,16 @@ interface GameplayListenersContext {
     dialog: MatDialog;
     flagTransferService: FlagTransferSocketService;
     combatSocketService: CombatSocketService;
+}
+
+function findSanctuaryOrigin(position: Position, tiles: Tile[][] ) : Position | undefined {
+    return ORIGIN_CANDIDATES.map(({ dx, dy }) => ({ x: position.x + dx, y: position.y + dy }))
+    .find(candidate =>
+        SANCTUARY_TILE_OFFSETS.every(({ dx, dy }) => {
+            const t = tiles[candidate.y + dy]?.[candidate.x + dx];
+            return t?.object?.type === ObjectType.HealingSanctuary || t?.object?.type === ObjectType.CombatSanctuary;
+        }),
+    );
 }
 
 export function setupGameplayEventListeners(context: GameplayListenersContext): void {
@@ -84,6 +97,20 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
             service.respondToFlagTransfer(data.fromPlayerId, false);
         });
         flagTransferService.clearAllPendingFlagTransfers();
+        const currentMap = service.mapCopy();
+        if (currentMap) {
+            let changed = false;
+            for (const row of currentMap.mapConfig.tiles) {
+                for (const tile of row) {
+                    if (tile.sanctuaryCooldown &&((tile.sanctuaryCooldown ?? 0) > 0)) {
+                        tile.sanctuaryCooldown--;
+                        if (tile.sanctuaryCooldown === 0) delete tile.sanctuaryCooldown;
+                        changed = true;
+                    }
+                }
+            }
+            if (changed) service.mapCopy.set({ ...currentMap });
+        }
     });
 
     socketService.on<{ playerId: string; position: Position; remainingMovement: number; remainingActions: number }>(
@@ -197,6 +224,47 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
         combatSocketService.activeCombat.set(null);
         combatSocketService.latestRound.set(null);
         combatSocketService.combatTurnTimeRemaining.set(null);
+    });
+    
+    socketService.on<{
+         position: Position, newDoorState: string, remainingActions: number, interactionType: string,
+         newLife?: number, newAttack?: number, newDefense?: number }>
+    (GameSessionEvents.InteractResult, (data) => {
+        const session = gameSessionSocketService.currentSession();
+        if (data.interactionType === 'door') {
+            const currentMap = service.mapCopy();
+            if (currentMap) {
+                currentMap.mapConfig.tiles[data.position.y][data.position.x].doorState = data.newDoorState;
+                service.mapCopy.set({ ...currentMap });
+            }
+        } else if (data.interactionType==='healingsanctuary' || data.interactionType==='combatsanctuary') {
+            const currentMap = service.mapCopy();
+            if (currentMap){
+                const originPos = findSanctuaryOrigin(data.position, currentMap.mapConfig.tiles);
+                if (originPos){
+                    currentMap.mapConfig.tiles[originPos.y][originPos.x].sanctuaryCooldown = SANCTUARY_COOLDOWN_TURNS;
+                    service.mapCopy.set({ ...currentMap });
+                }
+            }
+        }
+        if (session) {
+            const currentPlayerId = service.currentPlayerTurn();
+            const player = session.players.find(p => p.character.id === currentPlayerId);
+            if (player) {
+                player.character.remainingActions = data.remainingActions;
+                if (data.newLife !== undefined) {
+                    player.character.life = data.newLife;
+                }
+                if (data.newAttack !== undefined) {
+                    player.character.attack = data.newAttack;
+                }
+                if (data.newDefense !== undefined) {
+                    player.character.defense = data.newDefense;
+                }
+                gameSessionSocketService.currentSession.set({ ...session });
+
+            }
+        }
     });
 
     socketService.on<{

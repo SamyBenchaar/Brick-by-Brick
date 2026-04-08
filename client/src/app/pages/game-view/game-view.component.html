@@ -27,12 +27,12 @@
             <div class="turn-info brick-orange">
                 @if (isMyTurn()) {
                     <h3>C'est votre tour!</h3>
-                    <p>Temps restant: {{ displayedTurnTimer() }}</p>
+                    <p class="time-left">{{ displayedTurnTimer()}}</p>
                     <p>Utilisez WASD pour vous déplacer</p>
                     <button class="btn-end-turn" (click)="endTurn()">Terminer le tour</button>
                 } @else {
                     <h3>Tour de {{ getCurrentTurnPlayerName() }}</h3>
-                    <p>Temps restant: {{ displayedTurnTimer() }}</p>
+                    <p class="time-left">Temps restant: {{ displayedTurnTimer() }}</p>
                     @if (isDebugModeActivated() && isHost()){
                         <button class="btn-end-turn" (click)="endTurn()">Terminer le tour</button>
                     }
@@ -75,8 +75,8 @@
         <div #chatSidebar class="chat-sidebar" [class.chat-collapsed]="isChatCollapsed">
             <div class="chat-toggle" (click)="isChatCollapsed = !isChatCollapsed">
                 <span class="chat-toggle-icon">💬</span>
-                <span class="chat-toggle-label">{{ isChatCollapsed ? 'Chat' : 'Réduire' }}</span>
-                <span class="chat-toggle-arrow">{{ isChatCollapsed ? '◀' : '▶' }}</span>
+                <span class="chat-toggle-label">{{ isChatCollapsed ? 'Chat' : '' }} {{currentPlayer()?.character?.name ?? ''}}</span>
+                <span class="chat-toggle-arrow">{{ isChatCollapsed ? '◀' : 'Réduire ▶' }}</span>
             </div>
             @if (!isChatCollapsed && gameData) {
             <div class="chat-body" >
