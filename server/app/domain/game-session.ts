@@ -47,6 +47,7 @@ export class GameSession {
     }
 
     addPlayer(player: Player): void {
+        this.players = this.players.filter(p => p.socketId !== player.socketId);
         const newPlayerList = [...this.players, player];
         this.players = newPlayerList.sort((a, b) => b.character.speed - a.character.speed);
         this.socketToAvatar.set(player.socketId, player.character.avatarId);
