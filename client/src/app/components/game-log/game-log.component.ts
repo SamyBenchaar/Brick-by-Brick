@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, computed, inject, Input, OnDestroy, OnInit } from '@angular/core';
 import { LogService } from '@app/services/communication/log/log.service';
 
 @Component({
@@ -10,8 +10,16 @@ import { LogService } from '@app/services/communication/log/log.service';
 })
 export class GameLogComponent implements OnInit, OnDestroy {
   @Input() gameId?: string;
+  @Input() username: string;
   private logService = inject(LogService);
   logs = this.logService.logs;
+  
+  filteredLogs = computed(() => {    
+    return this.logs().filter(log =>
+        log.type === 'global' ||
+        (log.type === 'combat' && log.playersInvolved?.includes(this.username)),
+    );
+});
 
   ngOnInit() {
     const roomId = this.gameId || 'waiting-room';

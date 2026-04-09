@@ -6,6 +6,7 @@ import { SanctuaryService } from './sanctuary.service';
 export class TurnManagementService {
     private logger = new Logger(TurnManagementService.name);
     private turnTimers: Map<string, NodeJS.Timeout> = new Map();
+    private combatTimers: Map<string, NodeJS.Timeout> = new Map();
     @Inject() private sanctuaryService: SanctuaryService;
 
     private readonly randomOffset = 0.5;
@@ -33,10 +34,26 @@ export class TurnManagementService {
         return this.turnTimeInSeconds;
     }
 
-    private createTimer(roomId: string, getValue: () => number, decrement: () => void, onTick: (value: number) => void,
-        onFinish: () => void): void {
+    private createTimer(options: {
+        roomId: string;
+        timers: Map<string, NodeJS.Timeout>;
+        clearTimer: (targetRoomId: string) => void;
+        getValue: () => number;
+        decrement: () => void;
+        onTick: (value: number) => void;
+        onFinish: () => void;
+    }): void {
+        const {
+            roomId,
+            timers,
+            clearTimer,
+            getValue,
+            decrement,
+            onTick,
+            onFinish,
+        } = options;
 
-        this.clearTimer(roomId);
+        clearTimer(roomId);
         onTick(getValue());
 
         const interval = setInterval(() => {
@@ -45,35 +62,98 @@ export class TurnManagementService {
             onTick(value);
 
             if (value <= 0) {
-                this.clearTimer(roomId);
+                clearTimer(roomId);
                 onFinish();
+            }
+        }, this.timerIntervalInMilliseconds);
+
+        timers.set(roomId, interval);
+    }
+
+    startTurnTimer(gameSession: GameSession, onTimeoutCallback: () => void, onTickCallback?: (timeRemaining: number) => void): void {
+        const roomId = gameSession.roomId;
+
+        this.createTimer({
+            roomId,
+            timers: this.turnTimers,
+            clearTimer: (targetRoomId) => this.clearTurnTimer(targetRoomId),
+            getValue: () => gameSession.getCurrentTurnTime(),
+            decrement: () => gameSession.decrementTurnTime(),
+            onTick: (time) => onTickCallback?.(time),
+            onFinish: onTimeoutCallback,
+        });
+    }
+
+    resumeTurnTimer(
+        gameSession: GameSession,
+        onTimeoutCallback: () => void,
+        onTickCallback?: (timeRemaining: number) => void,
+    ): void {
+        const roomId = gameSession.roomId;
+
+        this.clearTurnTimer(roomId);
+        onTickCallback?.(gameSession.getCurrentTurnTime());
+
+        const interval = setInterval(() => {
+            gameSession.decrementTurnTime();
+            const value = gameSession.getCurrentTurnTime();
+            onTickCallback?.(value);
+
+            if (value <= 0) {
+                this.clearTurnTimer(roomId);
+                onTimeoutCallback();
             }
         }, this.timerIntervalInMilliseconds);
 
         this.turnTimers.set(roomId, interval);
     }
 
-    startTurnTimer(gameSession: GameSession, onTimeoutCallback: () => void, onTickCallback?: (timeRemaining: number) => void): void {
+    startCombatTimer(
+        gameSession: GameSession,
+        onTimeoutCallback: () => void,
+        onTickCallback?: (timeRemaining: number) => void,
+    ): void {
         const roomId = gameSession.roomId;
 
-        this.createTimer(roomId, () => gameSession.getCurrentTurnTime(),
-            () => gameSession.decrementTurnTime(), (time) => onTickCallback?.(time), onTimeoutCallback);
+        this.clearCombatTimer(roomId);
+        onTickCallback?.(gameSession.getCurrentCombatTurnTime());
+
+        const interval = setInterval(() => {
+            gameSession.decrementCombatTurnTime();
+            const value = gameSession.getCurrentCombatTurnTime();
+            onTickCallback?.(value);
+
+            if (value <= 0) {
+                this.clearCombatTimer(roomId);
+                onTimeoutCallback();
+            }
+        }, this.timerIntervalInMilliseconds);
+
+        this.combatTimers.set(roomId, interval);
     }
 
     startInterTurnCountdown(gameSession: GameSession, seconds: number, onTickCallback: (time: number) => void,
         onFinishCallback: () => void): void {
         let remaining = seconds;
 
-        this.createTimer(gameSession.roomId, () => remaining, () => {
+        this.createTimer({
+            roomId: gameSession.roomId,
+            timers: this.turnTimers,
+            clearTimer: (targetRoomId) => this.clearTurnTimer(targetRoomId),
+            getValue: () => remaining,
+            decrement: () => {
                 remaining--;
                 gameSession.setCurrentInterTurnTime(remaining);
-            },onTickCallback, onFinishCallback);
+            },
+            onTick: onTickCallback,
+            onFinish: onFinishCallback,
+        });
     }
 
     endTurn(gameSession: GameSession): void {
         const roomId = gameSession.roomId;
 
-        this.clearTimer(roomId);
+        this.clearTurnTimer(roomId);
         const currentPlayer = gameSession.getCurrentPlayer();
         if (currentPlayer) {
             currentPlayer.remainingMovement = currentPlayer.speed;
@@ -94,7 +174,7 @@ export class TurnManagementService {
         gameSession.advanceToNextPlayer();
     }
 
-    private clearTimer(roomId: string): void {
+    private clearTurnTimer(roomId: string): void {
         const timer = this.turnTimers.get(roomId);
         if (timer) {
             clearInterval(timer);
@@ -102,8 +182,25 @@ export class TurnManagementService {
         }
     }
 
+    private clearCombatTimer(roomId: string): void {
+        const timer = this.combatTimers.get(roomId);
+        if (timer) {
+            clearInterval(timer);
+            this.combatTimers.delete(roomId);
+        }
+    }
+
+    pauseTurnTimer(roomId: string): void {
+        this.clearTurnTimer(roomId);
+    }
+
+    stopCombatTimer(roomId: string): void {
+        this.clearCombatTimer(roomId);
+    }
+
     cleanupTimers(roomId: string): void {
-        this.clearTimer(roomId);
+        this.clearTurnTimer(roomId);
+        this.clearCombatTimer(roomId);
     }
 
     isPlayerTurn(gameSession: GameSession, playerId: string): boolean {

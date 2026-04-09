@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Character } from '@common/character';
 import { Position } from '@common/position';
-import { GameEvents } from '@common/game.events';
+import { GameEvents, CombatEvents, GameSessionEvents } from '@common/game.events';
 import { Subject } from 'rxjs';
 import { io, Socket } from 'socket.io-client';
 
@@ -83,7 +83,7 @@ export class GameSessionService {
 
     requestCombat(roomId: string, defenderId: string, playerId: string): void {
         if (!this.socket) return;
-        this.socket.emit(GameEvents.RequestCombat, {
+        this.socket.emit(CombatEvents.RequestCombat, {
             roomId,
             defenderId,
             playerId,
@@ -92,7 +92,7 @@ export class GameSessionService {
 
     endTurn(roomId: string, playerId: string): void {
         if (!this.socket) return;
-        this.socket.emit(GameEvents.EndTurnRequest, {
+        this.socket.emit(GameSessionEvents.EndTurnRequest, {
             roomId,
             playerId,
         });

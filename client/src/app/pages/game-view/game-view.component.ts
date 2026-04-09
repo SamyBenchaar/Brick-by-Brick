@@ -19,16 +19,19 @@ import { getGameSizeConfig } from '@common/constants/game-config-constants';
 import { MapSize, ObjectType } from '@common/map';
 import { Position } from '@common/position';
 import { Subscription } from 'rxjs';
+import { CombatViewComponent } from '@app/components/game-view-components/combat-view/combat-view.component';
+import { CombatSocketService } from '@app/services/communication/game-session-socket/combat-socket.service';
 
 @Component({
   selector: 'app-game-view',
-  imports: [CommonModule, GameGridComponent, ChatComponent, PlayerBoardComponent, PlayerSignComponent],
+  imports: [CommonModule, GameGridComponent, ChatComponent, PlayerBoardComponent, PlayerSignComponent, CombatViewComponent],
   templateUrl: './game-view.component.html',
   styleUrl: './game-view.component.scss',
 })
 export class GameViewComponent implements OnInit, OnDestroy {
   gameSessionSocketService = inject(GameSessionSocketService);
   gamePlaySocketService = inject(GamePlaySocketService);
+  combatSocketService = inject(CombatSocketService);
   private router = inject(Router);
   private dialog = inject(MatDialog);
   private injector = inject(Injector);
@@ -53,6 +56,19 @@ export class GameViewComponent implements OnInit, OnDestroy {
   });
   isDebugModeActivated = computed(() => this.gamePlaySocketService.isDebugModeActivated());
 
+  displayedTurnTimer = computed(() => {
+    const activeCombat = this.combatSocketService.activeCombat();
+    if (!activeCombat) {
+      return `${this.getTurnTimeRemaining()}s`;
+    }
+
+    if (!this.combatSocketService.isCurrentUserInCombat()) {
+      return '--';
+    }
+
+    const combatTime = this.combatSocketService.combatTurnTimeRemaining();
+    return combatTime === null ? '--' : `${combatTime}s`;
+  });
   ngOnInit(): void {
     if (!this.gameSessionSocketService.currentSession() || !this.gamePlaySocketService.mapCopy()) {
       this.router.navigate(['/']);
@@ -65,8 +81,15 @@ export class GameViewComponent implements OnInit, OnDestroy {
     }, { injector: this.injector });
 
     effect(() => {
+      const activeCombat = this.combatSocketService.activeCombat();
       this.gameSessionSocketService.currentSession();
       this.gamePlaySocketService.currentPlayerTurn();
+
+      if (activeCombat) {
+        this.isActionSelectionMode.set(false);
+        return;
+      }
+
       if (!this.gamePlaySocketService.canCurrentPlayerAttack()) {
         this.isActionSelectionMode.set(false);
       }
@@ -89,7 +112,7 @@ export class GameViewComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (!this.isMyTurn() || this.isWriting() || this.dialog.openDialogs.length > 0) return;
+    if (!this.isMyTurn() || this.isWriting() || this.combatSocketService.activeCombat() || this.dialog.openDialogs.length > 0) return;
     const direction = KEY_DIRECTION_MAP[key];
 
     if (direction) {
@@ -130,6 +153,10 @@ export class GameViewComponent implements OnInit, OnDestroy {
 
   isHost(): boolean {
     return this.gameSessionSocketService.isCurrentUserHost();
+  }
+
+  isInCombat(): boolean {
+    return this.combatSocketService.isCurrentUserInCombat();
   }
 
   getCurrentTurnPlayerName(): string {

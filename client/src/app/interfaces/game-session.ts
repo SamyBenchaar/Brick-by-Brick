@@ -1,3 +1,4 @@
+import { ActiveCombat } from '@common/combat';
 import { Player } from '@common/player';
 import { Position } from '@common/position';
 import { SessionStatus } from '@common/session.status';
@@ -23,4 +24,6 @@ export interface GameSession {
     playerTeams?: Map<string, 'team1' | 'team2'>;
     flagPosition?: Position | null;
     flagHolderId?: string | null;
+    activeCombat?: ActiveCombat | null;
+    currentCombatTurnTime?: number;
 }

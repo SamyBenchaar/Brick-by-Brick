@@ -127,13 +127,17 @@ export class CharacterCreationPageComponent implements OnInit {
     }
 
     applyBonus(target: 'life' | 'speed') {
+        this.character.maxLife = BASE_LIFE;
         this.character.life = BASE_LIFE;
         this.character.speed = BASE_SPEED;
+        this.character.movements = BASE_SPEED;
 
         if (target === 'life') {
-            this.character.life += BONUS_AMOUNT;
+            this.character.maxLife += BONUS_AMOUNT;
+            this.character.life = this.character.maxLife;
         } else {
             this.character.speed += BONUS_AMOUNT;
+            this.character.movements = this.character.speed;
         }
         this.bonusTarget = target;
     }

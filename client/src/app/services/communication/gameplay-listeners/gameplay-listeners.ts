@@ -3,16 +3,17 @@ import { Router } from '@angular/router';
 import { AppDialogComponent } from '@app/components/game-edition-components/app-dialog/app-dialog.component';
 import { Tile } from '@app/interfaces/game';
 import { GameSession } from '@app/interfaces/game-session';
+import { CombatSocketService } from '@app/services/communication/game-session-socket/combat-socket.service';
 import { FlagTransferSocketService } from '@app/services/communication/game-session-socket/flag-transfer-socket.service';
 import { GamePlaySocketService } from '@app/services/communication/game-session-socket/game-play-socket.service';
 import type { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
 import { SocketService } from '@app/services/communication/socket/socket.service';
+import { CombatRoundResolvedPayload } from '@common/combat';
 import { CTF_VICTORY_ANNOUNCE_DELAY } from '@common/constants/game-config-constants';
-import { GameSessionEvents } from '@common/game.events';
+import { CombatEvents, GameSessionEvents } from '@common/game.events';
 import { Position } from '@common/position';
 import { SANCTUARY_COOLDOWN_TURNS, SANCTUARY_TILE_OFFSETS, ORIGIN_CANDIDATES } from '@common/constants/santuary-constants';
-import {ObjectType} from '@common/map';
-// import { findSanctuaryOrigin } from '@app/services/game-object/game-object.service';
+import { ObjectType } from '@common/map';
 
 interface GameplayListenersContext {
     gamePlaySocketService: GamePlaySocketService;
@@ -21,16 +22,17 @@ interface GameplayListenersContext {
     router: Router;
     dialog: MatDialog;
     flagTransferService: FlagTransferSocketService;
+    combatSocketService: CombatSocketService;
 }
 
-function findSanctuaryOrigin(position: Position, tiles: Tile[][] ) : Position | undefined {
+function findSanctuaryOrigin(position: Position, tiles: Tile[][]): Position | undefined {
     return ORIGIN_CANDIDATES.map(({ dx, dy }) => ({ x: position.x + dx, y: position.y + dy }))
-    .find(candidate =>
-        SANCTUARY_TILE_OFFSETS.every(({ dx, dy }) => {
-            const t = tiles[candidate.y + dy]?.[candidate.x + dx];
-            return t?.object?.type === ObjectType.HealingSanctuary || t?.object?.type === ObjectType.CombatSanctuary;
-        }),
-    );
+        .find(candidate =>
+            SANCTUARY_TILE_OFFSETS.every(({ dx, dy }) => {
+                const t = tiles[candidate.y + dy]?.[candidate.x + dx];
+                return t?.object?.type === ObjectType.HealingSanctuary || t?.object?.type === ObjectType.CombatSanctuary;
+            }),
+        );
 }
 
 export function setupGameplayEventListeners(context: GameplayListenersContext): void {
@@ -41,6 +43,7 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
         router,
         dialog,
         flagTransferService,
+        combatSocketService,
     } = context;
 
     socketService.on<{ playerId: string; playerName: string; delay: number }>(
@@ -98,7 +101,7 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
             let changed = false;
             for (const row of currentMap.mapConfig.tiles) {
                 for (const tile of row) {
-                    if (tile.sanctuaryCooldown &&((tile.sanctuaryCooldown ?? 0) > 0)) {
+                    if (tile.sanctuaryCooldown && ((tile.sanctuaryCooldown ?? 0) > 0)) {
                         tile.sanctuaryCooldown--;
                         if (tile.sanctuaryCooldown === 0) delete tile.sanctuaryCooldown;
                         changed = true;
@@ -155,12 +158,51 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
     );
 
     socketService.on<{
+        attackerId: string;
+        defenderId: string;
+        initiatorId: string;
+        roundNumber: number;
+        attackerPosture?: string;
+        defenderPosture?: string;
+        attackerHp: number;
+        defenderHp: number;
+    }>(CombatEvents.CombatStarted, (data) => {
+        service.reachableTiles.set([]);
+        combatSocketService.activeCombat.set(data);
+        combatSocketService.latestRound.set(null);
+    });
+
+    socketService.on<{ timeRemaining: number }>(CombatEvents.CombatTurnStarted, (payload) => {
+        combatSocketService.combatTurnTimeRemaining.set(payload.timeRemaining);
+    });
+
+    socketService.on<{ timeRemaining: number }>(CombatEvents.CombatTurnTimeUpdate, (payload) => {
+        combatSocketService.combatTurnTimeRemaining.set(payload.timeRemaining);
+    });
+
+    socketService.on<CombatRoundResolvedPayload>(CombatEvents.CombatRoundResolved, (data) => {
+        combatSocketService.latestRound.set(data);
+        combatSocketService.activeCombat.update(current => current ? {
+            ...current,
+            attackerHp: data.attackerLife,
+            defenderHp: data.defenderLife,
+            roundNumber: data.roundNumber,
+            attackerPosture: undefined,
+            defenderPosture: undefined,
+        } : null);
+    });
+
+    socketService.on<{
         winner: string;
         loser: string;
         attackerVictories: number;
         defenderNewPosition: Position;
         remainingActions: number;
-    }>(GameSessionEvents.CombatResult, (data) => {
+    }>(CombatEvents.CombatResult, (data) => {
+        service.reachableTiles.set([]);
+        combatSocketService.activeCombat.set(null);
+        combatSocketService.latestRound.set(null);
+        combatSocketService.combatTurnTimeRemaining.set(null);
         const session = service.currentSession();
         if (session) {
             const attacker = session.players.find(p => p.character.id === data.winner);
@@ -176,46 +218,54 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
         }
     });
 
+    socketService.on(CombatEvents.CombatEnded, () => {
+        service.reachableTiles.set([]);
+        combatSocketService.activeCombat.set(null);
+        combatSocketService.latestRound.set(null);
+        combatSocketService.combatTurnTimeRemaining.set(null);
+    });
+
     socketService.on<{
-         position: Position, newDoorState: string, remainingActions: number, interactionType: string,
-         newLife?: number, newAttack?: number, newDefense?: number }>
-    (GameSessionEvents.InteractResult, (data) => {
-        const session = gameSessionSocketService.currentSession();
-        if (data.interactionType === 'door') {
-            const currentMap = service.mapCopy();
-            if (currentMap) {
-                currentMap.mapConfig.tiles[data.position.y][data.position.x].doorState = data.newDoorState;
-                service.mapCopy.set({ ...currentMap });
-            }
-        } else if (data.interactionType==='healingsanctuary' || data.interactionType==='combatsanctuary') {
-            const currentMap = service.mapCopy();
-            if (currentMap){
-                const originPos = findSanctuaryOrigin(data.position, currentMap.mapConfig.tiles);
-                if (originPos){
-                    currentMap.mapConfig.tiles[originPos.y][originPos.x].sanctuaryCooldown = SANCTUARY_COOLDOWN_TURNS;
+        position: Position, newDoorState: string, remainingActions: number, interactionType: string,
+        newLife?: number, newAttack?: number, newDefense?: number
+    }>
+        (GameSessionEvents.InteractResult, (data) => {
+            const session = gameSessionSocketService.currentSession();
+            if (data.interactionType === 'door') {
+                const currentMap = service.mapCopy();
+                if (currentMap) {
+                    currentMap.mapConfig.tiles[data.position.y][data.position.x].doorState = data.newDoorState;
                     service.mapCopy.set({ ...currentMap });
                 }
+            } else if (data.interactionType === 'healingsanctuary' || data.interactionType === 'combatsanctuary') {
+                const currentMap = service.mapCopy();
+                if (currentMap) {
+                    const originPos = findSanctuaryOrigin(data.position, currentMap.mapConfig.tiles);
+                    if (originPos) {
+                        currentMap.mapConfig.tiles[originPos.y][originPos.x].sanctuaryCooldown = SANCTUARY_COOLDOWN_TURNS;
+                        service.mapCopy.set({ ...currentMap });
+                    }
+                }
             }
-        }
-        if (session) {
-            const currentPlayerId = service.currentPlayerTurn();
-            const player = session.players.find(p => p.character.id === currentPlayerId);
-            if (player) {
-                player.character.remainingActions = data.remainingActions;
-                if (data.newLife !== undefined) {
-                    player.character.life = data.newLife;
-                }
-                if (data.newAttack !== undefined) {
-                    player.character.attack = data.newAttack;
-                }
-                if (data.newDefense !== undefined) {
-                    player.character.defense = data.newDefense;
-                }
-                gameSessionSocketService.currentSession.set({ ...session });
+            if (session) {
+                const currentPlayerId = service.currentPlayerTurn();
+                const player = session.players.find(p => p.character.id === currentPlayerId);
+                if (player) {
+                    player.character.remainingActions = data.remainingActions;
+                    if (data.newLife !== undefined) {
+                        player.character.life = data.newLife;
+                    }
+                    if (data.newAttack !== undefined) {
+                        player.character.attack = data.newAttack;
+                    }
+                    if (data.newDefense !== undefined) {
+                        player.character.defense = data.newDefense;
+                    }
+                    gameSessionSocketService.currentSession.set({ ...session });
 
+                }
             }
-        }
-    });
+        });
 
     socketService.on<{ playerId: string; mapCopyTiles: Tile[][] }>(GameSessionEvents.PlayerAbandoned, (data) => {
         const session = service.currentSession();
@@ -237,6 +287,7 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
                     });
                 }
             }
+            combatSocketService.activeCombat.set(null);
             gameSessionSocketService.currentSession.set({ ...session });
         }
     });
