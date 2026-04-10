@@ -264,18 +264,37 @@ export class GameSessionService {
             return false;
         }
 
+        const canMove = this.canCurrentPlayerMove(gameSession);
+        const canInteract = this.canCurrentPlayerInteract(gameSession, currentPlayer);
+        const canFight = this.canCurrentPlayerFight(gameSession, currentPlayer);
+
+        return canMove || canInteract || canFight;
+    }
+
+    private canCurrentPlayerMove(gameSession: GameSession): boolean {
         const reachableTiles = this.getReachableTiles(gameSession);
-        const canMove = reachableTiles.length > 1;
+        return reachableTiles.length > 1;
+    }
 
+    private canCurrentPlayerInteract(gameSession: GameSession, currentPlayer: Character): boolean {
         const hasRemainingActions = (currentPlayer.remainingActions ?? 0) > 0;
-        const adjacentPlayers = this.movementService.getAdjacentPlayers(
-            gameSession,
-            currentPlayer.position,
-        );
-        const canInteract = hasRemainingActions && this.movementService.isDoorAdjacent(currentPlayer.position, gameSession);
-        const canFight = hasRemainingActions && adjacentPlayers.length > 0;
+        if (!hasRemainingActions) {
+            return false;
+        }
 
-        return canMove || canFight || canInteract;
+        return this.movementService.isDoorAdjacent(currentPlayer.position, gameSession);
+    }
+
+    private canCurrentPlayerFight(gameSession: GameSession, currentPlayer: Character): boolean {
+        const hasRemainingActions = (currentPlayer.remainingActions ?? 0) > 0;
+        if (!hasRemainingActions) {
+            return false;
+        }
+
+        const adjacentPlayers = this.movementService.getAdjacentPlayers(gameSession, currentPlayer.position);
+        return adjacentPlayers.some((adjacentPlayer) =>
+            this.combatService.canFight(currentPlayer, adjacentPlayer, gameSession),
+        );
     }
 
     removePlayer(roomId: string, playerId: string): void {
