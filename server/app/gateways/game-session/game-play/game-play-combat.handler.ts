@@ -306,25 +306,29 @@ export class GamePlayCombatHandler {
         this.startCombatTurnTimer(gameSession, context);
     }
 
-    private endCombat(gameSession: GameSession, winnerId: string, loserId: string, context: GamePlayHandlerContext): void {
+    private endCombat(
+        gameSession: GameSession,
+        outcome: 'attacker' | 'defender' | 'draw',
+        context: GamePlayHandlerContext,
+    ): void {
         this.turnManagementService.stopCombatTimer(gameSession.roomId);
 
-        const participants = this.getCombatParticipants(gameSession, winnerId, loserId);
-        if (!participants) {
+        const combat = gameSession.getActiveCombat();
+        if (!combat) {
             return;
         }
 
-        const { winner, loser, attacker } = participants;
-        this.applyCombatOutcome(gameSession, winner, loser, attacker);
-        this.emitCombatOutcome({
-            gameSession,
-            winnerId,
-            loserId,
-            winner,
-            loser,
-            attacker,
-            context,
-        });
+        const attacker = gameSession.getCharacterById(combat.attackerId);
+        const defender = gameSession.getCharacterById(combat.defenderId);
+        if (!attacker || !defender) {
+            return;
+        }
+
+        const combatState = this.buildCombatEndState(gameSession, attacker, defender, combat, outcome);
+        gameSession.clearActiveCombat();
+
+        this.emitCombatResult(gameSession, combatState, context);
+        this.logCombatResult(gameSession, combatState, context);
 
         const gameWinner = this.gameSessionService.checkGameWinner(gameSession);
         if (gameWinner) {
@@ -332,71 +336,189 @@ export class GamePlayCombatHandler {
             return;
         }
 
-        this.resumeOrEndTurn(gameSession, winner, context);
+        this.resumeOrEndTurn(gameSession, combatState.turnShouldContinue, context);
     }
 
-    private getCombatParticipants(
+    private buildCombatEndState(
         gameSession: GameSession,
-        winnerId: string,
-        loserId: string,
-    ): { winner: Character; loser: Character; attacker: Character } | null {
-        const winner = gameSession.getCharacterById(winnerId);
-        const loser = gameSession.getCharacterById(loserId);
-        const attacker = gameSession.getCharacterById(gameSession.getActiveCombat()?.attackerId ?? '');
+        attacker: Character,
+        defender: Character,
+        combat: ActiveCombat,
+        outcome: 'attacker' | 'defender' | 'draw',
+    ): {
+        attacker: Character;
+        defender: Character;
+        winner: Character | null;
+        loserIds: string[];
+        outcome: 'attacker' | 'defender' | 'draw';
+        attackerPosition: Position;
+        defenderPosition: Position;
+        turnShouldContinue: boolean;
+    } {
+        const attackerDefeated = outcome === 'defender' || outcome === 'draw';
+        const defenderDefeated = outcome === 'attacker' || outcome === 'draw';
+        const winner = this.getWinnerFromOutcome(outcome, attacker, defender);
 
-        if (!winner || !loser || !attacker) {
+        if (!attackerDefeated) {
+            attacker.life = combat.attackerHp;
+        }
+
+        if (!defenderDefeated) {
+            defender.life = combat.defenderHp;
+        }
+
+        if (winner) {
+            winner.victories = (winner.victories ?? 0) + 1;
+        }
+
+        const attackerPosition = attackerDefeated
+            ? this.respawnDefeatedPlayer(gameSession, attacker)
+            : attacker.position;
+
+        const defenderPosition = defenderDefeated
+            ? this.respawnDefeatedPlayer(gameSession, defender)
+            : defender.position;
+
+        const turnShouldContinue = outcome === 'attacker' && (attacker.remainingMovement ?? 0) > 0;
+
+        return {
+            attacker,
+            defender,
+            winner,
+            loserIds: this.getLoserIds(attacker, defender, attackerDefeated, defenderDefeated),
+            outcome,
+            attackerPosition,
+            defenderPosition,
+            turnShouldContinue,
+        };
+    }
+
+    private getWinnerFromOutcome(
+        outcome: 'attacker' | 'defender' | 'draw',
+        attacker: Character,
+        defender: Character,
+    ): Character | null {
+        if (outcome === 'attacker') {
+            return attacker;
+        }
+
+        if (outcome === 'defender') {
+            return defender;
+        }
+
+        return null;
+    }
+
+    private getLoserIds(
+        attacker: Character,
+        defender: Character,
+        attackerDefeated: boolean,
+        defenderDefeated: boolean,
+    ): string[] {
+        const loserIds: string[] = [];
+
+        if (attackerDefeated) {
+            loserIds.push(attacker.id);
+        }
+
+        if (defenderDefeated) {
+            loserIds.push(defender.id);
+        }
+
+        return loserIds;
+    }
+
+    private respawnDefeatedPlayer(gameSession: GameSession, player: Character): Position {
+        const defeatPosition = { ...player.position };
+
+        this.dropFlagIfNeeded(gameSession, player, defeatPosition);
+
+        const respawnPosition = this.getRespawnPosition(gameSession, player);
+        player.position = respawnPosition;
+        player.life = player.maxLife;
+
+        return respawnPosition;
+    }
+
+    private dropFlagIfNeeded(gameSession: GameSession, player: Character, defeatPosition: Position): void {
+        if (!player.hasFlag || gameSession.gameMode !== 'ctf') {
+            return;
+        }
+
+        const dropPosition = this.getFlagDropPosition(gameSession, defeatPosition);
+        if (dropPosition) {
+            gameSession.dropFlag(dropPosition);
+        }
+    }
+
+    private getRespawnPosition(gameSession: GameSession, player: Character): Position {
+        const startingPoint = gameSession.getStartingPoint(player.id);
+        if (!startingPoint) {
+            return player.position;
+        }
+
+        const startingPointIsFree = this.isPositionFree(gameSession, startingPoint, player.id);
+        if (startingPointIsFree) {
+            return startingPoint;
+        }
+
+        return this.gameSessionService.findNearestFreeTile(gameSession, startingPoint) ?? startingPoint;
+    }
+
+    private isPositionFree(gameSession: GameSession, position: Position, excludedPlayerId: string): boolean {
+        return !gameSession.players.some((otherPlayer) =>
+            otherPlayer.character.id !== excludedPlayerId &&
+            otherPlayer.character.position.x === position.x &&
+            otherPlayer.character.position.y === position.y,
+        );
+    }
+
+    private getFlagDropPosition(gameSession: GameSession, defeatPosition: Position): Position | null {
+        const tile = gameSession.getMapCopy()?.tiles?.[defeatPosition.y]?.[defeatPosition.x];
+        if (!tile) {
             return null;
         }
 
-        return { winner, loser, attacker };
-    }
-
-    private applyCombatOutcome(gameSession: GameSession, winner: Character, loser: Character, attacker: Character): void {
-        attacker.remainingActions = Math.max((attacker.remainingActions ?? 1) - 1, 0);
-        winner.victories = (winner.victories ?? 0) + 1;
-
-        if (loser.hasFlag && gameSession.gameMode === 'ctf') {
-            gameSession.dropFlag(loser.position);
+        const defeatedOnOpenedDoor = tile.type === TileType.Door && tile.doorState === 'opened';
+        if (defeatedOnOpenedDoor) {
+            return this.gameSessionService.findNearestFreeTile(gameSession, defeatPosition);
         }
 
-        const startingPoint = gameSession.getStartingPoint(loser.id);
-        if (startingPoint) {
-            loser.position = startingPoint;
-        }
-
-        gameSession.clearActiveCombat();
+        return defeatPosition;
     }
 
-    private emitCombatOutcome(options: {
-        gameSession: GameSession;
-        winnerId: string;
-        loserId: string;
-        winner: Character;
-        loser: Character;
-        attacker: Character;
-        context: GamePlayHandlerContext;
-    }): void {
-        const {
-            gameSession,
-            winnerId,
-            loserId,
-            winner,
-            loser,
-            attacker,
-            context,
-        } = options;
-
+    private emitCombatResult(
+        gameSession: GameSession,
+        combatState: {
+            attacker: Character;
+            defender: Character;
+            winner: Character | null;
+            loserIds: string[];
+            outcome: 'attacker' | 'defender' | 'draw';
+            attackerPosition: Position;
+            defenderPosition: Position;
+            turnShouldContinue: boolean;
+        },
+        context: GamePlayHandlerContext,
+    ): void {
         context.server.to(gameSession.roomId).emit(CombatEvents.CombatResult, {
-            winner: winnerId,
-            loser: loserId,
-            attackerVictories: winner.victories,
-            defenderNewPosition: loser.position,
-            remainingActions: attacker.remainingActions,
+            attackerId: combatState.attacker.id,
+            defenderId: combatState.defender.id,
+            winnerId: combatState.winner?.id ?? null,
+            loserIds: combatState.loserIds,
+            outcome: combatState.outcome,
+            attackerPosition: combatState.attackerPosition,
+            defenderPosition: combatState.defenderPosition,
+            attackerLife: combatState.attacker.life,
+            defenderLife: combatState.defender.life,
+            attackerVictories: combatState.attacker.victories,
+            defenderVictories: combatState.defender.victories,
+            remainingActions: combatState.attacker.remainingActions,
+            remainingTurnTime: gameSession.getCurrentTurnTime(),
+            turnShouldContinue: combatState.turnShouldContinue,
             flagPosition: gameSession.gameMode === 'ctf' ? gameSession.getFlagPosition() : null,
-            flagHolder: gameSession.gameMode === 'ctf' ? gameSession.getFlagHolder() : null,
+            flagHolderId: gameSession.gameMode === 'ctf' ? gameSession.getFlagHolder() : null,
         });
-
-        context.logService.log(gameSession.roomId, `Fin du combat: ${winner.name} a gagné contre ${loser.name}`);
 
         if (gameSession.gameMode === 'ctf') {
             context.server.to(gameSession.roomId).emit(GameSessionEvents.GameSessionUpdated, gameSession);
@@ -405,36 +527,67 @@ export class GamePlayCombatHandler {
         context.emitReachableTiles(gameSession);
     }
 
-    private resumeOrEndTurn(gameSession: GameSession, winner: Character, context: GamePlayHandlerContext): void {
-        const currentPlayer = gameSession.getCurrentPlayer();
-        const shouldResumeTurn = currentPlayer?.id === winner.id && (currentPlayer.remainingMovement ?? 0) > 0;
-
-        if (shouldResumeTurn) {
-            this.turnManagementService.resumeTurnTimer(
-                gameSession,
-                () => {
-                    this.gameSessionService.endCurrentTurn(gameSession);
-                    context.onTurnEnd(gameSession);
-                },
-                (timeRemaining: number) => {
-                    context.server.to(gameSession.roomId).emit(GameSessionEvents.TurnTimeUpdate, {
-                        timeRemaining,
-                    });
-                },
+    private logCombatResult(
+        gameSession: GameSession,
+        combatState: {
+            attacker: Character;
+            defender: Character;
+            winner: Character | null;
+            outcome: 'attacker' | 'defender' | 'draw';
+        },
+        context: GamePlayHandlerContext,
+    ): void {
+        if (combatState.outcome === 'draw') {
+            context.logService.log(
+                gameSession.roomId,
+                `Fin du combat: ${combatState.attacker.name} et ${combatState.defender.name} sont tous deux vaincus`,
             );
-
-            context.server.to(gameSession.roomId).emit(GameSessionEvents.TurnStarted, {
-                playerId: currentPlayer?.id,
-                playerName: currentPlayer?.name,
-                turnTime: gameSession.getCurrentTurnTime(),
-                remainingMovement: currentPlayer?.remainingMovement,
-                remainingActions: currentPlayer?.remainingActions,
-            });
             return;
         }
 
-        this.gameSessionService.endCurrentTurn(gameSession);
-        context.onTurnEnd(gameSession);
+        if (!combatState.winner) {
+            return;
+        }
+
+        const loser = combatState.winner.id === combatState.attacker.id ? combatState.defender : combatState.attacker;
+        context.logService.log(
+            gameSession.roomId,
+            `Fin du combat: ${combatState.winner.name} a gagné contre ${loser.name}`,
+        );
+    }
+
+    private resumeOrEndTurn(
+        gameSession: GameSession,
+        turnShouldContinue: boolean,
+        context: GamePlayHandlerContext,
+    ): void {
+        const currentPlayer = gameSession.getCurrentPlayer();
+        if (!currentPlayer || !turnShouldContinue) {
+            this.gameSessionService.endCurrentTurn(gameSession);
+            context.onTurnEnd(gameSession);
+            return;
+        }
+
+        this.turnManagementService.resumeTurnTimer(
+            gameSession,
+            () => {
+                this.gameSessionService.endCurrentTurn(gameSession);
+                context.onTurnEnd(gameSession);
+            },
+            (timeRemaining: number) => {
+                context.server.to(gameSession.roomId).emit(GameSessionEvents.TurnTimeUpdate, {
+                    timeRemaining,
+                });
+            },
+        );
+
+        context.server.to(gameSession.roomId).emit(GameSessionEvents.TurnStarted, {
+            playerId: currentPlayer.id,
+            playerName: currentPlayer.name,
+            turnTime: gameSession.getCurrentTurnTime(),
+            remainingMovement: currentPlayer.remainingMovement,
+            remainingActions: currentPlayer.remainingActions,
+        });
     }
 
     private startCombatTurnTimer(gameSession: GameSession, context: GamePlayHandlerContext): void {
