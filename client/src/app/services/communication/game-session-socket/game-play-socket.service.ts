@@ -172,23 +172,41 @@ export class GamePlaySocketService {
         return session.players.find((p: Player) => p.character.id === characterId)?.character ?? null;
     }
 
-    getAutoAttackTarget(): Character | null {
-        const currentPlayer = this.getCurrentPlayerCharacter();
-        if (!currentPlayer?.position) {
-            return null;
+    private isEnemyTarget(currentPlayer: Character, target: Character): boolean {
+        const session = this.currentSession();
+        if (session?.gameMode !== 'ctf') {
+            return true;
         }
 
+        if (!currentPlayer.team || !target.team) {
+            return true;
+        }
+
+        return currentPlayer.team !== target.team;
+    }
+
+    private canCharacterAttackTarget(currentPlayer: Character, target: Character): boolean {
+        const hasAction = (currentPlayer.remainingActions ?? 0) > 0;
+        const hasPositions = currentPlayer.position !== undefined && target.position !== undefined;
+        const isDifferentCharacter = currentPlayer.id !== target.id;
+
+        return hasAction &&
+            hasPositions &&
+            isDifferentCharacter &&
+            this.areAdjacent(currentPlayer.position as Position, target.position) &&
+            this.isEnemyTarget(currentPlayer, target);
+    }
+
+    getAutoAttackTarget(): Character | null {
+        const currentPlayer = this.getCurrentPlayerCharacter();
         const session = this.currentSession();
-        if (!session) {
+        if (!currentPlayer?.position || !session) {
             return null;
         }
 
         return session.players
             .map((player: Player) => player.character)
-            .find((character: Character) =>
-                character.id !== currentPlayer.id && character.position !== undefined &&
-                this.areAdjacent(currentPlayer.position as Position, character.position),
-            ) ?? null;
+            .find((target: Character) => this.canCharacterAttackTarget(currentPlayer, target)) ?? null;
     }
 
     isFlagOnPosition(position: Position): boolean {
@@ -284,18 +302,16 @@ export class GamePlaySocketService {
     }
 
     canAttackTarget(target: Character | null): boolean {
-        if (this.combatSocketService.activeCombat()) {
+        if (this.combatSocketService.activeCombat() || !target) {
             return false;
         }
 
         const currentPlayer = this.getCurrentPlayerCharacter();
+        if (!this.isMyTurn() || !currentPlayer) {
+            return false;
+        }
 
-        return (
-            this.isMyTurn() && currentPlayer?.position !== undefined &&
-            target?.position !== undefined && target.id !== currentPlayer.id &&
-            currentPlayer.remainingActions !== undefined && currentPlayer.remainingActions > 0 &&
-            this.areAdjacent(currentPlayer.position, target.position)
-        );
+        return this.canCharacterAttackTarget(currentPlayer, target);
     }
 
     canCurrentPlayerAttack(): boolean {
