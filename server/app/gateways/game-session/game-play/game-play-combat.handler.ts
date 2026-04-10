@@ -9,8 +9,15 @@ import { Dice, DICE_FACES_MAP } from '@common/dice';
 import { CombatEvents, GameSessionEvents } from '@common/game.events';
 import { TileType } from '@common/map';
 import { Player } from '@common/player';
+import { Position } from '@common/position';
 import { Injectable, Logger } from '@nestjs/common';
 import { Socket } from 'socket.io';
+
+type CombatParticipants = {
+    attacker: Character;
+    defender: Character;
+    requestingPlayer: Player;
+};
 
 type RoundWinner = 'attacker' | 'defender' | 'tie';
 
@@ -31,43 +38,74 @@ export class GamePlayCombatHandler {
         context: GamePlayHandlerContext,
     ): void {
         const gameSession = this.gameSessionService.getGameSession(payload.roomId);
-        if (!gameSession) {
+        if (!gameSession || this.isCombatUnavailable(gameSession)) {
             return;
         }
 
-        if (gameSession.isTurnStarting || gameSession.getActiveCombat()) {
-            return;
-        }
-
-        const currentPlayer = gameSession.getCurrentPlayer();
-        const requestingPlayer = gameSession.players.find(p => p.socketId === socket.id);
-        const defender = gameSession.players.find(p => p.character.id === payload.defenderId)?.character;
-
-        if (!this.validateCombatRequest(currentPlayer, requestingPlayer, defender)) {
+        const participants = this.getCombatParticipantsFromRequest(gameSession, socket.id, payload.defenderId);
+        if (!participants || !this.canStartCombat(gameSession, participants)) {
             return;
         }
 
         try {
-            this.initiateActiveCombat(gameSession, payload.defenderId, currentPlayer, context);
-            context.logService.log(gameSession.roomId, `Début de combat: ${requestingPlayer.character.name} attaque ${defender.name}`);
+            this.initiateActiveCombat(gameSession, participants.defender.id, participants.attacker, context);
+            context.logService.log(
+                gameSession.roomId,
+                `Début de combat: ${participants.requestingPlayer.character.name} attaque ${participants.defender.name}`,
+            );
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';
             this.logger.error(`Combat error: ${errorMessage}`);
         }
     }
 
-    private validateCombatRequest(currentPlayer: Character | null, requestingPlayer: Player | undefined, defender: Character | undefined): boolean {
-        if (!currentPlayer || !requestingPlayer || !defender || currentPlayer.id !== requestingPlayer.character.id) {
-            return false;
+    private isCombatUnavailable(gameSession: GameSession): boolean {
+        return gameSession.isTurnStarting || gameSession.getActiveCombat() !== null;
+    }
+
+    private getCombatParticipantsFromRequest(
+        gameSession: GameSession,
+        socketId: string,
+        defenderId: string,
+    ): CombatParticipants | null {
+        const attacker = gameSession.getCurrentPlayer();
+        const requestingPlayer = gameSession.players.find((player) => player.socketId === socketId);
+        const defender = gameSession.players.find((player) => player.character.id === defenderId)?.character;
+
+        if (!attacker || !requestingPlayer || !defender) {
+            return null;
         }
 
-        if ((currentPlayer.remainingActions ?? 0) <= 0) {
-            return false;
-        }
+        return { attacker, defender, requestingPlayer };
+    }
 
-        const distance = Math.abs(currentPlayer.position.x - defender.position.x) +
-            Math.abs(currentPlayer.position.y - defender.position.y);
-        return distance === 1;
+    private canStartCombat(gameSession: GameSession, participants: CombatParticipants): boolean {
+        return this.isRequesterCurrentPlayer(participants) &&
+            this.hasRemainingCombatAction(participants.attacker) &&
+            this.areCombatantsAdjacent(participants.attacker, participants.defender) &&
+            !this.areAlliesInCtf(gameSession, participants.attacker, participants.defender);
+    }
+
+    private isRequesterCurrentPlayer(participants: CombatParticipants): boolean {
+        return participants.attacker.id === participants.requestingPlayer.character.id;
+    }
+
+    private hasRemainingCombatAction(attacker: Character): boolean {
+        return (attacker.remainingActions ?? 0) > 0;
+    }
+
+    private areCombatantsAdjacent(attacker: Character, defender: Character): boolean {
+        const horizontalDistance = Math.abs(attacker.position.x - defender.position.x);
+        const verticalDistance = Math.abs(attacker.position.y - defender.position.y);
+
+        return horizontalDistance + verticalDistance === 1;
+    }
+
+    private areAlliesInCtf(gameSession: GameSession, attacker: Character, defender: Character): boolean {
+        const isCtfMode = gameSession.gameMode === 'ctf';
+        const bothTeamsKnown = !!attacker.team && !!defender.team;
+
+        return isCtfMode && bothTeamsKnown && attacker.team === defender.team;
     }
 
     private initiateActiveCombat(
