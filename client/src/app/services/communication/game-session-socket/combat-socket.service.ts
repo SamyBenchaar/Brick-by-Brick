@@ -6,6 +6,7 @@ import { GamePlaySocketService } from './game-play-socket.service';
 @Injectable({ providedIn: 'root' })
 export class CombatSocketService {
     private gamePlaySocketService = inject(GamePlaySocketService);
+    private combatNotificationTimeout: ReturnType<typeof setTimeout> | null = null;
 
     activeCombat: WritableSignal<ActiveCombat | null> = signal<ActiveCombat | null>(null);
     combatNotification: WritableSignal<string | null> = signal<string | null>(null);
@@ -52,5 +53,26 @@ export class CombatSocketService {
     isCurrentUserInCombat(): boolean {
         const myId = this.getSelf()?.id;
         return !!myId && this.combatParticipantIds().includes(myId);
+    }
+
+    showCombatNotification(message: string): void {
+        this.combatNotification.set(message);
+
+        if (this.combatNotificationTimeout) {
+            clearTimeout(this.combatNotificationTimeout);
+        }
+
+        this.combatNotificationTimeout = setTimeout(() => {
+            this.clearCombatNotification();
+        }, 3000);
+    }
+
+    clearCombatNotification(): void {
+        if (this.combatNotificationTimeout) {
+            clearTimeout(this.combatNotificationTimeout);
+            this.combatNotificationTimeout = null;
+        }
+
+        this.combatNotification.set(null);
     }
 }

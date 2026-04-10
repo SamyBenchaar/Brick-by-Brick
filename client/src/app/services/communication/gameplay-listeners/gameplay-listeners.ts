@@ -193,29 +193,76 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
     });
 
     socketService.on<{
-        winner: string;
-        loser: string;
+        attackerId: string;
+        defenderId: string;
+        winnerId: string | null;
+        loserIds: string[];
+        outcome: 'attacker' | 'defender' | 'draw';
+        attackerPosition: Position;
+        defenderPosition: Position;
+        attackerLife: number;
+        defenderLife: number;
         attackerVictories: number;
-        defenderNewPosition: Position;
+        defenderVictories: number;
         remainingActions: number;
+        remainingTurnTime: number;
+        turnShouldContinue: boolean;
+        flagPosition: Position | null;
+        flagHolderId: string | null;
     }>(CombatEvents.CombatResult, (data) => {
         service.reachableTiles.set([]);
         combatSocketService.activeCombat.set(null);
         combatSocketService.latestRound.set(null);
         combatSocketService.combatTurnTimeRemaining.set(null);
+
         const session = service.currentSession();
         if (session) {
-            const attacker = session.players.find(p => p.character.id === data.winner);
-            const defender = session.players.find(p => p.character.id === data.loser);
+            const attacker = session.players.find((player) => player.character.id === data.attackerId);
+            const defender = session.players.find((player) => player.character.id === data.defenderId);
+
             if (attacker) {
+                attacker.character.position = data.attackerPosition;
+                attacker.character.life = data.attackerLife;
                 attacker.character.victories = data.attackerVictories;
                 attacker.character.remainingActions = data.remainingActions;
+                attacker.character.hasFlag = data.flagHolderId === attacker.character.id;
             }
+
             if (defender) {
-                defender.character.position = data.defenderNewPosition;
+                defender.character.position = data.defenderPosition;
+                defender.character.life = data.defenderLife;
+                defender.character.victories = data.defenderVictories;
+                defender.character.hasFlag = data.flagHolderId === defender.character.id;
             }
+
+            session.flagPosition = data.flagPosition;
+            session.flagHolderId = data.flagHolderId;
             gameSessionSocketService.currentSession.set({ ...session });
         }
+
+        const currentPlayer = gamePlaySocketService.getCurrentPlayerCharacter();
+        if (!currentPlayer) {
+            return;
+        }
+
+        const currentPlayerWasInCombat =
+            currentPlayer.id === data.attackerId || currentPlayer.id === data.defenderId;
+
+        if (!currentPlayerWasInCombat) {
+            return;
+        }
+
+        if (data.outcome === 'draw') {
+            combatSocketService.showCombatNotification('Le combat s\'est terminé par un match nul.');
+            return;
+        }
+
+        const currentPlayerWon = data.winnerId === currentPlayer.id;
+        const notificationMessage = currentPlayerWon
+            ? 'Vous avez remporté le combat.'
+            : 'Vous avez perdu le combat.';
+
+        combatSocketService.showCombatNotification(notificationMessage);
     });
 
     socketService.on(CombatEvents.CombatEnded, () => {
