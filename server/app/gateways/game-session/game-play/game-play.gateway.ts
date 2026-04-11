@@ -321,6 +321,7 @@ export class GamePlayGateway implements OnGatewayInit {
             winningTeam,
             gameMode: gameSession.gameMode,
             reason: winner ? 'victory' : 'noPlayers',
+            players:gameSession.players,
         });
 
         const activePlayers = gameSession.players.map(p => p.character.name).join(', ');

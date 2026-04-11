@@ -14,6 +14,7 @@ import { CombatEvents, GameSessionEvents } from '@common/game.events';
 import { Position } from '@common/position';
 import { SANCTUARY_COOLDOWN_TURNS, SANCTUARY_TILE_OFFSETS, ORIGIN_CANDIDATES } from '@common/constants/santuary-constants';
 import { ObjectType, TileType } from '@common/map';
+import { Player } from '@common/player';
 
 interface GameplayListenersContext {
     gamePlaySocketService: GamePlaySocketService;
@@ -294,7 +295,7 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
 
     socketService.on<{
         winner:
-        { id: string; name: string; avatarId: number } | null; winningTeam?: 'team1' | 'team2'; gameMode?: string; reason: string
+        { id: string; name: string; avatarId: number } | null; winningTeam?: 'team1' | 'team2'; gameMode?: string; reason: string; players?: Player[];
     }>(
         GameSessionEvents.GameEnded,
         (data) => {
@@ -344,9 +345,9 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
                     gameSessionSocketService.currentSession.set(null);
                     router.navigate(['/game-statistics'],{
                         state:{
-                            players: [...(session?.players ?? []), ... (session?.leftPlayers ?? [])],
+                            players: [...(data.players ?? session?.players ?? []), ...(session?.leftPlayers ?? [])],
                             winner : data.winner,
-                            winnerTeam: data.winningTeam,
+                            winningTeam: data.winningTeam,
                             gameMode: data.gameMode,
                             walkableTiles,
                         },
