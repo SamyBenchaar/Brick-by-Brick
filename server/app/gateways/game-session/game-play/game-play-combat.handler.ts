@@ -157,6 +157,12 @@ export class GamePlayCombatHandler {
         combat.attackerHp = Math.max(combat.attackerHp - damageToAttacker, 0);
         combat.defenderHp = Math.max(combat.defenderHp - damageToDefender, 0);
 
+        attacker.totalDamageDealt += damageToDefender;
+        attacker.totalDamageReceived += damageToAttacker;
+        defender.totalDamageDealt += damageToAttacker;
+        defender.totalDamageReceived += damageToDefender;
+
+
         const combatEnds = combat.attackerHp === 0 || combat.defenderHp === 0;
         
         const result = this.determineRoundWinner(damageToAttacker, damageToDefender);
@@ -270,6 +276,7 @@ export class GamePlayCombatHandler {
     private applyCombatOutcome(gameSession: GameSession, winner: Character, loser: Character, attacker: Character): void {
         attacker.remainingActions = Math.max((attacker.remainingActions ?? 1) - 1, 0);
         winner.victories = (winner.victories ?? 0) + 1;
+        loser.defeats++;
 
         if (loser.hasFlag && gameSession.gameMode === 'ctf') {
             gameSession.dropFlag(loser.position);

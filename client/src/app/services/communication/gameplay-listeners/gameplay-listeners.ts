@@ -13,7 +13,7 @@ import { CTF_VICTORY_ANNOUNCE_DELAY } from '@common/constants/game-config-consta
 import { CombatEvents, GameSessionEvents } from '@common/game.events';
 import { Position } from '@common/position';
 import { SANCTUARY_COOLDOWN_TURNS, SANCTUARY_TILE_OFFSETS, ORIGIN_CANDIDATES } from '@common/constants/santuary-constants';
-import { ObjectType } from '@common/map';
+import { ObjectType, TileType } from '@common/map';
 
 interface GameplayListenersContext {
     gamePlaySocketService: GamePlaySocketService;
@@ -335,14 +335,32 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
             const delay = data.gameMode === 'ctf' && data.reason === 'victory' ? CTF_VICTORY_ANNOUNCE_DELAY : gameSessionSocketService.endGameDelay;
 
             setTimeout(() => {
-                router.navigate(['/']).then(() => {
-                    dialog.open(AppDialogComponent, {
-                        data: { title, message, type: data.reason === 'victory' ? 'info' : 'info' },
-                        disableClose: true,
-                    });
+                if (data.reason === 'victory') {
+                    const session = service.currentSession();
+                    const tiles= service.mapCopy()?.mapConfig.tiles;
+                    const walkableTiles= tiles?.flat().filter(t => 
+                        t.type === TileType.Base || t.type === TileType.Water || t.type === TileType.Ice).length;
                     service.gameEnded.set(false);
                     gameSessionSocketService.currentSession.set(null);
-                });
+                    router.navigate(['/game-statistics'],{
+                        state:{
+                            players: [...(session?.players ?? []), ... (session?.leftPlayers ?? [])],
+                            winner : data.winner,
+                            winnerTeam: data.winningTeam,
+                            gameMode: data.gameMode,
+                            walkableTiles,
+                        },
+                    });
+                }else{
+                    router.navigate(['/']).then(() => {
+                        dialog.open(AppDialogComponent, {
+                            data: { title, message, type: data.reason === 'victory' ? 'info' : 'info' },
+                            disableClose: true,
+                        });
+                        service.gameEnded.set(false);
+                        gameSessionSocketService.currentSession.set(null);
+                    });
+                }
             }, delay);
         },
     );
