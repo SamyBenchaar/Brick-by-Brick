@@ -18,7 +18,7 @@ export class GameStatisticsComponent implements OnInit {
   walkableTiles: number = 0;
 
   ngOnInit(): void {
-    const state = history.state;
+    const state = history.state ?? {};
     this.winner = state.winner ?? null;
     this.winningTeam = state.winningTeam ?? undefined;
     this.gameMode = state.gameMode ?? 'classic';
