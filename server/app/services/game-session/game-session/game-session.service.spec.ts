@@ -52,6 +52,10 @@ describe('GameSessionService', () => {
         defenseDice: Dice.D6,
         isActif: false,
         battlesWon: 0,
+        defeats: 0,
+        totalDamageDealt: 0,
+        totalDamageReceived: 0,
+        tilesVisited: 0,
     });
 
     const createPlayer = (socketId: string, name = 'TestPlayer'): Player => ({

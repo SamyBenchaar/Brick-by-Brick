@@ -331,6 +331,10 @@ export class GameSessionService {
                 actions: BASE_ACTIONS,
                 attackDice: Dice.D4,
                 defenseDice: Dice.D6,
+                defeats: 0,
+                totalDamageDealt: 0,
+                totalDamageReceived: 0,
+                tilesVisited: 0,
             },
         };
     }
