@@ -7,13 +7,18 @@ import { CombatSocketService } from '@app/services/communication/game-session-so
 import { FlagTransferSocketService } from '@app/services/communication/game-session-socket/flag-transfer-socket.service';
 import { GamePlaySocketService } from '@app/services/communication/game-session-socket/game-play-socket.service';
 import type { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
+import {
+    CombatResultPayload,
+    handleCombatResult,
+    handleTurnEnded,
+} from '@app/services/communication/gameplay-listeners/gameplay-listeners-helper.service';
 import { SocketService } from '@app/services/communication/socket/socket.service';
 import { CombatRoundResolvedPayload } from '@common/combat';
 import { CTF_VICTORY_ANNOUNCE_DELAY } from '@common/constants/game-config-constants';
+import { ORIGIN_CANDIDATES, SANCTUARY_COOLDOWN_TURNS, SANCTUARY_TILE_OFFSETS } from '@common/constants/santuary-constants';
 import { CombatEvents, GameSessionEvents } from '@common/game.events';
-import { Position } from '@common/position';
-import { SANCTUARY_COOLDOWN_TURNS, SANCTUARY_TILE_OFFSETS, ORIGIN_CANDIDATES } from '@common/constants/santuary-constants';
 import { ObjectType } from '@common/map';
+import { Position } from '@common/position';
 
 interface GameplayListenersContext {
     gamePlaySocketService: GamePlaySocketService;
@@ -87,29 +92,7 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
     });
 
     socketService.on<{ playerId: string }>(GameSessionEvents.TurnEnded, () => {
-        service.currentPlayerTurn.set(null);
-        service.reachableTiles.set([]);
-        dialog.getDialogById('sanctuary-dialog')?.close('dismiss');
-        const pendingDialogs = flagTransferService.getPendingFlagTransferDialogs();
-        pendingDialogs.forEach(([, data]) => {
-            data.dialogRef.close(false);
-            service.respondToFlagTransfer(data.fromPlayerId, false);
-        });
-        flagTransferService.clearAllPendingFlagTransfers();
-        const currentMap = service.mapCopy();
-        if (currentMap) {
-            let changed = false;
-            for (const row of currentMap.mapConfig.tiles) {
-                for (const tile of row) {
-                    if (tile.sanctuaryCooldown && ((tile.sanctuaryCooldown ?? 0) > 0)) {
-                        tile.sanctuaryCooldown--;
-                        if (tile.sanctuaryCooldown === 0) delete tile.sanctuaryCooldown;
-                        changed = true;
-                    }
-                }
-            }
-            if (changed) service.mapCopy.set({ ...currentMap });
-        }
+        handleTurnEnded(service, dialog, flagTransferService);
     });
 
     socketService.on<{ playerId: string; position: Position; remainingMovement: number; remainingActions: number }>(
@@ -192,77 +175,8 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
         } : null);
     });
 
-    socketService.on<{
-        attackerId: string;
-        defenderId: string;
-        winnerId: string | null;
-        loserIds: string[];
-        outcome: 'attacker' | 'defender' | 'draw';
-        attackerPosition: Position;
-        defenderPosition: Position;
-        attackerLife: number;
-        defenderLife: number;
-        attackerVictories: number;
-        defenderVictories: number;
-        remainingActions: number;
-        remainingTurnTime: number;
-        turnShouldContinue: boolean;
-        flagPosition: Position | null;
-        flagHolderId: string | null;
-    }>(CombatEvents.CombatResult, (data) => {
-        service.reachableTiles.set([]);
-        combatSocketService.activeCombat.set(null);
-        combatSocketService.latestRound.set(null);
-        combatSocketService.combatTurnTimeRemaining.set(null);
-
-        const session = service.currentSession();
-        if (session) {
-            const attacker = session.players.find((player) => player.character.id === data.attackerId);
-            const defender = session.players.find((player) => player.character.id === data.defenderId);
-
-            if (attacker) {
-                attacker.character.position = data.attackerPosition;
-                attacker.character.life = data.attackerLife;
-                attacker.character.victories = data.attackerVictories;
-                attacker.character.remainingActions = data.remainingActions;
-                attacker.character.hasFlag = data.flagHolderId === attacker.character.id;
-            }
-
-            if (defender) {
-                defender.character.position = data.defenderPosition;
-                defender.character.life = data.defenderLife;
-                defender.character.victories = data.defenderVictories;
-                defender.character.hasFlag = data.flagHolderId === defender.character.id;
-            }
-
-            session.flagPosition = data.flagPosition;
-            session.flagHolderId = data.flagHolderId;
-            gameSessionSocketService.currentSession.set({ ...session });
-        }
-
-        const currentPlayer = gamePlaySocketService.getCurrentPlayerCharacter();
-        if (!currentPlayer) {
-            return;
-        }
-
-        const currentPlayerWasInCombat =
-            currentPlayer.id === data.attackerId || currentPlayer.id === data.defenderId;
-
-        if (!currentPlayerWasInCombat) {
-            return;
-        }
-
-        if (data.outcome === 'draw') {
-            combatSocketService.showCombatNotification('Le combat s\'est terminé par un match nul.');
-            return;
-        }
-
-        const currentPlayerWon = data.winnerId === currentPlayer.id;
-        const notificationMessage = currentPlayerWon
-            ? 'Vous avez remporté le combat.'
-            : 'Vous avez perdu le combat.';
-
-        combatSocketService.showCombatNotification(notificationMessage);
+    socketService.on<CombatResultPayload>(CombatEvents.CombatResult, (data) => {
+        handleCombatResult(data, service, gameSessionSocketService, combatSocketService);
     });
 
     socketService.on(CombatEvents.CombatEnded, () => {

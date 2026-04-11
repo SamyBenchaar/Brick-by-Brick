@@ -5,7 +5,7 @@ import { GameSession } from '@app/interfaces/game-session';
 import { SocketService } from '@app/services/communication/socket/socket.service';
 import { Character } from '@common/character';
 import { ADJACENT_POSITIONS, ADJACENT_TO_ORIGIN_POSITION, ORIGIN_CANDIDATES, SANCTUARY_TILE_OFFSETS } from '@common/constants/santuary-constants';
-import { GameSessionEvents, CombatEvents } from '@common/game.events';
+import { CombatEvents, GameSessionEvents } from '@common/game.events';
 import { ObjectType, TileType } from '@common/map';
 import { Player } from '@common/player';
 import { Position } from '@common/position';
@@ -187,14 +187,15 @@ export class GamePlaySocketService {
 
     private canCharacterAttackTarget(currentPlayer: Character, target: Character): boolean {
         const hasAction = (currentPlayer.remainingActions ?? 0) > 0;
-        const hasPositions = currentPlayer.position !== undefined && target.position !== undefined;
+        const currentPlayerPosition = currentPlayer.position;
+        const targetPosition = target.position;
         const isDifferentCharacter = currentPlayer.id !== target.id;
 
-        return hasAction &&
-            hasPositions &&
-            isDifferentCharacter &&
-            this.areAdjacent(currentPlayer.position as Position, target.position) &&
-            this.isEnemyTarget(currentPlayer, target);
+        if (!hasAction || !currentPlayerPosition || !targetPosition || !isDifferentCharacter) {
+            return false;
+        }
+
+        return this.areAdjacent(currentPlayerPosition, targetPosition) && this.isEnemyTarget(currentPlayer, target);
     }
 
     getAutoAttackTarget(): Character | null {
