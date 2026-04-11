@@ -2,6 +2,7 @@ import { GameSession } from '@app/domain/game-session';
 import { GamePlayHandlerContext } from '@app/gateways/game-session/game-play/game-play-handler.context';
 import { GameSessionService } from '@app/services/game-session/game-session/game-session.service';
 import { TurnManagementService } from '@app/services/game-session/turn-management.service';
+import { formatCombatRoundLog } from '@app/services/log/combat-log.util';
 import { Character } from '@common/character';
 import { ActiveCombat, COMBAT_POSTURE, CombatRoundResolvedPayload, CombatValueDetail } from '@common/combat';
 import { COMBAT_TURN_TIME } from '@common/constants/combat-constants';
@@ -13,7 +14,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Socket } from 'socket.io';
 
 type RoundWinner = 'attacker' | 'defender' | 'tie';
-
 
 @Injectable()
 export class GamePlayCombatHandler {
@@ -168,23 +168,26 @@ export class GamePlayCombatHandler {
 
 
         const combatEnds = combat.attackerHp === 0 || combat.defenderHp === 0;
-        
-        const result = this.determineRoundWinner(damageToAttacker, damageToDefender);
-        let logMessage: string;
 
-        switch(result){
-            case 'tie':
-                logMessage = `Manche ${combat.roundNumber}: Égalité entre ${attacker.name} et ${defender.name}`;
-                break;
-            case 'attacker':
-                logMessage = `Manche ${combat.roundNumber}: ${attacker.name} remporte la manche contre ${defender.name}`;
-                break;
-            case 'defender':
-                logMessage = `Manche ${combat.roundNumber}: ${defender.name} remporte la manche contre ${attacker.name}`;
-                break;
-            }
+        const result = this.determineRoundWinner(damageToAttacker, damageToDefender);
         const playersInvolved = [attacker.name, defender.name];
-        context.logService.log(gameSession.roomId, logMessage, 'combat', playersInvolved);
+
+        if (context) {
+            const logMessage = formatCombatRoundLog(
+                combat,
+                attacker,
+                defender,
+                attackerAttackDetail,
+                attackerDefenseDetail,
+                defenderAttackDetail,
+                defenderDefenseDetail,
+                damageToDefender,
+                damageToAttacker,
+                result,
+            );
+
+            context.logService.log(gameSession.roomId, logMessage, 'combat', playersInvolved);
+        }
 
         if (combatEnds) {
             const winner = combat.attackerHp > 0 ? combat.attackerId : combat.defenderId;
@@ -398,7 +401,7 @@ export class GamePlayCombatHandler {
             ? this.rollDice(character.attackDice, isAttacker, gameSession.isDebugModeActivated)
             : this.rollDice(character.defenseDice, isAttacker, gameSession.isDebugModeActivated);
 
-        const total = baseStat + postureBonus - tilePenalty + diceRoll;
+        const total = baseStat + postureBonus + tilePenalty + diceRoll;
 
         return {
             base: baseStat,
