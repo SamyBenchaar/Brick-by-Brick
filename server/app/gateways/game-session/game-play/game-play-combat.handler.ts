@@ -154,13 +154,17 @@ export class GamePlayCombatHandler {
         const damageToDefender = Math.max(attackerAttackDetail.total - defenderDefenseDetail.total, 0);
         const damageToAttacker = Math.max(defenderAttackDetail.total - attackerDefenseDetail.total, 0);
 
+        const effectiveDamageToDefender = Math.min(damageToDefender, combat.defenderHp);
+        const effectiveDamageToAttacker = Math.min(damageToAttacker, combat.attackerHp);
+        
+
         combat.attackerHp = Math.max(combat.attackerHp - damageToAttacker, 0);
         combat.defenderHp = Math.max(combat.defenderHp - damageToDefender, 0);
 
-        attacker.totalDamageDealt += damageToDefender;
-        attacker.totalDamageReceived += damageToAttacker;
-        defender.totalDamageDealt += damageToAttacker;
-        defender.totalDamageReceived += damageToDefender;
+        attacker.totalDamageDealt += effectiveDamageToDefender;
+        attacker.totalDamageReceived += effectiveDamageToAttacker;
+        defender.totalDamageDealt += effectiveDamageToAttacker;
+        defender.totalDamageReceived += effectiveDamageToDefender;
 
 
         const combatEnds = combat.attackerHp === 0 || combat.defenderHp === 0;
