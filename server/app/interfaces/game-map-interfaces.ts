@@ -1,6 +1,12 @@
+import { Position } from '@common/position';
+
 export interface MapTile {
     type: string;
     object?: { type: string };
+    doorState?: string;
+    isOrigin?: boolean;
+    sanctuaryOrigin?: Position;
+    sanctuaryCooldown?:number;
 }
 
 export interface GameMap {

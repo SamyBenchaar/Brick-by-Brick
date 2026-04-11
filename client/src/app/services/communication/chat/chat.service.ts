@@ -1,7 +1,7 @@
 import { inject, Injectable, signal, WritableSignal } from '@angular/core';
+import { SocketService } from '@app/services/communication/socket/socket.service';
 import { ChatEvents } from '@common/game.events';
 import { ChatMessage } from '@common/message';
-import { SocketService } from '@app/services/communication/socket/socket.service';
 
 @Injectable({
     providedIn: 'root',

@@ -71,6 +71,8 @@ export class EditionPageComponent implements OnInit {
         if (game) {
           this.selectedSize = game.mapConfig.size as GameSizeId;
           this.objectCounterService.startPoint = this.getMaxPlayers();
+          this.objectCounterService.healingSanctuary = 2**((this.getMaxPlayers()-2)/2);
+          this.objectCounterService.combatSanctuary = 2**((this.getMaxPlayers()-2)/2);
           this.mapEditorService.setCurrentGame(game);
           this.gameName = game.name;
           this.gameDescription = game.description;
@@ -143,12 +145,15 @@ export class EditionPageComponent implements OnInit {
 
   private async buildGameCreationData(): Promise<GameCreationData> {
     const grid = this.gameGridComponent.gameMap.grid;
-    const tiles = grid.map(row =>
-      row.map(tile => {
+    const tiles = grid.map((row,y) =>
+      row.map((tile,x) => {
         const tileData: TileData = { type: tile.type };
         if (tile.object) {
           tileData.object = { type: tile.object };
         }
+        if (tile.sanctuaryOrigin?.x === x && tile.sanctuaryOrigin?.y === y) {
+          tileData.isOrigin = true;
+      }
         return tileData;
       }),
     );

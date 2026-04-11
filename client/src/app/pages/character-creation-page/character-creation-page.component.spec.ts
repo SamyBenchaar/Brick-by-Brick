@@ -34,7 +34,7 @@ describe('CharacterCreationPageComponent', () => {
         takenAvatarsSignal = signal<number[]>([AVATAR_ID_ONE]);
 
         mockGameSessionSocketService = jasmine.createSpyObj('GameSessionSocketService', [
-            'connect', 'createGameSession', 'joinGameSession', 'observeGameSession', 'updateTakenAvatars',
+            'connect', 'createGameSession', 'joinGameSession', 'observeGameSession', 'updateTakenAvatars', 'leaveGameSession',
         ], {
             currentSession: { set: jasmine.createSpy() },
             roomId: { set: jasmine.createSpy() },
@@ -213,6 +213,7 @@ describe('CharacterCreationPageComponent', () => {
 
             component.submitCharacter();
 
+            expect(mockGameSessionSocketService.leaveGameSession).toHaveBeenCalled();
             expect(mockGameSessionSocketService.joinGameSession).toHaveBeenCalledWith('ROOM1', component.character);
             expect(routerMock.navigate).toHaveBeenCalledWith(['/waiting-room', 'ROOM1']);
         });
@@ -268,8 +269,9 @@ describe('CharacterCreationPageComponent', () => {
             expect(component.fromGameCreation).toBeFalse();
         });
 
-        it('devrait appeler observeGameSession avec le roomId au init', () => {
-            expect(mockGameSessionSocketService.connect).toHaveBeenCalled();
+        it('devrait appeler leaveGameSession et observeGameSession quand on revient de la salle d\'attente', () => {
+            expect(mockGameSessionSocketService.leaveGameSession).toHaveBeenCalled();
+            expect(mockGameSessionSocketService.observeGameSession).toHaveBeenCalledWith('ROOM1');
         });
     });
 

@@ -1,6 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { Game } from '@app/interfaces/game';
-import { ObjectType, TileType } from '@common/map';
+import { DoorState, ObjectType, TileType } from '@common/map';
 import { Position } from '@common/position';
 
 
@@ -47,6 +47,14 @@ export class MapEditorService {
     }
   }
 
+  setDoorState(position: Position, state: DoorState | undefined): void {
+    const game = this.currentGame();
+    if (game) {
+      game.mapConfig.tiles[position.y][position.x].doorState = state;
+      this.currentGame.set(game);
+    }
+  }
+
   setObject(position: Position, type: ObjectType | null): void {
     const game = this.currentGame();
     if (game) {
@@ -55,6 +63,14 @@ export class MapEditorService {
       } else {
         delete game.mapConfig.tiles[position.y][position.x].object;
       }
+      this.currentGame.set(game);
+    }
+  }
+
+  setOrigin(position: Position, isOrigin: boolean): void {
+    const game = this.currentGame();
+    if (game) {
+      game.mapConfig.tiles[position.y][position.x].isOrigin = isOrigin;
       this.currentGame.set(game);
     }
   }

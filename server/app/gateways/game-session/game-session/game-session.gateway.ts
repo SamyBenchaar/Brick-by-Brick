@@ -4,6 +4,7 @@ import { GameSessionService } from '@app/services/game-session/game-session/game
 import { Character } from '@common/character';
 import { GameSessionEvents } from '@common/game.events';
 import { Player } from '@common/player';
+import { VirtualPlayerProfile } from '@common/virtual.player.profile';
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import {
     OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, SubscribeMessage,
@@ -74,6 +75,12 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
         const gameSession = this.getSessionOrFail(socket, payload.roomId);
         if (!gameSession) return;
 
+        const existingPlayerIndex = gameSession.players.findIndex(p => p.socketId === socket.id);
+        if (existingPlayerIndex !== -1) {
+            gameSession.removePlayer(socket.id);
+            this.logger.log(`Joueur existant ${socket.id} supprimé avant mise à jour du personnage`);
+        }
+
         const error = this.gameSessionService.joinSession(gameSession.roomId, player);
         if (error) {
             socket.emit(GameSessionEvents.GameSessionJoinError, error);
@@ -126,6 +133,35 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
         this.notifyGameSessionUpdated(updatedSession);
 
         this.logger.log(`Joueur ${payload.targetId} exclu de la salle ${payload.roomId}`);
+    }
+
+    @SubscribeMessage(GameSessionEvents.AddVirtualPlayer)
+    handleAddVirtualPlayer(socket: Socket, payload: { roomId: string; profile: VirtualPlayerProfile }) {
+        const gameSession = this.getSessionOrFail(socket, payload.roomId);
+        if (!gameSession) return;
+
+        if (!gameSession.isHost(socket.id)) {
+            socket.emit(GameSessionEvents.GameSessionJoinError, "Seul l'organisateur peut ajouter un joueur virtuel");
+            return;
+        }
+
+        if (payload.profile !== VirtualPlayerProfile.Aggressive && payload.profile !== VirtualPlayerProfile.Defensive) {
+            socket.emit(GameSessionEvents.GameSessionJoinError, 'Profil de joueur virtuel invalide');
+            return;
+        }
+
+        const error = this.gameSessionService.addVirtualPlayer(payload.roomId, payload.profile);
+        if (error) {
+            socket.emit(GameSessionEvents.GameSessionJoinError, error);
+            return;
+        }
+
+        const updatedSession = this.getSessionOrFail(socket, payload.roomId);
+        if (!updatedSession) return;
+
+        this.notifyGameSessionUpdated(updatedSession);
+        this.notifyGameSessionListUpdated();
+        this.logger.log(`Joueur virtuel ${payload.profile} ajouté dans la salle ${payload.roomId}`);
     }
 
     private handlePlayingDisconnect(socket: Socket, roomId: string) {
@@ -237,7 +273,7 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
 
     notifyGameSessionUpdated(gameSession: GameSession): void {
         this.notifyAvatarTakenUpdated(gameSession.roomId, gameSession.getTakenAvatars());
-        this.server.emit(GameSessionEvents.GameSessionUpdated, gameSession);
+        this.server.to(gameSession.roomId).emit(GameSessionEvents.GameSessionUpdated, gameSession);
     }
 
     notifyGameSessionListUpdated() {
@@ -251,5 +287,9 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
 
     notifyAvatarTakenUpdated(roomId: string, takenAvatars: number[]): void {
         this.server.to(roomId).emit(GameSessionEvents.AvatarTakenUpdated, takenAvatars);
+    }
+
+    clearSocketRoomTracking(socketId: string): void {
+        this.socketToRoom.delete(socketId);
     }
 }

@@ -9,6 +9,9 @@
   </div>
 
   <mat-dialog-content class="dialog-content">
+    @if (data.image) {
+      <img [src]="data.image" alt="Dialog image" class="dialog-image">
+    }
     @if (isArray) {
       <ul class="error-list">
         @for (err of data.message; track $index) {
@@ -22,10 +25,17 @@
   </mat-dialog-content>
 
   <mat-dialog-actions align="end" class="dialog-actions">
-    @if (data.type === 'warning') {
-        <button mat-button class="cancel-button" [mat-dialog-close]="false">
-          {{ data.cancelText || 'Annuler' }}
-        </button>
+    @if (data.type === 'warning' || (data.confirmText || data.cancelText)) {
+        @if (data.thirdOptionText) {
+          <button mat-button class="cancel-button" [mat-dialog-close]="'dismiss'">
+            {{ data.thirdOptionText || 'Annuler' }}
+          </button>
+        }      
+        @if (data.cancelText) {
+          <button mat-button class="cancel-button" [mat-dialog-close]="false">
+            {{ data.cancelText || 'Annuler' }}
+          </button>
+        }
         <button mat-raised-button [ngClass]="data.type + '-button'" [mat-dialog-close]="true">
           {{ data.confirmText || 'Confirmer' }}
         </button>

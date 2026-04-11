@@ -7,7 +7,6 @@
                 [class.selected]="isSelected(type)"
                 [class]="tile.getCssClass(type)"  
                 (click)="selectTileType(type)">
-                <!-- <span class="tile-label">{{type}}</span> -->
                 <img [src] = "getTilePath(type)" class="tile-icon">
                 <span class="tile-description">{{getTileTypeDescription(type)}}</span>
             </div>

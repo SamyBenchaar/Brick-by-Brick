@@ -3,7 +3,9 @@
     flex-direction: column;
     gap: 10px;
     padding: 10px 12px;
-    min-width: 200px;
+    max-width: 100%;
+    min-width: 300px;
+    box-sizing: border-box;
 
     background-color: #c8a96e;
     border: 3px solid #6b4c2a;
@@ -23,17 +25,26 @@
     border-bottom: 2px solid #6b4c2a;
 }
 
-.player-avatar {
-    width: 48px;
-    height: 48px;
-    object-fit: cover;
-    border: 2px solid #6b4c2a;
+.player-avatar-wrapper {
+    width: 90px;
+    height: 90px;
     border-radius: 3px;
+    border: 2px solid #6b4c2a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.player-avatar {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
     image-rendering: pixelated;
 }
 
 .player-name {
-    font-size: 16px;
+    font-size: 20px;
     color: #3a2510;
     text-transform: uppercase;
     letter-spacing: 1px;
@@ -60,33 +71,33 @@
 }
 
 .stat-label {
-    font-size: 13px;
+    font-size: 20px;
     color: #3a2510;
     white-space: nowrap;
 }
 
 .stat-value {
-    font-size: 13px;
+    font-size: 20px;
     color: #3a2510;
     font-weight: bold;
     letter-spacing: 1px;
 }
 
-.attack-button {
+.action-button {
     width: 100%;
     margin-top: 4px;
     padding: 6px 8px;
     border: 2px solid #6b4c2a;
     border-radius: 3px;
-    background-color: rgba(255, 255, 255, 0.3);
-    color: #3a2510;
+    background-color: rgba(255, 0, 0, 0.783);
+    color: #040404;
     font-family: 'MyFont', sans-serif;
-    font-size: 13px;
+    font-size: 20px;
     text-transform: uppercase;
     cursor: pointer;
 }
 
-.attack-button:disabled {
-    opacity: 0.5;
+.action-button:disabled {
+    opacity: 0.2;
     cursor: not-allowed;
 }

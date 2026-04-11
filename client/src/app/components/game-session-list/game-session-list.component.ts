@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { Component, computed, effect, EventEmitter, inject, OnDestroy, OnInit, Output, signal } from '@angular/core';
 import { GameSession } from '@app/interfaces/game-session';
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
 import { getGameModeLabel, getGameSizeLabel } from '@common/constants/game-config-constants';
@@ -12,6 +12,7 @@ import { getGameModeLabel, getGameSizeLabel } from '@common/constants/game-confi
 export class GameSessionListComponent implements OnInit, OnDestroy {
   gameSessionSocketService = inject(GameSessionSocketService);
   selectedGameSessionId = signal<string | null>(null);
+  @Output() gameSessionSelected = new EventEmitter<string>();
 
   availableGameSessions = computed(() => this.gameSessionSocketService.gameSessions().filter(
     session => session.status === 'waiting' && session.players.length < session.maxPlayers));
@@ -33,6 +34,7 @@ export class GameSessionListComponent implements OnInit, OnDestroy {
 
   selectGameSession(gameSessionId: string): void {
     this.selectedGameSessionId.set(gameSessionId);
+    this.gameSessionSelected.emit(gameSessionId);
   }
 
   isSelected(gameSessionId: string): boolean {

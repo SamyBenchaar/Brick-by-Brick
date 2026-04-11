@@ -1,7 +1,11 @@
 <app-base-sign [name]="name" [iconUrl]="iconUrl">
     <div class="player-sign-container">
         <div class="player-header">
-            <img class="player-avatar" [src]="avatar?.image" [alt]="player?.character?.name" />
+            <div class="player-avatar-wrapper">
+                <img class="player-avatar" 
+                     [src]="avatar?.image" 
+                     [alt]="player?.character?.name" />
+            </div>
             <span class="player-name">{{ player?.character?.name }}</span>
         </div>
 
@@ -32,8 +36,8 @@
             </div>
         </div>
 
-        <button class="attack-button" type="button" [disabled]="!canAttack" (click)="onAttackClick()">
-            {{ selectedTargetName ? 'Attaquer ' + selectedTargetName : 'Attaquer' }}
+        <button class="action-button" type="button" [disabled]="!canAct " (click)="onActionClick()">
+            {{ selectedTargetName ? 'interagir avec ' + selectedTargetName : 'Action' }}
         </button>
     </div>
 </app-base-sign>

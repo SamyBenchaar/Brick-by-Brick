@@ -1,0 +1,25 @@
+<div class="player-info">
+    <div class="player-name">{{ character.name }}</div>
+    <img class="avatar" [src]='getAvatarPath(character.avatarId)'  [alt]="character.name">
+    <div class="player-life">Vie: {{ currentHp }}/{{ character.maxLife }}</div>
+    <app-hp-bar [current]="currentHp" [max]="character.maxLife"></app-hp-bar>
+
+    <div class="stats-container">
+        <div class="stat-box">
+            <div class="section-title">Attaque</div>
+            <div>Valeur: {{character.attack}}</div>
+            <div>Dé: {{attackDetail?.dice ?? ''}}</div>
+            <div>Pénalité: {{attackDetail?.tilePenalty ?? ''}}</div>
+            <div class="attack-score">Total attaque: {{attackDetail?.total ?? ''}}</div>
+        </div>
+
+
+        <div class="stat-box">
+            <div class="section-title">Défense</div>
+            <div>Valeur: {{character.defense}}</div>
+            <div>Dé: {{defenseDetail?.dice ?? ''}}</div>
+            <div>Pénalité: {{defenseDetail?.tilePenalty ?? ''}}</div>
+            <div class="defense-score">Total défense: {{defenseDetail?.total ?? ''}}</div>
+        </div>
+    </div>
+</div>

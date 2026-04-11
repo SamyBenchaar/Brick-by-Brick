@@ -7,20 +7,30 @@
             class="tile"
             [class]="'tile-' + tile.type"
             [class.reachable]="isViewMode && isReachableTile(position)"
-            [style.backgroundImage]="'url(' + getTilePath(tile.type) + ')'"
+            [style.backgroundImage]="'url(' + getTilePath(tile.type, tile.doorState ?? undefined) + ')'"
             (mousedown)="onTileMouseDown(position, $event)"
             (mouseenter)="onTileMouseEnter(position)"
             (contextmenu)="onTileRightClick(position, $event)"
-            [matTooltip]="tile.object ? objectDescriptions[tile.object] : ''"
-            matTooltipShowDelay="0"
-            matTooltipClass="description-tooltip"
             >
             @if(tile.object) {
-            <img [src]="getObjectPath(tile.object)" class="tile-object-image"/>
+                @if(isSanctuaryOriginTile(tile, position)) {
+                    <img [src]="getObjectPath(tile.object, tile.sanctuaryCooldown ?? 0)" class="tile-object-multi"/>
+                } @else if (!isMultiTileObject(tile.object) && isFlagVisible(tile)) {
+                    <img [src]="getObjectPath(tile.object)" class="tile-object-image"/>
+                }
             }
             @if(playerAtPos) {
-            <div class="player-avatar">
+            <div class="player-avatar" [ngClass]="getPlayerTeamClass(playerAtPos)">
                 <img [src]="getAvatarImage(playerAtPos.avatarId)" [alt]="playerAtPos.name" />
+                @if (gameMode === 'ctf' && playerAtPos.hasFlag) {
+                    <div class="flag-on-player">
+                        <img src="./assets/images/flag.png" alt="Flag" />
+                    </div>
+                }
+            </div>
+            } @else if (isFlagAtPosition(position)) {
+            <div class="flag-on-ground">
+                <img src="./assets/images/flag.png" alt="Flag" />
             </div>
             }
         </div>

@@ -1,15 +1,21 @@
 <app-base-sign [name]="name">
     <div class="board-container">
         @for (player of players; track player.character.id) {
-        <div class="player-row">
+        <div class="player-row" [class]="isCtfMode() && player.character.team ? 'team-' + player.character.team : ''">
             @if (player.socketId === host?.socketId) {
             <span class="player-badge">👑</span>
             } @else {
             <span class="player-badge">🧍🏽‍♂️</span>
             } @if (player.character.isActif) {
             <span class="player-badge">⚔️</span>
+            } @if (isCtfMode() && player.character.hasFlag) {
+            <span class="player-badge flag-badge">🚩</span>
             }
             <span class="player-name">{{ player.character.name }}</span>
+            @if (isCtfMode() && getTeamLabel(player)) {
+            <span class="player-team" [class]="'team-badge-' + player.character.team">{{ getTeamLabel(player) }}</span>
+            }
+
             <span class="player-wins">{{ player.character.victories }} victoires</span>
         </div>
         } @for (player of leftPlayers; track player.character.id) {

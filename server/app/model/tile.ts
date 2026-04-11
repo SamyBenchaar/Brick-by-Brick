@@ -12,6 +12,15 @@ export class Tile {
     @ApiProperty()
     @Prop({ required: false, type: mapObjectSchema })
     object?: MapObject;
+
+    @ApiProperty()
+    @Prop({ required: false, enum: ['opened', 'closed'] })
+    doorState?: string;
+
+    @ApiProperty()
+    @Prop({ required: false})
+    isOrigin?: boolean;
+
 }
 
 export const tileSchema = SchemaFactory.createForClass(Tile);
