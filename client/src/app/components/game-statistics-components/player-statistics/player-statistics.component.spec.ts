@@ -8,7 +8,7 @@ describe('PlayerStatisticsComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [PlayerStatisticsComponent]
+      imports: [PlayerStatisticsComponent],
     })
     .compileComponents();
 
