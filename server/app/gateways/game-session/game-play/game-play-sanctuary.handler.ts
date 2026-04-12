@@ -13,6 +13,7 @@ import { DOUBLE_SANCTUARY_BONUS_CHANCE,
         SANCTUARY_COOLDOWN_TURNS,
         SANCTUARYLABEL } from '@common/constants/santuary-constants';
 import { LogService } from '@app/services/log/log.service';
+import { GameSession } from '@app/domain/game-session';
 
 @Injectable()
 export class GamePlaySanctuaryHandler {
@@ -31,7 +32,7 @@ export class GamePlaySanctuaryHandler {
             if (!currentPlayer || !requestingPlayer || currentPlayer.id !== requestingPlayer.character.id) return;
             if ((currentPlayer.remainingActions ?? 0) <= 0) return;
 
-            const interactionType = this.processInteraction(gameSession.mapCopy?.tiles, currentPlayer, payload.position, payload.mode);
+            const interactionType = this.processInteraction(gameSession.mapCopy?.tiles, currentPlayer, payload.position, payload.mode, gameSession);
             if (!interactionType) return;
 
             currentPlayer.remainingActions -= 1;
@@ -53,7 +54,9 @@ export class GamePlaySanctuaryHandler {
             }
         }
 
-        private processInteraction(tiles: MapTile[][] | undefined, player: Character, position: Position, mode: 'normal' | 'double'): string | null {
+        private processInteraction(tiles: MapTile[][] | undefined,
+             player: Character, position: Position,
+              mode: 'normal' | 'double', gameSession: GameSession): string | null {
             if (!tiles) return null;
 
             const tile = tiles[position.y]?.[position.x];
@@ -70,6 +73,7 @@ export class GamePlaySanctuaryHandler {
             if (!applied) return null;
 
             originTile.sanctuaryCooldown = SANCTUARY_COOLDOWN_TURNS;
+            gameSession.usedSanctuaries.add(`${origin.x},${origin.y}`);
             return objectType;
         }
 

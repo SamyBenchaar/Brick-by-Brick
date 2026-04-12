@@ -1,4 +1,5 @@
-﻿import { GameSession } from '@app/domain/game-session';
+﻿import { MS_TO_SECONDS_CONVERSION } from '@common/constants/game-statistics-constants';
+import { GameSession } from '@app/domain/game-session';
 import { GamePlayHandlerContext } from '@app/gateways/game-session/game-play/game-play-handler.context';
 import { GamePlayHandlersProvider } from '@app/gateways/game-session/game-play/game-play-handlers.provider';
 import { GameSessionGateway } from '@app/gateways/game-session/game-session/game-session.gateway';
@@ -15,6 +16,7 @@ import {
     OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
+import { PERCENTAGE_MULTIPLIER, TileType } from '@common/map';
 
 @WebSocketGateway({ cors: true })
 @Injectable()
@@ -60,6 +62,7 @@ export class GamePlayGateway implements OnGatewayInit {
         }
 
         gameSession.status = SessionStatus.Playing;
+        gameSession.startTime = new Date();
         this.gameSessionGateway.notifyGameSessionListUpdated();
 
         const fullMapData = await this.gameSessionService.getFullMapData(gameSession.mapId);
@@ -315,13 +318,52 @@ export class GamePlayGateway implements OnGatewayInit {
         this.gameSessionService.cleanupTurnTimers(gameSession.roomId);
 
         const winningTeam = winner && gameSession.gameMode === 'ctf' ? gameSession.getPlayerTeam(winner.id) : null;
+        const allVisitedTiles = new Set<string>();
+        gameSession.visitedTiles.forEach(playerTiles => 
+            playerTiles.forEach(tile => allVisitedTiles.add(tile)),
+        );
 
+        const durationSeconds= gameSession.startTime? Math.floor((Date.now() - gameSession.startTime.getTime()) / MS_TO_SECONDS_CONVERSION): 0;
+        const mapTiles = gameSession.mapCopy?.tiles ?? [];
+        let totalSanctuaries = 0;
+        mapTiles.forEach((row, y) => row.forEach((tile, x) => {
+            if (tile.sanctuaryOrigin?.x === x && tile.sanctuaryOrigin?.y === y) totalSanctuaries++;
+        }));
+
+        let walkableTiles = 0;
+        mapTiles.forEach(row => row.forEach(tile => {
+            if (tile.type === TileType.Base || tile.type === TileType.Water || tile.type === TileType.Ice) {
+                walkableTiles++;
+            }
+        }));
+
+        let totalDoors = 0;
+        mapTiles.forEach(row => row.forEach(tile => {
+            if (tile.type === TileType.Door) totalDoors++;
+        }));
+
+        const tilesVisitedPercent = walkableTiles > 0
+        ? Math.round((allVisitedTiles.size / walkableTiles) * PERCENTAGE_MULTIPLIER)
+        : 0;
+        const sanctuariesUsedPercent = totalSanctuaries > 0
+            ? Math.round((gameSession.usedSanctuaries.size / totalSanctuaries) * PERCENTAGE_MULTIPLIER)
+            : null;
+        const doorsUsedPercent = totalDoors > 0
+            ? Math.round((gameSession.usedDoors.size / totalDoors) * PERCENTAGE_MULTIPLIER)
+            : null;
+        
         this.server.to(gameSession.roomId).emit(GameSessionEvents.GameEnded, {
             winner: winner ? { id: winner.id, name: winner.name, avatarId: winner.avatarId } : null,
             winningTeam,
             gameMode: gameSession.gameMode,
             reason: winner ? 'victory' : 'noPlayers',
             players:gameSession.players,
+            durationSeconds,
+            totalTurns: gameSession.totalTurns,
+            sanctuariesUsedPercent,
+            tilesVisitedPercent,
+            doorsUsedPercent,
+            flagHoldersCount: gameSession.gameMode === 'ctf' ? gameSession.flagHolders.size : null,
         });
 
         const activePlayers = gameSession.players.map(p => p.character.name).join(', ');

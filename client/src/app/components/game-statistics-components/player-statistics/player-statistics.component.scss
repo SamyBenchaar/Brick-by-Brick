@@ -20,24 +20,81 @@
   th {
     background-color: rgba(253, 95, 3, 0.85);
     color: #fff;
-    padding: 0.5rem 0.75rem;
+    padding: 0.35rem 0.5rem;     
     text-transform: uppercase;
-    font-size: 0.75rem;
+    font-size: 0.8rem;
     letter-spacing: 1px;
     border: 2px solid #000;
     text-align: center;
   }
   td {
-    padding: 0.6rem 1.25rem;
+    padding: 0.35rem 0.5rem;
     border: 1px solid #000;
     text-align: center;
-    font-size: 1rem;
+    font-size: 0.7rem;
   }
   tbody tr:nth-child(even) {
     background-color: rgba(246, 145, 145, 0.25);
   }
   tbody tr:hover {
     background-color: rgba(255, 156, 156, 0.5);
+  }
+}
+
+.stats-table.size-large {
+  th {
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem; 
+    // background-color: rgba(253, 95, 3, 0.85);
+    // color: #fff;   
+    // text-transform: uppercase;
+    // letter-spacing: 1px;
+    // border: 2px solid #000;
+    // text-align: center;
+  }
+  td {
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+    // border: 1px solid #000;
+    // text-align: center;
+  }
+}
+
+.stats-table.size-medium {
+  th {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.75rem;
+    // background-color: rgba(253, 95, 3, 0.85);
+    // color: #fff;   
+    // text-transform: uppercase;
+    // letter-spacing: 1px;
+    // border: 2px solid #000;
+    // text-align: center;
+  }
+  td {
+    padding: 0.4rem 0.75rem; 
+    font-size: 0.9rem;
+    // border: 1px solid #000;
+    // text-align: center;
+  }
+}
+
+.stats-table.size-small {
+  th { 
+    padding: 0.3rem 0.5rem; 
+    font-size: 0.7rem;
+    // background-color: rgba(253, 95, 3, 0.85);
+    // color: #fff;   
+    // text-transform: uppercase;
+    // letter-spacing: 1px;
+    // border: 2px solid #000;
+    // text-align: center;
+  }
+  td { 
+    padding: 0.3rem 0.5rem; 
+    font-size: 0.8rem;
+    // border: 1px solid #000;
+    // text-align: center;
   }
 }
 

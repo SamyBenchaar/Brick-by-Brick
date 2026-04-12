@@ -1,0 +1,44 @@
+
+<section class="global-stats">
+    <h2 class="stats-title">Statistiques globales</h2>
+    <table class="stats-table">
+      <thead>
+        <tr>
+          <th>Statistique</th>
+          <th>Valeur</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Durée de la partie</td>
+          <td>{{ formatDuration(durationSeconds) }}</td>
+        </tr>
+        <tr>
+          <td>Nombre de tours</td>
+          <td>{{ totalTurns }}</td>
+        </tr>
+        <tr>
+          <td>Tuiles visitées</td>
+          <td>{{ tilesVisitedPercent }}%</td>
+        </tr>
+        @if (sanctuariesUsedPercent !== null) {
+          <tr>
+            <td>Sanctuaires utilisés</td>
+            <td>{{ sanctuariesUsedPercent }}%</td>
+          </tr>
+        }
+        @if (doorsUsedPercent !== null) {
+          <tr>
+            <td>Portes utilisées</td>
+            <td>{{ doorsUsedPercent }}%</td>
+          </tr>
+        }
+        @if (gameMode === 'ctf' && flagHoldersCount !== null) {
+          <tr>
+            <td>Joueurs ayant détenu le drapeau </td>
+            <td>{{ flagHoldersCount }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </section>

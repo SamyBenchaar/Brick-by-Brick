@@ -229,7 +229,15 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
 
     socketService.on<{
         winner:
-        { id: string; name: string; avatarId: number } | null; winningTeam?: 'team1' | 'team2'; gameMode?: string; reason: string; players?: Player[];
+        { id: string; name: string; avatarId: number }
+        | null; winningTeam?: 'team1' | 'team2';
+          gameMode?: string;
+        reason: string; players?: Player[];
+        durationSeconds?: number; totalTurns?: 
+        number; sanctuariesUsedPercent?: number | null; 
+        tilesVisitedPercent?: number | null;
+        doorsUsedPercent?: number | null;
+        flagHoldersCount?: number | null;
     }>(
         GameSessionEvents.GameEnded,
         (data) => {
@@ -284,6 +292,12 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
                             winningTeam: data.winningTeam,
                             gameMode: data.gameMode,
                             walkableTiles,
+                            durationSeconds: data.durationSeconds?? 0,
+                            totalTurns: data.totalTurns?? 0,
+                            sanctuariesUsedPercent: data.sanctuariesUsedPercent?? null,
+                            tilesVisitedPercent: data.tilesVisitedPercent?? 0,
+                            doorsUsedPercent: data.doorsUsedPercent?? null,
+                            flagHoldersCount: data.flagHoldersCount?? null,
                         },
                     });
                 }else{
