@@ -8,7 +8,6 @@ import { GameSessionService } from '@app/services/game-session/game-session/game
 import { LogService } from '@app/services/log/log.service';
 import { Character } from '@common/character';
 import { CombatEvents, GameSessionEvents } from '@common/game.events';
-import { Player } from '@common/player';
 import { Position } from '@common/position';
 import { SessionStatus } from '@common/session.status';
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
@@ -165,84 +164,9 @@ export class GamePlayGateway implements OnGatewayInit {
         );
     }
 
-    // @SubscribeMessage(GameSessionEvents.RequestInteract)
-    // handleRequestInteract(socket: Socket, payload: { roomId: string; position: Position }) {
-    //     this.handlersProvider.movementHandler.handleRequestInteract(
-    //         socket,
-    //         payload,
-    //         this.createHandlerContext(),
-    //     );
-    // }
-
-
     @SubscribeMessage(GameSessionEvents.PlayerAbandoned)
     handlePlayerAbandoned(socket: Socket, payload: { roomId: string }) {
-        const gameSession = this.gameSessionService.getGameSession(payload.roomId);
-        if (!gameSession) {
-            return;
-        }
-
-        if (gameSession.status !== SessionStatus.Playing) {
-            return;
-        }
-
-        const currentPlayer = gameSession.getCurrentPlayer();
-        const abandoningPlayer = gameSession.players.find(p => p.socketId === socket.id);
-        const wasCurrentPlayer = currentPlayer && abandoningPlayer && currentPlayer.id === abandoningPlayer.character.id;
-
-        this.handleAbandonedPlayerFlagPlacement(gameSession, abandoningPlayer);
-
-        this.handleAbandonedPlayerCombatCleanup(gameSession, payload.roomId, abandoningPlayer?.character.id);
-
-        this.gameSessionService.removePlayer(payload.roomId, socket.id);
-        socket.leave(payload.roomId);
-        this.gameSessionGateway.clearSocketRoomTracking(socket.id);
-
-        this.server.to(payload.roomId).emit(GameSessionEvents.PlayerAbandoned, {
-            playerId: abandoningPlayer?.character.id,
-            mapCopyTiles: gameSession.mapCopy?.tiles,
-        });
-
-        if (abandoningPlayer) {
-            this.logService.log(payload.roomId, `Abandon de partie par ${abandoningPlayer.character.name}`);
-        }
-
-        if (this.handleAbandonedPlayerPostRemovalState(gameSession)) {
-            return;
-        }
-
-        if (wasCurrentPlayer) {
-            this.handleTurnEnd(gameSession);
-        }
-    }
-
-    private handleAbandonedPlayerCombatCleanup(gameSession: GameSession, roomId: string, abandonedPlayerId: string | undefined): void {
-        const combat = gameSession.getActiveCombat();
-        if (combat && abandonedPlayerId && gameSession.isPlayerInActiveCombat(abandonedPlayerId)) {
-            gameSession.clearActiveCombat();
-            this.server.to(roomId).emit(CombatEvents.CombatEnded, {
-                reason: 'playerLeft',
-                abandonedPlayerId,
-            });
-        }
-    }
-
-    private handleAbandonedPlayerPostRemovalState(gameSession: GameSession): boolean {
-        const hasHumanPlayersRemaining = gameSession.players.some((player) => !player.virtualProfile);
-        if (!hasHumanPlayersRemaining) {
-            this.handleGameEnd(gameSession, null);
-            return true;
-        }
-
-        if (!this.handleAbandonedPlayerTeamCheck(gameSession)) {
-            return true;
-        }
-
-        if (!this.handleAbandonedPlayerWinnerCheck(gameSession)) {
-            return true;
-        }
-
-        return this.handleAbandonedPlayerEmptyGame(gameSession);
+        this.handlersProvider.abandonHandler.handlePlayerAbandoned(socket, payload, this.createHandlerContext());
     }
 
     @SubscribeMessage(GameSessionEvents.RequestInteract)
@@ -259,45 +183,6 @@ export class GamePlayGateway implements OnGatewayInit {
         }
     }
 
-    private handleAbandonedPlayerFlagPlacement(gameSession: GameSession, abandoningPlayer: Player | undefined): void {
-        if (gameSession.gameMode === 'ctf' && abandoningPlayer?.character.hasFlag && abandoningPlayer.character.position) {
-            const freeTile = this.gameSessionService.findNearestFreeTile(gameSession, abandoningPlayer.character.position);
-            if (freeTile) {
-                gameSession.setFlagPosition(freeTile);
-                gameSession.setFlagHolder(null);
-            }
-        }
-    }
-
-    private handleAbandonedPlayerTeamCheck(gameSession: GameSession): boolean {
-        if (gameSession.gameMode === 'ctf') {
-            const team1Count = gameSession.getTotalPlayersInTeam('team1');
-            const team2Count = gameSession.getTotalPlayersInTeam('team2');
-
-            if (team1Count === 0 || team2Count === 0) {
-                this.handleGameEndCanceled(gameSession);
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private handleAbandonedPlayerWinnerCheck(gameSession: GameSession): boolean {
-        const winner = this.gameSessionService.checkGameWinner(gameSession);
-        if (winner) {
-            this.handleGameEnd(gameSession, winner);
-            return false;
-        }
-        return true;
-    }
-
-    private handleAbandonedPlayerEmptyGame(gameSession: GameSession): boolean {
-        if (gameSession.playerOrder.length <= 1) {
-            this.handleGameEnd(gameSession, null);
-            return true;
-        }
-        return false;
-    }
 
     private startGameTurn(gameSession: GameSession): void {
         this.handlersProvider.turnHandler.startGameTurn(
@@ -427,6 +312,7 @@ export class GamePlayGateway implements OnGatewayInit {
             server: this.server,
             logService: this.logService,
             onGameEnd: (gameSession: GameSession, winner: Character | null) => this.handleGameEnd(gameSession, winner),
+            onGameEndCanceled: (gameSession: GameSession) => this.handleGameEndCanceled(gameSession),
             onTurnEnd: (gameSession: GameSession) => this.handleTurnEnd(gameSession),
             emitReachableTiles: (gameSession: GameSession) => this.emitReachableTiles(gameSession),
         };
