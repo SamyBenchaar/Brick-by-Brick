@@ -154,8 +154,18 @@ export class GamePlayCombatHandler {
         const damageToDefender = Math.max(attackerAttackDetail.total - defenderDefenseDetail.total, 0);
         const damageToAttacker = Math.max(defenderAttackDetail.total - attackerDefenseDetail.total, 0);
 
+        const effectiveDamageToDefender = Math.min(damageToDefender, combat.defenderHp);
+        const effectiveDamageToAttacker = Math.min(damageToAttacker, combat.attackerHp);
+        
+
         combat.attackerHp = Math.max(combat.attackerHp - damageToAttacker, 0);
         combat.defenderHp = Math.max(combat.defenderHp - damageToDefender, 0);
+
+        attacker.totalDamageDealt += effectiveDamageToDefender;
+        attacker.totalDamageReceived += effectiveDamageToAttacker;
+        defender.totalDamageDealt += effectiveDamageToAttacker;
+        defender.totalDamageReceived += effectiveDamageToDefender;
+
 
         const combatEnds = combat.attackerHp === 0 || combat.defenderHp === 0;
         
@@ -270,6 +280,7 @@ export class GamePlayCombatHandler {
     private applyCombatOutcome(gameSession: GameSession, winner: Character, loser: Character, attacker: Character): void {
         attacker.remainingActions = Math.max((attacker.remainingActions ?? 1) - 1, 0);
         winner.victories = (winner.victories ?? 0) + 1;
+        loser.defeats++;
 
         if (loser.hasFlag && gameSession.gameMode === 'ctf') {
             gameSession.dropFlag(loser.position);

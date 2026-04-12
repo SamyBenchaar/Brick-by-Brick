@@ -1,0 +1,15 @@
+<div class="container">
+    <header class="header">
+        <button class="button return-button" (click)="navigateHome()">accueil</button>
+        <h1 class="header-title">Statistiques</h1>
+    </header>
+    <main class="stats-content">
+        <div class="stats-tables">
+            <app-player-statistics [players]="players" [walkableTiles]="walkableTiles" [gameMode]="gameMode" [winner]="winner" [winningTeam]="winningTeam"></app-player-statistics>
+        </div>
+        <div class="chat-column">
+            <!-- <app-chat [username]="winner?.name ?? ''" [gameId]="gameId" [hostPlayerId]="hostId" [isWriting]="isWriting"></app-chat> -->
+        </div>
+    </main>
+
+</div>
