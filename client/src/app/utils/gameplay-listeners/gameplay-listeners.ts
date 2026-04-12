@@ -9,11 +9,11 @@ import { GamePlaySocketService } from '@app/services/communication/game-session-
 import type { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
 import { SocketService } from '@app/services/communication/socket/socket.service';
 import { CTF_VICTORY_ANNOUNCE_DELAY } from '@common/constants/game-config-constants';
+import { ORIGIN_CANDIDATES, SANCTUARY_COOLDOWN_TURNS, SANCTUARY_TILE_OFFSETS } from '@common/constants/santuary-constants';
 import { GameSessionEvents } from '@common/game.events';
-import { Position } from '@common/position';
-import { SANCTUARY_COOLDOWN_TURNS, SANCTUARY_TILE_OFFSETS, ORIGIN_CANDIDATES } from '@common/constants/santuary-constants';
 import { ObjectType, TileType } from '@common/map';
 import { Player } from '@common/player';
+import { Position } from '@common/position';
 import { setupCombatListeners } from './combat-listener';
 
 interface GameplayListenersContext {
@@ -272,21 +272,21 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
             setTimeout(() => {
                 if (data.reason === 'victory') {
                     const session = service.currentSession();
-                    const tiles= service.mapCopy()?.mapConfig.tiles;
-                    const walkableTiles= tiles?.flat().filter(t => 
+                    const tiles = service.mapCopy()?.mapConfig.tiles;
+                    const walkableTiles = tiles?.flat().filter(t =>
                         t.type === TileType.Base || t.type === TileType.Water || t.type === TileType.Ice).length;
                     service.gameEnded.set(false);
                     gameSessionSocketService.currentSession.set(null);
-                    router.navigate(['/game-statistics'],{
-                        state:{
+                    router.navigate(['/game-statistics'], {
+                        state: {
                             players: [...(data.players ?? session?.players ?? []), ...(session?.leftPlayers ?? [])],
-                            winner : data.winner,
+                            winner: data.winner,
                             winningTeam: data.winningTeam,
                             gameMode: data.gameMode,
                             walkableTiles,
                         },
                     });
-                }else{
+                } else {
                     router.navigate(['/']).then(() => {
                         dialog.open(AppDialogComponent, {
                             data: { title, message, type: data.reason === 'victory' ? 'info' : 'info' },

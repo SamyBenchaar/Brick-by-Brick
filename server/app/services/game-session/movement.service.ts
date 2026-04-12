@@ -1,5 +1,5 @@
 import { GameSession, Position } from '@app/domain/game-session';
-import { MapTile, MovementCost } from '@app/interfaces/game-map-interfaces';
+import { MapTile } from '@app/interfaces/game-map-interfaces';
 import { Character } from '@common/character';
 import { KEY_DIRECTION_MAP } from '@common/constants/key-event.constants';
 import { DoorState, ObjectType, TILE_COST, TileType } from '@common/map';
@@ -8,11 +8,6 @@ import { Injectable, Logger } from '@nestjs/common';
 @Injectable()
 export class MovementService {
     private logger = new Logger(MovementService.name);
-    private readonly cost: MovementCost = {
-        base: 1,
-        water: 2,
-        ice: 0,
-    };
 
     private readonly directions = {
         arrowUp: { x: 0, y: -1 },
@@ -157,7 +152,7 @@ export class MovementService {
         }
 
         player.position = newPos;
-        if(gameSession.isTileVisited(player.id, newPos)) {
+        if (gameSession.isTileVisited(player.id, newPos)) {
             player.tilesVisited++;
         }
         player.remainingMovement -= moveCost;

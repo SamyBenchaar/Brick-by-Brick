@@ -5,7 +5,8 @@ import { Tile } from '@app/classes/tile/tile';
 import { OBJECT_DESCRIPTIONS } from '@app/constants/object-descriptions';
 import { MapEditorService } from '@app/services/map-editor/map-editor.service';
 import { ObjectCounterService } from '@app/services/object-counter/object-counter.service';
-import { GameModeValue, getGameSizeConfig } from '@common/constants/game-config-constants';
+import { getGameSizeConfig } from '@app/utils/game-config.utils';
+import { GameModeValue } from '@common/constants/game-config-constants';
 import { ObjectType } from '@common/map';
 
 @Component({
@@ -26,8 +27,8 @@ export class ObjectSidebarComponent implements OnInit {
     const size = this.route.snapshot.queryParams.size;
     const config = getGameSizeConfig(size);
     this.objectCounterService.startPoint = config.maxPlayers;
-    this.objectCounterService.healingSanctuary = 2**((config.maxPlayers-2)/2);
-    this.objectCounterService.combatSanctuary = 2**((config.maxPlayers-2)/2);
+    this.objectCounterService.healingSanctuary = 2 ** ((config.maxPlayers - 2) / 2);
+    this.objectCounterService.combatSanctuary = 2 ** ((config.maxPlayers - 2) / 2);
   }
 
 

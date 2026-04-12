@@ -7,7 +7,7 @@ import { GameListMode } from '@app/constants/game-list-mode.enum';
 import { Game } from '@app/interfaces/game';
 import { CommunicationService } from '@app/services/communication/communication/communication.service';
 import { GameSocketService } from '@app/services/communication/game-socket/game-socket.service';
-import { getGameModeLabel, getGameSizeLabel } from '@common/constants/game-config-constants';
+import { getGameModeLabel, getGameSizeLabel } from '@app/utils/game-config.utils';
 
 @Component({
     selector: 'app-game-list',

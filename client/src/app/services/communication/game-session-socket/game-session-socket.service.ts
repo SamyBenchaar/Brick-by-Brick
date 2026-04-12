@@ -5,8 +5,8 @@ import { AppDialogComponent } from '@app/components/game-edition-components/app-
 import { Game } from '@app/interfaces/game';
 import { GameSession } from '@app/interfaces/game-session';
 import { FlagTransferSocketService } from '@app/services/communication/game-session-socket/flag-transfer-socket.service';
-import { setupGameplayEventListeners } from '@app/services/communication/gameplay-listeners/gameplay-listeners';
 import { SocketService } from '@app/services/communication/socket/socket.service';
+import { setupGameplayEventListeners } from '@app/utils/gameplay-listeners/gameplay-listeners';
 import { Character } from '@common/character';
 import { GameSessionEvents } from '@common/game.events';
 import { VirtualPlayerProfile } from '@common/virtual.player.profile';
@@ -19,13 +19,9 @@ import { GamePlaySocketService } from './game-play-socket.service';
 export class GameSessionSocketService {
     gameSessions: WritableSignal<GameSession[]> = signal<GameSession[]>([]);
     currentSession: WritableSignal<GameSession | null> = signal<GameSession | null>(null);
-    roomId: WritableSignal<string> = signal<string>('');
-    hostSocketId: WritableSignal<string> = signal<string>('');
     hasAbandoned: WritableSignal<boolean> = signal<boolean>(false);
 
     private listenersInitialized = false;
-    kickedMessage: WritableSignal<string | null> = signal<string | null>(null);
-    cancelledMessage: WritableSignal<string | null> = signal<string | null>(null);
     takenAvatars: WritableSignal<number[]> = signal<number[]>([]);
     private lastJoinRoomId: string | null = null;
     private lastJoinPlayer: Character | null = null;

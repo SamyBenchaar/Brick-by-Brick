@@ -190,7 +190,6 @@ export class CharacterCreationPageComponent implements OnInit {
         if (this.fromGameCreation && this.gameId) {
 
             this.gameSessionSocketService.currentSession.set(null);
-            this.gameSessionSocketService.roomId.set('');
             this.gamePlaySocketService.mapCopy.set(null);
 
             // Le créateur: créer la session et attendre que le roomId soit reçu du serveur

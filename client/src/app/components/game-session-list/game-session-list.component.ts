@@ -1,7 +1,7 @@
 import { Component, computed, effect, EventEmitter, inject, OnDestroy, OnInit, Output, signal } from '@angular/core';
 import { GameSession } from '@app/interfaces/game-session';
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
-import { getGameModeLabel, getGameSizeLabel } from '@common/constants/game-config-constants';
+import { getGameModeLabel, getGameSizeLabel } from '@app/utils/game-config.utils';
 
 @Component({
   selector: 'app-game-session-list',
