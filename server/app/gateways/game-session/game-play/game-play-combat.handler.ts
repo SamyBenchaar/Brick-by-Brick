@@ -1,53 +1,29 @@
 import { GameSession } from '@app/domain/game-session';
 import { GamePlayHandlerContext } from '@app/gateways/game-session/game-play/game-play-handler.context';
+import { CombatEndService } from '@app/services/game-session/combat/combat-end.service';
+import { CombatRequestValidatorService } from '@app/services/game-session/combat/combat-request-validator.service';
+import { CombatRoundService } from '@app/services/game-session/combat/combat-round.service';
+import { CombatEndState, CombatRoundOutcome } from '@app/services/game-session/combat/combat-types';
 import { GameSessionService } from '@app/services/game-session/game-session/game-session.service';
 import { TurnManagementService } from '@app/services/game-session/turn-management.service';
 import { formatCombatRoundLog } from '@app/services/log/combat-log.util';
 import { Character } from '@common/character';
-import { ActiveCombat, COMBAT_POSTURE, CombatOutcome, CombatRoundResolvedPayload, CombatValueDetail } from '@common/combat';
+import { ActiveCombat, CombatRoundResolvedPayload } from '@common/combat';
 import { COMBAT_TURN_TIME } from '@common/constants/combat-constants';
-import { Dice, DICE_FACES_MAP } from '@common/dice';
 import { CombatEvents, GameSessionEvents } from '@common/game.events';
-import { TileType } from '@common/map';
-import { Player } from '@common/player';
-import { Position } from '@common/position';
 import { Injectable, Logger } from '@nestjs/common';
 import { Socket } from 'socket.io';
 
-type CombatParticipants = {
-    attacker: Character;
-    defender: Character;
-    requestingPlayer: Player;
-};
-
-type CombatRoundDetails = {
-    attackerAttackDetail: CombatValueDetail;
-    attackerDefenseDetail: CombatValueDetail;
-    defenderAttackDetail: CombatValueDetail;
-    defenderDefenseDetail: CombatValueDetail;
-    damageToDefender: number;
-    damageToAttacker: number;
-};
-
-type CombatEndState = {
-    attacker: Character;
-    defender: Character;
-    winner: Character | null;
-    loserIds: string[];
-    outcome: 'attacker' | 'defender' | 'draw';
-    attackerPosition: Position;
-    defenderPosition: Position;
-    turnShouldContinue: boolean;
-};
-
 @Injectable()
 export class GamePlayCombatHandler {
-    private readonly iceTilePenalty = -2;
+    private readonly logger = new Logger(GamePlayCombatHandler.name);
 
     constructor(
-        private readonly logger: Logger,
         private readonly gameSessionService: GameSessionService,
         private readonly turnManagementService: TurnManagementService,
+        private readonly combatRequestValidatorService: CombatRequestValidatorService,
+        private readonly combatRoundService: CombatRoundService,
+        private readonly combatEndService: CombatEndService,
     ) {}
 
     handleRequestCombat(
@@ -56,12 +32,16 @@ export class GamePlayCombatHandler {
         context: GamePlayHandlerContext,
     ): void {
         const gameSession = this.gameSessionService.getGameSession(payload.roomId);
-        if (!gameSession || this.isCombatUnavailable(gameSession)) {
+        if (!gameSession || this.combatRequestValidatorService.isCombatUnavailable(gameSession)) {
             return;
         }
 
-        const participants = this.getCombatParticipantsFromRequest(gameSession, socket.id, payload.defenderId);
-        if (!participants || !this.canStartCombat(gameSession, participants)) {
+        const participants = this.combatRequestValidatorService.getCombatParticipantsFromRequest(
+            gameSession,
+            socket.id,
+            payload.defenderId,
+        );
+        if (!participants || !this.combatRequestValidatorService.canStartCombat(gameSession, participants)) {
             return;
         }
 
@@ -103,55 +83,6 @@ export class GamePlayCombatHandler {
             this.turnManagementService.stopCombatTimer(gameSession.roomId);
             this.resolveCombatRound(gameSession, context);
         }
-    }
-
-    private isCombatUnavailable(gameSession: GameSession): boolean {
-        return gameSession.isTurnStarting || gameSession.getActiveCombat() !== null;
-    }
-
-    private getCombatParticipantsFromRequest(
-        gameSession: GameSession,
-        socketId: string,
-        defenderId: string,
-    ): CombatParticipants | null {
-        const attacker = gameSession.getCurrentPlayer();
-        const requestingPlayer = gameSession.players.find((player) => player.socketId === socketId);
-        const defender = gameSession.players.find((player) => player.character.id === defenderId)?.character;
-
-        if (!attacker || !requestingPlayer || !defender) {
-            return null;
-        }
-
-        return { attacker, defender, requestingPlayer };
-    }
-
-    private canStartCombat(gameSession: GameSession, participants: CombatParticipants): boolean {
-        return this.isRequesterCurrentPlayer(participants) &&
-            this.hasRemainingCombatAction(participants.attacker) &&
-            this.areCombatantsAdjacent(participants.attacker, participants.defender) &&
-            !this.areAlliesInCtf(gameSession, participants.attacker, participants.defender);
-    }
-
-    private isRequesterCurrentPlayer(participants: CombatParticipants): boolean {
-        return participants.attacker.id === participants.requestingPlayer.character.id;
-    }
-
-    private hasRemainingCombatAction(attacker: Character): boolean {
-        return (attacker.remainingActions ?? 0) > 0;
-    }
-
-    private areCombatantsAdjacent(attacker: Character, defender: Character): boolean {
-        const horizontalDistance = Math.abs(attacker.position.x - defender.position.x);
-        const verticalDistance = Math.abs(attacker.position.y - defender.position.y);
-
-        return horizontalDistance + verticalDistance === 1;
-    }
-
-    private areAlliesInCtf(gameSession: GameSession, attacker: Character, defender: Character): boolean {
-        const isCtfMode = gameSession.gameMode === 'ctf';
-        const bothTeamsKnown = !!attacker.team && !!defender.team;
-
-        return isCtfMode && bothTeamsKnown && attacker.team === defender.team;
     }
 
     private initiateActiveCombat(
@@ -225,13 +156,24 @@ export class GamePlayCombatHandler {
             return;
         }
 
-        const roundDetails = this.buildRoundDetails(gameSession, combat, attacker, defender);
-        this.applyRoundDamage(combat, roundDetails);
+        const roundDetails = this.combatRoundService.buildRoundDetails(gameSession, combat, attacker, defender);
+        this.combatRoundService.applyRoundDamage(combat, roundDetails);
 
-        const payload = this.buildRoundResolvedPayload(combat, roundDetails);
-        this.logCombatRound(gameSession, attacker, defender, payload, roundDetails, context);
+        const payload = this.combatRoundService.buildRoundResolvedPayload(combat, roundDetails);
+        const roundOutcome = this.combatRoundService.determineRoundWinner(
+            roundDetails.damageToAttacker,
+            roundDetails.damageToDefender,
+        );
+        this.logCombatRound({
+            gameSession,
+            attacker,
+            defender,
+            payload,
+            roundOutcome,
+            context,
+        });
 
-        const outcome = this.getCombatOutcome(combat);
+        const outcome = this.combatRoundService.getCombatOutcome(combat);
         if (outcome !== null) {
             if (context) {
                 this.endCombat(gameSession, outcome, context);
@@ -242,112 +184,23 @@ export class GamePlayCombatHandler {
         this.prepareNextCombatRound(gameSession, combat, payload, context);
     }
 
-    private buildRoundDetails(
-        gameSession: GameSession,
-        combat: ActiveCombat,
-        attacker: Character,
-        defender: Character,
-    ): CombatRoundDetails {
-        const attackerAttackDetail = this.calculateCombatScore(gameSession, attacker, combat, true, true);
-        const attackerDefenseDetail = this.calculateCombatScore(gameSession, attacker, combat, false, true);
-        const defenderAttackDetail = this.calculateCombatScore(gameSession, defender, combat, true, false);
-        const defenderDefenseDetail = this.calculateCombatScore(gameSession, defender, combat, false, false);
-
-        const damageToDefender = Math.max(attackerAttackDetail.total - defenderDefenseDetail.total, 0);
-        const damageToAttacker = Math.max(defenderAttackDetail.total - attackerDefenseDetail.total, 0);
-
-        return {
-            attackerAttackDetail,
-            attackerDefenseDetail,
-            defenderAttackDetail,
-            defenderDefenseDetail,
-            damageToDefender,
-            damageToAttacker,
-        };
-    }
-
-    private applyRoundDamage(combat: ActiveCombat, roundDetails: CombatRoundDetails): void {
-        combat.attackerHp = Math.max(combat.attackerHp - roundDetails.damageToAttacker, 0);
-        combat.defenderHp = Math.max(combat.defenderHp - roundDetails.damageToDefender, 0);
-    }
-
-    private buildRoundResolvedPayload(
-        combat: ActiveCombat,
-        roundDetails: CombatRoundDetails,
-    ): CombatRoundResolvedPayload {
-        return {
-            roundNumber: combat.roundNumber,
-            attackerId: combat.attackerId,
-            defenderId: combat.defenderId,
-            attackerChoice: combat.attackerPosture || COMBAT_POSTURE.NONE,
-            defenderChoice: combat.defenderPosture || COMBAT_POSTURE.NONE,
-            attackerStrike: {
-                attack: roundDetails.attackerAttackDetail,
-                defense: roundDetails.defenderDefenseDetail,
-                damage: roundDetails.damageToDefender,
-            },
-            defenderStrike: {
-                attack: roundDetails.defenderAttackDetail,
-                defense: roundDetails.attackerDefenseDetail,
-                damage: roundDetails.damageToAttacker,
-            },
-            attackerLife: combat.attackerHp,
-            defenderLife: combat.defenderHp,
-        };
-    }
-
-    private logCombatRound(
-        gameSession: GameSession,
-        attacker: Character,
-        defender: Character,
-        payload: CombatRoundResolvedPayload,
-        roundDetails: CombatRoundDetails,
-        context?: GamePlayHandlerContext,
-    ): void {
+    private logCombatRound(args: {
+        gameSession: GameSession;
+        attacker: Character;
+        defender: Character;
+        payload: CombatRoundResolvedPayload;
+        roundOutcome: CombatRoundOutcome;
+        context?: GamePlayHandlerContext;
+    }): void {
+        const { gameSession, attacker, defender, payload, roundOutcome, context } = args;
         if (!context) {
             return;
         }
-
-        const roundOutcome = this.determineRoundWinner(
-            roundDetails.damageToAttacker,
-            roundDetails.damageToDefender,
-        );
 
         const logMessage = formatCombatRoundLog(payload, attacker, defender, roundOutcome);
         const playersInvolved = [attacker.name, defender.name];
 
         context.logService.log(gameSession.roomId, logMessage, 'combat', playersInvolved);
-    }
-
-    private getCombatOutcome(combat: ActiveCombat): 'attacker' | 'defender' | 'draw' | null {
-        const attackerDefeated = combat.attackerHp === 0;
-        const defenderDefeated = combat.defenderHp === 0;
-
-        if (attackerDefeated && defenderDefeated) {
-            return 'draw';
-        }
-
-        if (defenderDefeated) {
-            return 'attacker';
-        }
-
-        if (attackerDefeated) {
-            return 'defender';
-        }
-
-        return null;
-    }
-
-    private determineRoundWinner(damageToAttacker: number, damageToDefender: number): CombatOutcome {
-        if (damageToDefender > damageToAttacker) {
-            return 'attacker';
-        }
-
-        if (damageToAttacker > damageToDefender) {
-            return 'defender';
-        }
-
-        return 'draw';
     }
 
     private prepareNextCombatRound(
@@ -356,9 +209,7 @@ export class GamePlayCombatHandler {
         payload: CombatRoundResolvedPayload,
         context?: GamePlayHandlerContext,
     ): void {
-        combat.roundNumber += 1;
-        combat.attackerPosture = undefined;
-        combat.defenderPosture = undefined;
+        this.combatRoundService.prepareNextRound(combat);
 
         if (!context) {
             return;
@@ -371,7 +222,7 @@ export class GamePlayCombatHandler {
 
     private endCombat(
         gameSession: GameSession,
-        outcome: 'attacker' | 'defender' | 'draw',
+        outcome: CombatRoundOutcome,
         context: GamePlayHandlerContext,
     ): void {
         this.turnManagementService.stopCombatTimer(gameSession.roomId);
@@ -387,7 +238,13 @@ export class GamePlayCombatHandler {
             return;
         }
 
-        const combatState = this.buildCombatEndState(gameSession, attacker, defender, combat, outcome);
+        const combatState = this.combatEndService.buildCombatEndState(
+            gameSession,
+            attacker,
+            defender,
+            combat,
+            outcome,
+        );
         gameSession.clearActiveCombat();
 
         this.emitCombatResult(gameSession, combatState, context);
@@ -400,145 +257,6 @@ export class GamePlayCombatHandler {
         }
 
         this.resumeOrEndTurn(gameSession, combatState.turnShouldContinue, context);
-    }
-
-    private buildCombatEndState(
-        gameSession: GameSession,
-        attacker: Character,
-        defender: Character,
-        combat: ActiveCombat,
-        outcome: 'attacker' | 'defender' | 'draw',
-    ): CombatEndState {
-        const attackerDefeated = outcome === 'defender' || outcome === 'draw';
-        const defenderDefeated = outcome === 'attacker' || outcome === 'draw';
-        const winner = this.getWinnerFromOutcome(outcome, attacker, defender);
-
-        if (!attackerDefeated) {
-            attacker.life = combat.attackerHp;
-        }
-
-        if (!defenderDefeated) {
-            defender.life = combat.defenderHp;
-        }
-
-        if (winner) {
-            winner.victories = (winner.victories ?? 0) + 1;
-        }
-
-        const attackerPosition = attackerDefeated
-            ? this.respawnDefeatedPlayer(gameSession, attacker)
-            : attacker.position;
-
-        const defenderPosition = defenderDefeated
-            ? this.respawnDefeatedPlayer(gameSession, defender)
-            : defender.position;
-
-        const turnShouldContinue = outcome === 'attacker' && (attacker.remainingMovement ?? 0) > 0;
-
-        return {
-            attacker,
-            defender,
-            winner,
-            loserIds: this.getLoserIds(attacker, defender, attackerDefeated, defenderDefeated),
-            outcome,
-            attackerPosition,
-            defenderPosition,
-            turnShouldContinue,
-        };
-    }
-
-    private getWinnerFromOutcome(
-        outcome: 'attacker' | 'defender' | 'draw',
-        attacker: Character,
-        defender: Character,
-    ): Character | null {
-        if (outcome === 'attacker') {
-            return attacker;
-        }
-
-        if (outcome === 'defender') {
-            return defender;
-        }
-
-        return null;
-    }
-
-    private getLoserIds(
-        attacker: Character,
-        defender: Character,
-        attackerDefeated: boolean,
-        defenderDefeated: boolean,
-    ): string[] {
-        const loserIds: string[] = [];
-
-        if (attackerDefeated) {
-            loserIds.push(attacker.id);
-        }
-
-        if (defenderDefeated) {
-            loserIds.push(defender.id);
-        }
-
-        return loserIds;
-    }
-
-    private respawnDefeatedPlayer(gameSession: GameSession, player: Character): Position {
-        const defeatPosition = { ...player.position };
-
-        this.dropFlagIfNeeded(gameSession, player, defeatPosition);
-
-        const respawnPosition = this.getRespawnPosition(gameSession, player);
-        player.position = respawnPosition;
-        player.life = player.maxLife;
-
-        return respawnPosition;
-    }
-
-    private dropFlagIfNeeded(gameSession: GameSession, player: Character, defeatPosition: Position): void {
-        if (!player.hasFlag || gameSession.gameMode !== 'ctf') {
-            return;
-        }
-
-        const dropPosition = this.getFlagDropPosition(gameSession, defeatPosition);
-        if (dropPosition) {
-            gameSession.dropFlag(dropPosition);
-        }
-    }
-
-    private getRespawnPosition(gameSession: GameSession, player: Character): Position {
-        const startingPoint = gameSession.getStartingPoint(player.id);
-        if (!startingPoint) {
-            return player.position;
-        }
-
-        const startingPointIsFree = this.isPositionFree(gameSession, startingPoint, player.id);
-        if (startingPointIsFree) {
-            return startingPoint;
-        }
-
-        return this.gameSessionService.findNearestFreeTile(gameSession, startingPoint) ?? startingPoint;
-    }
-
-    private isPositionFree(gameSession: GameSession, position: Position, excludedPlayerId: string): boolean {
-        return !gameSession.players.some((otherPlayer) =>
-            otherPlayer.character.id !== excludedPlayerId &&
-            otherPlayer.character.position.x === position.x &&
-            otherPlayer.character.position.y === position.y,
-        );
-    }
-
-    private getFlagDropPosition(gameSession: GameSession, defeatPosition: Position): Position | null {
-        const tile = gameSession.getMapCopy()?.tiles?.[defeatPosition.y]?.[defeatPosition.x];
-        if (!tile) {
-            return null;
-        }
-
-        const defeatedOnOpenedDoor = tile.type === TileType.Door && tile.doorState === 'opened';
-        if (defeatedOnOpenedDoor) {
-            return this.gameSessionService.findNearestFreeTile(gameSession, defeatPosition);
-        }
-
-        return defeatPosition;
     }
 
     private emitCombatResult(
@@ -646,53 +364,5 @@ export class GamePlayCombatHandler {
                 });
             },
         );
-    }
-
-    private calculateCombatScore(
-        gameSession: GameSession,
-        character: Character,
-        combat: ActiveCombat,
-        isAttackMode: boolean,
-        isAttacker: boolean,
-    ): CombatValueDetail {
-        const posture = isAttacker ? combat.attackerPosture : combat.defenderPosture;
-        const attackBonus = posture === COMBAT_POSTURE.OFFENSIVE ? 2 : 0;
-        const defenseBonus = posture === COMBAT_POSTURE.DEFENSIVE ? 2 : 0;
-
-        const baseStat = isAttackMode ? character.attack : character.defense;
-        const postureBonus = isAttackMode ? attackBonus : defenseBonus;
-        const tilePenalty = this.getTilePenalty(gameSession, character);
-
-        const diceRoll = isAttackMode
-            ? this.rollDice(character.attackDice, isAttacker, gameSession.isDebugModeActivated)
-            : this.rollDice(character.defenseDice, isAttacker, gameSession.isDebugModeActivated);
-
-        const total = baseStat + postureBonus + tilePenalty + diceRoll;
-
-        return {
-            base: baseStat,
-            postureBonus,
-            dice: diceRoll,
-            tilePenalty,
-            total,
-        };
-    }
-
-    private getTilePenalty(gameSession: GameSession, player: Character): number {
-        const tile = gameSession.getMapCopy()?.tiles?.[player.position.y]?.[player.position.x];
-        if (!tile) {
-            return 0;
-        }
-
-        return tile.type === TileType.Ice ? this.iceTilePenalty : 0;
-    }
-
-    private rollDice(dice: Dice, isAttacker: boolean, debugMode = false): number {
-        if (debugMode) {
-            return isAttacker ? DICE_FACES_MAP[dice] : 1;
-        }
-
-        const faces = DICE_FACES_MAP[dice];
-        return Math.floor(Math.random() * faces) + 1;
     }
 }
