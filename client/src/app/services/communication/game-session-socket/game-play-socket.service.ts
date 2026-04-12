@@ -59,7 +59,6 @@ export class GamePlaySocketService {
         this.socketService.off(GameSessionEvents.MoveExecuted);
         this.socketService.off(CombatEvents.CombatResult);
     }
-
     resetGameplayState(): void {
         this.currentPlayerTurn.set(null);
         this.turnTimeRemaining.set(0);
@@ -69,48 +68,36 @@ export class GamePlaySocketService {
         this.isDebugModeActivated.set(false);
         this.mapCopy.set(null);
     }
-
     toggleDebugMode(): void {
-        if (!this.isCurrentUserHost()) {
-            return;
-        }
-
-        const currentRoomId = this.gameSessionSocketService.getRoomId();
-        if (currentRoomId) {
-            this.socketService.emit(GameSessionEvents.ToggleDebugMode, { currentRoomId });
+        if (this.isCurrentUserHost()) {
+            const currentRoomId = this.gameSessionSocketService.getRoomId();
+            if (currentRoomId) {
+                this.socketService.emit(GameSessionEvents.ToggleDebugMode, { currentRoomId });
+            }
         }
     }
-
     requestMove(direction: string): void {
-        if (this.combatSocketService.activeCombat()) {
-            return;
-        }
-
-        const currentRoomId = this.gameSessionSocketService.getRoomId();
-        if (currentRoomId) {
-            this.socketService.emit(GameSessionEvents.RequestMove, { roomId: currentRoomId, direction });
+        if (!this.combatSocketService.activeCombat()) {
+            const currentRoomId = this.gameSessionSocketService.getRoomId();
+            if (currentRoomId) {
+                this.socketService.emit(GameSessionEvents.RequestMove, { roomId: currentRoomId, direction });
+            }
         }
     }
-
     requestAssignPosition(position: Position): void {
-        if (!this.isMyTurn() || !this.isDebugModeActivated()) {
-            return;
-        }
-
-        const currentRoomId = this.getRoomId();
-        if (currentRoomId) {
-            this.socketService.emit(GameSessionEvents.RequestAssignPosition, { roomId: currentRoomId, position });
+        if (this.isMyTurn() && this.isDebugModeActivated()) {
+            const currentRoomId = this.getRoomId();
+            if (currentRoomId) {
+                this.socketService.emit(GameSessionEvents.RequestAssignPosition, { roomId: currentRoomId, position });
+            }
         }
     }
-
     requestCombat(defenderId: string): void {
-        if (this.combatSocketService.activeCombat()) {
-            return;
-        }
-
-        const currentRoomId = this.getRoomId();
-        if (currentRoomId) {
-            this.socketService.emit(CombatEvents.RequestCombat, { roomId: currentRoomId, defenderId });
+        if (!this.combatSocketService.activeCombat()) {
+            const currentRoomId = this.getRoomId();
+            if (currentRoomId) {
+                this.socketService.emit(CombatEvents.RequestCombat, { roomId: currentRoomId, defenderId });
+            }
         }
     }
 
@@ -119,37 +106,30 @@ export class GamePlaySocketService {
         if (roomId) this.socketService.emit(CombatEvents.SubmitCombatPosture, { roomId, posture });
     }
 
-
     requestFlagTransfer(toPlayerId: string): void {
-        if (this.combatSocketService.activeCombat()) {
-            return;
-        }
-
-        const currentRoomId = this.getRoomId();
-        if (currentRoomId) {
-            this.socketService.emit(GameSessionEvents.RequestFlagTransfer, { roomId: currentRoomId, toPlayerId });
+        if (!this.combatSocketService.activeCombat()) {
+            const currentRoomId = this.getRoomId();
+            if (currentRoomId) {
+                this.socketService.emit(GameSessionEvents.RequestFlagTransfer, { roomId: currentRoomId, toPlayerId });
+            }
         }
     }
 
     requestInteract(position: Position, mode: string): void {
-        if (this.combatSocketService.activeCombat()) {
-            return;
-        }
-
-        const currentRoomId = this.getRoomId();
-        if (currentRoomId) {
-            this.socketService.emit(GameSessionEvents.RequestInteract, { roomId: currentRoomId, position, mode });
+        if (!this.combatSocketService.activeCombat()) {
+            const currentRoomId = this.getRoomId();
+            if (currentRoomId) {
+                this.socketService.emit(GameSessionEvents.RequestInteract, { roomId: currentRoomId, position, mode });
+            }
         }
     }
 
     endTurn(): void {
-        if (this.combatSocketService.activeCombat()) {
-            return;
-        }
-
-        const currentRoomId = this.getRoomId();
-        if (currentRoomId) {
-            this.socketService.emit(GameSessionEvents.EndTurnRequest, { roomId: currentRoomId });
+        if (!this.combatSocketService.activeCombat()) {
+            const currentRoomId = this.getRoomId();
+            if (currentRoomId) {
+                this.socketService.emit(GameSessionEvents.EndTurnRequest, { roomId: currentRoomId });
+            }
         }
     }
 
@@ -333,7 +313,6 @@ export class GamePlaySocketService {
         const currentPlayer = this.getCurrentPlayerCharacter();
         if (!currentPlayer) return false;
 
-        // Allow transfer if: (I have flag and target doesn't) OR (target has flag and I don't)
         const canTransfer = (
             currentPlayer.hasFlag === true && target.hasFlag === false
         ) || (
@@ -352,11 +331,7 @@ export class GamePlaySocketService {
             return false;
         }
 
-        if (target.id === currentPlayer.id) {
-            return false;
-        }
-
-        if (currentPlayer.team !== target.team) {
+        if (target.id === currentPlayer.id || currentPlayer.team !== target.team) {
             return false;
         }
 
@@ -428,9 +403,7 @@ export class GamePlaySocketService {
         const currentRoomId = this.getRoomId();
         if (currentRoomId) {
             this.socketService.emit(GameSessionEvents.FlagTransferResponse, {
-                roomId: currentRoomId,
-                fromPlayerId,
-                accepted,
+                roomId: currentRoomId, fromPlayerId, accepted,
             });
         }
     }

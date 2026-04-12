@@ -5,6 +5,7 @@ import { GamePlaySocketService } from './game-play-socket.service';
 
 @Injectable({ providedIn: 'root' })
 export class CombatSocketService {
+    private readonly combatNotificationDelayMs = 3000;
     private gamePlaySocketService = inject(GamePlaySocketService);
     private combatNotificationTimeout: ReturnType<typeof setTimeout> | null = null;
 
@@ -64,7 +65,7 @@ export class CombatSocketService {
 
         this.combatNotificationTimeout = setTimeout(() => {
             this.clearCombatNotification();
-        }, 3000);
+        }, this.combatNotificationDelayMs);
     }
 
     clearCombatNotification(): void {
