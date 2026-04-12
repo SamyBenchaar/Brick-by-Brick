@@ -2,8 +2,9 @@ import { GameSession } from '@app/domain/game-session';
 import { GamePlayHandlerContext } from '@app/gateways/game-session/game-play/game-play-handler.context';
 import { GameSessionService } from '@app/services/game-session/game-session/game-session.service';
 import { TurnManagementService } from '@app/services/game-session/turn-management.service';
+import { formatCombatRoundLog } from '@app/services/log/combat-log.util';
 import { Character } from '@common/character';
-import { ActiveCombat, COMBAT_POSTURE, CombatRoundResolvedPayload, CombatValueDetail } from '@common/combat';
+import { ActiveCombat, COMBAT_POSTURE, CombatOutcome, CombatRoundResolvedPayload, CombatValueDetail } from '@common/combat';
 import { COMBAT_TURN_TIME } from '@common/constants/combat-constants';
 import { Dice, DICE_FACES_MAP } from '@common/dice';
 import { CombatEvents, GameSessionEvents } from '@common/game.events';
@@ -11,8 +12,6 @@ import { TileType } from '@common/map';
 import { Player } from '@common/player';
 import { Injectable, Logger } from '@nestjs/common';
 import { Socket } from 'socket.io';
-
-type RoundWinner = 'attacker' | 'defender' | 'tie';
 
 
 @Injectable()
@@ -154,27 +153,48 @@ export class GamePlayCombatHandler {
         const damageToDefender = Math.max(attackerAttackDetail.total - defenderDefenseDetail.total, 0);
         const damageToAttacker = Math.max(defenderAttackDetail.total - attackerDefenseDetail.total, 0);
 
+        const effectiveDamageToDefender = Math.min(damageToDefender, combat.defenderHp);
+        const effectiveDamageToAttacker = Math.min(damageToAttacker, combat.attackerHp);
+
+
         combat.attackerHp = Math.max(combat.attackerHp - damageToAttacker, 0);
         combat.defenderHp = Math.max(combat.defenderHp - damageToDefender, 0);
 
-        const combatEnds = combat.attackerHp === 0 || combat.defenderHp === 0;
-        
-        const result = this.determineRoundWinner(damageToAttacker, damageToDefender);
-        let logMessage: string;
+        attacker.totalDamageDealt += effectiveDamageToDefender;
+        attacker.totalDamageReceived += effectiveDamageToAttacker;
+        defender.totalDamageDealt += effectiveDamageToAttacker;
+        defender.totalDamageReceived += effectiveDamageToDefender;
 
-        switch(result){
-            case 'tie':
-                logMessage = `Manche ${combat.roundNumber}: Égalité entre ${attacker.name} et ${defender.name}`;
-                break;
-            case 'attacker':
-                logMessage = `Manche ${combat.roundNumber}: ${attacker.name} remporte la manche contre ${defender.name}`;
-                break;
-            case 'defender':
-                logMessage = `Manche ${combat.roundNumber}: ${defender.name} remporte la manche contre ${attacker.name}`;
-                break;
-            }
+
+        const combatEnds = combat.attackerHp === 0 || combat.defenderHp === 0;
+
+        const result = this.determineRoundWinner(damageToAttacker, damageToDefender);
         const playersInvolved = [attacker.name, defender.name];
-        context.logService.log(gameSession.roomId, logMessage, 'combat', playersInvolved);
+
+        const payload: CombatRoundResolvedPayload = {
+            roundNumber: combat.roundNumber,
+            attackerId: combat.attackerId,
+            defenderId: combat.defenderId,
+            attackerChoice: combat.attackerPosture || COMBAT_POSTURE.NONE,
+            defenderChoice: combat.defenderPosture || COMBAT_POSTURE.NONE,
+            attackerStrike: {
+                attack: attackerAttackDetail,
+                defense: defenderDefenseDetail,
+                damage: damageToDefender,
+            },
+            defenderStrike: {
+                attack: defenderAttackDetail,
+                defense: attackerDefenseDetail,
+                damage: damageToAttacker,
+            },
+            attackerLife: combat.attackerHp,
+            defenderLife: combat.defenderHp,
+        };
+
+        if (context) {
+            const logMessage = formatCombatRoundLog(payload, attacker, defender, result);
+            context.logService.log(gameSession.roomId, logMessage, 'combat', playersInvolved);
+        }
 
         if (combatEnds) {
             const winner = combat.attackerHp > 0 ? combat.attackerId : combat.defenderId;
@@ -184,26 +204,6 @@ export class GamePlayCombatHandler {
                 this.endCombat(gameSession, winner, loser, context);
             }
         } else {
-            const payload: CombatRoundResolvedPayload = {
-                roundNumber: combat.roundNumber,
-                attackerId: combat.attackerId,
-                defenderId: combat.defenderId,
-                attackerChoice: combat.attackerPosture || COMBAT_POSTURE.NONE,
-                defenderChoice: combat.defenderPosture || COMBAT_POSTURE.NONE,
-                attackerStrike: {
-                    attack: attackerAttackDetail,
-                    defense: defenderDefenseDetail,
-                    damage: damageToDefender,
-                },
-                defenderStrike: {
-                    attack: defenderAttackDetail,
-                    defense: attackerDefenseDetail,
-                    damage: damageToAttacker,
-                },
-                attackerLife: combat.attackerHp,
-                defenderLife: combat.defenderHp,
-            };
-
             combat.roundNumber += 1;
             combat.attackerPosture = undefined;
             combat.defenderPosture = undefined;
@@ -216,10 +216,10 @@ export class GamePlayCombatHandler {
         }
     }
 
-    private determineRoundWinner(damageToAttacker: number, damageToDefender: number): RoundWinner {
+    private determineRoundWinner(damageToAttacker: number, damageToDefender: number): CombatOutcome {
         if (damageToDefender > damageToAttacker) return 'attacker';
         if (damageToAttacker > damageToDefender) return 'defender';
-        return 'tie';
+        return 'draw';
     }
 
     private endCombat(gameSession: GameSession, winnerId: string, loserId: string, context: GamePlayHandlerContext): void {
@@ -270,6 +270,7 @@ export class GamePlayCombatHandler {
     private applyCombatOutcome(gameSession: GameSession, winner: Character, loser: Character, attacker: Character): void {
         attacker.remainingActions = Math.max((attacker.remainingActions ?? 1) - 1, 0);
         winner.victories = (winner.victories ?? 0) + 1;
+        loser.defeats++;
 
         if (loser.hasFlag && gameSession.gameMode === 'ctf') {
             gameSession.dropFlag(loser.position);
@@ -387,7 +388,7 @@ export class GamePlayCombatHandler {
             ? this.rollDice(character.attackDice, isAttacker, gameSession.isDebugModeActivated)
             : this.rollDice(character.defenseDice, isAttacker, gameSession.isDebugModeActivated);
 
-        const total = baseStat + postureBonus - tilePenalty + diceRoll;
+        const total = baseStat + postureBonus + tilePenalty + diceRoll;
 
         return {
             base: baseStat,

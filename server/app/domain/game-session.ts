@@ -20,6 +20,7 @@ export class GameSession {
     host: Player;
     mapId: string;
     socketToAvatar: Map<string, number> = new Map();
+    visitedTiles: Map<string, Set<string>> = new Map();
 
     playerOrder: string[] = [];
     currentPlayerIndex: number = 0;
@@ -382,6 +383,17 @@ export class GameSession {
         });
 
         expiredRequests.forEach(playerId => this.flagTransferRequests.delete(playerId));
+    }
+
+    isTileVisited(playerId: string, position: Position): boolean {
+        if (!this.visitedTiles.has(playerId)) {
+            this.visitedTiles.set(playerId, new Set());
+        }
+        const key = `${position.x},${position.y}`;
+        const playerTiles= this.visitedTiles.get(playerId);
+        if (playerTiles.has(key)) return false;
+        playerTiles.add(key);
+        return true;
     }
 }
 

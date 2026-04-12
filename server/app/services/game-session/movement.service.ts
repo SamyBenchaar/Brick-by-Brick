@@ -157,6 +157,9 @@ export class MovementService {
         }
 
         player.position = newPos;
+        if(gameSession.isTileVisited(player.id, newPos)) {
+            player.tilesVisited++;
+        }
         player.remainingMovement -= moveCost;
 
         return true;
