@@ -117,7 +117,7 @@ export class GameSessionService {
         this.startingPointService.assignStartingPoints(gameSession, mapConfig);
         this.startingPointService.cleanupUnusedStartingPoints(gameSession, mapConfig.tiles);
         gameSession.setStatus(SessionStatus.Playing);
-        this.logger.log(`Game session ${gameSession.roomId} initialized`);
+        this.logger.log(`Game session ${gameSession.roomId} initialisée`);
     }
 
     async startCurrentTurn(
@@ -128,7 +128,7 @@ export class GameSessionService {
     ): Promise<void> {
         const currentPlayer = gameSession.getCurrentPlayer();
         if (!currentPlayer) {
-            throw new Error('No current player found');
+            throw new Error('Aucun joueur courant trouvé');
         }
 
         this.movementService.resetMovementPoints(currentPlayer);
@@ -220,10 +220,10 @@ export class GameSessionService {
         const attacker = gameSession.getCurrentPlayer();
         const defender = gameSession.players.find(p => p.character.id === defenderId)?.character;
         if (!attacker || !defender) {
-            throw new Error('Invalid player IDs');
+            throw new Error('Identifiants de joueurs invalides');
         }
         if (!this.combatService.canFight(attacker, defender, gameSession)) {
-            throw new Error('Players are not adjacent');
+            throw new Error('Les joueurs ne sont pas adjacents');
         }
         const result = this.combatService.executeCombat(
             gameSession,
