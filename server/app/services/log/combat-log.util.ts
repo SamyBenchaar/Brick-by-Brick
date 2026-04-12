@@ -1,9 +1,9 @@
 import { Character } from '@common/character';
-import { ActiveCombat, CombatValueDetail } from '@common/combat';
+import { CombatOutcome, CombatRoundResolvedPayload, CombatValueDetail } from '@common/combat';
 
-export function formatCombatLog(
+function formatCombatLog(
     detail: CombatValueDetail,
-    type: 'attack' | 'defense'
+    type: 'attack' | 'defense',
 ): string {
     return `${type === 'attack' ? '⚔️' : '🛡️'} `
         + `${detail.base}`
@@ -13,41 +13,33 @@ export function formatCombatLog(
         + ` = ${detail.total}`;
 }
 
-export function formatCombatRoundLog(
-    combat: ActiveCombat,
-    attacker: Character,
-    defender: Character,
-    attackerAttackDetail: CombatValueDetail,
-    attackerDefenseDetail: CombatValueDetail,
-    defenderAttackDetail: CombatValueDetail,
-    defenderDefenseDetail: CombatValueDetail,
-    damageToDefender: number,
-    damageToAttacker: number,
-    result: 'attacker' | 'defender' | 'tie',
-): string {
-    const roundNumber = `Manche ${combat.roundNumber}`;
-    const roundOutcome = result === 'tie'
+export function formatCombatRoundLog(payload: CombatRoundResolvedPayload, attacker: Character,
+    defender: Character, result: CombatOutcome): string {
+    
+    const roundNumber = `Manche: ${payload.roundNumber}`;
+    const roundOutcome = result === 'draw'
         ? `Égalité entre ${attacker.name} et ${defender.name}`
         : result === 'attacker'
             ? `${attacker.name} remporte la manche contre ${defender.name}`
             : `${defender.name} remporte la manche contre ${attacker.name}`;
 
-    const attackerAttackLine = `Attaque ${attacker.name} : ${formatCombatLog(attackerAttackDetail, 'attack')}\n`;
-    const attackerDefenseLine = `Défense ${attacker.name} : ${formatCombatLog(attackerDefenseDetail, 'defense')}\n`;
-    const defenderAttackLine = `Attaque ${defender.name} : ${formatCombatLog(defenderAttackDetail, 'attack')}\n`;
-    const defenderDefenseLine = `Défense ${defender.name} : ${formatCombatLog(defenderDefenseDetail, 'defense')}\n`;
+    const attackerAttackLine = `Attaque ${attacker.name}: ${formatCombatLog(payload.attackerStrike.attack, 'attack')}`;
+    const attackerDefenseLine = `Défense ${attacker.name}: ${formatCombatLog(payload.attackerStrike.defense, 'defense')}`;
+    const defenderAttackLine = `Attaque ${defender.name}: ${formatCombatLog(payload.defenderStrike.attack, 'attack')}`;
+    const defenderDefenseLine = `Défense ${defender.name}: ${formatCombatLog(payload.defenderStrike.defense, 'defense')}`;
 
-    const diffAttackVsDefenseTotal = attackerAttackDetail.total - defenderDefenseDetail.total;
-    const diffDefenseVsAttackTotal = defenderAttackDetail.total - attackerDefenseDetail.total;
+    const diffAttackVsDefenseTotal = payload.attackerStrike.attack.total - payload.defenderStrike.defense.total;
+    const diffDefenseVsAttackTotal = payload.defenderStrike.attack.total - payload.attackerStrike.defense.total;
+    const diffAttackVsDefense = `Différence attaque ${attacker.name} vs défense ${defender.name}: ` +
+        `${payload.attackerStrike.attack.total} - ${payload.defenderStrike.defense.total} = ${diffAttackVsDefenseTotal}`;
+    const diffDefenseVsAttack = `Différence attaque ${defender.name} vs défense ${attacker.name}: ` +
+        `${payload.defenderStrike.attack.total} - ${payload.attackerStrike.defense.total} = ${diffDefenseVsAttackTotal}\n`;
 
-    const diffAttackVsDefense = `Différence attaque ${attacker.name} vs défense ${defender.name}: ${attackerAttackDetail.total} - ${defenderDefenseDetail.total} = ${diffAttackVsDefenseTotal}\n`;
-    const diffDefenseVsAttack = `Différence attaque ${defender.name} vs défense  ${attacker.name} : ${defenderAttackDetail.total} - ${attackerDefenseDetail.total} = ${diffDefenseVsAttackTotal}\n`;
-
-    const attackerResult = damageToDefender > 0
-        ? `${attacker.name} inflige ${damageToDefender} dégâts à ${defender.name}`
+    const attackerResult = payload.attackerStrike.damage > 0
+        ? `${attacker.name} inflige ${payload.attackerStrike.damage} dégâts à ${defender.name}`
         : `${attacker.name} n'inflige aucun dégât à ${defender.name}`;
-    const defenderResult = damageToAttacker > 0
-        ? `${defender.name} inflige ${damageToAttacker} dégâts à ${attacker.name}`
+    const defenderResult = payload.defenderStrike.damage > 0
+        ? `${defender.name} inflige ${payload.defenderStrike.damage} dégâts à ${attacker.name}`
         : `${defender.name} n'inflige aucun dégât à ${attacker.name}`;
 
     return [

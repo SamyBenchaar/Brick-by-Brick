@@ -4,7 +4,7 @@ import { GameSessionService } from '@app/services/game-session/game-session/game
 import { TurnManagementService } from '@app/services/game-session/turn-management.service';
 import { formatCombatRoundLog } from '@app/services/log/combat-log.util';
 import { Character } from '@common/character';
-import { ActiveCombat, COMBAT_POSTURE, CombatRoundResolvedPayload, CombatValueDetail } from '@common/combat';
+import { ActiveCombat, COMBAT_POSTURE, CombatOutcome, CombatRoundResolvedPayload, CombatValueDetail } from '@common/combat';
 import { COMBAT_TURN_TIME } from '@common/constants/combat-constants';
 import { Dice, DICE_FACES_MAP } from '@common/dice';
 import { CombatEvents, GameSessionEvents } from '@common/game.events';
@@ -13,7 +13,6 @@ import { Player } from '@common/player';
 import { Injectable, Logger } from '@nestjs/common';
 import { Socket } from 'socket.io';
 
-type RoundWinner = 'attacker' | 'defender' | 'tie';
 
 @Injectable()
 export class GamePlayCombatHandler {
@@ -156,7 +155,7 @@ export class GamePlayCombatHandler {
 
         const effectiveDamageToDefender = Math.min(damageToDefender, combat.defenderHp);
         const effectiveDamageToAttacker = Math.min(damageToAttacker, combat.attackerHp);
-        
+
 
         combat.attackerHp = Math.max(combat.attackerHp - damageToAttacker, 0);
         combat.defenderHp = Math.max(combat.defenderHp - damageToDefender, 0);
@@ -172,20 +171,28 @@ export class GamePlayCombatHandler {
         const result = this.determineRoundWinner(damageToAttacker, damageToDefender);
         const playersInvolved = [attacker.name, defender.name];
 
-        if (context) {
-            const logMessage = formatCombatRoundLog(
-                combat,
-                attacker,
-                defender,
-                attackerAttackDetail,
-                attackerDefenseDetail,
-                defenderAttackDetail,
-                defenderDefenseDetail,
-                damageToDefender,
-                damageToAttacker,
-                result,
-            );
+        const payload: CombatRoundResolvedPayload = {
+            roundNumber: combat.roundNumber,
+            attackerId: combat.attackerId,
+            defenderId: combat.defenderId,
+            attackerChoice: combat.attackerPosture || COMBAT_POSTURE.NONE,
+            defenderChoice: combat.defenderPosture || COMBAT_POSTURE.NONE,
+            attackerStrike: {
+                attack: attackerAttackDetail,
+                defense: defenderDefenseDetail,
+                damage: damageToDefender,
+            },
+            defenderStrike: {
+                attack: defenderAttackDetail,
+                defense: attackerDefenseDetail,
+                damage: damageToAttacker,
+            },
+            attackerLife: combat.attackerHp,
+            defenderLife: combat.defenderHp,
+        };
 
+        if (context) {
+            const logMessage = formatCombatRoundLog(payload, attacker, defender, result);
             context.logService.log(gameSession.roomId, logMessage, 'combat', playersInvolved);
         }
 
@@ -197,26 +204,6 @@ export class GamePlayCombatHandler {
                 this.endCombat(gameSession, winner, loser, context);
             }
         } else {
-            const payload: CombatRoundResolvedPayload = {
-                roundNumber: combat.roundNumber,
-                attackerId: combat.attackerId,
-                defenderId: combat.defenderId,
-                attackerChoice: combat.attackerPosture || COMBAT_POSTURE.NONE,
-                defenderChoice: combat.defenderPosture || COMBAT_POSTURE.NONE,
-                attackerStrike: {
-                    attack: attackerAttackDetail,
-                    defense: defenderDefenseDetail,
-                    damage: damageToDefender,
-                },
-                defenderStrike: {
-                    attack: defenderAttackDetail,
-                    defense: attackerDefenseDetail,
-                    damage: damageToAttacker,
-                },
-                attackerLife: combat.attackerHp,
-                defenderLife: combat.defenderHp,
-            };
-
             combat.roundNumber += 1;
             combat.attackerPosture = undefined;
             combat.defenderPosture = undefined;
@@ -229,10 +216,10 @@ export class GamePlayCombatHandler {
         }
     }
 
-    private determineRoundWinner(damageToAttacker: number, damageToDefender: number): RoundWinner {
+    private determineRoundWinner(damageToAttacker: number, damageToDefender: number): CombatOutcome {
         if (damageToDefender > damageToAttacker) return 'attacker';
         if (damageToAttacker > damageToDefender) return 'defender';
-        return 'tie';
+        return 'draw';
     }
 
     private endCombat(gameSession: GameSession, winnerId: string, loserId: string, context: GamePlayHandlerContext): void {
