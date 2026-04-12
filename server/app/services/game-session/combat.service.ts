@@ -15,7 +15,7 @@ export class CombatService {
     canFight(attacker: Character, defender: Character, gameSession?: GameSession): boolean {
         const distance = Math.abs(attacker.position.x - defender.position.x) +
             Math.abs(attacker.position.y - defender.position.y);
-        const hasActions = attacker.remainingActions !== undefined && attacker.remainingActions > 0;
+        const hasActions = (attacker.remainingActions ?? 0) > 0;
 
         if (gameSession?.gameMode === 'ctf' && gameSession.playerTeams) {
             const attackerTeam = gameSession.playerTeams.get(attacker.id);
@@ -34,7 +34,7 @@ export class CombatService {
         defender: Character,
         mapConfig: GameMap,
     ): CombatResult {
-        if (attacker.remainingActions !== undefined && attacker.remainingActions > 0) {
+        if ((attacker.remainingActions ?? 0) > 0) {
             attacker.remainingActions -= 1;
         }
 

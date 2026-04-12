@@ -78,7 +78,6 @@ export class CharacterCreationPageComponent implements OnInit {
                     if (!this.character && taken.length > 0) {
                         const freeAvatar = AVATARS.find(a => !taken.includes(a.id));
                         if (!freeAvatar) {
-                            alert('Toutes les places sont déjà prises ! Trop de joueurs en même temps.');
                             return;
                         }
                         this.character = this.createBaseCharacter(freeAvatar.id);
@@ -181,7 +180,6 @@ export class CharacterCreationPageComponent implements OnInit {
     }
     submitCharacter() {
         if (!this.gameId && !this.roomId) {
-            alert('Erreur: Identifiant de session manquant. Veuillez revenir à la page précédente.');
             return;
         }
 

@@ -67,12 +67,8 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
             if (session) {
                 const player = session.players.find(p => p.character.id === data.playerId);
                 if (player) {
-                    if (data.remainingMovement !== undefined) {
-                        player.character.remainingMovement = data.remainingMovement;
-                    }
-                    if (data.remainingActions !== undefined) {
-                        player.character.remainingActions = data.remainingActions;
-                    }
+                    player.character.remainingMovement = data.remainingMovement ?? player.character.remainingMovement;
+                    player.character.remainingActions = data.remainingActions ?? player.character.remainingActions;
                     gameSessionSocketService.currentSession.set({ ...session });
                 }
             }

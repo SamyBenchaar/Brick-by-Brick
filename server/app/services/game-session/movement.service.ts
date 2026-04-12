@@ -89,8 +89,7 @@ export class MovementService {
                 const totalCost = cost + moveCost;
 
                 if (totalCost <= movementPoints) {
-                    const previousBest = bestCosts.get(newPosKey);
-                    if (previousBest !== undefined && totalCost >= previousBest) {
+                    if (bestCosts.has(newPosKey) && totalCost >= bestCosts.get(newPosKey)!) {
                         continue;
                     }
 
