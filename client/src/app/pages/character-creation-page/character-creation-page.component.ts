@@ -109,6 +109,10 @@ export class CharacterCreationPageComponent implements OnInit {
             defenseDice: Dice.D6,
             isActif: false,
             battlesWon: 0,
+            defeats: 0,
+            totalDamageDealt: 0,
+            totalDamageReceived: 0,
+            tilesVisited: 0,
         };
     }
 

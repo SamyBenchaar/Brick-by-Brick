@@ -39,6 +39,7 @@ export function getGameSizeConfig(sizeId: string) {
     return GAME_SIZES_DISPLAY.find(s => s.id === sizeId) || GAME_SIZES_DISPLAY[0];
 }
 
+
 export const VICTORIES_TO_WIN = 3;
 export const ROOM_ID_LENGTH = 8;
 export const MAX_PLAYER = 6;

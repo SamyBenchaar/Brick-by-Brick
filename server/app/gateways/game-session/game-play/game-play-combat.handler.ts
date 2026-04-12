@@ -2,8 +2,9 @@ import { GameSession } from '@app/domain/game-session';
 import { GamePlayHandlerContext } from '@app/gateways/game-session/game-play/game-play-handler.context';
 import { GameSessionService } from '@app/services/game-session/game-session/game-session.service';
 import { TurnManagementService } from '@app/services/game-session/turn-management.service';
+import { formatCombatRoundLog } from '@app/services/log/combat-log.util';
 import { Character } from '@common/character';
-import { ActiveCombat, COMBAT_POSTURE, CombatRoundResolvedPayload, CombatValueDetail } from '@common/combat';
+import { ActiveCombat, COMBAT_POSTURE, CombatOutcome, CombatRoundResolvedPayload, CombatValueDetail } from '@common/combat';
 import { COMBAT_TURN_TIME } from '@common/constants/combat-constants';
 import { Dice, DICE_FACES_MAP } from '@common/dice';
 import { CombatEvents, GameSessionEvents } from '@common/game.events';
@@ -19,6 +20,25 @@ type CombatParticipants = {
     requestingPlayer: Player;
 };
 
+type CombatRoundDetails = {
+    attackerAttackDetail: CombatValueDetail;
+    attackerDefenseDetail: CombatValueDetail;
+    defenderAttackDetail: CombatValueDetail;
+    defenderDefenseDetail: CombatValueDetail;
+    damageToDefender: number;
+    damageToAttacker: number;
+};
+
+type CombatEndState = {
+    attacker: Character;
+    defender: Character;
+    winner: Character | null;
+    loserIds: string[];
+    outcome: 'attacker' | 'defender' | 'draw';
+    attackerPosition: Position;
+    defenderPosition: Position;
+    turnShouldContinue: boolean;
+};
 
 @Injectable()
 export class GamePlayCombatHandler {
@@ -54,6 +74,34 @@ export class GamePlayCombatHandler {
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';
             this.logger.error(`Combat error: ${errorMessage}`);
+        }
+    }
+
+    handlePostureChosen(
+        socket: Socket,
+        payload: { roomId: string; posture: string },
+        context: GamePlayHandlerContext,
+    ): void {
+        const gameSession = this.gameSessionService.getGameSession(payload.roomId);
+        if (!gameSession) {
+            return;
+        }
+
+        const combat = gameSession.getActiveCombat();
+        if (!combat) {
+            return;
+        }
+
+        const player = gameSession.players.find((currentPlayer) => currentPlayer.socketId === socket.id);
+        if (!player) {
+            return;
+        }
+
+        this.applyChosenPosture(combat, player.character.id, payload.posture);
+
+        if (this.areBothPosturesChosen(combat)) {
+            this.turnManagementService.stopCombatTimer(gameSession.roomId);
+            this.resolveCombatRound(gameSession, context);
         }
     }
 
@@ -112,6 +160,11 @@ export class GamePlayCombatHandler {
         attacker: Character,
         context: GamePlayHandlerContext,
     ): void {
+        const defender = gameSession.players.find((player) => player.character.id === defenderId)?.character;
+        if (!defender) {
+            return;
+        }
+
         const activeCombat: ActiveCombat = {
             attackerId: attacker.id,
             defenderId,
@@ -120,7 +173,7 @@ export class GamePlayCombatHandler {
             attackerPosture: undefined,
             defenderPosture: undefined,
             attackerHp: attacker.life,
-            defenderHp: gameSession.players.find(p => p.character.id === defenderId)?.character.life ?? 0,
+            defenderHp: defender.life,
         };
 
         attacker.remainingActions = Math.max((attacker.remainingActions ?? 1) - 1, 0);
@@ -136,32 +189,19 @@ export class GamePlayCombatHandler {
         this.startCombatTurnTimer(gameSession, context);
     }
 
-    handlePostureChosen(
-        socket: Socket,
-        payload: { roomId: string; posture: string },
-        context: GamePlayHandlerContext,
-    ) {
-        const gameSession = this.gameSessionService.getGameSession(payload.roomId);
-        if (!gameSession) return;
-
-        const combat = gameSession.getActiveCombat();
-        if (!combat) return;
-
-        const player = gameSession.players.find(p => p.socketId === socket.id);
-        if (!player) return;
-
-        const playerId = player.character.id;
-
+    private applyChosenPosture(combat: ActiveCombat, playerId: string, posture: string): void {
         if (playerId === combat.attackerId) {
-            combat.attackerPosture = payload.posture;
-        } else if (playerId === combat.defenderId) {
-            combat.defenderPosture = payload.posture;
+            combat.attackerPosture = posture;
+            return;
         }
 
-        if (combat.attackerPosture && combat.defenderPosture) {
-            this.turnManagementService.stopCombatTimer(gameSession.roomId);
-            this.resolveCombatRound(gameSession, context);
+        if (playerId === combat.defenderId) {
+            combat.defenderPosture = posture;
         }
+    }
+
+    private areBothPosturesChosen(combat: ActiveCombat): boolean {
+        return !!combat.attackerPosture && !!combat.defenderPosture;
     }
 
     private handleCombatTimeout(gameSession: GameSession, context: GamePlayHandlerContext): void {
@@ -188,6 +228,9 @@ export class GamePlayCombatHandler {
         const roundDetails = this.buildRoundDetails(gameSession, combat, attacker, defender);
         this.applyRoundDamage(combat, roundDetails);
 
+        const payload = this.buildRoundResolvedPayload(combat, roundDetails);
+        this.logCombatRound(gameSession, attacker, defender, payload, roundDetails, context);
+
         const outcome = this.getCombatOutcome(combat);
         if (outcome !== null) {
             if (context) {
@@ -196,7 +239,7 @@ export class GamePlayCombatHandler {
             return;
         }
 
-        this.prepareNextCombatRound(gameSession, combat, roundDetails, context);
+        this.prepareNextCombatRound(gameSession, combat, payload, context);
     }
 
     private buildRoundDetails(
@@ -204,14 +247,7 @@ export class GamePlayCombatHandler {
         combat: ActiveCombat,
         attacker: Character,
         defender: Character,
-    ): {
-        attackerAttackDetail: CombatValueDetail;
-        attackerDefenseDetail: CombatValueDetail;
-        defenderAttackDetail: CombatValueDetail;
-        defenderDefenseDetail: CombatValueDetail;
-        damageToDefender: number;
-        damageToAttacker: number;
-    } {
+    ): CombatRoundDetails {
         const attackerAttackDetail = this.calculateCombatScore(gameSession, attacker, combat, true, true);
         const attackerDefenseDetail = this.calculateCombatScore(gameSession, attacker, combat, false, true);
         const defenderAttackDetail = this.calculateCombatScore(gameSession, defender, combat, true, false);
@@ -230,15 +266,57 @@ export class GamePlayCombatHandler {
         };
     }
 
-    private applyRoundDamage(
-        combat: ActiveCombat,
-        roundDetails: {
-            damageToDefender: number;
-            damageToAttacker: number;
-        },
-    ): void {
+    private applyRoundDamage(combat: ActiveCombat, roundDetails: CombatRoundDetails): void {
         combat.attackerHp = Math.max(combat.attackerHp - roundDetails.damageToAttacker, 0);
         combat.defenderHp = Math.max(combat.defenderHp - roundDetails.damageToDefender, 0);
+    }
+
+    private buildRoundResolvedPayload(
+        combat: ActiveCombat,
+        roundDetails: CombatRoundDetails,
+    ): CombatRoundResolvedPayload {
+        return {
+            roundNumber: combat.roundNumber,
+            attackerId: combat.attackerId,
+            defenderId: combat.defenderId,
+            attackerChoice: combat.attackerPosture || COMBAT_POSTURE.NONE,
+            defenderChoice: combat.defenderPosture || COMBAT_POSTURE.NONE,
+            attackerStrike: {
+                attack: roundDetails.attackerAttackDetail,
+                defense: roundDetails.defenderDefenseDetail,
+                damage: roundDetails.damageToDefender,
+            },
+            defenderStrike: {
+                attack: roundDetails.defenderAttackDetail,
+                defense: roundDetails.attackerDefenseDetail,
+                damage: roundDetails.damageToAttacker,
+            },
+            attackerLife: combat.attackerHp,
+            defenderLife: combat.defenderHp,
+        };
+    }
+
+    private logCombatRound(
+        gameSession: GameSession,
+        attacker: Character,
+        defender: Character,
+        payload: CombatRoundResolvedPayload,
+        roundDetails: CombatRoundDetails,
+        context?: GamePlayHandlerContext,
+    ): void {
+        if (!context) {
+            return;
+        }
+
+        const roundOutcome = this.determineRoundWinner(
+            roundDetails.damageToAttacker,
+            roundDetails.damageToDefender,
+        );
+
+        const logMessage = formatCombatRoundLog(payload, attacker, defender, roundOutcome);
+        const playersInvolved = [attacker.name, defender.name];
+
+        context.logService.log(gameSession.roomId, logMessage, 'combat', playersInvolved);
     }
 
     private getCombatOutcome(combat: ActiveCombat): 'attacker' | 'defender' | 'draw' | null {
@@ -260,39 +338,24 @@ export class GamePlayCombatHandler {
         return null;
     }
 
+    private determineRoundWinner(damageToAttacker: number, damageToDefender: number): CombatOutcome {
+        if (damageToDefender > damageToAttacker) {
+            return 'attacker';
+        }
+
+        if (damageToAttacker > damageToDefender) {
+            return 'defender';
+        }
+
+        return 'draw';
+    }
+
     private prepareNextCombatRound(
         gameSession: GameSession,
         combat: ActiveCombat,
-        roundDetails: {
-            attackerAttackDetail: CombatValueDetail;
-            attackerDefenseDetail: CombatValueDetail;
-            defenderAttackDetail: CombatValueDetail;
-            defenderDefenseDetail: CombatValueDetail;
-            damageToDefender: number;
-            damageToAttacker: number;
-        },
+        payload: CombatRoundResolvedPayload,
         context?: GamePlayHandlerContext,
     ): void {
-        const payload: CombatRoundResolvedPayload = {
-            roundNumber: combat.roundNumber,
-            attackerId: combat.attackerId,
-            defenderId: combat.defenderId,
-            attackerChoice: combat.attackerPosture || COMBAT_POSTURE.NONE,
-            defenderChoice: combat.defenderPosture || COMBAT_POSTURE.NONE,
-            attackerStrike: {
-                attack: roundDetails.attackerAttackDetail,
-                defense: roundDetails.defenderDefenseDetail,
-                damage: roundDetails.damageToDefender,
-            },
-            defenderStrike: {
-                attack: roundDetails.defenderAttackDetail,
-                defense: roundDetails.attackerDefenseDetail,
-                damage: roundDetails.damageToAttacker,
-            },
-            attackerLife: combat.attackerHp,
-            defenderLife: combat.defenderHp,
-        };
-
         combat.roundNumber += 1;
         combat.attackerPosture = undefined;
         combat.defenderPosture = undefined;
@@ -345,16 +408,7 @@ export class GamePlayCombatHandler {
         defender: Character,
         combat: ActiveCombat,
         outcome: 'attacker' | 'defender' | 'draw',
-    ): {
-        attacker: Character;
-        defender: Character;
-        winner: Character | null;
-        loserIds: string[];
-        outcome: 'attacker' | 'defender' | 'draw';
-        attackerPosition: Position;
-        defenderPosition: Position;
-        turnShouldContinue: boolean;
-    } {
+    ): CombatEndState {
         const attackerDefeated = outcome === 'defender' || outcome === 'draw';
         const defenderDefeated = outcome === 'attacker' || outcome === 'draw';
         const winner = this.getWinnerFromOutcome(outcome, attacker, defender);
@@ -489,16 +543,7 @@ export class GamePlayCombatHandler {
 
     private emitCombatResult(
         gameSession: GameSession,
-        combatState: {
-            attacker: Character;
-            defender: Character;
-            winner: Character | null;
-            loserIds: string[];
-            outcome: 'attacker' | 'defender' | 'draw';
-            attackerPosition: Position;
-            defenderPosition: Position;
-            turnShouldContinue: boolean;
-        },
+        combatState: CombatEndState,
         context: GamePlayHandlerContext,
     ): void {
         context.server.to(gameSession.roomId).emit(CombatEvents.CombatResult, {
@@ -529,12 +574,7 @@ export class GamePlayCombatHandler {
 
     private logCombatResult(
         gameSession: GameSession,
-        combatState: {
-            attacker: Character;
-            defender: Character;
-            winner: Character | null;
-            outcome: 'attacker' | 'defender' | 'draw';
-        },
+        combatState: Pick<CombatEndState, 'attacker' | 'defender' | 'winner' | 'outcome'>,
         context: GamePlayHandlerContext,
     ): void {
         if (combatState.outcome === 'draw') {
@@ -608,16 +648,19 @@ export class GamePlayCombatHandler {
         );
     }
 
-    private calculateCombatScore(gameSession: GameSession, character: Character, combat: ActiveCombat,
-        isAttackMode: boolean, isAttacker: boolean): CombatValueDetail {
-
+    private calculateCombatScore(
+        gameSession: GameSession,
+        character: Character,
+        combat: ActiveCombat,
+        isAttackMode: boolean,
+        isAttacker: boolean,
+    ): CombatValueDetail {
         const posture = isAttacker ? combat.attackerPosture : combat.defenderPosture;
         const attackBonus = posture === COMBAT_POSTURE.OFFENSIVE ? 2 : 0;
         const defenseBonus = posture === COMBAT_POSTURE.DEFENSIVE ? 2 : 0;
 
         const baseStat = isAttackMode ? character.attack : character.defense;
         const postureBonus = isAttackMode ? attackBonus : defenseBonus;
-
         const tilePenalty = this.getTilePenalty(gameSession, character);
 
         const diceRoll = isAttackMode
@@ -636,12 +679,15 @@ export class GamePlayCombatHandler {
     }
 
     private getTilePenalty(gameSession: GameSession, player: Character): number {
-        const tile = gameSession.getMapCopy()?.tiles[player.position.y][player.position.x];
+        const tile = gameSession.getMapCopy()?.tiles?.[player.position.y]?.[player.position.x];
+        if (!tile) {
+            return 0;
+        }
 
         return tile.type === TileType.Ice ? this.iceTilePenalty : 0;
     }
 
-    private rollDice(dice: Dice, isAttacker: boolean, debugMode: boolean = false): number {
+    private rollDice(dice: Dice, isAttacker: boolean, debugMode = false): number {
         if (debugMode) {
             return isAttacker ? DICE_FACES_MAP[dice] : 1;
         }

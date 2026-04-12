@@ -25,5 +25,9 @@ export interface Character {
   combatSanctuaryBonus?: number;
   team?: 'team1' | 'team2';
   hasFlag?: boolean;
+  defeats:number;
+  totalDamageDealt:number
+  totalDamageReceived:number
+  tilesVisited:number
 }
 

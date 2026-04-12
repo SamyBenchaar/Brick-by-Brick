@@ -64,6 +64,7 @@ export class WaitingRoomPage implements OnInit, OnDestroy {
     ngOnDestroy(): void {
         window.removeEventListener('beforeunload', this.handleBeforeUnload);
         sessionStorage.removeItem('waitingRoomRefresh');
+        // this.gameSessionSocketService.leaveGameSession();
     }
 
     handleBeforeUnload = (): void => {
