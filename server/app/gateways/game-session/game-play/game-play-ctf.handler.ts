@@ -4,12 +4,13 @@ import { GameSessionService } from '@app/services/game-session/game-session/game
 import { LogService } from '@app/services/log/log.service';
 import { GameSessionEvents } from '@common/game.events';
 import { Player } from '@common/player';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable, forwardRef } from '@nestjs/common';
 import { Socket } from 'socket.io';
 
 @Injectable()
 export class GamePlayCtfHandler {
     constructor(
+        @Inject(forwardRef(() => GameSessionService))
         private readonly gameSessionService: GameSessionService,
         private readonly logService: LogService,
     ) {}

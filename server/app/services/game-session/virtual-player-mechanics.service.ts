@@ -1,22 +1,24 @@
 import { GameSession } from '@app/domain/game-session';
+import { GamePlayGateway } from '@app/gateways/game-session/game-play/game-play.gateway';
 import { GameGateway } from '@app/gateways/game/game.gateway';
 import { LogService } from '@app/services/log/log.service';
 import { COMBAT_SANCTUARY_BONUS, HEALING_SANCTUARY_BONUS } from '@common/constants/santuary-constants';
-import { GameSessionEvents, CombatEvents } from '@common/game.events';
+import { GameSessionEvents } from '@common/game.events';
 import { DoorState, ObjectType, TileType } from '@common/map';
 import { Player } from '@common/player';
 import { Position } from '@common/position';
-import { Inject, Injectable } from '@nestjs/common';
-import { CombatService } from './combat.service';
+import { forwardRef, Inject, Injectable, Optional } from '@nestjs/common';
 import { MovementService } from './movement.service';
 import { VirtualPlayerPathfindingService } from './virtual-player-mechanics/virtual-player-pathfinding.service';
 import { VirtualPlayerTargetingService } from './virtual-player-mechanics/virtual-player-targeting.service';
 
 @Injectable()
 export class VirtualPlayerMechanicsService {
-    @Inject() private readonly combatService: CombatService;
     @Inject() private readonly movementService: MovementService;
     @Inject() private readonly gameGateway: GameGateway;
+    @Optional()
+    @Inject(forwardRef(() => GamePlayGateway))
+    private readonly gamePlayGateway?: GamePlayGateway;
     @Inject() private readonly pathfinding: VirtualPlayerPathfindingService;
     @Inject() private readonly targeting: VirtualPlayerTargetingService;
     @Inject() private readonly logService: LogService;
@@ -80,32 +82,17 @@ export class VirtualPlayerMechanicsService {
             return false;
         }
 
-        const mapCopy = session.getMapCopy();
-        if (!mapCopy) {
-            return false;
-        }
-
         await this.randomDelay();
         if (!this.isBotCurrentPlayer(session, bot) || !this.hasAction(bot)) {
             return false;
         }
-        const result = this.combatService.executeCombat(
-            session,
-            bot.character,
-            target.character,
-            mapCopy,
-        );
 
-        this.gameGateway.notifyRoomEvent(session.roomId, CombatEvents.CombatResult, {
-            winner: result.winner,
-            loser: result.loser,
-            attackerVictories: result.attackerVictories,
-            defenderNewPosition: target.character.position,
-            remainingActions: bot.character.remainingActions,
-        });
+        if (!this.gamePlayGateway) {
+            return false;
+        }
 
-        this.gameGateway.notifyRoomEvent(session.roomId, GameSessionEvents.GameSessionUpdated, session);
-        return true;
+        this.gamePlayGateway.triggerBotCombat(session.roomId, bot.character.id, target.character.id);
+        return !!session.getActiveCombat();
     }
 
     findFleeTarget(session: GameSession, bot: Player, enemy: Player): Position | null {
@@ -216,33 +203,17 @@ export class VirtualPlayerMechanicsService {
             return false;
         }
 
-        const mapCopy = session.getMapCopy();
-        if (!mapCopy) {
-            return false;
-        }
-
         await this.randomDelay();
         if (!this.isBotCurrentPlayer(session, bot) || !this.hasAction(bot)) {
             return false;
         }
-        const result = this.combatService.executeCombat(
-            session,
-            bot.character,
-            target.character,
-            mapCopy,
-        );
 
-        this.gameGateway.notifyRoomEvent(session.roomId, CombatEvents.CombatResult, {
-            winner: result.winner,
-            loser: result.loser,
-            attackerVictories: result.attackerVictories,
-            defenderNewPosition: target.character.position,
-            remainingActions: bot.character.remainingActions,
-        });
+        if (!this.gamePlayGateway) {
+            return false;
+        }
 
-        this.gameGateway.notifyRoomEvent(session.roomId, GameSessionEvents.GameSessionUpdated, session);
-
-        return true;
+        this.gamePlayGateway.triggerBotCombat(session.roomId, bot.character.id, target.character.id);
+        return !!session.getActiveCombat();
     }
 
     async tryUseAdjacentSanctuary(session: GameSession, bot: Player): Promise<boolean> {
