@@ -14,9 +14,9 @@
             >
             @if(tile.object) {
                 @if(isSanctuaryOriginTile(tile, position)) {
-                    <img [src]="getObjectPath(tile.object, tile.sanctuaryCooldown ?? 0)" class="tile-object-multi"/>
+                    <img [src]="getObjectPath(tile.object, tile.sanctuaryCooldown ?? 0, position)" class="tile-object-multi"/>
                 } @else if (!isMultiTileObject(tile.object) && isFlagVisible(tile)) {
-                    <img [src]="getObjectPath(tile.object)" class="tile-object-image"/>
+                    <img [src]="getObjectPath(tile.object, undefined, position)" class="tile-object-image"/>
                 }
             }
             @if(playerAtPos) {
