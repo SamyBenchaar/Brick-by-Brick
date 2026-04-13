@@ -16,7 +16,7 @@ import { ObjectType, TileType } from '@common/map';
 import { Position } from '@common/position';
 import { Player } from '@common/player';
 import { setupCombatListeners } from './combat-listener';
-import {CombatResultPayload,} from '@common/combat';
+import {CombatResultPayload} from '@common/combat';
 
 interface GameplayListenersContext {
     gamePlaySocketService: GamePlaySocketService;
