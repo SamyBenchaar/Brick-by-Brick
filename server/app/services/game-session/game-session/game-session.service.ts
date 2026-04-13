@@ -228,7 +228,11 @@ export class GameSessionService {
     //     return result;
     // }
 
-    checkGameWinner(gameSession: GameSession): Character | null {
+     checkGameWinner(gameSession: GameSession): Character | null {
+        if (gameSession.gameMode === 'ctf') {
+            return null;
+        }
+
         const players = gameSession.getActivePlayers();
         return this.combatService.checkGameWinCondition(players);
     }
