@@ -157,7 +157,7 @@ export class GamePlayCombatHandler {
         }
 
         const roundDetails = this.combatRoundService.buildRoundDetails(gameSession, combat, attacker, defender);
-        this.combatRoundService.applyRoundDamage(combat, roundDetails);
+        this.combatRoundService.applyRoundDamage(combat, roundDetails, attacker, defender);
 
         const payload = this.combatRoundService.buildRoundResolvedPayload(combat, roundDetails);
         const roundOutcome = this.combatRoundService.determineRoundWinner(

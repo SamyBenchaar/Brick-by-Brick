@@ -34,6 +34,9 @@ export class CombatEndService {
             winner.victories = (winner.victories ?? 0) + 1;
         }
 
+        if (attackerDefeated) attacker.defeats = (attacker.defeats ?? 0) + 1;
+        if (defenderDefeated) defender.defeats = (defender.defeats ?? 0) + 1;
+
         const attackerPosition = attackerDefeated
             ? this.respawnDefeatedPlayer(gameSession, attacker)
             : attacker.position;

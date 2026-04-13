@@ -34,9 +34,17 @@ export class CombatRoundService {
         };
     }
 
-    applyRoundDamage(combat: ActiveCombat, roundDetails: CombatRoundDetails): void {
+    applyRoundDamage(combat: ActiveCombat, roundDetails: CombatRoundDetails, attacker: Character, defender: Character): void {
+        const effectiveDamageToDefender = Math.min(roundDetails.damageToDefender, combat.defenderHp);
+        const effectiveDamageToAttacker = Math.min(roundDetails.damageToAttacker, combat.attackerHp);
+
         combat.attackerHp = Math.max(combat.attackerHp - roundDetails.damageToAttacker, 0);
         combat.defenderHp = Math.max(combat.defenderHp - roundDetails.damageToDefender, 0);
+
+        attacker.totalDamageDealt += effectiveDamageToDefender;
+        attacker.totalDamageReceived += effectiveDamageToAttacker;
+        defender.totalDamageDealt += effectiveDamageToAttacker;
+        defender.totalDamageReceived += effectiveDamageToDefender;
     }
 
     buildRoundResolvedPayload(
