@@ -1,10 +1,7 @@
-import { GameSession, Position } from '@app/domain/game-session';
-import { CombatInfo, CombatResult, GameMap } from '@app/interfaces/game-map-interfaces';
+import { GameSession } from '@app/domain/game-session';
 import { Character } from '@common/character';
 import { VICTORIES_TO_WIN } from '@common/constants/game-config-constants';
 import { Injectable, Logger } from '@nestjs/common';
-import { StartingPointService } from './starting-point.service';
-
 
 @Injectable()
 export class CombatService {
