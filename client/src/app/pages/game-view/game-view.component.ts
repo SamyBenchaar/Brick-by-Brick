@@ -54,6 +54,7 @@ export class GameViewComponent implements OnInit, OnDestroy {
     const socketId = this.gameSessionSocketService.getSocketId();
     return this.gameSessionSocketService.currentSession()?.players.find(p => p.socketId === socketId) ?? null;
   });
+  currentPlayerTurn = computed(() => this.gamePlaySocketService.currentPlayerTurn());
   isDebugModeActivated = computed(() => this.gamePlaySocketService.isDebugModeActivated());
 
   displayedTurnTimer = computed(() => {

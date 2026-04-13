@@ -38,7 +38,7 @@
                     }
                 }
             </div>
-            <app-player-board [players]="playerList()" [leftPlayers]="leftPlayerList()" [host]="hostPlayer()" [gameMode]="gameSessionSocketService.currentSession()?.gameMode ?? 'classic'"></app-player-board>
+            <app-player-board [players]="playerList()" [leftPlayers]="leftPlayerList()" [host]="hostPlayer()" [gameMode]="gameSessionSocketService.currentSession()?.gameMode ?? 'classic'" [currentPlayerTurn]="currentPlayerTurn()"></app-player-board>
                 <app-player-sign
                     [player]="currentPlayer()"
                     [canAct]="canAttackSelectedTarget() || canInteract()"

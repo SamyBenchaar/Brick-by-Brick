@@ -1,5 +1,9 @@
 <app-base-sign [name]="name" [iconUrl]="iconUrl">
     <div class="player-sign-container">
+        <button class="action-button" type="button" [disabled]="!canAct " (click)="onActionClick()">
+            {{ selectedTargetName ? 'interagir avec ' + selectedTargetName : 'Action' }}
+        </button>
+
         <div class="player-header">
             <div class="player-avatar-wrapper">
                 <img class="player-avatar" 
@@ -35,9 +39,5 @@
                 <span class="stat-value">{{ player?.character?.remainingMovement ?? player?.character?.movements }}</span>
             </div>
         </div>
-
-        <button class="action-button" type="button" [disabled]="!canAct " (click)="onActionClick()">
-            {{ selectedTargetName ? 'interagir avec ' + selectedTargetName : 'Action' }}
-        </button>
     </div>
 </app-base-sign>
