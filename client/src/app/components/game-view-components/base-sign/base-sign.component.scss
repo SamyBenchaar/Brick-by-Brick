@@ -10,11 +10,9 @@
     align-items: center;
     gap: 8px;
     padding: 7px 14px;
-
-    background-color: #c8a96e;
+    background-color: #b8935a;
     border: 3px solid #6b4c2a;
     border-radius: 4px 4px 0 0;
-    box-shadow: inset 0 0 0 2px #e8c98a;
 
     font-size: 15px;
     color: #3a2510;
@@ -55,6 +53,8 @@
     border: 3px solid #6b4c2a;
     border-top: none;
     border-radius: 0 0 4px 4px;
-    box-shadow: inset 0 0 0 2px #e8c98a;
     overflow: hidden;
+    background-image: url('/assets/images/brown_background.jpg');
+    background-size: cover;
+    background-position: center;
 }
