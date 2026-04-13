@@ -51,7 +51,7 @@ export class GameGridUtilService {
     }
 
     getTilePath(tile: TileType, doorState?: DoorState): string {
-        return tile === TileType.Door ? `./assets/images/${doorState}-door.jpg` : `./assets/images/${tile}.jpg`;
+        return tile === TileType.Door ? `./assets/images/tiles/${doorState}-door.png` : `./assets/images/tiles/${tile}.jpg`;
     }
 
     getPlayerTeamClass(player: Character, gameMode: string): string {
