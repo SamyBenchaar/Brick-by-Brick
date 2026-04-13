@@ -1,5 +1,6 @@
 import { GameSession, Position } from '@app/domain/game-session';
 import { MapTile } from '@app/interfaces/game-map-interfaces';
+import { Direction } from '@app/interfaces/map-validation-interfaces';
 import { Character } from '@common/character';
 import { KEY_DIRECTION_MAP } from '@common/constants/key-event.constants';
 import { DoorState, ObjectType, TILE_COST, TileType } from '@common/map';
@@ -9,11 +10,11 @@ import { Injectable, Logger } from '@nestjs/common';
 export class MovementService {
     private logger = new Logger(MovementService.name);
 
-    private readonly directions = {
-        arrowUp: { x: 0, y: -1 },
-        arrowDown: { x: 0, y: 1 },
-        arrowLeft: { x: -1, y: 0 },
-        arrowRight: { x: 1, y: 0 },
+    private readonly directions: Record<string, Direction> = {
+        arrowUp: { dx: 0, dy: -1 },
+        arrowDown: { dx: 0, dy: 1 },
+        arrowLeft: { dx: -1, dy: 0 },
+        arrowRight: { dx: 1, dy: 0 },
     };
 
     private toPositionKey(position: Position): string {
@@ -98,8 +99,8 @@ export class MovementService {
 
         for (const direction of Object.values(this.directions)) {
             const newPos: Position = {
-                x: pos.x + direction.x,
-                y: pos.y + direction.y,
+                x: pos.x + direction.dx,
+                y: pos.y + direction.dy,
             };
 
             if (!this.isValidTile(mapData, newPos, occupiedPositions)) {
@@ -159,8 +160,8 @@ export class MovementService {
         }
 
         const newPos: Position = {
-            x: player.position.x + directionDelta.x,
-            y: player.position.y + directionDelta.y,
+            x: player.position.x + directionDelta.dx,
+            y: player.position.y + directionDelta.dy,
         };
 
         const occupiedPositions = this.getOccupiedPositions(gameSession);

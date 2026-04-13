@@ -1,9 +1,11 @@
+import { GameModeDisplay } from '@common/interfaces/game-mode-display';
+
 export type GameSizeId = 'Small' | 'Medium' | 'Large';
 export type GameModeValue = 'classic' | 'ctf';
 
-export const GAME_MODES_DISPLAY = [
-    { value: 'classic' as const, label: 'Classique', disabled: false },
-    { value: 'ctf' as const, label: 'Capture du drapeau', disabled: false },
+export const GAME_MODES_DISPLAY: GameModeDisplay[] = [
+    { value: 'classic', label: 'Classique', disabled: false },
+    { value: 'ctf', label: 'Capture du drapeau', disabled: false },
 ];
 
 export const GAME_SIZES_DISPLAY = [
