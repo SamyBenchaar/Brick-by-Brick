@@ -26,6 +26,9 @@ export class MapValidationService {
         // Validation: Tous les sanctuaires doivent être accessibles
         errors.push(...this.validateSanctuaries(gameData));
 
+        // Validation: Le drapeau doit être placé en mode CTF
+        errors.push(...this.validateFlagForCTF(gameData));
+
         return errors;
     }
 
@@ -243,5 +246,25 @@ export class MapValidationService {
             }
         }
         return true;
+    }
+
+    private validateFlagForCTF(gameData: Partial<Game>): string[] {
+        if (gameData.gameMode !== 'ctf') {
+            return [];
+        }
+        const tiles = gameData.mapConfig.tiles;
+        let flagCount = 0;
+
+        for (const row of tiles) {
+            for (const tile of row) {
+                if (tile.object?.type === ObjectType.Flag) {
+                    flagCount++;
+                }
+            }
+        }
+        if (flagCount === 0) {
+            return ['En mode CTF, le drapeau doit être placé sur la carte.'];
+        }
+        return [];
     }
 }

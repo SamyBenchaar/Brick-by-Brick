@@ -55,21 +55,24 @@ export interface CombatRoundResolvedPayload {
     defenderLife: number;
 }
 
-export interface CombatEndedPayload {
+export interface CombatResultPayload { 
+    attackerId: string;
+    defenderId: string; 
     winnerId: string | null;
     loserIds: string[];
-    outcome: CombatOutcome;
-    attackerPosition: Position | null;
-    defenderPosition: Position | null;
+    outcome: 'attacker' | 'defender' | 'draw';
+    attackerPosition: Position;
+    defenderPosition: Position;
     attackerLife: number;
     defenderLife: number;
     attackerVictories: number;
     defenderVictories: number;
-    flagPosition: Position | null;
     remainingActions: number;
-    turnShouldContinue: boolean;
     remainingTurnTime: number;
-}
+    turnShouldContinue: boolean;
+    flagPosition: Position | null;
+    flagHolderId: string | null;
+};
 
 export interface SubmitCombatChoicePayload {
     roomId: string;

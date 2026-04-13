@@ -69,6 +69,13 @@ export class GameViewComponent implements OnInit, OnDestroy {
     const combatTime = this.combatSocketService.combatTurnTimeRemaining();
     return combatTime === null ? '--' : `${combatTime}s`;
   });
+
+  combatNotification = computed(() => this.combatSocketService.combatNotification());
+
+  closeCombatNotification(): void {
+    this.combatSocketService.clearCombatNotification();
+  }
+
   ngOnInit(): void {
     if (!this.gameSessionSocketService.currentSession() || !this.gamePlaySocketService.mapCopy()) {
       this.router.navigate(['/']);
@@ -96,6 +103,7 @@ export class GameViewComponent implements OnInit, OnDestroy {
     }, { injector: this.injector });
 
     window.addEventListener('beforeunload', this.handleBeforeUnload);
+    window.addEventListener('popstate', this.handleBackButton);
   }
 
   @HostListener('window:keyup', ['$event'])
@@ -129,6 +137,10 @@ export class GameViewComponent implements OnInit, OnDestroy {
   }
 
   handleBeforeUnload = (): void => {
+    this.gameSessionSocketService.abandonGame();
+  };
+
+  handleBackButton = (): void => {
     this.gameSessionSocketService.abandonGame();
   };
 
@@ -271,6 +283,7 @@ export class GameViewComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.routeSubscription?.unsubscribe();
     window.removeEventListener('beforeunload', this.handleBeforeUnload);
+    window.removeEventListener('popstate', this.handleBackButton);
   }
   leaveGameSession(): void {
     this.gameSessionSocketService.leaveGameSession();

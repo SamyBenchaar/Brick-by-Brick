@@ -7,13 +7,16 @@ import { CombatSocketService } from '@app/services/communication/game-session-so
 import { FlagTransferSocketService } from '@app/services/communication/game-session-socket/flag-transfer-socket.service';
 import { GamePlaySocketService } from '@app/services/communication/game-session-socket/game-play-socket.service';
 import type { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
+import { handleCombatResult, handleTurnEnded} from '@app/services/communication/gameplay-listeners/gameplay-listeners-helper.service';
 import { SocketService } from '@app/services/communication/socket/socket.service';
-import { CombatRoundResolvedPayload } from '@common/combat';
 import { CTF_VICTORY_ANNOUNCE_DELAY } from '@common/constants/game-config-constants';
+import { ORIGIN_CANDIDATES, SANCTUARY_COOLDOWN_TURNS, SANCTUARY_TILE_OFFSETS } from '@common/constants/santuary-constants';
 import { CombatEvents, GameSessionEvents } from '@common/game.events';
+import { ObjectType, TileType } from '@common/map';
 import { Position } from '@common/position';
-import { SANCTUARY_COOLDOWN_TURNS, SANCTUARY_TILE_OFFSETS, ORIGIN_CANDIDATES } from '@common/constants/santuary-constants';
-import { ObjectType } from '@common/map';
+import { Player } from '@common/player';
+import { setupCombatListeners } from './combat-listener';
+import {CombatResultPayload} from '@common/combat';
 
 interface GameplayListenersContext {
     gamePlaySocketService: GamePlaySocketService;
@@ -87,29 +90,7 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
     });
 
     socketService.on<{ playerId: string }>(GameSessionEvents.TurnEnded, () => {
-        service.currentPlayerTurn.set(null);
-        service.reachableTiles.set([]);
-        dialog.getDialogById('sanctuary-dialog')?.close('dismiss');
-        const pendingDialogs = flagTransferService.getPendingFlagTransferDialogs();
-        pendingDialogs.forEach(([, data]) => {
-            data.dialogRef.close(false);
-            service.respondToFlagTransfer(data.fromPlayerId, false);
-        });
-        flagTransferService.clearAllPendingFlagTransfers();
-        const currentMap = service.mapCopy();
-        if (currentMap) {
-            let changed = false;
-            for (const row of currentMap.mapConfig.tiles) {
-                for (const tile of row) {
-                    if (tile.sanctuaryCooldown && ((tile.sanctuaryCooldown ?? 0) > 0)) {
-                        tile.sanctuaryCooldown--;
-                        if (tile.sanctuaryCooldown === 0) delete tile.sanctuaryCooldown;
-                        changed = true;
-                    }
-                }
-            }
-            if (changed) service.mapCopy.set({ ...currentMap });
-        }
+        handleTurnEnded(service, dialog, flagTransferService);
     });
 
     socketService.on<{ playerId: string; position: Position; remainingMovement: number; remainingActions: number }>(
@@ -157,74 +138,11 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
         },
     );
 
-    socketService.on<{
-        attackerId: string;
-        defenderId: string;
-        initiatorId: string;
-        roundNumber: number;
-        attackerPosture?: string;
-        defenderPosture?: string;
-        attackerHp: number;
-        defenderHp: number;
-    }>(CombatEvents.CombatStarted, (data) => {
-        service.reachableTiles.set([]);
-        combatSocketService.activeCombat.set(data);
-        combatSocketService.latestRound.set(null);
-    });
+    setupCombatListeners(socketService, service, gameSessionSocketService, combatSocketService);
 
-    socketService.on<{ timeRemaining: number }>(CombatEvents.CombatTurnStarted, (payload) => {
-        combatSocketService.combatTurnTimeRemaining.set(payload.timeRemaining);
+    socketService.on<CombatResultPayload>(CombatEvents.CombatResult, (data) => {
+        handleCombatResult(data, service, gameSessionSocketService, combatSocketService);
     });
-
-    socketService.on<{ timeRemaining: number }>(CombatEvents.CombatTurnTimeUpdate, (payload) => {
-        combatSocketService.combatTurnTimeRemaining.set(payload.timeRemaining);
-    });
-
-    socketService.on<CombatRoundResolvedPayload>(CombatEvents.CombatRoundResolved, (data) => {
-        combatSocketService.latestRound.set(data);
-        combatSocketService.activeCombat.update(current => current ? {
-            ...current,
-            attackerHp: data.attackerLife,
-            defenderHp: data.defenderLife,
-            roundNumber: data.roundNumber,
-            attackerPosture: undefined,
-            defenderPosture: undefined,
-        } : null);
-    });
-
-    socketService.on<{
-        winner: string;
-        loser: string;
-        attackerVictories: number;
-        defenderNewPosition: Position;
-        remainingActions: number;
-    }>(CombatEvents.CombatResult, (data) => {
-        service.reachableTiles.set([]);
-        combatSocketService.activeCombat.set(null);
-        combatSocketService.latestRound.set(null);
-        combatSocketService.combatTurnTimeRemaining.set(null);
-        const session = service.currentSession();
-        if (session) {
-            const attacker = session.players.find(p => p.character.id === data.winner);
-            const defender = session.players.find(p => p.character.id === data.loser);
-            if (attacker) {
-                attacker.character.victories = data.attackerVictories;
-                attacker.character.remainingActions = data.remainingActions;
-            }
-            if (defender) {
-                defender.character.position = data.defenderNewPosition;
-            }
-            gameSessionSocketService.currentSession.set({ ...session });
-        }
-    });
-
-    socketService.on(CombatEvents.CombatEnded, () => {
-        service.reachableTiles.set([]);
-        combatSocketService.activeCombat.set(null);
-        combatSocketService.latestRound.set(null);
-        combatSocketService.combatTurnTimeRemaining.set(null);
-    });
-
     socketService.on<{
         position: Position, newDoorState: string, remainingActions: number, interactionType: string,
         newLife?: number, newAttack?: number, newDefense?: number
@@ -294,7 +212,7 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
 
     socketService.on<{
         winner:
-        { id: string; name: string; avatarId: number } | null; winningTeam?: 'team1' | 'team2'; gameMode?: string; reason: string
+        { id: string; name: string; avatarId: number } | null; winningTeam?: 'team1' | 'team2'; gameMode?: string; reason: string; players?: Player[];
     }>(
         GameSessionEvents.GameEnded,
         (data) => {
@@ -335,14 +253,32 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
             const delay = data.gameMode === 'ctf' && data.reason === 'victory' ? CTF_VICTORY_ANNOUNCE_DELAY : gameSessionSocketService.endGameDelay;
 
             setTimeout(() => {
-                router.navigate(['/']).then(() => {
-                    dialog.open(AppDialogComponent, {
-                        data: { title, message, type: data.reason === 'victory' ? 'info' : 'info' },
-                        disableClose: true,
-                    });
+                if (data.reason === 'victory') {
+                    const session = service.currentSession();
+                    const tiles= service.mapCopy()?.mapConfig.tiles;
+                    const walkableTiles= tiles?.flat().filter(t => 
+                        t.type === TileType.Base || t.type === TileType.Water || t.type === TileType.Ice).length;
                     service.gameEnded.set(false);
                     gameSessionSocketService.currentSession.set(null);
-                });
+                    router.navigate(['/game-statistics'],{
+                        state:{
+                            players: [...(data.players ?? session?.players ?? []), ...(session?.leftPlayers ?? [])],
+                            winner : data.winner,
+                            winningTeam: data.winningTeam,
+                            gameMode: data.gameMode,
+                            walkableTiles,
+                        },
+                    });
+                }else{
+                    router.navigate(['/']).then(() => {
+                        dialog.open(AppDialogComponent, {
+                            data: { title, message, type: data.reason === 'victory' ? 'info' : 'info' },
+                            disableClose: true,
+                        });
+                        service.gameEnded.set(false);
+                        gameSessionSocketService.currentSession.set(null);
+                    });
+                }
             }, delay);
         },
     );

@@ -1,0 +1,53 @@
+import { Component, Input } from '@angular/core';
+import {Player} from '@common/player';
+import {PERCENTAGE_MULTIPLIER} from '@app/constants/statistics-constants';
+
+type SortColumn = 'combats' | 'victories' | 'defeats' | 'lifeLost' | 'damageDealt' | 'tilesVisited';
+type SortDirection = 'asc' | 'desc';
+@Component({
+  selector: 'app-player-statistics',
+  imports: [],
+  templateUrl: './player-statistics.component.html',
+  styleUrl: './player-statistics.component.scss',
+})
+export class PlayerStatisticsComponent {
+  @Input() players: Player[]=[];
+  @Input() walkableTiles: number=0;
+  @Input() gameMode: string='classic';
+  @Input() winner: {id:string; name:string; avatarId:number} | null=null;
+  @Input() winningTeam: 'team1' | 'team2' | undefined=undefined;
+
+  sortColumn: SortColumn | null =null;
+  sortDirection: SortDirection = 'asc';
+
+  get sortedPlayers(): Player[] {
+        if (!this.sortColumn) return this.players;
+    return [...this.players].sort((a, b) => {
+      const aVal = this.getSortValue(a);
+      const bVal = this.getSortValue(b);
+      return this.sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
+    });
+  }
+
+  sort(column: SortColumn, direction: SortDirection): void {
+    this.sortColumn = column;
+    this.sortDirection = direction;
+  }
+
+  private getSortValue(player: Player): number {
+    const c = player.character;
+    switch (this.sortColumn) {
+      case 'combats': return (c.victories ?? 0) + (c.defeats ?? 0);
+      case 'victories': return c.victories ?? 0;
+      case 'defeats': return c.defeats ?? 0;
+      case 'lifeLost': return c.totalDamageReceived ?? 0;
+      case 'damageDealt': return c.totalDamageDealt ?? 0;
+      case 'tilesVisited': return this.getTilesPercentage(c.tilesVisited ?? 0);
+      default: return 0;
+    }
+  }
+  getTilesPercentage(tilesVisited: number):number {
+    if (this.walkableTiles === 0) return 0;
+    return Math.round((tilesVisited/this.walkableTiles)*PERCENTAGE_MULTIPLIER);
+  }
+}

@@ -65,7 +65,11 @@ export class CharacterCreationPageComponent implements OnInit {
                 this.fromGameCreation = true;
             }
 
-            if (this.roomId) {
+            if (this.roomId && !this.fromGameCreation) {
+                this.gameSessionSocketService.leaveGameSession();
+                this.gameSessionSocketService.observeGameSession(this.roomId);
+                this.character = this.createBaseCharacter(AVATARS[0].id);
+            } else if (this.roomId) {
                 this.gameSessionSocketService.observeGameSession(this.roomId);
 
                 effect(() => {
@@ -105,6 +109,10 @@ export class CharacterCreationPageComponent implements OnInit {
             defenseDice: Dice.D6,
             isActif: false,
             battlesWon: 0,
+            defeats: 0,
+            totalDamageDealt: 0,
+            totalDamageReceived: 0,
+            tilesVisited: 0,
         };
     }
 
@@ -196,6 +204,7 @@ export class CharacterCreationPageComponent implements OnInit {
                 }
             }, { injector: this.injector });
         } else if (this.roomId) {
+            this.gameSessionSocketService.leaveGameSession();
             this.gameSessionSocketService.joinGameSession(this.roomId, this.character);
             sessionStorage.setItem(WAITING_ROOM_ACCESS_KEY, 'true');
             this.router.navigate(['/waiting-room', this.roomId]);
