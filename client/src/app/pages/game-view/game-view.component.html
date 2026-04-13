@@ -73,6 +73,8 @@
                     [flagPosition]="gameSessionSocketService.currentSession()?.flagPosition ?? null"
                     [reachableTiles]="gamePlaySocketService.reachableTiles()"
                     [isActionSelectionMode]="isActionSelectionMode()"
+                    [startingPoints]="gameSessionSocketService.currentSession()?.startingPoints ?? null"
+                    [currentPlayerId]="currentPlayer()?.character?.id ?? ''"
                     (attackTargetSelected)="onAttackTargetSelected($event)"
                     (actionTargetSelected)="onActionTargetSelected($event)">
                 </app-game-grid>

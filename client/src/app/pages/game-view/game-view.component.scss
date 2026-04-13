@@ -15,18 +15,6 @@ $turn-info-color: #f88400ec;
     background-size: cover;
 }
 
-.page-container.in-combat::after {
-    content: "";
-    position: fixed;
-    inset: 0;
-
-    backdrop-filter: blur(6px);
-    background: rgba(0, 0, 0, 0.15);
-
-    z-index: 5;
-    pointer-events: none;
-}
-
 .top-bar {
     display: flex;
     align-items: center;
@@ -39,29 +27,6 @@ $turn-info-color: #f88400ec;
     left: 45%;
     position: absolute;
     font-size: 20px;
-}
-
-.return-button    {
-    height: 50px;
-    padding: 14px 20px;
-}
-
-.chat-sidebar,
-.return-button {
-    position: relative;
-    z-index: 20;
-}
-
-.chat-sidebar,
-.return-button,
-app-combat-view {
-    pointer-events: auto;
-}
-
-app-combat-view {
-    position: fixed;
-    inset: 0;
-    z-index: 10;
 }
 
 .info-panel {
@@ -180,7 +145,7 @@ app-combat-view {
 .turn-info {
     border: none;
     background-size: 100% 100%;
-    z-index: 5;
+    z-index: 10;
     text-align: center;
     color: white;
 

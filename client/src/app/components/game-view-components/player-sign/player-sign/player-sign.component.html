@@ -10,7 +10,10 @@
                      [src]="avatar?.image" 
                      [alt]="player?.character?.name" />
             </div>
-            <span class="player-name">{{ player?.character?.name }}</span>
+            <div class="player-name-section">
+                <span class="player-name">{{ player?.character?.name }}</span>
+                <span class="starting-point-info">Point de départ: <img [src]="'assets/images/your_startingpoint.png'" alt="Starting point" class="starting-point-icon" /></span>
+            </div>
         </div>
 
         <div class="stats-grid">
