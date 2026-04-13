@@ -7,14 +7,16 @@ import { CombatSocketService } from '@app/services/communication/game-session-so
 import { FlagTransferSocketService } from '@app/services/communication/game-session-socket/flag-transfer-socket.service';
 import { GamePlaySocketService } from '@app/services/communication/game-session-socket/game-play-socket.service';
 import type { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
+import { handleCombatResult, handleTurnEnded} from '@app/services/communication/gameplay-listeners/gameplay-listeners-helper.service';
 import { SocketService } from '@app/services/communication/socket/socket.service';
 import { CTF_VICTORY_ANNOUNCE_DELAY } from '@common/constants/game-config-constants';
-import { GameSessionEvents } from '@common/game.events';
-import { Position } from '@common/position';
-import { SANCTUARY_COOLDOWN_TURNS, SANCTUARY_TILE_OFFSETS, ORIGIN_CANDIDATES } from '@common/constants/santuary-constants';
+import { ORIGIN_CANDIDATES, SANCTUARY_COOLDOWN_TURNS, SANCTUARY_TILE_OFFSETS } from '@common/constants/santuary-constants';
+import { CombatEvents, GameSessionEvents } from '@common/game.events';
 import { ObjectType, TileType } from '@common/map';
+import { Position } from '@common/position';
 import { Player } from '@common/player';
 import { setupCombatListeners } from './combat-listener';
+import {CombatResultPayload} from '@common/combat';
 
 interface GameplayListenersContext {
     gamePlaySocketService: GamePlaySocketService;
@@ -88,29 +90,7 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
     });
 
     socketService.on<{ playerId: string }>(GameSessionEvents.TurnEnded, () => {
-        service.currentPlayerTurn.set(null);
-        service.reachableTiles.set([]);
-        dialog.getDialogById('sanctuary-dialog')?.close('dismiss');
-        const pendingDialogs = flagTransferService.getPendingFlagTransferDialogs();
-        pendingDialogs.forEach(([, data]) => {
-            data.dialogRef.close(false);
-            service.respondToFlagTransfer(data.fromPlayerId, false);
-        });
-        flagTransferService.clearAllPendingFlagTransfers();
-        const currentMap = service.mapCopy();
-        if (currentMap) {
-            let changed = false;
-            for (const row of currentMap.mapConfig.tiles) {
-                for (const tile of row) {
-                    if (tile.sanctuaryCooldown && ((tile.sanctuaryCooldown ?? 0) > 0)) {
-                        tile.sanctuaryCooldown--;
-                        if (tile.sanctuaryCooldown === 0) delete tile.sanctuaryCooldown;
-                        changed = true;
-                    }
-                }
-            }
-            if (changed) service.mapCopy.set({ ...currentMap });
-        }
+        handleTurnEnded(service, dialog, flagTransferService);
     });
 
     socketService.on<{ playerId: string; position: Position; remainingMovement: number; remainingActions: number }>(
@@ -160,6 +140,9 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
 
     setupCombatListeners(socketService, service, gameSessionSocketService, combatSocketService);
 
+    socketService.on<CombatResultPayload>(CombatEvents.CombatResult, (data) => {
+        handleCombatResult(data, service, gameSessionSocketService, combatSocketService);
+    });
     socketService.on<{
         position: Position, newDoorState: string, remainingActions: number, interactionType: string,
         newLife?: number, newAttack?: number, newDefense?: number

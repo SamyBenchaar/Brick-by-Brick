@@ -69,6 +69,13 @@ export class GameViewComponent implements OnInit, OnDestroy {
     const combatTime = this.combatSocketService.combatTurnTimeRemaining();
     return combatTime === null ? '--' : `${combatTime}s`;
   });
+
+  combatNotification = computed(() => this.combatSocketService.combatNotification());
+
+  closeCombatNotification(): void {
+    this.combatSocketService.clearCombatNotification();
+  }
+
   ngOnInit(): void {
     if (!this.gameSessionSocketService.currentSession() || !this.gamePlaySocketService.mapCopy()) {
       this.router.navigate(['/']);
