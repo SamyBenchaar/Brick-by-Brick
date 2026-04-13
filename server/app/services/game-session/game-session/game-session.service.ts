@@ -1,6 +1,6 @@
 import { GameSession } from '@app/domain/game-session';
 import { TileDto } from '@app/dto/tile.dto';
-import { CombatResult, GameDataForInit } from '@app/interfaces/game-map-interfaces';
+import { GameDataForInit } from '@app/interfaces/game-map-interfaces';
 import { CombatService } from '@app/services/game-session/combat.service';
 import { MovementService } from '@app/services/game-session/movement.service';
 import { SanctuaryService } from '@app/services/game-session/sanctuary.service';
@@ -213,20 +213,20 @@ export class GameSessionService {
         return success;
     }
 
-    executeCombat(gameSession: GameSession, defenderId: string): CombatResult {
-        const attacker = gameSession.getCurrentPlayer();
-        const defender = gameSession.players.find(p => p.character.id === defenderId)?.character;
-        if (!attacker || !defender) {
-            throw new Error('Invalid player IDs');
-        }
-        if (!this.combatService.canFight(attacker, defender, gameSession)) {
-            throw new Error('Players are not adjacent');
-        }
-        const result = this.combatService.executeCombat(
-            gameSession, attacker, defender, gameSession.getMapCopy(),
-        );
-        return result;
-    }
+    // executeCombat(gameSession: GameSession, defenderId: string): CombatResult {
+    //     const attacker = gameSession.getCurrentPlayer();
+    //     const defender = gameSession.players.find(p => p.character.id === defenderId)?.character;
+    //     if (!attacker || !defender) {
+    //         throw new Error('Invalid player IDs');
+    //     }
+    //     if (!this.combatService.canFight(attacker, defender, gameSession)) {
+    //         throw new Error('Players are not adjacent');
+    //     }
+    //     const result = this.combatService.executeCombat(
+    //         gameSession, attacker, defender, gameSession.getMapCopy(),
+    //     );
+    //     return result;
+    // }
 
     checkGameWinner(gameSession: GameSession): Character | null {
         const players = gameSession.getActivePlayers();
@@ -239,6 +239,9 @@ export class GameSessionService {
         }
 
         const flagHolder = gameSession.getFlagHolderCharacter();
+        if (!flagHolder) {
+            return null;
+        }
 
         const start = gameSession.getStartingPoint(flagHolder.id);
         if (!start || !flagHolder?.position) {

@@ -3,7 +3,7 @@ import { GamePlayHandlerContext } from '@app/gateways/game-session/game-play/gam
 import { GameSessionService } from '@app/services/game-session/game-session/game-session.service';
 import { TurnManagementService } from '@app/services/game-session/turn-management.service';
 import { GameSessionEvents } from '@common/game.events';
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 
 @Injectable()
 export class GamePlayTurnHandler {
@@ -12,6 +12,7 @@ export class GamePlayTurnHandler {
 
     constructor(
         private readonly logger: Logger,
+        @Inject(forwardRef(() => GameSessionService))
         private readonly gameSessionService: GameSessionService,
         private readonly turnManagementService: TurnManagementService,
     ) {}

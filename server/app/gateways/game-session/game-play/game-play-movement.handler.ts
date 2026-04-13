@@ -6,12 +6,13 @@ import { MovementService } from '@app/services/game-session/movement.service';
 import { Character } from '@common/character';
 import { GameSessionEvents } from '@common/game.events';
 import { Position } from '@common/position';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable, forwardRef } from '@nestjs/common';
 import { Socket } from 'socket.io';
 
 @Injectable()
 export class GamePlayMovementHandler {
     constructor(
+        @Inject(forwardRef(() => GameSessionService))
         private readonly gameSessionService: GameSessionService,
         private readonly movementService: MovementService,
     ) {}
