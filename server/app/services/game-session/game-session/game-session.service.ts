@@ -213,20 +213,20 @@ export class GameSessionService {
         return success;
     }
 
-    executeCombat(gameSession: GameSession, defenderId: string): CombatResult {
-        const attacker = gameSession.getCurrentPlayer();
-        const defender = gameSession.players.find(p => p.character.id === defenderId)?.character;
-        if (!attacker || !defender) {
-            throw new Error('Invalid player IDs');
-        }
-        if (!this.combatService.canFight(attacker, defender, gameSession)) {
-            throw new Error('Players are not adjacent');
-        }
-        const result = this.combatService.executeCombat(
-            gameSession, attacker, defender, gameSession.getMapCopy(),
-        );
-        return result;
-    }
+    // executeCombat(gameSession: GameSession, defenderId: string): CombatResult {
+    //     const attacker = gameSession.getCurrentPlayer();
+    //     const defender = gameSession.players.find(p => p.character.id === defenderId)?.character;
+    //     if (!attacker || !defender) {
+    //         throw new Error('Invalid player IDs');
+    //     }
+    //     if (!this.combatService.canFight(attacker, defender, gameSession)) {
+    //         throw new Error('Players are not adjacent');
+    //     }
+    //     const result = this.combatService.executeCombat(
+    //         gameSession, attacker, defender, gameSession.getMapCopy(),
+    //     );
+    //     return result;
+    // }
 
     checkGameWinner(gameSession: GameSession): Character | null {
         const players = gameSession.getActivePlayers();

@@ -20,4 +20,20 @@ export class CombatService {
         return null;
     }
 
+    canFight(attacker: Character, defender: Character, gameSession?: GameSession): boolean {
+        const distance = Math.abs(attacker.position.x - defender.position.x) +
+            Math.abs(attacker.position.y - defender.position.y);
+        const hasActions = attacker.remainingActions !== undefined && attacker.remainingActions > 0;
+
+        if (gameSession?.gameMode === 'ctf' && gameSession.playerTeams) {
+            const attackerTeam = gameSession.playerTeams.get(attacker.id);
+            const defenderTeam = gameSession.playerTeams.get(defender.id);
+            if (attackerTeam && defenderTeam && attackerTeam === defenderTeam) {
+                return false;
+            }
+        }
+
+        return distance === 1 && hasActions;
+    }
+
 }
