@@ -3,7 +3,7 @@
         class="tab button brick-green" 
         (click)="activeTab = messageType.CHAT"
         [class.active]="activeTab === messageType.CHAT">
-        Chat
+        Clavardage
     </button>
     @if (gameSessionSocketService.currentSession()?.status === sessionStatus.Playing) {
     <button 
