@@ -54,6 +54,13 @@
                 </div>
             }
 
+            @if (combatNotification()) {
+                <div class="combat-result-notification">
+                    <button class="combat-result-notification-close" (click)="closeCombatNotification()">×</button>
+                    <p>{{ combatNotification() }}</p>
+                </div>
+            }
+
             <div class="grid-container">
                 @if (gameData) {
                 <app-game-grid 
