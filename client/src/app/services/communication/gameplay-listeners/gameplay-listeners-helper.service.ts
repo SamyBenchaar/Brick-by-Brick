@@ -3,26 +3,7 @@ import { CombatSocketService } from '@app/services/communication/game-session-so
 import { FlagTransferSocketService } from '@app/services/communication/game-session-socket/flag-transfer-socket.service';
 import { GamePlaySocketService } from '@app/services/communication/game-session-socket/game-play-socket.service';
 import type { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
-import { Position } from '@common/position';
-
-export type CombatResultPayload = {
-    attackerId: string;
-    defenderId: string;
-    winnerId: string | null;
-    loserIds: string[];
-    outcome: 'attacker' | 'defender' | 'draw';
-    attackerPosition: Position;
-    defenderPosition: Position;
-    attackerLife: number;
-    defenderLife: number;
-    attackerVictories: number;
-    defenderVictories: number;
-    remainingActions: number;
-    remainingTurnTime: number;
-    turnShouldContinue: boolean;
-    flagPosition: Position | null;
-    flagHolderId: string | null;
-};
+import type { CombatResultPayload } from '@common/combat';
 
 export function handleTurnEnded(
     service: GamePlaySocketService,

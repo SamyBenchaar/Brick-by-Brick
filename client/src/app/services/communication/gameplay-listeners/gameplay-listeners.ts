@@ -7,11 +7,7 @@ import { CombatSocketService } from '@app/services/communication/game-session-so
 import { FlagTransferSocketService } from '@app/services/communication/game-session-socket/flag-transfer-socket.service';
 import { GamePlaySocketService } from '@app/services/communication/game-session-socket/game-play-socket.service';
 import type { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
-import {
-    CombatResultPayload,
-    handleCombatResult,
-    handleTurnEnded,
-} from '@app/services/communication/gameplay-listeners/gameplay-listeners-helper.service';
+import { handleCombatResult, handleTurnEnded} from '@app/services/communication/gameplay-listeners/gameplay-listeners-helper.service';
 import { SocketService } from '@app/services/communication/socket/socket.service';
 import { CTF_VICTORY_ANNOUNCE_DELAY } from '@common/constants/game-config-constants';
 import { ORIGIN_CANDIDATES, SANCTUARY_COOLDOWN_TURNS, SANCTUARY_TILE_OFFSETS } from '@common/constants/santuary-constants';
@@ -20,6 +16,7 @@ import { ObjectType, TileType } from '@common/map';
 import { Position } from '@common/position';
 import { Player } from '@common/player';
 import { setupCombatListeners } from './combat-listener';
+import {CombatResultPayload,} from '@common/combat';
 
 interface GameplayListenersContext {
     gamePlaySocketService: GamePlaySocketService;
