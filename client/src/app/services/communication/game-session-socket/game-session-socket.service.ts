@@ -80,6 +80,26 @@ export class GameSessionSocketService {
     }
 
     private setupEventListeners(): void {
+        this.registerSessionListListeners();
+        this.registerSessionLifecycleListeners();
+        this.registerJoinErrorListener();
+        this.registerRoomStatusListeners();
+        this.registerGameStartedListener();
+
+        setupGameplayEventListeners({
+            gamePlaySocketService: this.gamePlaySocketService,
+            gameSessionSocketService: this,
+            socketService: this.socketService,
+            router: this.router,
+            dialog: this.dialog,
+            flagTransferService: this.flagTransferSocketService,
+            combatSocketService: this.combatSocketService,
+        });
+
+        this.registerAvatarTakenListener();
+    }
+
+    private registerSessionListListeners(): void {
         this.socketService.on<GameSession[]>(GameSessionEvents.GameSessionList, (gameSessions) => {
             this.gameSessions.set(gameSessions);
         });
@@ -87,7 +107,9 @@ export class GameSessionSocketService {
         this.socketService.on<GameSession[]>(GameSessionEvents.GameSessionListUpdated, (gameSessions) => {
             this.gameSessions.set(gameSessions);
         });
+    }
 
+    private registerSessionLifecycleListeners(): void {
         this.socketService.on<GameSession>(GameSessionEvents.GameSessionCreated, (gameSession) => {
             this.gameSessions.update(current => [...current, gameSession]);
             if (!this.currentSession()) {
@@ -123,7 +145,9 @@ export class GameSessionSocketService {
                 this.takenAvatars.set([]);
             }
         });
+    }
 
+    private registerJoinErrorListener(): void {
         this.socketService.on<string>(GameSessionEvents.GameSessionJoinError, (message) => {
             const isSessionFull = message.includes('session de jeu est pleine');
             const isOddPlayersWarning = message.includes('nombre pair de joueurs');
@@ -171,7 +195,9 @@ export class GameSessionSocketService {
                 });
             }
         });
+    }
 
+    private registerRoomStatusListeners(): void {
         this.socketService.on<{ message: string }>(GameSessionEvents.PlayerKicked, (data) => {
             this.currentSession.set(null);
             this.gamePlaySocketService.resetGameplayState();
@@ -196,7 +222,9 @@ export class GameSessionSocketService {
                 });
             });
         });
+    }
 
+    private registerGameStartedListener(): void {
         this.socketService.on<{ roomId: string; mapData: Game; gameSession: GameSession }>(GameSessionEvents.GameStarted, (payload) => {
             const { roomId, mapData, gameSession } = payload;
 
@@ -223,22 +251,12 @@ export class GameSessionSocketService {
             this.gamePlaySocketService.mapCopy.set(mapData);
             this.router.navigate(['/game-view'], { queryParams: { roomId } });
         });
+    }
 
-        setupGameplayEventListeners({
-            gamePlaySocketService: this.gamePlaySocketService,
-            gameSessionSocketService: this,
-            socketService: this.socketService,
-            router: this.router,
-            dialog: this.dialog,
-            flagTransferService: this.flagTransferSocketService,
-            combatSocketService: this.combatSocketService,
-        });
-
+    private registerAvatarTakenListener(): void {
         this.socketService.on<number[]>(GameSessionEvents.AvatarTakenUpdated, (avatarIds) => {
             this.takenAvatars.set(avatarIds);
         });
-
-
     }
 
     requestGameSessionList(): void {
