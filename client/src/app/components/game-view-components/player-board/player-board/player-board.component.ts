@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, Input, inject } from '@angular/core';
 import { BaseSignComponent } from '@app/components/game-view-components/base-sign/base-sign.component';
+import { AVATARS } from '@app/constants/character-constants';
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
 import { Player } from '@common/player';
 
@@ -15,14 +16,10 @@ export class PlayerBoardComponent {
   @Input() leftPlayers: Player[] = [];
   @Input() host: Player | undefined = undefined;
   @Input() gameMode: string = 'classic';
+  @Input() currentPlayerTurn: string | null = null;
   name: string = 'Joueurs';
 
   private gameSessionService = inject(GameSessionSocketService);
-
-  getTeamLabel(player: Player): string {
-    if (!player.character.team) return '';
-    return player.character.team === 'team1' ? 'Équipe 1' : 'Équipe 2';
-  }
 
   isCtfMode(): boolean {
     return this.gameMode === 'ctf';
@@ -65,5 +62,38 @@ export class PlayerBoardComponent {
 
   requestFlagTransfer(targetPlayer: Player): void {
     this.gameSessionService.requestFlagTransfer(targetPlayer.character.id);
+  }
+
+  isVirtualPlayer(player: Player): boolean {
+    return player.virtualProfile !== undefined;
+  }
+
+  isActivePlayer(player: Player): boolean {
+    return player.character.id === this.currentPlayerTurn;
+  }
+
+  getSortedPlayers(): Player[] {
+    const session = this.gameSessionService.currentSession();
+    if (!session?.playerOrder || session.playerOrder.length === 0) {
+      return [...this.players];
+    }
+
+    return [...this.players].sort((a, b) => {
+      const indexA = session.playerOrder.indexOf(a.character.id);
+      const indexB = session.playerOrder.indexOf(b.character.id);
+      
+      if (indexA !== -1 && indexB !== -1) {
+        return indexA - indexB;
+      }
+      
+      if (indexA !== -1) return -1;
+      if (indexB !== -1) return 1;
+      
+      return 0;
+    });
+  }
+
+  getAvatarImage(player: Player): string {
+    return AVATARS.find(a => a.id === player.character.avatarId)?.image ?? './assets/images/lily.jpg';
   }
 }
