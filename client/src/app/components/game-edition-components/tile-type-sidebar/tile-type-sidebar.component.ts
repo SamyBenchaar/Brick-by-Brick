@@ -31,8 +31,8 @@ export class TileTypeSidebarComponent {
   }
 
   getTilePath(tile: TileType): string {
-    // image de porte temporaire
-    return `./assets/images/${tile}.jpg`;
+    if(tile === TileType.Door) return `./assets/images/tiles/closed-${tile}.png`;
+    return `./assets/images/tiles/${tile}.jpg`;
   }
 
 }
