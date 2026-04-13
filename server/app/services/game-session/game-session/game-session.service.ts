@@ -1,6 +1,6 @@
 import { GameSession } from '@app/domain/game-session';
 import { TileDto } from '@app/dto/tile.dto';
-import { CombatResult, GameDataForInit } from '@app/interfaces/game-map-interfaces';
+import { GameDataForInit } from '@app/interfaces/game-map-interfaces';
 import { CombatService } from '@app/services/game-session/combat.service';
 import { MovementService } from '@app/services/game-session/movement.service';
 import { SanctuaryService } from '@app/services/game-session/sanctuary.service';
@@ -239,6 +239,9 @@ export class GameSessionService {
         }
 
         const flagHolder = gameSession.getFlagHolderCharacter();
+        if (!flagHolder) {
+            return null;
+        }
 
         const start = gameSession.getStartingPoint(flagHolder.id);
         if (!start || !flagHolder?.position) {
