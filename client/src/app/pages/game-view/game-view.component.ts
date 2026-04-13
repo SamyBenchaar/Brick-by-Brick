@@ -96,6 +96,7 @@ export class GameViewComponent implements OnInit, OnDestroy {
     }, { injector: this.injector });
 
     window.addEventListener('beforeunload', this.handleBeforeUnload);
+    window.addEventListener('popstate', this.handleBackButton);
   }
 
   @HostListener('window:keyup', ['$event'])
@@ -129,6 +130,10 @@ export class GameViewComponent implements OnInit, OnDestroy {
   }
 
   handleBeforeUnload = (): void => {
+    this.gameSessionSocketService.abandonGame();
+  };
+
+  handleBackButton = (): void => {
     this.gameSessionSocketService.abandonGame();
   };
 
@@ -271,6 +276,7 @@ export class GameViewComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.routeSubscription?.unsubscribe();
     window.removeEventListener('beforeunload', this.handleBeforeUnload);
+    window.removeEventListener('popstate', this.handleBackButton);
   }
   leaveGameSession(): void {
     this.gameSessionSocketService.leaveGameSession();
