@@ -176,13 +176,27 @@
     z-index: 10;
   }
 }
+.tile.interactable-origin {
+  &::after {
+    content: '';
+    position: absolute;
+    width: 190%;
+    height: 190%;
+    top: 0;
+    left: 0;
+    background-color: rgba(255, 162, 0, 0.3);
+    border: 3px solid rgba(255, 177, 31, 0.677);
+    pointer-events: none;
+    z-index: 10;
+  }
+}
 
 .tile-object-multi {
   position: absolute;
   top: 0;
   left: 0;
-  width: 205%;
-  height: 205%;
+  width: 202%;
+  height: 202%;
   object-fit: fill;
   pointer-events: none;
   z-index: 1;

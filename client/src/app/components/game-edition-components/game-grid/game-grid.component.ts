@@ -338,14 +338,8 @@ export class GameGridComponent implements OnInit, OnChanges {
         this.gamePlaySocketService.canRequestFlagFrom(player));
     } else {
         const tile = this.getTile(position);
-        if (!tile) return false;
-        if (tile.type === TileType.Door) {
-          return this.gamePlaySocketService.canPlayerInteractDoor();
-        }
-        if (tile.object === ObjectType.HealingSanctuary || tile.object === ObjectType.CombatSanctuary) {
-          return this.gamePlaySocketService.canPlayerInteractSanctuary();
-        }
-      return false;
+        if(!tile) return false;
+        return this.gamePlaySocketService.canInteractWithTarget(tile, position);
     }
   }
 
