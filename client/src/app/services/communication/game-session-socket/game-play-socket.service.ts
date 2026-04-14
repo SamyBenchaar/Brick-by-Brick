@@ -141,6 +141,11 @@ export class GamePlaySocketService {
         return myPlayer?.character.id === currentPlayerId;
     }
 
+    private canCurrentPlayerAct(): boolean {
+        const player = this.getCurrentPlayerCharacter();
+        return (this.isMyTurn() && (player?.remainingActions ?? 0) > 0 && !this.combatSocketService.activeCombat());
+    }
+
     getCurrentPlayerCharacter(): Character | null {
         const mySocketId = this.getSocketId();
         return this.currentSession()?.players.find((p: Player) => p.socketId === mySocketId)?.character ?? null;
@@ -195,13 +200,9 @@ export class GamePlaySocketService {
     }
 
     canInteractWithTarget(target: Tile, position: Position): boolean {
-        if (this.combatSocketService.activeCombat()) {
-            return false;
-        }
-
         const currentPlayer = this.getCurrentPlayerCharacter();
         const playerPosition = currentPlayer?.position;
-        if (!this.isMyTurn() || !playerPosition || (currentPlayer.remainingActions ?? 0) <= 0) return false;
+        if (!playerPosition || !this.canCurrentPlayerAct()) return false;
 
         if (target.type === TileType.Door) {
             return this.areAdjacent(playerPosition, position) && !this.isFlagOnPosition(position);
@@ -210,7 +211,6 @@ export class GamePlaySocketService {
         if (target.object === ObjectType.HealingSanctuary || target.object === ObjectType.CombatSanctuary) {
             return this.canInteractWithSanctuary(currentPlayer, playerPosition, target, position);
         }
-
         return false;
     }
 
@@ -239,13 +239,9 @@ export class GamePlaySocketService {
     }
 
     canPlayerInteractSanctuary(): boolean {
-        if (this.combatSocketService.activeCombat()) {
-            return false;
-        }
-
         const currentPlayer = this.getCurrentPlayerCharacter();
         const hasBonus = (currentPlayer?.combatSanctuaryBonus !== undefined);
-        if (!this.isMyTurn() || !currentPlayer?.position || (currentPlayer.remainingActions ?? 0) <= 0) return false;
+        if (!currentPlayer?.position || !this.canCurrentPlayerAct()) return false;
         const map = this.mapCopy();
         if (!map) return false;
         const { x, y } = currentPlayer.position;
@@ -254,7 +250,7 @@ export class GamePlaySocketService {
             const tileY = y + offset.y;
             const tile = map.mapConfig.tiles[tileY]?.[tileX];
             const isSanctuary = this.isSanctuary(tile?.object?.type);
-            if (hasBonus && this.isSanctuary(tile?.object?.type)) return false;
+            if (hasBonus && isSanctuary) return false;
             if (!isSanctuary) return false;
             const originPos = this.findSanctuaryOrigin({ x: tileX, y: tileY });
             if (!originPos) return false;
@@ -268,12 +264,8 @@ export class GamePlaySocketService {
     }
 
     canPlayerInteractDoor(): boolean {
-        if (this.combatSocketService.activeCombat()) {
-            return false;
-        }
-
         const currentPlayer = this.getCurrentPlayerCharacter();
-        if (!this.isMyTurn() || !currentPlayer?.position || (currentPlayer.remainingActions ?? 0) <= 0) return false;
+        if (!currentPlayer?.position || !this.canCurrentPlayerAct()) return false;
         const map = this.mapCopy();
         if (!map) return false;
         if (this.areAdjacent(currentPlayer.position,
@@ -283,69 +275,76 @@ export class GamePlaySocketService {
     }
 
     canAttackTarget(target: Character | null): boolean {
-        if (this.combatSocketService.activeCombat() || !target) {
-            return false;
-        }
-
         const currentPlayer = this.getCurrentPlayerCharacter();
-        if (!this.isMyTurn() || !currentPlayer) {
+        if (!this.canCurrentPlayerAct() || !currentPlayer || !target) {
             return false;
         }
-
         return this.canCharacterAttackTarget(currentPlayer, target);
     }
 
     canCurrentPlayerAttack(): boolean {
-        if (this.combatSocketService.activeCombat()) {
-            return false;
-        }
-
         const currentPlayer = this.getCurrentPlayerCharacter();
-        return this.isMyTurn() && currentPlayer?.position != null && currentPlayer.remainingActions != null &&
-            currentPlayer.remainingActions > 0 && this.getAutoAttackTarget() !== null;
+        return this.canCurrentPlayerAct() && currentPlayer?.position != null
+        && this.getAutoAttackTarget() !== null;
     }
 
     canTransferFlagTo(target: Character | null): boolean {
-        if (this.combatSocketService.activeCombat()) return false;
         if (this.currentSession()?.gameMode !== 'ctf') return false;
-        if (!target) return false;
-
         const currentPlayer = this.getCurrentPlayerCharacter();
-        if (!currentPlayer) return false;
+        if (!currentPlayer || !target) return false;
 
-        const canTransfer = (
-            currentPlayer.hasFlag === true && target.hasFlag === false
-        ) || (
-                currentPlayer.hasFlag === false && target.hasFlag === true
-            );
+        const canTransfer = (currentPlayer.hasFlag === true && target.hasFlag === false) || 
+            (currentPlayer.hasFlag === false && target.hasFlag === true);
 
         return (
             canTransfer &&
-            this.isMyTurn() &&
+            this.canCurrentPlayerAct() &&
             this.isValidFlagTransferTarget(currentPlayer, target)
         );
+    }
+
+    canRequestFlagFrom(targetcharacter: Character): boolean {
+        if (this.currentSession()?.gameMode !== 'ctf') return false;
+    
+        const currentPlayer = this.getCurrentPlayerCharacter();
+        if (!currentPlayer) return false;
+
+        const hasValidFlagState  =
+            !currentPlayer.hasFlag &&
+            !!targetcharacter.hasFlag;
+
+        return (hasValidFlagState &&
+            this.canCurrentPlayerAct() &&
+            this.isValidFlagTransferTarget(currentPlayer, targetcharacter));
     }
 
     private isValidFlagTransferTarget(currentPlayer: Character, target: Character): boolean {
         if (currentPlayer.position === undefined || target.position === undefined) {
             return false;
         }
-
         if (target.id === currentPlayer.id || currentPlayer.team !== target.team) {
             return false;
         }
 
-        if ((currentPlayer.remainingActions ?? 0) <= 0) {
+        if (!this.areAdjacent(currentPlayer.position, target.position)) {
             return false;
         }
-
-        const distance = Math.abs(currentPlayer.position.x - target.position.x) +
-            Math.abs(currentPlayer.position.y - target.position.y);
-        if (distance !== 1) {
-            return false;
-        }
-
         return true;
+    }
+
+    canPlayerInteractFlag(): boolean {
+        const currentPlayer = this.getCurrentPlayerCharacter();
+        if (!this.canCurrentPlayerAct() || !currentPlayer) {
+            return false;
+        }
+
+        const session = this.currentSession();
+        if (!session) return false;
+
+        return session.players.some(player => {
+            const character = player.character;
+            return character.id !== currentPlayer.id && this.canTransferFlagTo(character) || this.canRequestFlagFrom(character);
+        });
     }
 
     private areAdjacent(positionA: Position, positionB: Position): boolean {
