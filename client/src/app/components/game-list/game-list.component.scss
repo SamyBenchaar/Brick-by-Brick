@@ -28,6 +28,11 @@
       background-color: rgba(145, 217, 147, 0.8);
     }
 
+    &.not-visible {
+      opacity: 0.5;
+      filter: grayscale(100%);
+    }
+
   }
 
   .game-content {
