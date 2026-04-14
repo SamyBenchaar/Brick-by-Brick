@@ -207,7 +207,7 @@ export class GameViewComponent implements OnInit, OnDestroy {
       data: dialogData,
       disableClose: true,
     }).afterClosed().subscribe((confirmed: boolean) => {
-      if (confirmed) {
+      if (confirmed === true) {
         this.gameSessionSocketService.abandonGame();
       }
     });
@@ -247,8 +247,8 @@ export class GameViewComponent implements OnInit, OnDestroy {
           message: 'Choisissez votre mode d\'interaction.',
           type: 'info',
           confirmText: 'Normal',
-          cancelText: 'Double ou rien',
-          thirdOptionText: 'Annuler',
+          thirdOptionText: 'Double ou rien',
+          cancelText: 'Annuler',
         },
       });
       ref.afterClosed().subscribe((result) => {
