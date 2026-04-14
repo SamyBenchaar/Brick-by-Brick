@@ -309,7 +309,7 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
 
         dialogRef.afterClosed().subscribe((accepted: boolean) => {
             flagTransferService.removePendingFlagTransferDialog(toPlayer.character.id);
-            service.respondToFlagTransfer(data.fromPlayerId, accepted ?? false);
+            service.respondToFlagTransfer(data.fromPlayerId, accepted === true);
         });
     });
 
