@@ -11,6 +11,7 @@ import { Player } from '@common/player';
 import { Position } from '@common/position';
 import { CombatSocketService } from './combat-socket.service';
 import { GameSessionSocketService } from './game-session-socket.service';
+import {FLAG_TRANSFER_TIMEOUT_MS} from '@app/constants/flag-transfer-constants';
 
 @Injectable({
     providedIn: 'root',
@@ -77,6 +78,9 @@ export class GamePlaySocketService {
         }
     }
     requestMove(direction: string): void {
+        if (this.pendingFlagTransfers.size > 0) {
+            return;
+        }
         if (!this.combatSocketService.activeCombat()) {
             const currentRoomId = this.gameSessionSocketService.getRoomId();
             if (currentRoomId) {
@@ -110,6 +114,13 @@ export class GamePlaySocketService {
         if (!this.combatSocketService.activeCombat()) {
             const currentRoomId = this.getRoomId();
             if (currentRoomId) {
+                this.pendingFlagTransfers.set(toPlayerId, true);
+
+                const timeout = setTimeout(() => {
+                    this.pendingFlagTransfers.delete(toPlayerId);
+                }, FLAG_TRANSFER_TIMEOUT_MS);
+
+                this.pendingFlagTransferTimeouts.set(toPlayerId, timeout);
                 this.socketService.emit(GameSessionEvents.RequestFlagTransfer, { roomId: currentRoomId, toPlayerId });
             }
         }
@@ -139,6 +150,11 @@ export class GamePlaySocketService {
         const mySocketId = this.getSocketId();
         const myPlayer = this.currentSession()?.players.find((p: Player) => p.socketId === mySocketId);
         return myPlayer?.character.id === currentPlayerId;
+    }
+
+    private canCurrentPlayerAct(): boolean {
+        const player = this.getCurrentPlayerCharacter();
+        return (this.isMyTurn() && (player?.remainingActions ?? 0) > 0 && !this.combatSocketService.activeCombat());
     }
 
     getCurrentPlayerCharacter(): Character | null {
@@ -195,13 +211,9 @@ export class GamePlaySocketService {
     }
 
     canInteractWithTarget(target: Tile, position: Position): boolean {
-        if (this.combatSocketService.activeCombat()) {
-            return false;
-        }
-
         const currentPlayer = this.getCurrentPlayerCharacter();
         const playerPosition = currentPlayer?.position;
-        if (!this.isMyTurn() || !playerPosition || (currentPlayer.remainingActions ?? 0) <= 0) return false;
+        if (!playerPosition || !this.canCurrentPlayerAct()) return false;
 
         if (target.type === TileType.Door) {
             return this.areAdjacent(playerPosition, position) && !this.isFlagOnPosition(position);
@@ -210,7 +222,6 @@ export class GamePlaySocketService {
         if (target.object === ObjectType.HealingSanctuary || target.object === ObjectType.CombatSanctuary) {
             return this.canInteractWithSanctuary(currentPlayer, playerPosition, target, position);
         }
-
         return false;
     }
 
@@ -239,13 +250,9 @@ export class GamePlaySocketService {
     }
 
     canPlayerInteractSanctuary(): boolean {
-        if (this.combatSocketService.activeCombat()) {
-            return false;
-        }
-
         const currentPlayer = this.getCurrentPlayerCharacter();
         const hasBonus = (currentPlayer?.combatSanctuaryBonus !== undefined);
-        if (!this.isMyTurn() || !currentPlayer?.position || (currentPlayer.remainingActions ?? 0) <= 0) return false;
+        if (!currentPlayer?.position || !this.canCurrentPlayerAct()) return false;
         const map = this.mapCopy();
         if (!map) return false;
         const { x, y } = currentPlayer.position;
@@ -254,7 +261,7 @@ export class GamePlaySocketService {
             const tileY = y + offset.y;
             const tile = map.mapConfig.tiles[tileY]?.[tileX];
             const isSanctuary = this.isSanctuary(tile?.object?.type);
-            if (hasBonus && this.isSanctuary(tile?.object?.type)) return false;
+            if (hasBonus && isSanctuary) return false;
             if (!isSanctuary) return false;
             const originPos = this.findSanctuaryOrigin({ x: tileX, y: tileY });
             if (!originPos) return false;
@@ -268,12 +275,8 @@ export class GamePlaySocketService {
     }
 
     canPlayerInteractDoor(): boolean {
-        if (this.combatSocketService.activeCombat()) {
-            return false;
-        }
-
         const currentPlayer = this.getCurrentPlayerCharacter();
-        if (!this.isMyTurn() || !currentPlayer?.position || (currentPlayer.remainingActions ?? 0) <= 0) return false;
+        if (!currentPlayer?.position || !this.canCurrentPlayerAct()) return false;
         const map = this.mapCopy();
         if (!map) return false;
         if (this.areAdjacent(currentPlayer.position,
@@ -283,69 +286,82 @@ export class GamePlaySocketService {
     }
 
     canAttackTarget(target: Character | null): boolean {
-        if (this.combatSocketService.activeCombat() || !target) {
-            return false;
-        }
-
         const currentPlayer = this.getCurrentPlayerCharacter();
-        if (!this.isMyTurn() || !currentPlayer) {
+        if (!this.canCurrentPlayerAct() || !currentPlayer || !target) {
             return false;
         }
-
         return this.canCharacterAttackTarget(currentPlayer, target);
     }
 
     canCurrentPlayerAttack(): boolean {
-        if (this.combatSocketService.activeCombat()) {
-            return false;
-        }
-
         const currentPlayer = this.getCurrentPlayerCharacter();
-        return this.isMyTurn() && currentPlayer?.position != null && currentPlayer.remainingActions != null &&
-            currentPlayer.remainingActions > 0 && this.getAutoAttackTarget() !== null;
+        return this.canCurrentPlayerAct() && currentPlayer?.position != null
+            && this.getAutoAttackTarget() !== null;
     }
 
     canTransferFlagTo(target: Character | null): boolean {
-        if (this.combatSocketService.activeCombat()) return false;
         if (this.currentSession()?.gameMode !== 'ctf') return false;
-        if (!target) return false;
+        const currentPlayer = this.getCurrentPlayerCharacter();
+        if (!currentPlayer || !target) return false;
+
+        // Disable if there's a pending flag transfer request to this target
+        if (this.pendingFlagTransfers.has(target.id)) return false;
+
+        const canTransfer = (currentPlayer.hasFlag === true && target.hasFlag === false) ||
+            (currentPlayer.hasFlag === false && target.hasFlag === true);
+
+        return (
+            canTransfer &&
+            this.canCurrentPlayerAct() &&
+            this.isValidFlagTransferTarget(currentPlayer, target)
+        );
+    }
+
+    canRequestFlagFrom(targetcharacter: Character): boolean {
+        if (this.currentSession()?.gameMode !== 'ctf') return false;
+
+        // Disable if there's a pending flag transfer request to this target
+        if (this.pendingFlagTransfers.has(targetcharacter.id)) return false;
 
         const currentPlayer = this.getCurrentPlayerCharacter();
         if (!currentPlayer) return false;
 
-        const canTransfer = (
-            currentPlayer.hasFlag === true && target.hasFlag === false
-        ) || (
-                currentPlayer.hasFlag === false && target.hasFlag === true
-            );
+        const hasValidFlagState =
+            !currentPlayer.hasFlag &&
+            !!targetcharacter.hasFlag;
 
-        return (
-            canTransfer &&
-            this.isMyTurn() &&
-            this.isValidFlagTransferTarget(currentPlayer, target)
-        );
+        return (hasValidFlagState &&
+            this.canCurrentPlayerAct() &&
+            this.isValidFlagTransferTarget(currentPlayer, targetcharacter));
     }
 
     private isValidFlagTransferTarget(currentPlayer: Character, target: Character): boolean {
         if (currentPlayer.position === undefined || target.position === undefined) {
             return false;
         }
-
         if (target.id === currentPlayer.id || currentPlayer.team !== target.team) {
             return false;
         }
 
-        if ((currentPlayer.remainingActions ?? 0) <= 0) {
+        if (!this.areAdjacent(currentPlayer.position, target.position)) {
             return false;
         }
-
-        const distance = Math.abs(currentPlayer.position.x - target.position.x) +
-            Math.abs(currentPlayer.position.y - target.position.y);
-        if (distance !== 1) {
-            return false;
-        }
-
         return true;
+    }
+
+    canPlayerInteractFlag(): boolean {
+        const currentPlayer = this.getCurrentPlayerCharacter();
+        if (!this.canCurrentPlayerAct() || !currentPlayer) {
+            return false;
+        }
+
+        const session = this.currentSession();
+        if (!session) return false;
+
+        return session.players.some(player => {
+            const character = player.character;
+            return character.id !== currentPlayer.id && this.canTransferFlagTo(character) || this.canRequestFlagFrom(character);
+        });
     }
 
     private areAdjacent(positionA: Position, positionB: Position): boolean {
@@ -371,33 +387,6 @@ export class GamePlaySocketService {
         return this.gameSessionSocketService.isCurrentUserHost();
     }
 
-    setPendingFlagTransferDialog(toPlayerId: string, dialogRef: unknown, fromPlayerId: string): void {
-        this.pendingFlagTransfers.set(toPlayerId, { dialogRef, fromPlayerId });
-    }
-
-    removePendingFlagTransferDialog(toPlayerId: string): void {
-        this.pendingFlagTransfers.delete(toPlayerId);
-    }
-
-    clearPendingFlagTransfer(playerId: string): void {
-        const timeoutId = this.pendingFlagTransferTimeouts.get(playerId);
-        if (timeoutId !== undefined) {
-            clearTimeout(timeoutId);
-            this.pendingFlagTransferTimeouts.delete(playerId);
-        }
-    }
-
-    clearAllPendingFlagTransfers(): void {
-        this.pendingFlagTransferTimeouts.forEach((timeout) => {
-            clearTimeout(timeout);
-        });
-        this.pendingFlagTransferTimeouts.clear();
-        this.pendingFlagTransfers.clear();
-    }
-
-    setPendingFlagTransferTimeout(fromPlayerId: string, timeoutId: ReturnType<typeof setTimeout>): void {
-        this.pendingFlagTransferTimeouts.set(fromPlayerId, timeoutId);
-    }
 
     respondToFlagTransfer(fromPlayerId: string, accepted: boolean): void {
         const currentRoomId = this.getRoomId();
@@ -405,6 +394,16 @@ export class GamePlaySocketService {
             this.socketService.emit(GameSessionEvents.FlagTransferResponse, {
                 roomId: currentRoomId, fromPlayerId, accepted,
             });
+            this.clearPendingFlagTransferRequest(fromPlayerId);
+        }
+    }
+
+    clearPendingFlagTransferRequest(playerId: string): void {
+        this.pendingFlagTransfers.delete(playerId);
+        const timeout = this.pendingFlagTransferTimeouts.get(playerId);
+        if (timeout) {
+            clearTimeout(timeout);
+            this.pendingFlagTransferTimeouts.delete(playerId);
         }
     }
 }
