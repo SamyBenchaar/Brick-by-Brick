@@ -364,6 +364,7 @@ export class VirtualPlayerMechanicsService {
         }
 
         session.setFlagHolder(bot.character.id);
+        this.logService.log(session.roomId, `Drapeau pris du sol par ${bot.character.name}`);
         this.gameGateway.notifyRoomEvent(session.roomId, GameSessionEvents.GameSessionUpdated, session);
     }
 

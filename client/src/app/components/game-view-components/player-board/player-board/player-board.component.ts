@@ -31,39 +31,6 @@ export class PlayerBoardComponent {
     return session?.players.find(p => p.socketId === socketId)?.character;
   }
 
-  canTransferFlagTo(targetPlayer: Player): boolean {
-    if (!this.isCtfMode()) return false;
-
-    const currentPlayer = this.getCurrentPlayerCharacter();
-    if (!currentPlayer?.hasFlag) return false;
-    if ((currentPlayer.remainingActions ?? 0) <= 0) return false;
-
-    if (currentPlayer.id === targetPlayer.character.id) return false;
-    if (currentPlayer.team !== targetPlayer.character.team) return false;
-
-    return true;
-  }
-
-  canRequestFlagFrom(targetPlayer: Player): boolean {
-    if (!this.isCtfMode()) return false;
-
-    const currentPlayer = this.getCurrentPlayerCharacter();
-    if (!currentPlayer) return false;
-    if ((currentPlayer.remainingActions ?? 0) <= 0) return false;
-
-    if (!currentPlayer.hasFlag && targetPlayer.character.hasFlag) {
-      if (currentPlayer.id !== targetPlayer.character.id && currentPlayer.team === targetPlayer.character.team) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  requestFlagTransfer(targetPlayer: Player): void {
-    this.gameSessionService.requestFlagTransfer(targetPlayer.character.id);
-  }
-
   isVirtualPlayer(player: Player): boolean {
     return player.virtualProfile !== undefined;
   }
@@ -81,14 +48,14 @@ export class PlayerBoardComponent {
     return [...this.players].sort((a, b) => {
       const indexA = session.playerOrder.indexOf(a.character.id);
       const indexB = session.playerOrder.indexOf(b.character.id);
-      
+
       if (indexA !== -1 && indexB !== -1) {
         return indexA - indexB;
       }
-      
+
       if (indexA !== -1) return -1;
       if (indexB !== -1) return 1;
-      
+
       return 0;
     });
   }

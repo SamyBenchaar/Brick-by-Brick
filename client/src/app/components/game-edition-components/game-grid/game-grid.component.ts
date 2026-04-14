@@ -354,7 +354,10 @@ export class GameGridComponent implements OnInit, OnChanges {
       return;
     }
 
-    if (!this.gamePlaySocketService.canAttackTarget(target)) {
+    const canInteract = this.gamePlaySocketService.canAttackTarget(target) || 
+                       this.gamePlaySocketService.canTransferFlagTo(target);
+    
+    if (!canInteract) {
       return;
     }
 

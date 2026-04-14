@@ -87,10 +87,11 @@ export class GamePlayCtfHandler {
         const flagTransferRequest = gameSession.getFlagTransferRequest(toPlayer.character.id);
         if (!flagTransferRequest) return;
 
+        const fromPlayer = gameSession.players.find(p => p.character.id === payload.fromPlayerId);
+
         if (payload.accepted) {
             gameSession.acceptFlagTransfer(toPlayer.character.id);
 
-            const fromPlayer = gameSession.players.find(p => p.character.id === payload.fromPlayerId);
             if (fromPlayer && fromPlayer.character.remainingActions !== undefined) {
                 fromPlayer.character.remainingActions -= 1;
             }
@@ -104,6 +105,11 @@ export class GamePlayCtfHandler {
             }
         } else {
             gameSession.rejectFlagTransfer(toPlayer.character.id);
+
+            if (fromPlayer && fromPlayer.character.remainingActions !== undefined) {
+                fromPlayer.character.remainingActions -= 1;
+            }
+
             context.server.to(payload.roomId).emit(GameSessionEvents.GameSessionUpdated, gameSession);
         }
     }

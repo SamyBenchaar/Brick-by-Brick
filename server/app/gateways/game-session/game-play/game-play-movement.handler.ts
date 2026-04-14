@@ -75,6 +75,7 @@ export class GamePlayMovementHandler {
 
         if (!gameSession.getFlagHolder() && flagPos && currentPlayer.position?.x === flagPos.x && currentPlayer.position?.y === flagPos.y) {
             gameSession.setFlagHolder(currentPlayer.id);
+            context.logService.log(roomId, `Drapeau pris du sol par ${currentPlayer.name}`);
             context.server.to(roomId).emit(GameSessionEvents.GameSessionUpdated, gameSession);
         }
 

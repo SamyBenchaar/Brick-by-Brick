@@ -45,6 +45,12 @@ function closePendingFlagTransferDialogs(
     });
 
     flagTransferService.clearAllPendingFlagTransfers();
+
+    service.pendingFlagTransferTimeouts.forEach((timeout) => {
+        clearTimeout(timeout);
+    });
+    service.pendingFlagTransferTimeouts.clear();
+    service.pendingFlagTransfers.clear();
 }
 
 function decrementSanctuaryCooldowns(service: GamePlaySocketService): void {

@@ -7,16 +7,16 @@ import { CombatSocketService } from '@app/services/communication/game-session-so
 import { FlagTransferSocketService } from '@app/services/communication/game-session-socket/flag-transfer-socket.service';
 import { GamePlaySocketService } from '@app/services/communication/game-session-socket/game-play-socket.service';
 import type { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
-import { handleCombatResult, handleTurnEnded} from '@app/services/communication/gameplay-listeners/gameplay-listeners-helper.service';
+import { handleCombatResult, handleTurnEnded } from '@app/services/communication/gameplay-listeners/gameplay-listeners-helper.service';
 import { SocketService } from '@app/services/communication/socket/socket.service';
+import { CombatResultPayload } from '@common/combat';
 import { CTF_VICTORY_ANNOUNCE_DELAY } from '@common/constants/game-config-constants';
 import { ORIGIN_CANDIDATES, SANCTUARY_COOLDOWN_TURNS, SANCTUARY_TILE_OFFSETS } from '@common/constants/santuary-constants';
 import { CombatEvents, GameSessionEvents } from '@common/game.events';
 import { ObjectType, TileType } from '@common/map';
-import { Position } from '@common/position';
 import { Player } from '@common/player';
+import { Position } from '@common/position';
 import { setupCombatListeners } from './combat-listener';
-import {CombatResultPayload} from '@common/combat';
 
 interface GameplayListenersContext {
     gamePlaySocketService: GamePlaySocketService;
@@ -255,21 +255,21 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
             setTimeout(() => {
                 if (data.reason === 'victory') {
                     const session = service.currentSession();
-                    const tiles= service.mapCopy()?.mapConfig.tiles;
-                    const walkableTiles= tiles?.flat().filter(t => 
+                    const tiles = service.mapCopy()?.mapConfig.tiles;
+                    const walkableTiles = tiles?.flat().filter(t =>
                         t.type === TileType.Base || t.type === TileType.Water || t.type === TileType.Ice).length;
                     service.gameEnded.set(false);
                     gameSessionSocketService.currentSession.set(null);
-                    router.navigate(['/game-statistics'],{
-                        state:{
+                    router.navigate(['/game-statistics'], {
+                        state: {
                             players: [...(data.players ?? session?.players ?? []), ...(session?.leftPlayers ?? [])],
-                            winner : data.winner,
+                            winner: data.winner,
                             winningTeam: data.winningTeam,
                             gameMode: data.gameMode,
                             walkableTiles,
                         },
                     });
-                }else{
+                } else {
                     router.navigate(['/']).then(() => {
                         dialog.open(AppDialogComponent, {
                             data: { title, message, type: data.reason === 'victory' ? 'info' : 'info' },
@@ -315,6 +315,12 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
 
     socketService.on<GameSession>(GameSessionEvents.GameSessionUpdated, (updatedGameSession) => {
         if (updatedGameSession) {
+            service.pendingFlagTransferTimeouts.forEach((timeout) => {
+                clearTimeout(timeout);
+            });
+            service.pendingFlagTransferTimeouts.clear();
+            service.pendingFlagTransfers.clear();
+
             gameSessionSocketService.currentSession.set({ ...updatedGameSession });
         }
     });
