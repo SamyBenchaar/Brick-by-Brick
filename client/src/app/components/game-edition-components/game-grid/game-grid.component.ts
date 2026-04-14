@@ -354,7 +354,6 @@ export class GameGridComponent implements OnInit, OnChanges {
       return;
     }
 
-    // Allow flag transfers in CTF mode or regular attacks
     const canInteract = this.gamePlaySocketService.canAttackTarget(target) || 
                        this.gamePlaySocketService.canTransferFlagTo(target);
     

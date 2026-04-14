@@ -263,18 +263,13 @@ export class GameViewComponent implements OnInit, OnDestroy {
   }
 
   onAttackTargetSelected(target: Character): void {
-    console.log('Clicked on target:', target.name, 'hasFlag:', target.hasFlag);
-    console.log('Current player hasFlag:', this.currentPlayer()?.character.hasFlag);
-    console.log('Can transfer flag to target:', this.gamePlaySocketService.canTransferFlagTo(target));
     if (this.gamePlaySocketService.canTransferFlagTo(target)) {
-      console.log('Requesting flag transfer to', target.name);
       this.gamePlaySocketService.requestFlagTransfer(target.id);
       this.isActionSelectionMode.set(false);
       return;
     }
 
     if (!this.gamePlaySocketService.canAttackTarget(target)) {
-      console.log('Cannot attack target');
       return;
     }
 

@@ -11,6 +11,7 @@ import { Player } from '@common/player';
 import { Position } from '@common/position';
 import { CombatSocketService } from './combat-socket.service';
 import { GameSessionSocketService } from './game-session-socket.service';
+import {FLAG_TRANSFER_TIMEOUT_MS} from '@app/constants/flag-transfer-constants';
 
 @Injectable({
     providedIn: 'root',
@@ -77,6 +78,9 @@ export class GamePlaySocketService {
         }
     }
     requestMove(direction: string): void {
+        if (this.pendingFlagTransfers.size > 0) {
+            return;
+        }
         if (!this.combatSocketService.activeCombat()) {
             const currentRoomId = this.gameSessionSocketService.getRoomId();
             if (currentRoomId) {
@@ -110,6 +114,13 @@ export class GamePlaySocketService {
         if (!this.combatSocketService.activeCombat()) {
             const currentRoomId = this.getRoomId();
             if (currentRoomId) {
+                this.pendingFlagTransfers.set(toPlayerId, true);
+
+                const timeout = setTimeout(() => {
+                    this.pendingFlagTransfers.delete(toPlayerId);
+                }, FLAG_TRANSFER_TIMEOUT_MS);
+
+                this.pendingFlagTransferTimeouts.set(toPlayerId, timeout);
                 this.socketService.emit(GameSessionEvents.RequestFlagTransfer, { roomId: currentRoomId, toPlayerId });
             }
         }
@@ -285,7 +296,7 @@ export class GamePlaySocketService {
     canCurrentPlayerAttack(): boolean {
         const currentPlayer = this.getCurrentPlayerCharacter();
         return this.canCurrentPlayerAct() && currentPlayer?.position != null
-        && this.getAutoAttackTarget() !== null;
+            && this.getAutoAttackTarget() !== null;
     }
 
     canTransferFlagTo(target: Character | null): boolean {
@@ -293,7 +304,10 @@ export class GamePlaySocketService {
         const currentPlayer = this.getCurrentPlayerCharacter();
         if (!currentPlayer || !target) return false;
 
-        const canTransfer = (currentPlayer.hasFlag === true && target.hasFlag === false) || 
+        // Disable if there's a pending flag transfer request to this target
+        if (this.pendingFlagTransfers.has(target.id)) return false;
+
+        const canTransfer = (currentPlayer.hasFlag === true && target.hasFlag === false) ||
             (currentPlayer.hasFlag === false && target.hasFlag === true);
 
         return (
@@ -305,11 +319,14 @@ export class GamePlaySocketService {
 
     canRequestFlagFrom(targetcharacter: Character): boolean {
         if (this.currentSession()?.gameMode !== 'ctf') return false;
-    
+
+        // Disable if there's a pending flag transfer request to this target
+        if (this.pendingFlagTransfers.has(targetcharacter.id)) return false;
+
         const currentPlayer = this.getCurrentPlayerCharacter();
         if (!currentPlayer) return false;
 
-        const hasValidFlagState  =
+        const hasValidFlagState =
             !currentPlayer.hasFlag &&
             !!targetcharacter.hasFlag;
 
@@ -370,33 +387,6 @@ export class GamePlaySocketService {
         return this.gameSessionSocketService.isCurrentUserHost();
     }
 
-    setPendingFlagTransferDialog(toPlayerId: string, dialogRef: unknown, fromPlayerId: string): void {
-        this.pendingFlagTransfers.set(toPlayerId, { dialogRef, fromPlayerId });
-    }
-
-    removePendingFlagTransferDialog(toPlayerId: string): void {
-        this.pendingFlagTransfers.delete(toPlayerId);
-    }
-
-    clearPendingFlagTransfer(playerId: string): void {
-        const timeoutId = this.pendingFlagTransferTimeouts.get(playerId);
-        if (timeoutId !== undefined) {
-            clearTimeout(timeoutId);
-            this.pendingFlagTransferTimeouts.delete(playerId);
-        }
-    }
-
-    clearAllPendingFlagTransfers(): void {
-        this.pendingFlagTransferTimeouts.forEach((timeout) => {
-            clearTimeout(timeout);
-        });
-        this.pendingFlagTransferTimeouts.clear();
-        this.pendingFlagTransfers.clear();
-    }
-
-    setPendingFlagTransferTimeout(fromPlayerId: string, timeoutId: ReturnType<typeof setTimeout>): void {
-        this.pendingFlagTransferTimeouts.set(fromPlayerId, timeoutId);
-    }
 
     respondToFlagTransfer(fromPlayerId: string, accepted: boolean): void {
         const currentRoomId = this.getRoomId();
@@ -404,6 +394,16 @@ export class GamePlaySocketService {
             this.socketService.emit(GameSessionEvents.FlagTransferResponse, {
                 roomId: currentRoomId, fromPlayerId, accepted,
             });
+            this.clearPendingFlagTransferRequest(fromPlayerId);
+        }
+    }
+
+    clearPendingFlagTransferRequest(playerId: string): void {
+        this.pendingFlagTransfers.delete(playerId);
+        const timeout = this.pendingFlagTransferTimeouts.get(playerId);
+        if (timeout) {
+            clearTimeout(timeout);
+            this.pendingFlagTransferTimeouts.delete(playerId);
         }
     }
 }

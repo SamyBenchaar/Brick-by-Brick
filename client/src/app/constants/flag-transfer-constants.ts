@@ -1,0 +1,1 @@
+export const FLAG_TRANSFER_TIMEOUT_MS = 10000;
