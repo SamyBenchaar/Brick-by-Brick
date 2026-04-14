@@ -29,6 +29,11 @@
     border-right: 3px solid #333;
 }
 
+app-waiting-room-list {
+    flex: 1;
+    min-height: 0;
+}
+
 .chat {
     padding-left: 1rem;
     padding-right: 0.5rem;
