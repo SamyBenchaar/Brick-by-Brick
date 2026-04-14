@@ -274,15 +274,15 @@ export class GameGridComponent implements OnInit, OnChanges {
 
   isCurrentPlayerStartingPoint(position: Position): boolean {
     if (!this.startingPoints || !this.currentPlayerId) return false;
-    
+
     let startPos: Position | undefined;
-    
+
     if (this.startingPoints instanceof Map) {
       startPos = this.startingPoints.get(this.currentPlayerId);
     } else {
       startPos = (this.startingPoints as Record<string, Position>)[this.currentPlayerId];
     }
-    
+
     if (!startPos) return false;
     return startPos.x === position.x && startPos.y === position.y;
   }
@@ -330,6 +330,25 @@ export class GameGridComponent implements OnInit, OnChanges {
     return this.reachableTiles.some(t => t.x === position.x && t.y === position.y);
   }
 
+  isInteractableTile(position: Position): boolean {
+    const player = this.getPlayerAtPosition(position);
+    if (player) {
+      return (this.gamePlaySocketService.canAttackTarget(player) ||
+        this.gamePlaySocketService.canTransferFlagTo(player) ||
+        this.gamePlaySocketService.canRequestFlagFrom(player));
+    } else {
+        const tile = this.getTile(position);
+        if (!tile) return false;
+        if (tile.type === TileType.Door) {
+          return this.gamePlaySocketService.canPlayerInteractDoor();
+        }
+        if (tile.object === ObjectType.HealingSanctuary || tile.object === ObjectType.CombatSanctuary) {
+          return this.gamePlaySocketService.canPlayerInteractSanctuary();
+        }
+      return false;
+    }
+  }
+
   getAvatarImage(avatarId: number): string {
     return this.gameGridUtilService.getAvatarImage(avatarId);
   }
@@ -354,9 +373,9 @@ export class GameGridComponent implements OnInit, OnChanges {
       return;
     }
 
-    const canInteract = this.gamePlaySocketService.canAttackTarget(target) || 
-                       this.gamePlaySocketService.canTransferFlagTo(target);
-    
+    const canInteract = this.gamePlaySocketService.canAttackTarget(target) ||
+      this.gamePlaySocketService.canTransferFlagTo(target);
+
     if (!canInteract) {
       return;
     }

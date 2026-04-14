@@ -7,6 +7,7 @@
             class="tile"
             [class]="'tile-' + tile.type"
             [class.reachable]="isViewMode && isReachableTile(position)"
+            [class.interactable]="isViewMode && isActionSelectionMode && isInteractableTile(position)"
             [style.backgroundImage]="'url(' + getTilePath(tile.type, tile.doorState ?? undefined) + ')'"
             (mousedown)="onTileMouseDown(position, $event)"
             (mouseenter)="onTileMouseEnter(position)"
