@@ -35,6 +35,8 @@ export class GameGridComponent implements OnInit, OnChanges {
   @Input() isActionSelectionMode: boolean = false;
   @Input() flagHolderId: string | null = null;
   @Input() flagPosition: Position | null = null;
+  @Input() startingPoints: Map<string, Position> | Record<string, Position> | null = null;
+  @Input() currentPlayerId: string = '';
   @ViewChild('gridContainer') gridContainer!: ElementRef<HTMLElement>;
 
   @Output() attackTargetSelected = new EventEmitter<Character>();
@@ -270,7 +272,25 @@ export class GameGridComponent implements OnInit, OnChanges {
     return this.gameGridUtilService.isMultiTileObject(object);
   }
 
-  getObjectPath(object: ObjectType, sanctuaryCooldown?: number): string {
+  isCurrentPlayerStartingPoint(position: Position): boolean {
+    if (!this.startingPoints || !this.currentPlayerId) return false;
+    
+    let startPos: Position | undefined;
+    
+    if (this.startingPoints instanceof Map) {
+      startPos = this.startingPoints.get(this.currentPlayerId);
+    } else {
+      startPos = (this.startingPoints as Record<string, Position>)[this.currentPlayerId];
+    }
+    
+    if (!startPos) return false;
+    return startPos.x === position.x && startPos.y === position.y;
+  }
+
+  getObjectPath(object: ObjectType, sanctuaryCooldown?: number, position?: Position): string {
+    if (object === ObjectType.StartingPoint && position && this.isCurrentPlayerStartingPoint(position)) {
+      return './assets/images/your_startingpoint.png';
+    }
     return this.gameGridUtilService.getObjectPath(object, sanctuaryCooldown);
   }
 
@@ -334,7 +354,10 @@ export class GameGridComponent implements OnInit, OnChanges {
       return;
     }
 
-    if (!this.gamePlaySocketService.canAttackTarget(target)) {
+    const canInteract = this.gamePlaySocketService.canAttackTarget(target) || 
+                       this.gamePlaySocketService.canTransferFlagTo(target);
+    
+    if (!canInteract) {
       return;
     }
 

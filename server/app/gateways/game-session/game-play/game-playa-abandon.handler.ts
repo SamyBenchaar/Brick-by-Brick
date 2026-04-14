@@ -12,6 +12,7 @@ import { SessionStatus } from '@common/session.status';
 @Injectable()
 export class GamePlayAbandonHandler {
     constructor(
+        @Inject(forwardRef(() => GameSessionService))
         private readonly gameSessionService: GameSessionService,
         private readonly logService: LogService,
         @Inject(forwardRef(() => GameSessionGateway))

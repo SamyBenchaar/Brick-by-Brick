@@ -38,7 +38,7 @@
                     }
                 }
             </div>
-            <app-player-board [players]="playerList()" [leftPlayers]="leftPlayerList()" [host]="hostPlayer()" [gameMode]="gameSessionSocketService.currentSession()?.gameMode ?? 'classic'"></app-player-board>
+            <app-player-board [players]="playerList()" [leftPlayers]="leftPlayerList()" [host]="hostPlayer()" [gameMode]="gameSessionSocketService.currentSession()?.gameMode ?? 'classic'" [currentPlayerTurn]="currentPlayerTurn()"></app-player-board>
                 <app-player-sign
                     [player]="currentPlayer()"
                     [canAct]="canAttackSelectedTarget() || canInteract()"
@@ -54,6 +54,13 @@
                 </div>
             }
 
+            @if (combatNotification()) {
+                <div class="combat-result-notification">
+                    <button class="combat-result-notification-close" (click)="closeCombatNotification()">×</button>
+                    <p>{{ combatNotification() }}</p>
+                </div>
+            }
+
             <div class="grid-container">
                 @if (gameData) {
                 <app-game-grid 
@@ -66,6 +73,8 @@
                     [flagPosition]="gameSessionSocketService.currentSession()?.flagPosition ?? null"
                     [reachableTiles]="gamePlaySocketService.reachableTiles()"
                     [isActionSelectionMode]="isActionSelectionMode()"
+                    [startingPoints]="gameSessionSocketService.currentSession()?.startingPoints ?? null"
+                    [currentPlayerId]="currentPlayer()?.character?.id ?? ''"
                     (attackTargetSelected)="onAttackTargetSelected($event)"
                     (actionTargetSelected)="onActionTargetSelected($event)">
                 </app-game-grid>

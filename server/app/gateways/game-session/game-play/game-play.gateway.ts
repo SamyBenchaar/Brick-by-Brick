@@ -30,6 +30,7 @@ export class GamePlayGateway implements OnGatewayInit {
         private gameSessionService: GameSessionService,
         @Inject(forwardRef(() => GameSessionGateway))
         private gameSessionGateway: GameSessionGateway,
+        @Inject(forwardRef(() => GamePlayHandlersProvider))
         private handlersProvider: GamePlayHandlersProvider,
         private logService: LogService,
     ) {}
@@ -160,6 +161,21 @@ export class GamePlayGateway implements OnGatewayInit {
         this.handlersProvider.combatHandler.handlePostureChosen(
             socket,
             payload,
+            this.createHandlerContext(),
+        );
+    }
+
+    triggerBotCombat(roomId: string, attackerId: string, defenderId: string): void {
+        const gameSession = this.gameSessionService.getGameSession(roomId);
+        if (!gameSession) return;
+        const attacker = gameSession.players.find(p => p.character.id === attackerId)?.character;
+        const defender = gameSession.players.find(p => p.character.id === defenderId)?.character;
+        if (!attacker || !defender) return;
+
+        this.handlersProvider.combatHandler.initiateVirtualPlayerCombat(
+            gameSession,
+            attacker,
+            defenderId,
             this.createHandlerContext(),
         );
     }

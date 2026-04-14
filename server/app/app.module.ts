@@ -1,6 +1,5 @@
 import { GameController } from '@app/controllers/game/game.controller';
 import { ChatGateway } from '@app/gateways/chat/chat.gateway';
-import { LogGateway } from '@app/gateways/log/log.gateway';
 import { GamePlayCombatHandler } from '@app/gateways/game-session/game-play/game-play-combat.handler';
 import { GamePlayCtfHandler } from '@app/gateways/game-session/game-play/game-play-ctf.handler';
 import { GamePlayHandlersProvider } from '@app/gateways/game-session/game-play/game-play-handlers.provider';
@@ -11,8 +10,12 @@ import { GamePlayTurnHandler } from '@app/gateways/game-session/game-play/game-p
 import { GamePlayGateway } from '@app/gateways/game-session/game-play/game-play.gateway';
 import { GameSessionGateway } from '@app/gateways/game-session/game-session/game-session.gateway';
 import { GameGateway } from '@app/gateways/game/game.gateway';
+import { LogGateway } from '@app/gateways/log/log.gateway';
 import { Game, gameSchema } from '@app/model/game';
 import { CombatService } from '@app/services/game-session/combat.service';
+import { CombatEndService } from '@app/services/game-session/combat/combat-end.service';
+import { CombatRequestValidatorService } from '@app/services/game-session/combat/combat-request-validator.service';
+import { CombatRoundService } from '@app/services/game-session/combat/combat-round.service';
 import { MovementService } from '@app/services/game-session/movement.service';
 import { StartingPointService } from '@app/services/game-session/starting-point.service';
 import { TurnManagementService } from '@app/services/game-session/turn-management.service';
@@ -28,8 +31,8 @@ import { Logger, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { GameSessionService } from './services/game-session/game-session/game-session.service';
-import { GameService } from './services/game/game.service';
 import { SanctuaryService } from './services/game-session/sanctuary.service';
+import { GameService } from './services/game/game.service';
 
 @Module({
     imports: [
@@ -71,6 +74,9 @@ import { SanctuaryService } from './services/game-session/sanctuary.service';
         VirtualPlayerMechanicsService,
         VirtualPlayerService,
         CombatService,
+        CombatRequestValidatorService,
+        CombatRoundService,
+        CombatEndService,
         Logger,
         SanctuaryService,
         MapValidationService,

@@ -1,8 +1,9 @@
 import { GameSession } from '@app/domain/game-session';
 import { TileDto } from '@app/dto/tile.dto';
-import { CombatResult, GameDataForInit } from '@app/interfaces/game-map-interfaces';
+import { GameDataForInit } from '@app/interfaces/game-map-interfaces';
 import { CombatService } from '@app/services/game-session/combat.service';
 import { MovementService } from '@app/services/game-session/movement.service';
+import { SanctuaryService } from '@app/services/game-session/sanctuary.service';
 import { StartingPointService } from '@app/services/game-session/starting-point.service';
 import { TurnManagementService } from '@app/services/game-session/turn-management.service';
 import { VirtualPlayerService } from '@app/services/game-session/virtual-player.service';
@@ -17,7 +18,6 @@ import { Position } from '@common/position';
 import { SessionStatus } from '@common/session.status';
 import { VirtualPlayerProfile } from '@common/virtual.player.profile';
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
-import { SanctuaryService } from '@app/services/game-session/sanctuary.service';
 
 const BASE_LIFE = 6;
 const BASE_SPEED = 6;
@@ -208,33 +208,31 @@ export class GameSessionService {
             return false;
         }
         const success = this.movementService.executeMove(
-            gameSession,
-            currentPlayer,
-            direction,
-            mapData,
+            gameSession, currentPlayer, direction, mapData,
         );
         return success;
     }
 
-    executeCombat(gameSession: GameSession, defenderId: string): CombatResult {
-        const attacker = gameSession.getCurrentPlayer();
-        const defender = gameSession.players.find(p => p.character.id === defenderId)?.character;
-        if (!attacker || !defender) {
-            throw new Error('Invalid player IDs');
-        }
-        if (!this.combatService.canFight(attacker, defender, gameSession)) {
-            throw new Error('Players are not adjacent');
-        }
-        const result = this.combatService.executeCombat(
-            gameSession,
-            attacker,
-            defender,
-            gameSession.getMapCopy(),
-        );
-        return result;
-    }
+    // executeCombat(gameSession: GameSession, defenderId: string): CombatResult {
+    //     const attacker = gameSession.getCurrentPlayer();
+    //     const defender = gameSession.players.find(p => p.character.id === defenderId)?.character;
+    //     if (!attacker || !defender) {
+    //         throw new Error('Invalid player IDs');
+    //     }
+    //     if (!this.combatService.canFight(attacker, defender, gameSession)) {
+    //         throw new Error('Players are not adjacent');
+    //     }
+    //     const result = this.combatService.executeCombat(
+    //         gameSession, attacker, defender, gameSession.getMapCopy(),
+    //     );
+    //     return result;
+    // }
 
-    checkGameWinner(gameSession: GameSession): Character | null {
+     checkGameWinner(gameSession: GameSession): Character | null {
+        if (gameSession.gameMode === 'ctf') {
+            return null;
+        }
+
         const players = gameSession.getActivePlayers();
         return this.combatService.checkGameWinCondition(players);
     }
@@ -245,12 +243,12 @@ export class GameSessionService {
         }
 
         const flagHolder = gameSession.getFlagHolderCharacter();
-        if (!flagHolder?.position) {
+        if (!flagHolder) {
             return null;
         }
 
         const start = gameSession.getStartingPoint(flagHolder.id);
-        if (!start) {
+        if (!start || !flagHolder?.position) {
             return null;
         }
 
@@ -264,18 +262,32 @@ export class GameSessionService {
             return false;
         }
 
+        const canMove = this.canCurrentPlayerMove(gameSession);
+        const canInteract = this.canCurrentPlayerInteract(gameSession, currentPlayer);
+        const canFight = this.canCurrentPlayerFight(gameSession, currentPlayer);
+
+        return canMove || canInteract || canFight;
+    }
+
+    private canCurrentPlayerMove(gameSession: GameSession): boolean {
         const reachableTiles = this.getReachableTiles(gameSession);
-        const canMove = reachableTiles.length > 1;
+        return reachableTiles.length > 1;
+    }
 
+    private canCurrentPlayerInteract(gameSession: GameSession, currentPlayer: Character): boolean {
         const hasRemainingActions = (currentPlayer.remainingActions ?? 0) > 0;
-        const adjacentPlayers = this.movementService.getAdjacentPlayers(
-            gameSession,
-            currentPlayer.position,
-        );
-        const canInteract = hasRemainingActions && this.movementService.isDoorAdjacent(currentPlayer.position, gameSession);
-        const canFight = hasRemainingActions && adjacentPlayers.length > 0;
+        if (!hasRemainingActions) {
+            return false;
+        }
 
-        return canMove || canFight || canInteract;
+        return this.movementService.isDoorAdjacent(currentPlayer.position, gameSession);
+    }
+
+    private canCurrentPlayerFight(gameSession: GameSession, currentPlayer: Character): boolean {
+        const adjacentPlayers = this.movementService.getAdjacentPlayers(gameSession, currentPlayer.position);
+        return adjacentPlayers.some((adjacentPlayer) =>
+            this.combatService.canFight(currentPlayer, adjacentPlayer, gameSession),
+        );
     }
 
     removePlayer(roomId: string, playerId: string): void {
@@ -391,15 +403,11 @@ export class GameSessionService {
     private isFreeTile(gameSession: GameSession, position: Position, mapData: TileDto[][]): boolean {
         const tile = mapData[position.y][position.x];
 
-        if (tile.type === 'wall') {
+        if (tile.type === 'wall' || tile.object) {
             return false;
         }
 
         if (tile.type === 'door' && tile.doorState === 'opened') {
-            return false;
-        }
-
-        if (tile.object) {
             return false;
         }
 

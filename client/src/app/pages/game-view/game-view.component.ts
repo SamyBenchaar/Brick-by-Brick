@@ -2,25 +2,25 @@ import { CommonModule } from '@angular/common';
 import { Component, computed, effect, ElementRef, HostListener, inject, Injector, OnDestroy, OnInit, signal, ViewChild } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
+import { Tile } from '@app/classes/tile/tile';
 import { ChatComponent } from '@app/components/chat/chat.component';
 import { AppDialogComponent } from '@app/components/game-edition-components/app-dialog/app-dialog.component';
 import { GameGridComponent } from '@app/components/game-edition-components/game-grid/game-grid.component';
+import { CombatViewComponent } from '@app/components/game-view-components/combat-view/combat-view.component';
 import { PlayerBoardComponent } from '@app/components/game-view-components/player-board/player-board/player-board.component';
 import { PlayerSignComponent } from '@app/components/game-view-components/player-sign/player-sign/player-sign.component';
 import { AVATARS } from '@app/constants/character-constants';
-import { KEY_DEBUG, KEY_DIRECTION_MAP, KEY_ENTER } from '@common/constants/key-event.constants';
 import { AppDialogData } from '@app/interfaces/dialog-model';
 import { Game } from '@app/interfaces/game';
-import { Tile } from '@app/classes/tile/tile';
+import { CombatSocketService } from '@app/services/communication/game-session-socket/combat-socket.service';
 import { GamePlaySocketService } from '@app/services/communication/game-session-socket/game-play-socket.service';
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
 import { Character } from '@common/character';
 import { getGameSizeConfig } from '@common/constants/game-config-constants';
+import { KEY_DEBUG, KEY_DIRECTION_MAP, KEY_ENTER } from '@common/constants/key-event.constants';
 import { MapSize, ObjectType } from '@common/map';
 import { Position } from '@common/position';
 import { Subscription } from 'rxjs';
-import { CombatViewComponent } from '@app/components/game-view-components/combat-view/combat-view.component';
-import { CombatSocketService } from '@app/services/communication/game-session-socket/combat-socket.service';
 
 @Component({
   selector: 'app-game-view',
@@ -54,6 +54,7 @@ export class GameViewComponent implements OnInit, OnDestroy {
     const socketId = this.gameSessionSocketService.getSocketId();
     return this.gameSessionSocketService.currentSession()?.players.find(p => p.socketId === socketId) ?? null;
   });
+  currentPlayerTurn = computed(() => this.gamePlaySocketService.currentPlayerTurn());
   isDebugModeActivated = computed(() => this.gamePlaySocketService.isDebugModeActivated());
 
   displayedTurnTimer = computed(() => {
@@ -69,6 +70,13 @@ export class GameViewComponent implements OnInit, OnDestroy {
     const combatTime = this.combatSocketService.combatTurnTimeRemaining();
     return combatTime === null ? '--' : `${combatTime}s`;
   });
+
+  combatNotification = computed(() => this.combatSocketService.combatNotification());
+
+  closeCombatNotification(): void {
+    this.combatSocketService.clearCombatNotification();
+  }
+
   ngOnInit(): void {
     if (!this.gameSessionSocketService.currentSession() || !this.gamePlaySocketService.mapCopy()) {
       this.router.navigate(['/']);
@@ -96,6 +104,7 @@ export class GameViewComponent implements OnInit, OnDestroy {
     }, { injector: this.injector });
 
     window.addEventListener('beforeunload', this.handleBeforeUnload);
+    window.addEventListener('popstate', this.handleBackButton);
   }
 
   @HostListener('window:keyup', ['$event'])
@@ -129,6 +138,10 @@ export class GameViewComponent implements OnInit, OnDestroy {
   }
 
   handleBeforeUnload = (): void => {
+    this.gameSessionSocketService.abandonGame();
+  };
+
+  handleBackButton = (): void => {
     this.gameSessionSocketService.abandonGame();
   };
 
@@ -194,7 +207,7 @@ export class GameViewComponent implements OnInit, OnDestroy {
       data: dialogData,
       disableClose: true,
     }).afterClosed().subscribe((confirmed: boolean) => {
-      if (confirmed) {
+      if (confirmed === true) {
         this.gameSessionSocketService.abandonGame();
       }
     });
@@ -213,37 +226,37 @@ export class GameViewComponent implements OnInit, OnDestroy {
   }
 
   canInteract(): boolean {
-    return this.gamePlaySocketService.canPlayerInteractDoor() || this.gamePlaySocketService.canPlayerInteractSanctuary();
+    return this.gamePlaySocketService.canPlayerInteractDoor() || this.gamePlaySocketService.canPlayerInteractSanctuary()
+      || this.gamePlaySocketService.canPlayerInteractFlag();
   }
 
   onActionClick(): void {
     this.isActionSelectionMode.set(true);
-
   }
 
-  onActionTargetSelected(event: {tile: Tile, position: Position}): void {
+  onActionTargetSelected(event: { tile: Tile, position: Position }): void {
     if (!this.gamePlaySocketService.canInteractWithTarget(event.tile, event.position)) return;
-    
+
     const isSanctuary = event.tile.object === ObjectType.HealingSanctuary || event.tile.object === ObjectType.CombatSanctuary;
     if (isSanctuary) {
       const ref = this.dialog.open(AppDialogComponent, {
         id: 'sanctuary-dialog',
         data: {
-            title: event.tile.object === ObjectType.HealingSanctuary
-                ? 'Sanctuaire de soin' : 'Sanctuaire de combat',
-            message: 'Choisissez votre mode d\'interaction.',
-            type: 'info',
-            confirmText: 'Normal',
-            cancelText: 'Double ou rien',
-            thirdOptionText: 'Annuler',
+          title: event.tile.object === ObjectType.HealingSanctuary
+            ? 'Sanctuaire de soin' : 'Sanctuaire de combat',
+          message: 'Choisissez votre mode d\'interaction.',
+          type: 'info',
+          confirmText: 'Normal',
+          thirdOptionText: 'Double ou rien',
+          cancelText: 'Annuler',
         },
-    });
-    ref.afterClosed().subscribe((result) => {
+      });
+      ref.afterClosed().subscribe((result) => {
         if (result === true) this.gamePlaySocketService.requestInteract(event.position, 'normal');
         else if (result === false) this.gamePlaySocketService.requestInteract(event.position, 'double');
-    });
-    this.isActionSelectionMode.set(false);
-    return;
+      });
+      this.isActionSelectionMode.set(false);
+      return;
     }
     this.gamePlaySocketService.requestInteract(event.position, 'normal');
     this.isActionSelectionMode.set(false);
@@ -271,6 +284,7 @@ export class GameViewComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.routeSubscription?.unsubscribe();
     window.removeEventListener('beforeunload', this.handleBeforeUnload);
+    window.removeEventListener('popstate', this.handleBackButton);
   }
   leaveGameSession(): void {
     this.gameSessionSocketService.leaveGameSession();

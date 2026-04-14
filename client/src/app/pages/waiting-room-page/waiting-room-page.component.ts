@@ -60,17 +60,22 @@ export class WaitingRoomPage implements OnInit, OnDestroy {
 
         sessionStorage.setItem('waitingRoomRefresh', 'true');
         window.addEventListener('beforeunload', this.handleBeforeUnload);
+        window.addEventListener('popstate', this.handleBackButton);
     }
     ngOnDestroy(): void {
         window.removeEventListener('beforeunload', this.handleBeforeUnload);
+        window.removeEventListener('popstate', this.handleBackButton);
         sessionStorage.removeItem('waitingRoomRefresh');
-        // this.gameSessionSocketService.leaveGameSession();
     }
 
     handleBeforeUnload = (): void => {
         sessionStorage.removeItem(WAITING_ROOM_ACCESS_KEY);
         this.gameSessionSocketService.leaveGameSession();
         location.replace('/home');
+    };
+
+    handleBackButton = (): void => {
+        this.leave();
     };
 
     leave(): void {
