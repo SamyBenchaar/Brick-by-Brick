@@ -41,7 +41,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
 
         socket.join(`game-${roomId}`);
 
-        socket.emit(ChatEvents.ChatHistory, []);
+        const history = this.chatHistoryByGame.get(roomId) ?? [];
+        socket.emit(ChatEvents.ChatHistory, history);
     }
 
     @SubscribeMessage(ChatEvents.SendMessage)

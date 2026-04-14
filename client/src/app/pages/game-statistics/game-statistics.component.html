@@ -8,7 +8,13 @@
             <app-player-statistics [players]="players" [walkableTiles]="walkableTiles" [gameMode]="gameMode" [winner]="winner" [winningTeam]="winningTeam"></app-player-statistics>
         </div>
         <div class="chat-column">
-            <!-- <app-chat [username]="winner?.name ?? ''" [gameId]="gameId" [hostPlayerId]="hostId" [isWriting]="isWriting"></app-chat> -->
+            <app-chat
+            [username]="username"
+            [gameId]="gameId"
+            [hostPlayerId]="hostPlayerId"
+            [isWriting]="true"
+            [alwaysShowLog]="true"
+        ></app-chat>
         </div>
     </main>
 

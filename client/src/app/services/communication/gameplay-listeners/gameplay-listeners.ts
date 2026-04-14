@@ -267,6 +267,10 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
                             winningTeam: data.winningTeam,
                             gameMode: data.gameMode,
                             walkableTiles,
+                            gameId: session?.roomId,
+                            username:session?.players.find(p => p.socketId === service.getSocketId())?.character.name ?? '',
+                            hostPlayerId: session?.host?.socketId ?? '',
+
                         },
                     });
                 }else{

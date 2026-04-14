@@ -29,6 +29,7 @@ export class ChatComponent implements OnInit, OnChanges, OnDestroy {
     @Input() gameId?: string;
     @Input() hostPlayerId?: string;
     @Input() isWriting: boolean = true;
+    @Input() alwaysShowLog: boolean = false;
     @Output() isWritingChange = new EventEmitter<boolean>();
     @ViewChild('messagesContainer') messagesContainer!: ElementRef;
     private chatService = inject(ChatService);

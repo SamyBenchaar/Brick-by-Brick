@@ -19,6 +19,7 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
     @WebSocketServer() private server: Server;
 
     private socketToRoom: Map<string, string> = new Map();
+    private statsPageSockets: Map<string, Set<string>> = new Map();
 
     constructor(
         private readonly logger: Logger,
@@ -46,6 +47,10 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
             } else {
                 this.handleLeaveLogic(socket, roomId);
             }
+        }
+
+        for (const [statsRoomId] of this.statsPageSockets) {
+            this.removeFromStatsPage(socket.id, statsRoomId);
         }
     }
 
@@ -163,6 +168,19 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
         this.notifyGameSessionListUpdated();
         this.logger.log(`Joueur virtuel ${payload.profile} ajouté dans la salle ${payload.roomId}`);
     }
+
+    @SubscribeMessage(GameSessionEvents.JoinStatsPage)
+    handleJoinStatsPage(socket: Socket, payload: { roomId: string }): void {
+        if (!this.statsPageSockets.has(payload.roomId)) {
+            this.statsPageSockets.set(payload.roomId, new Set());
+        }
+        this.statsPageSockets.get(payload.roomId)!.add(socket.id);
+    }
+
+    @SubscribeMessage(GameSessionEvents.LeaveStatsPage)
+handleLeaveStatsPage(socket: Socket, payload: { roomId: string }): void {
+    this.removeFromStatsPage(socket.id, payload.roomId);
+}
 
     private handlePlayingDisconnect(socket: Socket, roomId: string) {
         const gameSession = this.gameSessionService.getGameSession(roomId);
@@ -291,5 +309,15 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
 
     clearSocketRoomTracking(socketId: string): void {
         this.socketToRoom.delete(socketId);
+    }
+
+    private removeFromStatsPage(socketId: string, roomId: string): void {
+        const sockets = this.statsPageSockets.get(roomId);
+        if (!sockets) return;
+        sockets.delete(socketId);
+        if (sockets.size === 0) {
+            this.statsPageSockets.delete(roomId);
+            this.cleanUpRoom(roomId);
+        }
     }
 }

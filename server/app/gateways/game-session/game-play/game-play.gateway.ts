@@ -21,7 +21,7 @@ import { Server, Socket } from 'socket.io';
 export class GamePlayGateway implements OnGatewayInit {
     @WebSocketServer() private server: Server;
 
-    private readonly gameEndCleanupDelay = 5000;
+    // private readonly gameEndCleanupDelay = 5000;
 
     constructor(
         private readonly logger: Logger,
@@ -321,15 +321,15 @@ export class GamePlayGateway implements OnGatewayInit {
             winningTeam,
             gameMode: gameSession.gameMode,
             reason: winner ? 'victory' : 'noPlayers',
-            players:gameSession.players,
+            players: gameSession.players,
         });
 
         const activePlayers = gameSession.players.map(p => p.character.name).join(', ');
         this.logService.log(gameSession.roomId, `Fin de partie. Joueurs actifs: ${activePlayers}`);
 
-        setTimeout(() => {
-            this.gameSessionGateway.cleanUpRoom(gameSession.roomId);
-        }, this.gameEndCleanupDelay);
+        // setTimeout(() => {
+        //     this.gameSessionGateway.cleanUpRoom(gameSession.roomId);
+        // }, this.gameEndCleanupDelay);
     }
 
     private handleGameEndCanceled(gameSession: GameSession): void {
@@ -341,9 +341,9 @@ export class GamePlayGateway implements OnGatewayInit {
             gameMode: gameSession.gameMode,
         });
 
-        setTimeout(() => {
-            this.gameSessionGateway.cleanUpRoom(gameSession.roomId);
-        }, this.gameEndCleanupDelay);
+        // setTimeout(() => {
+        //     this.gameSessionGateway.cleanUpRoom(gameSession.roomId);
+        // }, this.gameEndCleanupDelay);
     }
 
     private emitReachableTiles(gameSession: GameSession): void {
