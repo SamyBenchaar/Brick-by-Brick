@@ -118,7 +118,7 @@ export class GamePlayGateway implements OnGatewayInit {
         }
 
         const currentPlayer = gameSession.getCurrentPlayer();
-        const requestingPlayer = gameSession.players.find(p => p.socketId === socket.id);
+        const requestingPlayer = gameSession.players.find(player => player.socketId === socket.id);
         if (!currentPlayer || !requestingPlayer || currentPlayer.id !== requestingPlayer.character.id && !gameSession.isDebugModeActivated) {
             return;
         }
@@ -166,8 +166,8 @@ export class GamePlayGateway implements OnGatewayInit {
     triggerBotCombat(roomId: string, attackerId: string, defenderId: string): void {
         const gameSession = this.gameSessionService.getGameSession(roomId);
         if (!gameSession) return;
-        const attacker = gameSession.players.find(p => p.character.id === attackerId)?.character;
-        const defender = gameSession.players.find(p => p.character.id === defenderId)?.character;
+        const attacker = gameSession.players.find(player => player.character.id === attackerId)?.character;
+        const defender = gameSession.players.find(player => player.character.id === defenderId)?.character;
         if (!attacker || !defender) return;
 
         this.handlersProvider.combatHandler.initiateVirtualPlayerCombat(
@@ -200,7 +200,7 @@ export class GamePlayGateway implements OnGatewayInit {
         }
 
         const currentPlayer = gameSession.getCurrentPlayer();
-        const abandoningPlayer = gameSession.players.find(p => p.socketId === socket.id);
+        const abandoningPlayer = gameSession.players.find(player => player.socketId === socket.id);
         const wasCurrentPlayer = currentPlayer && abandoningPlayer && currentPlayer.id === abandoningPlayer.character.id;
 
         this.handleAbandonedPlayerFlagPlacement(gameSession, abandoningPlayer);
@@ -337,10 +337,10 @@ export class GamePlayGateway implements OnGatewayInit {
             winningTeam,
             gameMode: gameSession.gameMode,
             reason: winner ? 'victory' : 'noPlayers',
-            players:gameSession.players,
+            players: gameSession.players,
         });
 
-        const activePlayers = gameSession.players.map(p => p.character.name).join(', ');
+        const activePlayers = gameSession.players.map(player => player.character.name).join(', ');
         this.logService.log(gameSession.roomId, `Fin de partie. Joueurs actifs: ${activePlayers}`);
 
         setTimeout(() => {
@@ -368,7 +368,7 @@ export class GamePlayGateway implements OnGatewayInit {
             return;
         }
 
-        const playerData = gameSession.players.find(p => p.character.id === currentPlayer.id);
+        const playerData = gameSession.players.find(player => player.character.id === currentPlayer.id);
         if (!playerData) {
             return;
         }

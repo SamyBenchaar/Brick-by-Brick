@@ -75,7 +75,7 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
         const gameSession = this.getSessionOrFail(socket, payload.roomId);
         if (!gameSession) return;
 
-        const existingPlayerIndex = gameSession.players.findIndex(p => p.socketId === socket.id);
+        const existingPlayerIndex = gameSession.players.findIndex(player => player.socketId === socket.id);
         if (existingPlayerIndex !== -1) {
             gameSession.removePlayer(socket.id);
             this.logger.log(`Joueur existant ${socket.id} supprimé avant mise à jour du personnage`);

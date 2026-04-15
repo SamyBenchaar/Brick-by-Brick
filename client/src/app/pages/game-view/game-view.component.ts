@@ -52,7 +52,7 @@ export class GameViewComponent implements OnInit, OnDestroy {
   playerCount = computed(() => this.gameSessionSocketService.currentSession()?.players?.length ?? 0);
   currentPlayer = computed(() => {
     const socketId = this.gameSessionSocketService.getSocketId();
-    return this.gameSessionSocketService.currentSession()?.players.find(p => p.socketId === socketId) ?? null;
+    return this.gameSessionSocketService.currentSession()?.players.find(player => player.socketId === socketId) ?? null;
   });
   currentPlayerTurn = computed(() => this.gamePlaySocketService.currentPlayerTurn());
   isDebugModeActivated = computed(() => this.gamePlaySocketService.isDebugModeActivated());
@@ -174,7 +174,7 @@ export class GameViewComponent implements OnInit, OnDestroy {
 
   getCurrentTurnPlayerName(): string {
     const currentPlayerId = this.gamePlaySocketService.currentPlayerTurn();
-    const player = this.gameSessionSocketService.currentSession()?.players.find(p => p.character.id === currentPlayerId);
+    const player = this.gameSessionSocketService.currentSession()?.players.find(playerEntry => playerEntry.character.id === currentPlayerId);
     return player?.character.name ?? '';
   }
 
@@ -214,7 +214,7 @@ export class GameViewComponent implements OnInit, OnDestroy {
   }
 
   getPlayers(): Character[] {
-    return this.gameSessionSocketService.currentSession()?.players.map(p => p.character) ?? [];
+    return this.gameSessionSocketService.currentSession()?.players.map(player => player.character) ?? [];
   }
 
   getSelectedTarget(): string | null {
@@ -278,7 +278,7 @@ export class GameViewComponent implements OnInit, OnDestroy {
   }
 
   getAvatarImage(avatarId: number): string {
-    return AVATARS.find(a => a.id === avatarId)?.image ?? 'assets/images/lily.jpg';
+    return AVATARS.find(avatarOption => avatarOption.id === avatarId)?.image ?? 'assets/images/lily.jpg';
   }
 
   ngOnDestroy(): void {

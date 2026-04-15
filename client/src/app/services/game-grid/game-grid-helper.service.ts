@@ -13,15 +13,15 @@ export class GameGridHelperService {
     private gameSessionSocketService = inject(GameSessionSocketService);
 
     getPlayerAtPosition(players: Character[], position: Position): Character | null {
-        return players.find(p => p.position?.x === position.x && p.position?.y === position.y) ?? null;
+        return players.find(player => player.position?.x === position.x && player.position?.y === position.y) ?? null;
     }
 
     isReachableTile(reachableTiles: Position[], position: Position): boolean {
-        return reachableTiles.some(t => t.x === position.x && t.y === position.y);
+        return reachableTiles.some(tilePosition => tilePosition.x === position.x && tilePosition.y === position.y);
     }
 
     getAvatarImage(avatarId: number): string {
-        return AVATARS.find(a => a.id === avatarId)?.image ?? 'assets/images/lily.jpg';
+        return AVATARS.find(avatarOption => avatarOption.id === avatarId)?.image ?? 'assets/images/lily.jpg';
     }
 
     getTileCost(tileType: TileType): number {
@@ -29,7 +29,7 @@ export class GameGridHelperService {
     }
 
     isFlagHeldByPlayer(players: Character[], position: Position): boolean {
-        return players.some(p => p.position?.x === position.x && p.position?.y === position.y && p.hasFlag);
+        return players.some(player => player.position?.x === position.x && player.position?.y === position.y && player.hasFlag);
     }
 
     getPlayerTeamClass(player: Character): string {
@@ -53,7 +53,7 @@ export class GameGridHelperService {
         const session = this.gameSessionSocketService.currentSession();
         if (!session) return null;
 
-        const playerData = session.players.find(p => p.socketId === socketId);
+        const playerData = session.players.find(player => player.socketId === socketId);
         return playerData?.character ?? null;
     }
 }

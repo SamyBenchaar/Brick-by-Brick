@@ -76,7 +76,7 @@ export class CharacterCreationPageComponent implements OnInit {
                     const taken = this.gameSessionSocketService.takenAvatars();
 
                     if (!this.character && taken.length > 0) {
-                        const freeAvatar = AVATARS.find(a => !taken.includes(a.id));
+                        const freeAvatar = AVATARS.find(avatarOption => !taken.includes(avatarOption.id));
                         if (!freeAvatar) {
                             return;
                         }
@@ -129,7 +129,7 @@ export class CharacterCreationPageComponent implements OnInit {
         if (!this.avatars?.length || !this.character) {
             return '';
         }
-        const avatar = this.avatars.find(a => a.id === this.character.avatarId);
+        const avatar = this.avatars.find(avatarOption => avatarOption.id === this.character.avatarId);
         return avatar?.image ?? this.avatars[0]?.image ?? '';
     }
 

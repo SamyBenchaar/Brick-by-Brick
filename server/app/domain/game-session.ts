@@ -48,8 +48,8 @@ export class GameSession {
     }
 
     addPlayer(player: Player): void {
-        this.players = this.players.filter(p => p.socketId !== player.socketId);
-        if(this.status === SessionStatus.Waiting) {
+        this.players = this.players.filter(existingPlayer => existingPlayer.socketId !== player.socketId);
+        if (this.status === SessionStatus.Waiting) {
             this.players.push(player);
             this.socketToAvatar.set(player.socketId, player.character.avatarId);
             return;
@@ -141,7 +141,7 @@ export class GameSession {
     }
 
     getCharacters(): Character[] {
-        return this.players.map(p => p.character);
+        return this.players.map(player => player.character);
     }
 
     setPlayerOrder(order: string[]): void {
@@ -163,7 +163,7 @@ export class GameSession {
     getCurrentPlayer(): Character | undefined {
         if (this.playerOrder.length === 0) return undefined;
         const currentPlayerId = this.playerOrder[this.currentPlayerIndex];
-        return this.players.find(p => p.character.id === currentPlayerId)?.character;
+        return this.players.find(player => player.character.id === currentPlayerId)?.character;
     }
 
     setCurrentTurnTime(time: number): void {
@@ -244,7 +244,7 @@ export class GameSession {
     }
 
     getActivePlayers(): Character[] {
-        return this.players.filter(p => this.playerOrder.includes(p.character.id)).map(p => p.character);
+        return this.players.filter(player => this.playerOrder.includes(player.character.id)).map(player => player.character);
     }
 
     getNextPlayerIndex(): number {
@@ -252,7 +252,7 @@ export class GameSession {
     }
 
     getCharacterById(id: string): Character | undefined {
-        return this.players.find(p => p.character.id === id)?.character;
+        return this.players.find(player => player.character.id === id)?.character;
     }
 
     advanceToNextPlayer(): void {
@@ -272,14 +272,14 @@ export class GameSession {
         const shuffledPlayers = [...this.players].sort(() => Math.random() - SHUFFLE_FACTOR);
         const midpoint = shuffledPlayers.length / 2;
 
-        shuffledPlayers.slice(0, midpoint).forEach(p => {
-            this.playerTeams.set(p.character.id, 'team1');
-            p.character.team = 'team1';
+        shuffledPlayers.slice(0, midpoint).forEach(player => {
+            this.playerTeams.set(player.character.id, 'team1');
+            player.character.team = 'team1';
         });
 
-        shuffledPlayers.slice(midpoint).forEach(p => {
-            this.playerTeams.set(p.character.id, 'team2');
-            p.character.team = 'team2';
+        shuffledPlayers.slice(midpoint).forEach(player => {
+            this.playerTeams.set(player.character.id, 'team2');
+            player.character.team = 'team2';
         });
     }
 
@@ -292,18 +292,18 @@ export class GameSession {
         if (!playerTeam) return [];
 
         return this.players
-            .filter(p => this.playerTeams.get(p.character.id) === playerTeam && p.character.id !== playerId)
-            .map(p => p.character);
+            .filter(player => this.playerTeams.get(player.character.id) === playerTeam && player.character.id !== playerId)
+            .map(player => player.character);
     }
 
     getTotalPlayersInTeam(team: 'team1' | 'team2'): number {
-        return this.players.filter(p => this.playerTeams.get(p.character.id) === team).length;
+        return this.players.filter(player => this.playerTeams.get(player.character.id) === team).length;
     }
 
     getTeamPlayers(team: 'team1' | 'team2'): Character[] {
         return this.players
-            .filter(p => this.playerTeams.get(p.character.id) === team)
-            .map(p => p.character);
+            .filter(player => this.playerTeams.get(player.character.id) === team)
+            .map(player => player.character);
     }
 
     setFlagPosition(position: Position): void {
@@ -319,8 +319,8 @@ export class GameSession {
             this.flagPosition = null;
         }
         this.flagHolderId = playerId;
-        this.players.forEach(p => {
-            p.character.hasFlag = p.character.id === playerId;
+        this.players.forEach(player => {
+            player.character.hasFlag = player.character.id === playerId;
         });
     }
 
@@ -330,7 +330,7 @@ export class GameSession {
 
     getFlagHolderCharacter(): Character | undefined {
         if (!this.flagHolderId) return undefined;
-        return this.players.find(p => p.character.id === this.flagHolderId)?.character;
+        return this.players.find(player => player.character.id === this.flagHolderId)?.character;
     }
 
     dropFlag(position: Position): void {

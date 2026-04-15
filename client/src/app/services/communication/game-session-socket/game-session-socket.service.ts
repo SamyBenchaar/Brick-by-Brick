@@ -126,7 +126,7 @@ export class GameSessionSocketService {
             this.gameSessions.update(current =>
                 current.map(gameSession => gameSession.roomId === updatedSession.roomId ? updatedSession : gameSession));
             const mySocketId = this.socketService.getSocketId();
-            const isCurrentPlayerInSession = updatedSession.players.find(p => p.socketId === mySocketId);
+            const isCurrentPlayerInSession = updatedSession.players.find(player => player.socketId === mySocketId);
 
             if (isCurrentPlayerInSession) {
                 this.currentSession.set(updatedSession);
@@ -229,7 +229,7 @@ export class GameSessionSocketService {
             const { roomId, mapData, gameSession } = payload;
 
             const mySocketId = this.socketService.getSocketId();
-            const isPlayer = gameSession.players.some(p => p.socketId === mySocketId);
+            const isPlayer = gameSession.players.some(player => player.socketId === mySocketId);
             if (!isPlayer) {
                 this.dialog.open(AppDialogComponent, {
                     data: {

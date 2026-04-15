@@ -67,7 +67,7 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
 
             const session = service.currentSession();
             if (session) {
-                const player = session.players.find(p => p.character.id === data.playerId);
+                const player = session.players.find(playerEntry => playerEntry.character.id === data.playerId);
                 if (player) {
                     player.character.remainingMovement = data.remainingMovement ?? player.character.remainingMovement;
                     player.character.remainingActions = data.remainingActions ?? player.character.remainingActions;
@@ -94,7 +94,7 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
         (data) => {
             const session = service.currentSession();
             if (session) {
-                const player = session.players.find(p => p.character.id === data.playerId);
+                const player = session.players.find(playerEntry => playerEntry.character.id === data.playerId);
                 if (player) {
                     player.character.position = data.position;
                     player.character.remainingMovement = data.remainingMovement;
@@ -163,7 +163,7 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
             }
             if (session) {
                 const currentPlayerId = service.currentPlayerTurn();
-                const player = session.players.find(p => p.character.id === currentPlayerId);
+                const player = session.players.find(playerEntry => playerEntry.character.id === currentPlayerId);
                 if (player) {
                     player.character.remainingActions = data.remainingActions;
                     if (data.newLife !== undefined) {
@@ -184,11 +184,11 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
     socketService.on<{ playerId: string; mapCopyTiles: Tile[][] }>(GameSessionEvents.PlayerAbandoned, (data) => {
         const session = service.currentSession();
         if (session) {
-            const leftPlayer = session.players.find(p => p.character.id === data.playerId);
+            const leftPlayer = session.players.find(player => player.character.id === data.playerId);
             if (leftPlayer) {
                 session.leftPlayers = [...(session.leftPlayers ?? []), leftPlayer];
             }
-            session.players = session.players.filter(p => p.character.id !== data.playerId);
+            session.players = session.players.filter(player => player.character.id !== data.playerId);
             if (session.playerOrder) {
                 session.playerOrder = session.playerOrder.filter(id => id !== data.playerId);
             }
@@ -252,8 +252,8 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
                 if (data.reason === 'victory') {
                     const session = service.currentSession();
                     const tiles = service.mapCopy()?.mapConfig.tiles;
-                    const walkableTiles = tiles?.flat().filter(t =>
-                        t.type === TileType.Base || t.type === TileType.Water || t.type === TileType.Ice).length;
+                    const walkableTiles = tiles?.flat().filter(tile =>
+                        tile.type === TileType.Base || tile.type === TileType.Water || tile.type === TileType.Ice).length;
                     service.gameEnded.set(false);
                     gameSessionSocketService.currentSession.set(null);
                     router.navigate(['/game-statistics'], {
@@ -288,7 +288,7 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
         const session = gameSessionSocketService.currentSession();
         if (!session) return;
 
-        const toPlayer = session.players.find(p => p.socketId === mySocketId);
+        const toPlayer = session.players.find(player => player.socketId === mySocketId);
         if (!toPlayer) return;
 
         const dialogRef = dialog.open(AppDialogComponent, {

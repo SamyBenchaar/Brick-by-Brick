@@ -81,7 +81,7 @@ export class GameListComponent implements OnInit {
         this.communicationService.updateGameVisibility(game._id, !game.isVisible).subscribe({
             next: (updated) => {
                 this.gameSocketService.games.update(current =>
-                    current.map(g => (g._id === updated._id ? updated : g)),
+                    current.map(gameItem => (gameItem._id === updated._id ? updated : gameItem)),
                 );
             },
             error: (err) => {

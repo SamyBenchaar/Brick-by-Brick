@@ -30,7 +30,7 @@ export class GamePlaySanctuaryHandler {
         if (!gameSession || gameSession.isTurnStarting) return;
 
         const currentPlayer = gameSession.getCurrentPlayer();
-        const requestingPlayer = gameSession.players.find(p => p.socketId === socket.id);
+        const requestingPlayer = gameSession.players.find(player => player.socketId === socket.id);
 
         if (!currentPlayer || !requestingPlayer || currentPlayer.id !== requestingPlayer.character.id) return;
         if ((currentPlayer.remainingActions ?? 0) <= 0) return;

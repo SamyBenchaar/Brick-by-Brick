@@ -44,7 +44,7 @@ export class GameGridUtilService {
     }
 
     getObjectPath(object: ObjectType, sanctuaryCooldown?: number): string {
-        const isOnCooldown=  (sanctuaryCooldown ?? 0) > 0;
+        const isOnCooldown = (sanctuaryCooldown ?? 0) > 0;
         if (isOnCooldown && object === ObjectType.HealingSanctuary) return './assets/images/offhealingsanctuary.png';
         if (isOnCooldown && object === ObjectType.CombatSanctuary) return './assets/images/offcombatsanctuary.png';
         return `./assets/images/${object}.png`;
@@ -59,7 +59,7 @@ export class GameGridUtilService {
     }
 
     getAvatarImage(avatarId: number): string {
-        return AVATARS.find(a => a.id === avatarId)?.image ?? 'assets/images/lily.jpg';
+        return AVATARS.find(avatarOption => avatarOption.id === avatarId)?.image ?? 'assets/images/lily.jpg';
     }
 
     isSanctuaryOriginTile(tile: Tile, position: Position): boolean {

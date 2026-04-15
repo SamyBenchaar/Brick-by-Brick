@@ -19,7 +19,7 @@ export class GameSessionListComponent implements OnInit, OnDestroy {
 
   private clearUnavailableSelection = effect(() => {
     const selected = this.selectedGameSessionId();
-    if (selected && !this.availableGameSessions().some(s => s.roomId === selected)) {
+    if (selected && !this.availableGameSessions().some(gameSession => gameSession.roomId === selected)) {
       this.selectedGameSessionId.set(null);
     }
   });
@@ -43,7 +43,7 @@ export class GameSessionListComponent implements OnInit, OnDestroy {
 
   isSelectedAvailable(): boolean {
     const selected = this.selectedGameSessionId();
-    return selected !== null && this.availableGameSessions().some(s => s.roomId === selected);
+    return selected !== null && this.availableGameSessions().some(gameSession => gameSession.roomId === selected);
   }
 
   getPreviewImage(gameSession: GameSession): string {

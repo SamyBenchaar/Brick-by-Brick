@@ -162,7 +162,7 @@ export class GameSessionService {
             onTickCallback,
         );
 
-        const fullCurrentPlayer = gameSession.players.find(p => p.character.id === currentPlayer.id);
+        const fullCurrentPlayer = gameSession.players.find(player => player.character.id === currentPlayer.id);
         if (fullCurrentPlayer?.virtualProfile) {
             this.virtualPlayerService.playTurn(gameSession, fullCurrentPlayer)
                 .catch((error: Error) => {
@@ -213,7 +213,7 @@ export class GameSessionService {
         return success;
     }
 
-     checkGameWinner(gameSession: GameSession): Character | null {
+    checkGameWinner(gameSession: GameSession): Character | null {
         if (gameSession.gameMode === 'ctf') {
             return null;
         }
@@ -397,7 +397,7 @@ export class GameSessionService {
         }
 
         const hasPlayer = gameSession.players.some(
-            p => p.character.position?.x === position.x && p.character.position?.y === position.y,
+            player => player.character.position?.x === position.x && player.character.position?.y === position.y,
         );
         if (hasPlayer) {
             return false;

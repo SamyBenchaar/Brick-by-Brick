@@ -24,7 +24,7 @@ export class StartingPointService {
 
             while (!isValid) {
                 position = validStartingPoints[Math.floor(Math.random() * validStartingPoints.length)];
-                isValid = !selectedStartingPoints.some(p => p.x === position.x && p.y === position.y);
+                isValid = !selectedStartingPoints.some(selectedPosition => selectedPosition.x === position.x && selectedPosition.y === position.y);
             }
 
             gameSession.setStartingPoint(player.id, position);

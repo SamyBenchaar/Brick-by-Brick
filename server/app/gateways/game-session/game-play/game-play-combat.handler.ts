@@ -126,8 +126,8 @@ export class GamePlayCombatHandler {
         gameSession: GameSession,
         combat: ActiveCombat,
     ): void {
-        const attackerPlayer = gameSession.players.find(p => p.character.id === combat.attackerId);
-        const defenderPlayer = gameSession.players.find(p => p.character.id === combat.defenderId);
+        const attackerPlayer = gameSession.players.find(player => player.character.id === combat.attackerId);
+        const defenderPlayer = gameSession.players.find(player => player.character.id === combat.defenderId);
         if (attackerPlayer?.virtualProfile) {
             combat.attackerPosture = attackerPlayer.virtualProfile === 'aggressive' ? COMBAT_POSTURE.OFFENSIVE : COMBAT_POSTURE.DEFENSIVE;
         }

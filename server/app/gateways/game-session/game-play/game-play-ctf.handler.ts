@@ -23,8 +23,8 @@ export class GamePlayCtfHandler {
         const gameSession = this.gameSessionService.getGameSession(payload.roomId);
         if (!gameSession) return;
 
-        const fromPlayer = gameSession.players.find(p => p.socketId === socket.id);
-        const toPlayer = gameSession.players.find(p => p.character.id === payload.toPlayerId);
+        const fromPlayer = gameSession.players.find(player => player.socketId === socket.id);
+        const toPlayer = gameSession.players.find(player => player.character.id === payload.toPlayerId);
 
         if (!fromPlayer || !toPlayer) return;
         if (!this.validateFlagTransferRequest(gameSession, fromPlayer, toPlayer)) return;
@@ -81,13 +81,13 @@ export class GamePlayCtfHandler {
         const gameSession = this.gameSessionService.getGameSession(payload.roomId);
         if (!gameSession) return;
 
-        const toPlayer = gameSession.players.find(p => p.socketId === socket.id);
+        const toPlayer = gameSession.players.find(player => player.socketId === socket.id);
         if (!toPlayer) return;
 
         const flagTransferRequest = gameSession.getFlagTransferRequest(toPlayer.character.id);
         if (!flagTransferRequest) return;
 
-        const fromPlayer = gameSession.players.find(p => p.character.id === payload.fromPlayerId);
+        const fromPlayer = gameSession.players.find(player => player.character.id === payload.fromPlayerId);
 
         if (payload.accepted) {
             gameSession.acceptFlagTransfer(toPlayer.character.id);

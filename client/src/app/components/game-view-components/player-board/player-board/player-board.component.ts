@@ -28,7 +28,7 @@ export class PlayerBoardComponent {
   getCurrentPlayerCharacter() {
     const session = this.gameSessionService.currentSession();
     const socketId = this.gameSessionService.getSocketId();
-    return session?.players.find(p => p.socketId === socketId)?.character;
+    return session?.players.find(player => player.socketId === socketId)?.character;
   }
 
   isVirtualPlayer(player: Player): boolean {
@@ -61,6 +61,6 @@ export class PlayerBoardComponent {
   }
 
   getAvatarImage(player: Player): string {
-    return AVATARS.find(a => a.id === player.character.avatarId)?.image ?? './assets/images/lily.jpg';
+    return AVATARS.find(avatarOption => avatarOption.id === player.character.avatarId)?.image ?? './assets/images/lily.jpg';
   }
 }
