@@ -3,16 +3,21 @@ import { GamePlayCtfHandler } from '@app/gateways/game-session/game-play/game-pl
 import { GamePlayMovementHandler } from '@app/gateways/game-session/game-play/game-play-movement.handler';
 import { GamePlaySanctuaryHandler } from '@app/gateways/game-session/game-play/game-play-sanctuary.handler';
 import { GamePlayTurnHandler } from '@app/gateways/game-session/game-play/game-play-turn.handler';
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, forwardRef } from '@nestjs/common';
+import { GamePlayAbandonHandler } from '@app/gateways/game-session/game-play/game-play-abandon.handler';
 
 @Injectable()
 export class GamePlayHandlersProvider {
-    constructor(
-        @Inject(forwardRef(() => GamePlayCombatHandler))
-        readonly combatHandler: GamePlayCombatHandler,
-        readonly movementHandler: GamePlayMovementHandler,
-        readonly ctfHandler: GamePlayCtfHandler,
-        readonly turnHandler: GamePlayTurnHandler,
-        readonly sanctuaryHandler: GamePlaySanctuaryHandler,
-    ) {}
+    @Inject(forwardRef(() => GamePlayCombatHandler))
+    readonly combatHandler: GamePlayCombatHandler;
+    @Inject(GamePlayMovementHandler)
+    readonly movementHandler: GamePlayMovementHandler;
+    @Inject(GamePlayCtfHandler)
+    readonly ctfHandler: GamePlayCtfHandler;
+    @Inject(GamePlayTurnHandler)
+    readonly turnHandler: GamePlayTurnHandler;
+    @Inject(GamePlaySanctuaryHandler)
+    readonly sanctuaryHandler: GamePlaySanctuaryHandler;
+    @Inject(GamePlayAbandonHandler)
+    readonly abandonHandler: GamePlayAbandonHandler;
 }

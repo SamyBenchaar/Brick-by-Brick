@@ -1,1 +1,4 @@
 export const PERCENTAGE_MULTIPLIER = 100;
+
+export const LARGE_TABLE_THRESHOLD = 2;
+export const MEDIUM_TABLE_THRESHOLD = 4;

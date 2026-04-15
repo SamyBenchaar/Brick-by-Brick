@@ -7,6 +7,7 @@ export interface GamePlayHandlerContext {
     server: Server;
     logService: LogService;
     onGameEnd: (gameSession: GameSession, winner: Character | null) => void;
+    onGameEndCanceled: (gameSession: GameSession) => void;
     onTurnEnd: (gameSession: GameSession) => void;
     emitReachableTiles: (gameSession: GameSession) => void;
 }

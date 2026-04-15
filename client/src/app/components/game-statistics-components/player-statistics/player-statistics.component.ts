@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 import {Player} from '@common/player';
-import {PERCENTAGE_MULTIPLIER} from '@app/constants/statistics-constants';
+import {PERCENTAGE_MULTIPLIER, LARGE_TABLE_THRESHOLD, MEDIUM_TABLE_THRESHOLD} from '@app/constants/statistics-constants';
 
 type SortColumn = 'combats' | 'victories' | 'defeats' | 'lifeLost' | 'damageDealt' | 'tilesVisited';
 type SortDirection = 'asc' | 'desc';
@@ -50,4 +50,10 @@ export class PlayerStatisticsComponent {
     if (this.walkableTiles === 0) return 0;
     return Math.round((tilesVisited/this.walkableTiles)*PERCENTAGE_MULTIPLIER);
   }
+
+  get tableSizeClass(): string {
+    if (this.players.length <= LARGE_TABLE_THRESHOLD) return 'size-large';
+    if (this.players.length <= MEDIUM_TABLE_THRESHOLD) return 'size-medium';
+    return 'size-small';
+}
 }

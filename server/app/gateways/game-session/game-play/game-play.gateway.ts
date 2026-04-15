@@ -1,4 +1,5 @@
-﻿import { GameSession } from '@app/domain/game-session';
+﻿import { MS_TO_SECONDS_CONVERSION } from '@common/constants/game-statistics-constants';
+import { GameSession } from '@app/domain/game-session';
 import { GamePlayHandlerContext } from '@app/gateways/game-session/game-play/game-play-handler.context';
 import { GamePlayHandlersProvider } from '@app/gateways/game-session/game-play/game-play-handlers.provider';
 import { GameSessionGateway } from '@app/gateways/game-session/game-session/game-session.gateway';
@@ -7,7 +8,6 @@ import { GameSessionService } from '@app/services/game-session/game-session/game
 import { LogService } from '@app/services/log/log.service';
 import { Character } from '@common/character';
 import { CombatEvents, GameSessionEvents } from '@common/game.events';
-import { Player } from '@common/player';
 import { Position } from '@common/position';
 import { SessionStatus } from '@common/session.status';
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
@@ -15,6 +15,7 @@ import {
     OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
+import { PERCENTAGE_MULTIPLIER, TileType } from '@common/map';
 
 @WebSocketGateway({ cors: true })
 @Injectable()
@@ -61,6 +62,7 @@ export class GamePlayGateway implements OnGatewayInit {
         }
 
         gameSession.status = SessionStatus.Playing;
+        gameSession.startTime = new Date();
         this.gameSessionGateway.notifyGameSessionListUpdated();
 
         const fullMapData = await this.gameSessionService.getFullMapData(gameSession.mapId);
@@ -178,84 +180,9 @@ export class GamePlayGateway implements OnGatewayInit {
         );
     }
 
-    // @SubscribeMessage(GameSessionEvents.RequestInteract)
-    // handleRequestInteract(socket: Socket, payload: { roomId: string; position: Position }) {
-    //     this.handlersProvider.movementHandler.handleRequestInteract(
-    //         socket,
-    //         payload,
-    //         this.createHandlerContext(),
-    //     );
-    // }
-
-
     @SubscribeMessage(GameSessionEvents.PlayerAbandoned)
     handlePlayerAbandoned(socket: Socket, payload: { roomId: string }) {
-        const gameSession = this.gameSessionService.getGameSession(payload.roomId);
-        if (!gameSession) {
-            return;
-        }
-
-        if (gameSession.status !== SessionStatus.Playing) {
-            return;
-        }
-
-        const currentPlayer = gameSession.getCurrentPlayer();
-        const abandoningPlayer = gameSession.players.find(player => player.socketId === socket.id);
-        const wasCurrentPlayer = currentPlayer && abandoningPlayer && currentPlayer.id === abandoningPlayer.character.id;
-
-        this.handleAbandonedPlayerFlagPlacement(gameSession, abandoningPlayer);
-
-        this.handleAbandonedPlayerCombatCleanup(gameSession, payload.roomId, abandoningPlayer?.character.id);
-
-        this.gameSessionService.removePlayer(payload.roomId, socket.id);
-        socket.leave(payload.roomId);
-        this.gameSessionGateway.clearSocketRoomTracking(socket.id);
-
-        this.server.to(payload.roomId).emit(GameSessionEvents.PlayerAbandoned, {
-            playerId: abandoningPlayer?.character.id,
-            mapCopyTiles: gameSession.mapCopy?.tiles,
-        });
-
-        if (abandoningPlayer) {
-            this.logService.log(payload.roomId, `Abandon de partie par ${abandoningPlayer.character.name}`);
-        }
-
-        if (this.handleAbandonedPlayerPostRemovalState(gameSession)) {
-            return;
-        }
-
-        if (wasCurrentPlayer) {
-            this.handleTurnEnd(gameSession);
-        }
-    }
-
-    private handleAbandonedPlayerCombatCleanup(gameSession: GameSession, roomId: string, abandonedPlayerId: string | undefined): void {
-        const combat = gameSession.getActiveCombat();
-        if (combat && abandonedPlayerId && gameSession.isPlayerInActiveCombat(abandonedPlayerId)) {
-            gameSession.clearActiveCombat();
-            this.server.to(roomId).emit(CombatEvents.CombatEnded, {
-                reason: 'playerLeft',
-                abandonedPlayerId,
-            });
-        }
-    }
-
-    private handleAbandonedPlayerPostRemovalState(gameSession: GameSession): boolean {
-        const hasHumanPlayersRemaining = gameSession.players.some((player) => !player.virtualProfile);
-        if (!hasHumanPlayersRemaining) {
-            this.handleGameEnd(gameSession, null);
-            return true;
-        }
-
-        if (!this.handleAbandonedPlayerTeamCheck(gameSession)) {
-            return true;
-        }
-
-        if (!this.handleAbandonedPlayerWinnerCheck(gameSession)) {
-            return true;
-        }
-
-        return this.handleAbandonedPlayerEmptyGame(gameSession);
+        this.handlersProvider.abandonHandler.handlePlayerAbandoned(socket, payload, this.createHandlerContext());
     }
 
     @SubscribeMessage(GameSessionEvents.RequestInteract)
@@ -272,45 +199,6 @@ export class GamePlayGateway implements OnGatewayInit {
         }
     }
 
-    private handleAbandonedPlayerFlagPlacement(gameSession: GameSession, abandoningPlayer: Player | undefined): void {
-        if (gameSession.gameMode === 'ctf' && abandoningPlayer?.character.hasFlag && abandoningPlayer.character.position) {
-            const freeTile = this.gameSessionService.findNearestFreeTile(gameSession, abandoningPlayer.character.position);
-            if (freeTile) {
-                gameSession.setFlagPosition(freeTile);
-                gameSession.setFlagHolder(null);
-            }
-        }
-    }
-
-    private handleAbandonedPlayerTeamCheck(gameSession: GameSession): boolean {
-        if (gameSession.gameMode === 'ctf') {
-            const team1Count = gameSession.getTotalPlayersInTeam('team1');
-            const team2Count = gameSession.getTotalPlayersInTeam('team2');
-
-            if (team1Count === 0 || team2Count === 0) {
-                this.handleGameEndCanceled(gameSession);
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private handleAbandonedPlayerWinnerCheck(gameSession: GameSession): boolean {
-        const winner = this.gameSessionService.checkGameWinner(gameSession);
-        if (winner) {
-            this.handleGameEnd(gameSession, winner);
-            return false;
-        }
-        return true;
-    }
-
-    private handleAbandonedPlayerEmptyGame(gameSession: GameSession): boolean {
-        if (gameSession.playerOrder.length <= 1) {
-            this.handleGameEnd(gameSession, null);
-            return true;
-        }
-        return false;
-    }
 
     private startGameTurn(gameSession: GameSession): void {
         this.handlersProvider.turnHandler.startGameTurn(
@@ -331,13 +219,56 @@ export class GamePlayGateway implements OnGatewayInit {
         this.gameSessionService.cleanupTurnTimers(gameSession.roomId);
 
         const winningTeam = winner && gameSession.gameMode === 'ctf' ? gameSession.getPlayerTeam(winner.id) : null;
+        const allVisitedTiles = new Set<string>();
+        gameSession.visitedTiles.forEach(playerTiles => 
+            playerTiles.forEach(tile => allVisitedTiles.add(tile)),
+        );
 
+        const durationSeconds= gameSession.startTime? Math.floor((Date.now() - gameSession.startTime.getTime()) / MS_TO_SECONDS_CONVERSION): 0;
+        const mapTiles = gameSession.mapCopy?.tiles ?? [];
+        let totalSanctuaries = 0;
+        mapTiles.forEach((row, y) => row.forEach((tile, x) => {
+            if (tile.sanctuaryOrigin?.x === x && tile.sanctuaryOrigin?.y === y) totalSanctuaries++;
+        }));
+
+        let walkableTiles = 0;
+        mapTiles.forEach(row => row.forEach(tile => {
+            if (tile.type === TileType.Base || tile.type === TileType.Water || tile.type === TileType.Ice) {
+                walkableTiles++;
+            }
+        }));
+
+        let totalDoors = 0;
+        mapTiles.forEach(row => row.forEach(tile => {
+            if (tile.type === TileType.Door) totalDoors++;
+        }));
+
+        const tilesVisitedPercent = walkableTiles > 0
+        ? Math.round((allVisitedTiles.size / walkableTiles) * PERCENTAGE_MULTIPLIER)
+        : 0;
+        const sanctuariesUsedPercent = totalSanctuaries > 0
+            ? Math.round((gameSession.usedSanctuaries.size / totalSanctuaries) * PERCENTAGE_MULTIPLIER)
+            : null;
+        const doorsUsedPercent = totalDoors > 0
+            ? Math.round((gameSession.usedDoors.size / totalDoors) * PERCENTAGE_MULTIPLIER)
+            : null;
+        
         this.server.to(gameSession.roomId).emit(GameSessionEvents.GameEnded, {
             winner: winner ? { id: winner.id, name: winner.name, avatarId: winner.avatarId } : null,
             winningTeam,
             gameMode: gameSession.gameMode,
             reason: winner ? 'victory' : 'noPlayers',
+<<<<<<< HEAD
             players: gameSession.players,
+=======
+            players:gameSession.players,
+            durationSeconds,
+            totalTurns: gameSession.totalTurns,
+            sanctuariesUsedPercent,
+            tilesVisitedPercent,
+            doorsUsedPercent,
+            flagHoldersCount: gameSession.gameMode === 'ctf' ? gameSession.flagHolders.size : null,
+>>>>>>> dev
         });
 
         const activePlayers = gameSession.players.map(player => player.character.name).join(', ');
@@ -401,6 +332,7 @@ export class GamePlayGateway implements OnGatewayInit {
             server: this.server,
             logService: this.logService,
             onGameEnd: (gameSession: GameSession, winner: Character | null) => this.handleGameEnd(gameSession, winner),
+            onGameEndCanceled: (gameSession: GameSession) => this.handleGameEndCanceled(gameSession),
             onTurnEnd: (gameSession: GameSession) => this.handleTurnEnd(gameSession),
             emitReachableTiles: (gameSession: GameSession) => this.emitReachableTiles(gameSession),
         };
