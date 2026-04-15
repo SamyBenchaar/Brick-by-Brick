@@ -69,10 +69,10 @@ export class GameObjectService {
             { x: origin.x, y: origin.y + 1 }, { x: origin.x + 1, y: origin.y + 1 },
         ];
         positions.forEach(pos => {
-            const tile = getTile(pos);
-            if (tile) {
-                tile.object = undefined;
-                tile.sanctuaryOrigin = undefined;
+            const currentTile = getTile(pos);
+            if (currentTile) {
+                currentTile.object = undefined;
+                currentTile.sanctuaryOrigin = undefined;
             }
             this.mapEditorService.setObject(pos, null);
             this.mapEditorService.setOrigin(pos, false);

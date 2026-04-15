@@ -4,12 +4,19 @@ import { Direction } from '@app/interfaces/map-validation-interfaces';
 import { Character } from '@common/character';
 import { KEY_DIRECTION_MAP } from '@common/constants/key-event.constants';
 import { DoorState, ObjectType, TILE_COST, TileType } from '@common/map';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+
+type NeighborsProcessingContext = {
+    queue: { pos: Position; cost: number }[];
+    bestCosts: Map<string, number>;
+    reachable: Set<string>;
+    movementPoints: number;
+    mapData: MapTile[][];
+    occupiedPositions: Set<string>;
+};
 
 @Injectable()
 export class MovementService {
-    private logger = new Logger(MovementService.name);
-
     private readonly directions: Record<string, Direction> = {
         arrowUp: { dx: 0, dy: -1 },
         arrowDown: { dx: 0, dy: 1 },
@@ -68,7 +75,14 @@ export class MovementService {
 
         while (queue.length > 0) {
             const current = this.extractLowestCostNode(queue);
-            this.processNeighbors(current, queue, bestCosts, reachable, movementPoints, mapData, occupiedPositions);
+            this.processNeighbors(current, {
+                queue,
+                bestCosts,
+                reachable,
+                movementPoints,
+                mapData,
+                occupiedPositions,
+            });
         }
 
         return this.toPositions(reachable);
@@ -88,13 +102,9 @@ export class MovementService {
 
     private processNeighbors(
         current: { pos: Position; cost: number },
-        queue: { pos: Position; cost: number }[],
-        bestCosts: Map<string, number>,
-        reachable: Set<string>,
-        movementPoints: number,
-        mapData: MapTile[][],
-        occupiedPositions: Set<string>,
+        context: NeighborsProcessingContext,
     ): void {
+        const { queue, bestCosts, reachable, movementPoints, mapData, occupiedPositions } = context;
         const { pos, cost } = current;
 
         for (const direction of Object.values(this.directions)) {
@@ -116,7 +126,8 @@ export class MovementService {
                 continue;
             }
 
-            if (bestCosts.has(newPosKey) && totalCost >= bestCosts.get(newPosKey)!) {
+            const existingCost = bestCosts.get(newPosKey);
+            if (existingCost !== undefined && totalCost >= existingCost) {
                 continue;
             }
 

@@ -1,7 +1,7 @@
 import { GameSession } from '@app/domain/game-session';
 import { Character } from '@common/character';
 import { VICTORIES_TO_WIN } from '@common/constants/game-config-constants';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class CombatService {
