@@ -2,11 +2,12 @@ import { inject, Injectable, Injector, signal, WritableSignal } from '@angular/c
 import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { AppDialogComponent } from '@app/components/game-edition-components/app-dialog/app-dialog.component';
+import { DialogType } from '@app/constants/dialog-type.enum';
 import { Game } from '@app/interfaces/game';
 import { GameSession } from '@app/interfaces/game-session';
 import { FlagTransferSocketService } from '@app/services/communication/game-session-socket/flag-transfer-socket.service';
-import { setupGameplayEventListeners } from '@app/services/communication/gameplay-listeners/gameplay-listeners';
 import { SocketService } from '@app/services/communication/socket/socket.service';
+import { setupGameplayEventListeners } from '@app/utils/gameplay-listeners/gameplay-listeners';
 import { Character } from '@common/character';
 import { GameSessionEvents } from '@common/game.events';
 import { VirtualPlayerProfile } from '@common/virtual.player.profile';
@@ -19,13 +20,9 @@ import { GamePlaySocketService } from './game-play-socket.service';
 export class GameSessionSocketService {
     gameSessions: WritableSignal<GameSession[]> = signal<GameSession[]>([]);
     currentSession: WritableSignal<GameSession | null> = signal<GameSession | null>(null);
-    roomId: WritableSignal<string> = signal<string>('');
-    hostSocketId: WritableSignal<string> = signal<string>('');
     hasAbandoned: WritableSignal<boolean> = signal<boolean>(false);
 
     private listenersInitialized = false;
-    kickedMessage: WritableSignal<string | null> = signal<string | null>(null);
-    cancelledMessage: WritableSignal<string | null> = signal<string | null>(null);
     takenAvatars: WritableSignal<number[]> = signal<number[]>([]);
     private lastJoinRoomId: string | null = null;
     private lastJoinPlayer: Character | null = null;
@@ -84,6 +81,26 @@ export class GameSessionSocketService {
     }
 
     private setupEventListeners(): void {
+        this.registerSessionListListeners();
+        this.registerSessionLifecycleListeners();
+        this.registerJoinErrorListener();
+        this.registerRoomStatusListeners();
+        this.registerGameStartedListener();
+
+        setupGameplayEventListeners({
+            gamePlaySocketService: this.gamePlaySocketService,
+            gameSessionSocketService: this,
+            socketService: this.socketService,
+            router: this.router,
+            dialog: this.dialog,
+            flagTransferService: this.flagTransferSocketService,
+            combatSocketService: this.combatSocketService,
+        });
+
+        this.registerAvatarTakenListener();
+    }
+
+    private registerSessionListListeners(): void {
         this.socketService.on<GameSession[]>(GameSessionEvents.GameSessionList, (gameSessions) => {
             this.gameSessions.set(gameSessions);
         });
@@ -91,7 +108,9 @@ export class GameSessionSocketService {
         this.socketService.on<GameSession[]>(GameSessionEvents.GameSessionListUpdated, (gameSessions) => {
             this.gameSessions.set(gameSessions);
         });
+    }
 
+    private registerSessionLifecycleListeners(): void {
         this.socketService.on<GameSession>(GameSessionEvents.GameSessionCreated, (gameSession) => {
             this.gameSessions.update(current => [...current, gameSession]);
             if (!this.currentSession()) {
@@ -108,7 +127,7 @@ export class GameSessionSocketService {
             this.gameSessions.update(current =>
                 current.map(gameSession => gameSession.roomId === updatedSession.roomId ? updatedSession : gameSession));
             const mySocketId = this.socketService.getSocketId();
-            const isCurrentPlayerInSession = updatedSession.players.find(p => p.socketId === mySocketId);
+            const isCurrentPlayerInSession = updatedSession.players.find(player => player.socketId === mySocketId);
 
             if (isCurrentPlayerInSession) {
                 this.currentSession.set(updatedSession);
@@ -127,7 +146,9 @@ export class GameSessionSocketService {
                 this.takenAvatars.set([]);
             }
         });
+    }
 
+    private registerJoinErrorListener(): void {
         this.socketService.on<string>(GameSessionEvents.GameSessionJoinError, (message) => {
             const isSessionFull = message.includes('session de jeu est pleine');
             const isOddPlayersWarning = message.includes('nombre pair de joueurs');
@@ -138,7 +159,7 @@ export class GameSessionSocketService {
                     data: {
                         title: 'Capacité atteinte',
                         message: 'La salle est pleine. Vous ne pouvez plus ajouter de joueur virtuel.',
-                        type: 'info',
+                        type: DialogType.INFO,
                         confirmText: 'OK',
                     },
                 });
@@ -150,7 +171,7 @@ export class GameSessionSocketService {
                     data: {
                         title: 'Attention',
                         message,
-                        type: 'info',
+                        type: DialogType.INFO,
                         confirmText: 'OK',
                     },
                 });
@@ -159,7 +180,7 @@ export class GameSessionSocketService {
                     data: {
                         title: 'Erreur de jointure',
                         message,
-                        type: 'warning',
+                        type: DialogType.WARNING,
                         confirmText: 'Réessayer',
                         cancelText: "Retour a l'accueil",
                     },
@@ -175,7 +196,9 @@ export class GameSessionSocketService {
                 });
             }
         });
+    }
 
+    private registerRoomStatusListeners(): void {
         this.socketService.on<{ message: string }>(GameSessionEvents.PlayerKicked, (data) => {
             this.currentSession.set(null);
             this.gamePlaySocketService.resetGameplayState();
@@ -183,7 +206,7 @@ export class GameSessionSocketService {
             this.hasAbandoned.set(false);
             this.router.navigate(['/']).then(() => {
                 this.dialog.open(AppDialogComponent, {
-                    data: { title: 'Exclu de la salle', message: data.message, type: 'error' },
+                    data: { title: 'Exclu de la salle', message: data.message, type: DialogType.ERROR },
                     disableClose: true,
                 });
             });
@@ -196,22 +219,24 @@ export class GameSessionSocketService {
             this.hasAbandoned.set(false);
             this.router.navigate(['/']).then(() => {
                 this.dialog.open(AppDialogComponent, {
-                    data: { title: 'Salle annulée', message: data.message, type: 'info' }, disableClose: true,
+                    data: { title: 'Salle annulée', message: data.message, type: DialogType.INFO }, disableClose: true,
                 });
             });
         });
+    }
 
+    private registerGameStartedListener(): void {
         this.socketService.on<{ roomId: string; mapData: Game; gameSession: GameSession }>(GameSessionEvents.GameStarted, (payload) => {
             const { roomId, mapData, gameSession } = payload;
 
             const mySocketId = this.socketService.getSocketId();
-            const isPlayer = gameSession.players.some(p => p.socketId === mySocketId);
+            const isPlayer = gameSession.players.some(player => player.socketId === mySocketId);
             if (!isPlayer) {
                 this.dialog.open(AppDialogComponent, {
                     data: {
                         title: 'La partie a commencé',
                         message: "La partie a commencé avant que vous ne rejoigniez. Vous retournez à l'accueil",
-                        type: 'info',
+                        type: DialogType.INFO,
                         confirmText: 'OK',
                     },
                 });
@@ -227,22 +252,12 @@ export class GameSessionSocketService {
             this.gamePlaySocketService.mapCopy.set(mapData);
             this.router.navigate(['/game-view'], { queryParams: { roomId } });
         });
+    }
 
-        setupGameplayEventListeners({
-            gamePlaySocketService: this.gamePlaySocketService,
-            gameSessionSocketService: this,
-            socketService: this.socketService,
-            router: this.router,
-            dialog: this.dialog,
-            flagTransferService: this.flagTransferSocketService,
-            combatSocketService: this.combatSocketService,
-        });
-
+    private registerAvatarTakenListener(): void {
         this.socketService.on<number[]>(GameSessionEvents.AvatarTakenUpdated, (avatarIds) => {
             this.takenAvatars.set(avatarIds);
         });
-
-
     }
 
     requestGameSessionList(): void {

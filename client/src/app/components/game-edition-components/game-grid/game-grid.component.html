@@ -33,7 +33,7 @@
             @if(playerAtPos) {
             <div class="player-avatar" [ngClass]="getPlayerTeamClass(playerAtPos)">
                 <img [src]="getAvatarImage(playerAtPos.avatarId)" [alt]="playerAtPos.name" />
-                @if (gameMode === 'ctf' && playerAtPos.hasFlag) {
+                @if (gameMode === gameModeValue.Ctf && playerAtPos.hasFlag) {
                     <div class="flag-on-player">
                         <img src="./assets/images/flag.png" alt="Flag" />
                     </div>

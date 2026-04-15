@@ -39,10 +39,15 @@ export class MapEditorService {
     this.currentGame.set(game);
   }
 
+  private getTileAt(game: Game, position: Position) {
+    return game.mapConfig.tiles[position.y][position.x];
+  }
+
   setTileType(position: Position, type: TileType): void {
     const game = this.currentGame();
     if (game) {
-      game.mapConfig.tiles[position.y][position.x].type = type;
+      const tile = this.getTileAt(game, position);
+      tile.type = type;
       this.currentGame.set(game);
     }
   }
@@ -50,7 +55,8 @@ export class MapEditorService {
   setDoorState(position: Position, state: DoorState | undefined): void {
     const game = this.currentGame();
     if (game) {
-      game.mapConfig.tiles[position.y][position.x].doorState = state;
+      const tile = this.getTileAt(game, position);
+      tile.doorState = state;
       this.currentGame.set(game);
     }
   }
@@ -58,10 +64,11 @@ export class MapEditorService {
   setObject(position: Position, type: ObjectType | null): void {
     const game = this.currentGame();
     if (game) {
+      const tile = this.getTileAt(game, position);
       if (type) {
-        game.mapConfig.tiles[position.y][position.x].object = { type };
+        tile.object = { type };
       } else {
-        delete game.mapConfig.tiles[position.y][position.x].object;
+        delete tile.object;
       }
       this.currentGame.set(game);
     }
@@ -70,7 +77,8 @@ export class MapEditorService {
   setOrigin(position: Position, isOrigin: boolean): void {
     const game = this.currentGame();
     if (game) {
-      game.mapConfig.tiles[position.y][position.x].isOrigin = isOrigin;
+      const tile = this.getTileAt(game, position);
+      tile.isOrigin = isOrigin;
       this.currentGame.set(game);
     }
   }

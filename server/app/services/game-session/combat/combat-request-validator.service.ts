@@ -2,6 +2,7 @@ import { GameSession } from '@app/domain/game-session';
 import { CombatParticipants } from '@app/services/game-session/combat/combat-types';
 import { Character } from '@common/character';
 import { Injectable } from '@nestjs/common';
+import { GameModeValue } from '@common/constants/game-config-constants';
 
 @Injectable()
 export class CombatRequestValidatorService {
@@ -48,7 +49,7 @@ export class CombatRequestValidatorService {
     }
 
     private areAlliesInCtf(gameSession: GameSession, attacker: Character, defender: Character): boolean {
-        const isCtfMode = gameSession.gameMode === 'ctf';
+        const isCtfMode = gameSession.gameMode === GameModeValue.Ctf;
         const bothTeamsKnown = !!attacker.team && !!defender.team;
 
         return isCtfMode && bothTeamsKnown && attacker.team === defender.team;

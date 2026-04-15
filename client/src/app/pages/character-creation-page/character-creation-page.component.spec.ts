@@ -16,7 +16,7 @@ import { CharacterCreationPageComponent } from './character-creation-page.compon
  * 3. Bonus : application correcte du bonus vie/rapidité et réinitialisation quand on change de bonus.
  * 4. Dés : inversion attaque/défense (cas limite d'inversion forcée pour éviter doublon de dés).
  * 5. Validation : bouton désactivé sans nom/bonus ou avec nom contenant des espaces (cas limite données invalides).
- * 6. Soumission : rejoindre une session existante (roomId) vs création nouvelle; alerte si aucun id fourni (cas limite).
+ * 6. Soumission : rejoindre une session existante (roomId) vs création nouvelle; aucun envoi si aucun id fourni (cas limite).
  * 7. Personnage aléatoire : champs remplis et dés cohérents.
  */
 describe('CharacterCreationPageComponent', () => {
@@ -221,11 +221,11 @@ describe('CharacterCreationPageComponent', () => {
         it('ne devrait pas soumettre sans gameId ni roomId', () => {
             component.gameId = null;
             component.roomId = null;
-
-            spyOn(window, 'alert');
             component.submitCharacter();
 
-            expect(window.alert).toHaveBeenCalled();
+            expect(mockGameSessionSocketService.createGameSession).not.toHaveBeenCalled();
+            expect(mockGameSessionSocketService.joinGameSession).not.toHaveBeenCalled();
+            expect(routerMock.navigate).not.toHaveBeenCalled();
         });
 
         it('devrait stocker le nom dans sessionStorage', () => {

@@ -12,6 +12,7 @@ import { Position } from '@common/position';
 import { CombatSocketService } from './combat-socket.service';
 import { GameSessionSocketService } from './game-session-socket.service';
 import {FLAG_TRANSFER_TIMEOUT_MS} from '@app/constants/flag-transfer-constants';
+import { GameModeValue } from '@common/constants/game-config-constants';
 
 @Injectable({
     providedIn: 'root',
@@ -170,7 +171,7 @@ export class GamePlaySocketService {
 
     private isEnemyTarget(currentPlayer: Character, target: Character): boolean {
         const session = this.currentSession();
-        if (session?.gameMode !== 'ctf') {
+        if (session?.gameMode !== GameModeValue.Ctf) {
             return true;
         }
 
@@ -206,7 +207,7 @@ export class GamePlaySocketService {
             .find((target: Character) => this.canCharacterAttackTarget(currentPlayer, target)) ?? null;
     }
 
-    isFlagOnPosition(position: Position): boolean {
+     isFlagOnPosition(position: Position): boolean {
         return this.gameSession?.flagPosition?.x === position.x && this.gameSession?.flagPosition?.y === position.y;
     }
 
@@ -300,7 +301,7 @@ export class GamePlaySocketService {
     }
 
     canTransferFlagTo(target: Character | null): boolean {
-        if (this.currentSession()?.gameMode !== 'ctf') return false;
+        if (this.currentSession()?.gameMode !== GameModeValue.Ctf) return false;
         const currentPlayer = this.getCurrentPlayerCharacter();
         if (!currentPlayer || !target) return false;
 
@@ -318,7 +319,7 @@ export class GamePlaySocketService {
     }
 
     canRequestFlagFrom(targetcharacter: Character): boolean {
-        if (this.currentSession()?.gameMode !== 'ctf') return false;
+        if (this.currentSession()?.gameMode !== GameModeValue.Ctf) return false;
 
         // Disable if there's a pending flag transfer request to this target
         if (this.pendingFlagTransfers.has(targetcharacter.id)) return false;

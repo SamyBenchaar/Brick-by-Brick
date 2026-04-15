@@ -8,6 +8,7 @@ import { GameSessionEvents } from '@common/game.events';
 import { Position } from '@common/position';
 import { Inject, Injectable, forwardRef } from '@nestjs/common';
 import { Socket } from 'socket.io';
+import { GameModeValue } from '@common/constants/game-config-constants';
 
 @Injectable()
 export class GamePlayMovementHandler {
@@ -32,7 +33,7 @@ export class GamePlayMovementHandler {
         }
 
         const currentPlayer = gameSession.getCurrentPlayer();
-        const requestingPlayer = gameSession.players.find(p => p.socketId === socket.id);
+        const requestingPlayer = gameSession.players.find(player => player.socketId === socket.id);
 
         if (!currentPlayer || !requestingPlayer || currentPlayer.id !== requestingPlayer.character.id) {
             return;
@@ -49,7 +50,7 @@ export class GamePlayMovementHandler {
                 remainingActions: currentPlayer.remainingActions,
             });
 
-            if (gameSession.gameMode === 'ctf') {
+            if (gameSession.gameMode === GameModeValue.Ctf) {
                 const ctfGameEnded = this.handleCtfMovement(gameSession, context, payload.roomId);
                 if (ctfGameEnded) {
                     return;
@@ -125,7 +126,7 @@ export class GamePlayMovementHandler {
         if (!gameSession || gameSession.isTurnStarting || gameSession.getActiveCombat()) return;
 
         const currentPlayer = gameSession.getCurrentPlayer();
-        const requestingPlayer = gameSession.players.find(p => p.socketId === socket.id);
+        const requestingPlayer = gameSession.players.find(player => player.socketId === socket.id);
 
         if (!currentPlayer || !requestingPlayer || currentPlayer.id !== requestingPlayer.character.id) return;
         if ((currentPlayer.remainingActions ?? 0) <= 0) return;

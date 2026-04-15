@@ -1,5 +1,4 @@
-﻿import { MS_TO_SECONDS_CONVERSION } from '@common/constants/game-statistics-constants';
-import { GameSession } from '@app/domain/game-session';
+﻿import { GameSession } from '@app/domain/game-session';
 import { GamePlayHandlerContext } from '@app/gateways/game-session/game-play/game-play-handler.context';
 import { GamePlayHandlersProvider } from '@app/gateways/game-session/game-play/game-play-handlers.provider';
 import { GameSessionGateway } from '@app/gateways/game-session/game-session/game-session.gateway';
@@ -7,7 +6,9 @@ import { GameDataForInit } from '@app/interfaces/game-map-interfaces';
 import { GameSessionService } from '@app/services/game-session/game-session/game-session.service';
 import { LogService } from '@app/services/log/log.service';
 import { Character } from '@common/character';
+import { MS_TO_SECONDS_CONVERSION } from '@common/constants/game-statistics-constants';
 import { CombatEvents, GameSessionEvents } from '@common/game.events';
+import { PERCENTAGE_MULTIPLIER, TileType } from '@common/map';
 import { Position } from '@common/position';
 import { SessionStatus } from '@common/session.status';
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
@@ -15,7 +16,7 @@ import {
     OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { PERCENTAGE_MULTIPLIER, TileType } from '@common/map';
+import { GameModeValue } from '@common/constants/game-config-constants';
 
 @WebSocketGateway({ cors: true })
 @Injectable()
@@ -56,7 +57,7 @@ export class GamePlayGateway implements OnGatewayInit {
             return;
         }
 
-        if (gameSession.gameMode === 'ctf' && gameSession.players.length % 2 !== 0) {
+        if (gameSession.gameMode === GameModeValue.Ctf && gameSession.players.length % 2 !== 0) {
             socket.emit(GameSessionEvents.GameSessionJoinError, 'Le mode CTF requiert un nombre pair de joueurs');
             return;
         }
@@ -68,12 +69,12 @@ export class GamePlayGateway implements OnGatewayInit {
         const fullMapData = await this.gameSessionService.getFullMapData(gameSession.mapId);
         this.gameSessionService.initializeGameSession(gameSession, fullMapData);
 
-        if (gameSession.gameMode === 'ctf') {
+        if (gameSession.gameMode === GameModeValue.Ctf) {
             gameSession.assignTeams();
             this.findAndSetFlagPosition(gameSession, fullMapData);
         }
 
-        if (gameSession.gameMode === 'ctf') {
+        if (gameSession.gameMode === GameModeValue.Ctf) {
             this.server.to(payload.roomId).emit(GameSessionEvents.GameSessionUpdated, gameSession);
         }
 
@@ -120,7 +121,7 @@ export class GamePlayGateway implements OnGatewayInit {
         }
 
         const currentPlayer = gameSession.getCurrentPlayer();
-        const requestingPlayer = gameSession.players.find(p => p.socketId === socket.id);
+        const requestingPlayer = gameSession.players.find(player => player.socketId === socket.id);
         if (!currentPlayer || !requestingPlayer || currentPlayer.id !== requestingPlayer.character.id && !gameSession.isDebugModeActivated) {
             return;
         }
@@ -168,8 +169,8 @@ export class GamePlayGateway implements OnGatewayInit {
     triggerBotCombat(roomId: string, attackerId: string, defenderId: string): void {
         const gameSession = this.gameSessionService.getGameSession(roomId);
         if (!gameSession) return;
-        const attacker = gameSession.players.find(p => p.character.id === attackerId)?.character;
-        const defender = gameSession.players.find(p => p.character.id === defenderId)?.character;
+        const attacker = gameSession.players.find(player => player.character.id === attackerId)?.character;
+        const defender = gameSession.players.find(player => player.character.id === defenderId)?.character;
         if (!attacker || !defender) return;
 
         this.handlersProvider.combatHandler.initiateVirtualPlayerCombat(
@@ -218,13 +219,15 @@ export class GamePlayGateway implements OnGatewayInit {
     private handleGameEnd(gameSession: GameSession, winner: Character | null): void {
         this.gameSessionService.cleanupTurnTimers(gameSession.roomId);
 
-        const winningTeam = winner && gameSession.gameMode === 'ctf' ? gameSession.getPlayerTeam(winner.id) : null;
+        const winningTeam = winner && gameSession.gameMode === GameModeValue.Ctf ? gameSession.getPlayerTeam(winner.id) : null;
         const allVisitedTiles = new Set<string>();
-        gameSession.visitedTiles.forEach(playerTiles => 
+        gameSession.visitedTiles.forEach(playerTiles =>
             playerTiles.forEach(tile => allVisitedTiles.add(tile)),
         );
 
-        const durationSeconds= gameSession.startTime? Math.floor((Date.now() - gameSession.startTime.getTime()) / MS_TO_SECONDS_CONVERSION): 0;
+        const durationSeconds = gameSession.startTime
+            ? Math.floor((Date.now() - gameSession.startTime.getTime()) / MS_TO_SECONDS_CONVERSION)
+            : 0;
         const mapTiles = gameSession.mapCopy?.tiles ?? [];
         let totalSanctuaries = 0;
         mapTiles.forEach((row, y) => row.forEach((tile, x) => {
@@ -244,30 +247,30 @@ export class GamePlayGateway implements OnGatewayInit {
         }));
 
         const tilesVisitedPercent = walkableTiles > 0
-        ? Math.round((allVisitedTiles.size / walkableTiles) * PERCENTAGE_MULTIPLIER)
-        : 0;
+            ? Math.round((allVisitedTiles.size / walkableTiles) * PERCENTAGE_MULTIPLIER)
+            : 0;
         const sanctuariesUsedPercent = totalSanctuaries > 0
             ? Math.round((gameSession.usedSanctuaries.size / totalSanctuaries) * PERCENTAGE_MULTIPLIER)
             : null;
         const doorsUsedPercent = totalDoors > 0
             ? Math.round((gameSession.usedDoors.size / totalDoors) * PERCENTAGE_MULTIPLIER)
             : null;
-        
+
         this.server.to(gameSession.roomId).emit(GameSessionEvents.GameEnded, {
             winner: winner ? { id: winner.id, name: winner.name, avatarId: winner.avatarId } : null,
             winningTeam,
             gameMode: gameSession.gameMode,
             reason: winner ? 'victory' : 'noPlayers',
-            players:gameSession.players,
+            players: gameSession.players,
             durationSeconds,
             totalTurns: gameSession.totalTurns,
             sanctuariesUsedPercent,
             tilesVisitedPercent,
             doorsUsedPercent,
-            flagHoldersCount: gameSession.gameMode === 'ctf' ? gameSession.flagHolders.size : null,
+            flagHoldersCount: gameSession.gameMode === GameModeValue.Ctf ? gameSession.flagHolders.size : null,
         });
 
-        const activePlayers = gameSession.players.map(p => p.character.name).join(', ');
+        const activePlayers = gameSession.players.map(player => player.character.name).join(', ');
         this.logService.log(gameSession.roomId, `Fin de partie. Joueurs actifs: ${activePlayers}`);
 
         setTimeout(() => {
@@ -295,7 +298,7 @@ export class GamePlayGateway implements OnGatewayInit {
             return;
         }
 
-        const playerData = gameSession.players.find(p => p.character.id === currentPlayer.id);
+        const playerData = gameSession.players.find(player => player.character.id === currentPlayer.id);
         if (!playerData) {
             return;
         }

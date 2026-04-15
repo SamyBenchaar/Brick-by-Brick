@@ -74,7 +74,7 @@ describe('MapValidationService', () => {
       mapConfig: { size: 'Small', tiles },
     } as Partial<Game>);
 
-    expect(result.some(e => e.includes('points de départ'))).toBeTruthy();
+    expect(result.some(validationError => validationError.includes('points de départ'))).toBeTruthy();
   });
 
   it('doit passer pour une carte valide', async () => {
@@ -105,7 +105,7 @@ describe('MapValidationService', () => {
       mapConfig: { size: 'Small', tiles },
     } as Partial<Game>);
 
-    expect(result.some(e => e.includes('points de départ'))).toBeTruthy();
+    expect(result.some(validationError => validationError.includes('points de départ'))).toBeTruthy();
   });
 
   // Cas limite: couverture terrain exactement 50%
@@ -134,7 +134,7 @@ describe('MapValidationService', () => {
       mapConfig: { size: 'Small', tiles },
     } as Partial<Game>);
 
-    expect(result.some(e => e.includes('surface de terrain jouable'))).toBeTruthy();
+    expect(result.some(validationError => validationError.includes('surface de terrain jouable'))).toBeTruthy();
   });
 
   // Cas limite: carte vide (tous les murs)
@@ -168,6 +168,6 @@ describe('MapValidationService', () => {
       mapConfig: { size: 'Small', tiles },
     } as Partial<Game>);
 
-    expect(result.some(e => e.includes('points de départ'))).toBeTruthy();
+    expect(result.some(validationError => validationError.includes('points de départ'))).toBeTruthy();
   });
 });

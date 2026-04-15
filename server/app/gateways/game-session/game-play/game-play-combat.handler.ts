@@ -13,6 +13,7 @@ import { COMBAT_TURN_TIME } from '@common/constants/combat-constants';
 import { CombatEvents, GameSessionEvents } from '@common/game.events';
 import { Injectable, Logger } from '@nestjs/common';
 import { Socket } from 'socket.io';
+import { GameModeValue } from '@common/constants/game-config-constants';
 @Injectable()
 export class GamePlayCombatHandler {
     private readonly logger = new Logger(GamePlayCombatHandler.name);
@@ -126,8 +127,8 @@ export class GamePlayCombatHandler {
         gameSession: GameSession,
         combat: ActiveCombat,
     ): void {
-        const attackerPlayer = gameSession.players.find(p => p.character.id === combat.attackerId);
-        const defenderPlayer = gameSession.players.find(p => p.character.id === combat.defenderId);
+        const attackerPlayer = gameSession.players.find(player => player.character.id === combat.attackerId);
+        const defenderPlayer = gameSession.players.find(player => player.character.id === combat.defenderId);
         if (attackerPlayer?.virtualProfile) {
             combat.attackerPosture = attackerPlayer.virtualProfile === 'aggressive' ? COMBAT_POSTURE.OFFENSIVE : COMBAT_POSTURE.DEFENSIVE;
         }
@@ -272,10 +273,10 @@ export class GamePlayCombatHandler {
             remainingActions: combatState.attacker.remainingActions,
             remainingTurnTime: gameSession.getCurrentTurnTime(),
             turnShouldContinue: combatState.turnShouldContinue,
-            flagPosition: gameSession.gameMode === 'ctf' ? gameSession.getFlagPosition() : null,
-            flagHolderId: gameSession.gameMode === 'ctf' ? gameSession.getFlagHolder() : null,
+            flagPosition: gameSession.gameMode === GameModeValue.Ctf ? gameSession.getFlagPosition() : null,
+            flagHolderId: gameSession.gameMode === GameModeValue.Ctf ? gameSession.getFlagHolder() : null,
         });
-        if (gameSession.gameMode === 'ctf') {
+        if (gameSession.gameMode === GameModeValue.Ctf) {
             context.server.to(gameSession.roomId).emit(GameSessionEvents.GameSessionUpdated, gameSession);
         }
         context.emitReachableTiles(gameSession);

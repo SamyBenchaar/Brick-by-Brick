@@ -1,4 +1,5 @@
 import { Component, Input } from '@angular/core';
+import { GameModeValue } from '@common/constants/game-config-constants';
 import { SECONDS_TO_MINUTES_CONVERSION } from '@common/constants/game-statistics-constants';
 
 @Component({
@@ -9,6 +10,8 @@ import { SECONDS_TO_MINUTES_CONVERSION } from '@common/constants/game-statistics
 })
 export class GlobalGameStatisticsComponent {
 
+  gameModeValue = GameModeValue;
+
   @Input() durationSeconds: number = 0;
   @Input() totalTurns: number = 0;
   @Input() gameMode: string = 'classic';
@@ -17,7 +20,7 @@ export class GlobalGameStatisticsComponent {
   @Input() doorsUsedPercent: number | null = null;
   @Input() flagHoldersCount: number | null = null;
 
-  
+
   formatDuration(seconds: number): string {
     const m = Math.floor(seconds / SECONDS_TO_MINUTES_CONVERSION).toString().padStart(2, '0');
     const s = (seconds % SECONDS_TO_MINUTES_CONVERSION).toString().padStart(2, '0');

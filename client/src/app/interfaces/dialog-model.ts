@@ -1,4 +1,4 @@
-export type DialogType = 'success' | 'error' | 'info' | 'warning';
+import { DialogType } from '@app/constants/dialog-type.enum';
 
 export interface AppDialogData {
   title: string;

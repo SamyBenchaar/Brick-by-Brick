@@ -33,7 +33,7 @@
             <td>{{ doorsUsedPercent }}%</td>
           </tr>
         }
-        @if (gameMode === 'ctf' && flagHoldersCount !== null) {
+        @if (gameMode === gameModeValue.Ctf && flagHoldersCount !== null) {
           <tr>
             <td>Joueurs ayant détenu le drapeau </td>
             <td>{{ flagHoldersCount }}</td>

@@ -40,15 +40,15 @@ export const GRID_SIZE = 750;
 // Constantes pour la validation
 export const MIN_TERRAIN_COVERAGE = 0.5;
 export const SHUFFLE_FACTOR = 0.5;
-export const EXPIRED_FLAG_TIME = 30000; 
+export const EXPIRED_FLAG_TIME = 30000;
 
 export const PERCENTAGE_MULTIPLIER = 100;
 
 export const PLAYABLE_TYPES = [TileType.Base, TileType.Ice, TileType.Water, TileType.Door];
 
 export const TILE_COST: Partial<Record<TileType, number>> = {
-  [TileType.Base]: 1,
-  [TileType.Water]: 2,
-  [TileType.Ice]: 0,
-  [TileType.Door]: 1,
+    [TileType.Base]: 1,
+    [TileType.Water]: 2,
+    [TileType.Ice]: 0,
+    [TileType.Door]: 1,
 };
