@@ -4,7 +4,7 @@ import { GamePlayMovementHandler } from '@app/gateways/game-session/game-play/ga
 import { GamePlaySanctuaryHandler } from '@app/gateways/game-session/game-play/game-play-sanctuary.handler';
 import { GamePlayTurnHandler } from '@app/gateways/game-session/game-play/game-play-turn.handler';
 import { Inject, Injectable, forwardRef } from '@nestjs/common';
-import { GamePlayAbandonHandler } from './game-playa-abandon.handler';
+import { GamePlayAbandonHandler } from '@app/gateways/game-session/game-play/game-play-abandon.handler';
 
 @Injectable()
 export class GamePlayHandlersProvider {
