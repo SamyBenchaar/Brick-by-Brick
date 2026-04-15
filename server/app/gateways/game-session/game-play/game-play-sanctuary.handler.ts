@@ -1,3 +1,4 @@
+import { GameSession } from '@app/domain/game-session';
 import { GamePlayHandlerContext } from '@app/gateways/game-session/game-play/game-play-handler.context';
 import { MapTile } from '@app/interfaces/game-map-interfaces';
 import { GameSessionService } from '@app/services/game-session/game-session/game-session.service';
@@ -35,8 +36,8 @@ export class GamePlaySanctuaryHandler {
         if (!currentPlayer || !requestingPlayer || currentPlayer.id !== requestingPlayer.character.id) return;
         if ((currentPlayer.remainingActions ?? 0) <= 0) return;
 
-        const interactionType = this.processInteraction(gameSession.mapCopy?.tiles, currentPlayer, payload.position, payload.mode);
-        if (!interactionType) return;
+            const interactionType = this.processInteraction(gameSession.mapCopy?.tiles, currentPlayer, payload.position, payload.mode, gameSession);
+            if (!interactionType) return;
 
         currentPlayer.remainingActions -= 1;
         context.server.to(gameSession.roomId).emit(GameSessionEvents.InteractResult, {
@@ -57,8 +58,10 @@ export class GamePlaySanctuaryHandler {
         }
     }
 
-    private processInteraction(tiles: MapTile[][] | undefined, player: Character, position: Position, mode: 'normal' | 'double'): string | null {
-        if (!tiles) return null;
+        private processInteraction(tiles: MapTile[][] | undefined,
+             player: Character, position: Position,
+              mode: 'normal' | 'double', gameSession: GameSession): string | null {
+            if (!tiles) return null;
 
         const tile = tiles[position.y]?.[position.x];
         if (!tile?.object) return null;
@@ -72,8 +75,9 @@ export class GamePlaySanctuaryHandler {
 
         const applied = this.applyEffect(player, objectType, mode);
         if (!applied) return null;
-
+        
         originTile.sanctuaryCooldown = SANCTUARY_COOLDOWN_TURNS;
+        gameSession.usedSanctuaries.add(`${origin.x},${origin.y}`);
         return objectType;
     }
 

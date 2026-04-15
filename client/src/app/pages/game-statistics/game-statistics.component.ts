@@ -2,10 +2,11 @@ import { Component, OnInit, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { Player } from '@common/player';
 import { PlayerStatisticsComponent } from '@app/components/game-statistics-components/player-statistics/player-statistics.component';
+import { GlobalGameStatisticsComponent } from '@app/components/game-statistics-components/global-game-statistics/global-game-statistics.component';
 
 @Component({
   selector: 'app-game-statistics',
-  imports: [PlayerStatisticsComponent],
+  imports: [PlayerStatisticsComponent, GlobalGameStatisticsComponent],
   templateUrl: './game-statistics.component.html',
   styleUrl: './game-statistics.component.scss',
 })
@@ -16,7 +17,13 @@ export class GameStatisticsComponent implements OnInit {
   gameMode: string = 'classic';
   players: Player[] = [];
   walkableTiles: number = 0;
-
+  durationSeconds: number = 0;
+  totalTurns: number = 0;
+  sanctuariesUsedPercent: number | null = null;
+  tilesVisitedPercent: number = 0;
+  doorsUsedPercent: number | null = null;
+  flagHoldersCount: number | null = null;
+  
   ngOnInit(): void {
     const state = history.state ?? {};
     this.winner = state.winner ?? null;
@@ -24,6 +31,12 @@ export class GameStatisticsComponent implements OnInit {
     this.gameMode = state.gameMode ?? 'classic';
     this.players = state.players ?? [];
     this.walkableTiles = state.walkableTiles ?? 0;
+    this.durationSeconds = state.durationSeconds ?? 0;
+    this.totalTurns = state.totalTurns ?? 0;
+    this.sanctuariesUsedPercent = state.sanctuariesUsedPercent ?? null;
+    this.tilesVisitedPercent = state.tilesVisitedPercent ?? 0;
+    this.doorsUsedPercent = state.doorsUsedPercent ?? null;
+    this.flagHoldersCount = state.flagHoldersCount ?? null;
   }
 
   navigateHome(): void {
