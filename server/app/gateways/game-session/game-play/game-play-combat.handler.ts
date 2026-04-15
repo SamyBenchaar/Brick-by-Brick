@@ -6,14 +6,15 @@ import { CombatRoundService } from '@app/services/game-session/combat/combat-rou
 import { CombatEndState, CombatRoundOutcome } from '@app/services/game-session/combat/combat-types';
 import { GameSessionService } from '@app/services/game-session/game-session/game-session.service';
 import { TurnManagementService } from '@app/services/game-session/turn-management.service';
+import { VirtualPlayerService } from '@app/services/game-session/virtual-player.service';
 import { formatCombatRoundLog } from '@app/services/log/combat-log.util';
 import { Character } from '@common/character';
 import { ActiveCombat, COMBAT_POSTURE, CombatRoundResolvedPayload } from '@common/combat';
 import { COMBAT_TURN_TIME } from '@common/constants/combat-constants';
+import { GameModeValue } from '@common/constants/game-config-constants';
 import { CombatEvents, GameSessionEvents } from '@common/game.events';
 import { Injectable, Logger } from '@nestjs/common';
 import { Socket } from 'socket.io';
-import { GameModeValue } from '@common/constants/game-config-constants';
 @Injectable()
 export class GamePlayCombatHandler {
     private readonly logger = new Logger(GamePlayCombatHandler.name);
@@ -24,6 +25,7 @@ export class GamePlayCombatHandler {
         private readonly combatRequestValidatorService: CombatRequestValidatorService,
         private readonly combatRoundService: CombatRoundService,
         private readonly combatEndService: CombatEndService,
+        private readonly virtualPlayerService: VirtualPlayerService,
     ) {}
     handleRequestCombat(
         socket: Socket,
@@ -332,6 +334,20 @@ export class GamePlayCombatHandler {
             remainingMovement: currentPlayer.remainingMovement,
             remainingActions: currentPlayer.remainingActions,
         });
+
+        const fullCurrentPlayer = gameSession.players.find((player) => player.character.id === currentPlayer.id);
+        if (fullCurrentPlayer?.virtualProfile) {
+            this.virtualPlayerService.playTurn(gameSession, fullCurrentPlayer)
+                .catch((error: Error) => {
+                    this.logger.error(`Erreur durant la reprise du tour JV post-combat: ${error.message}`);
+                })
+                .finally(() => {
+                    if (!gameSession.getActiveCombat()) {
+                        this.gameSessionService.endCurrentTurn(gameSession);
+                        context.onTurnEnd(gameSession);
+                    }
+                });
+        }
     }
     private startCombatTurnTimer(gameSession: GameSession, context: GamePlayHandlerContext): void {
         context.server.to(gameSession.roomId).emit(CombatEvents.CombatTurnStarted, {
