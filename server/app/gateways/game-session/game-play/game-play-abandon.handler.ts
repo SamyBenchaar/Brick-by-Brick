@@ -37,6 +37,8 @@ export class GamePlayAbandonHandler {
         context.server.to(payload.roomId).emit(GameSessionEvents.PlayerAbandoned, {
             playerId: abandoningPlayer?.character.id,
             mapCopyTiles: gameSession.mapCopy?.tiles,
+            flagPosition: gameSession.flagPosition,
+            flagHolderId: gameSession.flagHolderId,
         });
 
         if (abandoningPlayer) {
@@ -49,12 +51,12 @@ export class GamePlayAbandonHandler {
     }
 
     private handleAbandonedPlayerFlagPlacement(gameSession: GameSession, abandoningPlayer: Player | undefined): void {
-        if (gameSession.gameMode === 'ctf' && abandoningPlayer?.character.hasFlag && abandoningPlayer.character.position) {
-            const freeTile = this.gameSessionService.findNearestFreeTile(gameSession, abandoningPlayer.character.position);
-            if (freeTile) {
-                gameSession.setFlagPosition(freeTile);
-                gameSession.setFlagHolder(null);
-            }
+        if (!abandoningPlayer || gameSession.gameMode !== 'ctf') {
+            return;
+        }
+
+        if (gameSession.flagHolderId === abandoningPlayer.character.id) {
+            gameSession.dropFlag(abandoningPlayer.character.position);
         }
     }
 
