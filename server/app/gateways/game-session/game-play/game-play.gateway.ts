@@ -23,7 +23,6 @@ import { GameModeValue } from '@common/constants/game-config-constants';
 export class GamePlayGateway implements OnGatewayInit {
     @WebSocketServer() private server: Server;
 
-    private readonly gameEndCleanupDelay = 5000;
 
     constructor(
         private readonly logger: Logger,
@@ -273,9 +272,7 @@ export class GamePlayGateway implements OnGatewayInit {
         const activePlayers = gameSession.players.map(player => player.character.name).join(', ');
         this.logService.log(gameSession.roomId, `Fin de partie. Joueurs actifs: ${activePlayers}`);
 
-        setTimeout(() => {
-            this.gameSessionGateway.cleanUpRoom(gameSession.roomId);
-        }, this.gameEndCleanupDelay);
+
     }
 
     private handleGameEndCanceled(gameSession: GameSession): void {
@@ -287,9 +284,6 @@ export class GamePlayGateway implements OnGatewayInit {
             gameMode: gameSession.gameMode,
         });
 
-        setTimeout(() => {
-            this.gameSessionGateway.cleanUpRoom(gameSession.roomId);
-        }, this.gameEndCleanupDelay);
     }
 
     private emitReachableTiles(gameSession: GameSession): void {

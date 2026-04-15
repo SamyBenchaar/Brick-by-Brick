@@ -39,6 +39,105 @@ function findSanctuaryOrigin(position: Position, tiles: Tile[][]): Position | un
         );
 }
 
+type GameEndedPayload = {
+    winner: { id: string; name: string; avatarId: number } | null;
+    winningTeam?: 'team1' | 'team2';
+    gameMode?: string;
+    reason: string;
+    players?: Player[];
+    durationSeconds?: number;
+    totalTurns?: number;
+    sanctuariesUsedPercent?: number | null;
+    tilesVisitedPercent?: number | null;
+    doorsUsedPercent?: number | null;
+    flagHoldersCount?: number | null;
+};
+
+function buildGameEndedMessage(data: GameEndedPayload, socketId: string): { title: string; message: string } {
+    let message = '';
+    let title = 'Partie terminée';
+    if (data.reason === 'victory' && data.winner) {
+        if (data.gameMode === GameModeValue.Ctf && data.winningTeam) {
+            const teamName = data.winningTeam === 'team1' ? 'bleue' : 'rouge';
+            title = 'Victoire!';
+            message = `L'équipe ${teamName} a gagné la partie!`;
+        } else if (data.winner.id === socketId) {
+            title = 'Victoire!';
+            message = 'Félicitations! Vous avez gagné la partie avec 3 victoires!';
+        } else {
+            message = `${data.winner.name} a gagné la partie avec 3 victoires!`;
+        }
+    } else if (data.reason === 'noPlayers') {
+        message = 'La partie est terminée car tous les autres joueurs ont abandonné.';
+    } else if (data.reason === 'canceled') {
+        title = 'Partie annulée';
+        message = "La partie a été annulée car une équipe n'a plus aucun joueur.";
+    } else {
+        message = 'La partie est terminée.';
+    }
+    return { title, message };
+}
+
+function buildGlobalStats(data: GameEndedPayload) {
+    return {
+        durationSeconds: data.durationSeconds ?? 0,
+        totalTurns: data.totalTurns ?? 0,
+        sanctuariesUsedPercent: data.sanctuariesUsedPercent ?? null,
+        tilesVisitedPercent: data.tilesVisitedPercent ?? 0,
+        doorsUsedPercent: data.doorsUsedPercent ?? null,
+        flagHoldersCount: data.flagHoldersCount ?? null,
+    };
+}
+
+function buildPlayerStatsState(data: GameEndedPayload, session: GameSession | null, service: GamePlaySocketService) {
+    const tiles = service.mapCopy()?.mapConfig.tiles;
+    const walkableTiles = tiles?.flat().filter(t =>
+        t.type === TileType.Base || t.type === TileType.Water || t.type === TileType.Ice).length;
+    return {
+        players: [...(data.players ?? session?.players ?? []), ...(session?.leftPlayers ?? [])],
+        winner: data.winner,
+        winningTeam: data.winningTeam,
+        gameMode: data.gameMode,
+        walkableTiles,
+        gameId: session?.roomId,
+        username: session?.players.find(p => p.socketId === service.getSocketId())?.character.name ?? '',
+        hostPlayerId: session?.host?.socketId ?? '',
+    };
+}
+
+function buildStatsState(data: GameEndedPayload, session: GameSession | null, service: GamePlaySocketService) {
+    return { ...buildPlayerStatsState(data, session, service), ...buildGlobalStats(data) };
+}
+
+function handleVictoryNavigation(
+    data: GameEndedPayload,
+    service: GamePlaySocketService,
+    gameSessionSocketService: GameSessionSocketService,
+    router: Router,
+): void {
+    const session = service.currentSession();
+    service.gameEnded.set(false);
+    gameSessionSocketService.currentSession.set(null);
+    router.navigate(['/game-statistics'], { state: buildStatsState(data, session, service) });
+}
+
+function handleNonVictoryNavigation(
+    title: string,
+    message: string,
+    service: GamePlaySocketService,
+    gameSessionSocketService: GameSessionSocketService,
+    ui: { router: Router; dialog: MatDialog },
+): void {
+    ui.router.navigate(['/']).then(() => {
+        ui.dialog.open(AppDialogComponent, {
+            data: { title, message, type: DialogType.INFO },
+            disableClose: true,
+        });
+        service.gameEnded.set(false);
+        gameSessionSocketService.currentSession.set(null);
+    });
+}
+
 export function setupGameplayEventListeners(context: GameplayListenersContext): void {
     const {
         gamePlaySocketService: service,
@@ -218,18 +317,7 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
         }
     });
 
-    socketService.on<{
-        winner:
-        { id: string; name: string; avatarId: number }
-        | null; winningTeam?: 'team1' | 'team2';
-        gameMode?: string;
-        reason: string; players?: Player[];
-        durationSeconds?: number; totalTurns?:
-        number; sanctuariesUsedPercent?: number | null;
-        tilesVisitedPercent?: number | null;
-        doorsUsedPercent?: number | null;
-        flagHoldersCount?: number | null;
-    }>(
+    socketService.on<GameEndedPayload>(
         GameSessionEvents.GameEnded,
         (data) => {
             if (gameSessionSocketService.hasAbandoned()) {
@@ -237,72 +325,16 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
                 gameSessionSocketService.currentSession.set(null);
                 return;
             }
-
             service.gameEnded.set(true);
-            let message = '';
-            let title = 'Partie terminée';
-
-            if (data.reason === 'victory' && data.winner) {
-                if (data.gameMode === GameModeValue.Ctf && data.winningTeam) {
-                    const teamName = data.winningTeam === 'team1' ? 'bleue' : 'rouge';
-                    title = 'Victoire!';
-                    message = `L'équipe ${teamName} a gagné la partie!`;
-                } else {
-                    const mySocketId = service.getSocketId();
-                    if (data.winner.id === mySocketId) {
-                        title = 'Victoire!';
-                        message = 'Félicitations! Vous avez gagné la partie avec 3 victoires!';
-                    } else {
-                        title = 'Partie terminée';
-                        message = `${data.winner.name} a gagné la partie avec 3 victoires!`;
-                    }
-                }
-            } else if (data.reason === 'noPlayers') {
-                message = 'La partie est terminée car tous les autres joueurs ont abandonné.';
-            } else if (data.reason === 'canceled') {
-                title = 'Partie annulée';
-                message = 'La partie a été annulée car une équipe n\'a plus aucun joueur.';
-            } else {
-                message = 'La partie est terminée.';
-            }
-
-            const delay =
-                data.gameMode === GameModeValue.Ctf && data.reason === 'victory'
-                    ? CTF_VICTORY_ANNOUNCE_DELAY
-                    : gameSessionSocketService.endGameDelay;
-
+            const { title, message } = buildGameEndedMessage(data, service.getSocketId());
+            const delay = data.gameMode === GameModeValue.Ctf && data.reason === 'victory'
+                ? CTF_VICTORY_ANNOUNCE_DELAY
+                : gameSessionSocketService.endGameDelay;
             setTimeout(() => {
                 if (data.reason === 'victory') {
-                    const session = service.currentSession();
-                    const tiles = service.mapCopy()?.mapConfig.tiles;
-                    const walkableTiles = tiles?.flat().filter(tile =>
-                        tile.type === TileType.Base || tile.type === TileType.Water || tile.type === TileType.Ice).length;
-                    service.gameEnded.set(false);
-                    gameSessionSocketService.currentSession.set(null);
-                    router.navigate(['/game-statistics'], {
-                        state: {
-                            players: [...(data.players ?? session?.players ?? []), ...(session?.leftPlayers ?? [])],
-                            winner: data.winner,
-                            winningTeam: data.winningTeam,
-                            gameMode: data.gameMode,
-                            walkableTiles,
-                            durationSeconds: data.durationSeconds ?? 0,
-                            totalTurns: data.totalTurns ?? 0,
-                            sanctuariesUsedPercent: data.sanctuariesUsedPercent ?? null,
-                            tilesVisitedPercent: data.tilesVisitedPercent ?? 0,
-                            doorsUsedPercent: data.doorsUsedPercent ?? null,
-                            flagHoldersCount: data.flagHoldersCount ?? null,
-                        },
-                    });
+                    handleVictoryNavigation(data, service, gameSessionSocketService, router);
                 } else {
-                    router.navigate(['/']).then(() => {
-                        dialog.open(AppDialogComponent, {
-                            data: { title, message, type: data.reason === 'victory' ? DialogType.INFO : DialogType.INFO },
-                            disableClose: true,
-                        });
-                        service.gameEnded.set(false);
-                        gameSessionSocketService.currentSession.set(null);
-                    });
+                    handleNonVictoryNavigation(title, message, service, gameSessionSocketService, { router, dialog });
                 }
             }, delay);
         },
