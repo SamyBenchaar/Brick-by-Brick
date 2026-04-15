@@ -1,9 +1,15 @@
 import { Injectable } from '@angular/core';
 import { Character } from '@common/character';
+import { CombatEvents, GameEvents, GameSessionEvents } from '@common/game.events';
 import { Position } from '@common/position';
-import { GameEvents, CombatEvents, GameSessionEvents } from '@common/game.events';
 import { Subject } from 'rxjs';
 import { io, Socket } from 'socket.io-client';
+
+enum SocketConnectionEvent {
+    Connect = 'connect',
+    Disconnect = 'disconnect',
+    Error = 'error',
+}
 
 @Injectable({
     providedIn: 'root',
@@ -28,16 +34,16 @@ export class GameSessionService {
             reconnectionAttempts: 5,
         });
 
-        this.socket.on('connect', () => {
+        this.socket.on(SocketConnectionEvent.Connect, () => {
             // connection 
         });
 
-        this.socket.on('disconnect', () => {
+        this.socket.on(SocketConnectionEvent.Disconnect, () => {
             // deconnection
         });
 
-        this.socket.on('error', (error: unknown) => {
-            const subject = this.on('error');
+        this.socket.on(SocketConnectionEvent.Error, (error: unknown) => {
+            const subject = this.on(SocketConnectionEvent.Error);
             subject.next(error);
         });
     }
@@ -69,7 +75,7 @@ export class GameSessionService {
 
     startGame(roomId: string): void {
         if (!this.socket) return;
-        this.socket.emit('startGame', { roomId });
+        this.socket.emit(GameSessionEvents.StartGame, { roomId });
     }
 
     requestMove(roomId: string, direction: string, playerId: string): void {

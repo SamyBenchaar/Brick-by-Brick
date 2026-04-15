@@ -16,7 +16,7 @@ import { ObjectType } from '@common/map';
   styleUrl: './object-sidebar.component.scss',
 })
 export class ObjectSidebarComponent implements OnInit {
-  @Input() gameMode: GameModeValue = 'classic';
+  @Input() gameMode: GameModeValue = GameModeValue.Classic;
   editableObjects = Tile.editableObjects;
   private route = inject(ActivatedRoute);
   private objectCounterService = inject(ObjectCounterService);
@@ -60,7 +60,7 @@ export class ObjectSidebarComponent implements OnInit {
     if (type === ObjectType.Flag) {
       const game = this.mapEditorService.getCurrentGame();
       const currentMode = game?.gameMode || this.gameMode;
-      return currentMode === 'ctf';
+      return currentMode === GameModeValue.Ctf;
     }
     return true;
   }

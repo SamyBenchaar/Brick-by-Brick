@@ -1,6 +1,7 @@
 import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { AppDialogComponent } from '@app/components/game-edition-components/app-dialog/app-dialog.component';
+import { DialogType } from '@app/constants/dialog-type.enum';
 import { Tile } from '@app/interfaces/game';
 import { GameSession } from '@app/interfaces/game-session';
 import { CombatSocketService } from '@app/services/communication/game-session-socket/combat-socket.service';
@@ -268,7 +269,7 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
                 } else {
                     router.navigate(['/']).then(() => {
                         dialog.open(AppDialogComponent, {
-                            data: { title, message, type: data.reason === 'victory' ? 'info' : 'info' },
+                            data: { title, message, type: data.reason === 'victory' ? DialogType.INFO : DialogType.INFO },
                             disableClose: true,
                         });
                         service.gameEnded.set(false);
@@ -295,7 +296,7 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
             data: {
                 title: 'Demande de transfert de drapeau',
                 message: `${data.fromPlayerName} veut vous transférer le drapeau. Acceptez-vous?`,
-                type: 'warning',
+                type: DialogType.WARNING,
                 confirmText: 'Accepter',
                 cancelText: 'Refuser',
             },

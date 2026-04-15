@@ -10,6 +10,7 @@ import { CombatViewComponent } from '@app/components/game-view-components/combat
 import { PlayerBoardComponent } from '@app/components/game-view-components/player-board/player-board/player-board.component';
 import { PlayerSignComponent } from '@app/components/game-view-components/player-sign/player-sign/player-sign.component';
 import { AVATARS } from '@app/constants/character-constants';
+import { DialogType } from '@app/constants/dialog-type.enum';
 import { AppDialogData } from '@app/interfaces/dialog-model';
 import { Game } from '@app/interfaces/game';
 import { CombatSocketService } from '@app/services/communication/game-session-socket/combat-socket.service';
@@ -198,7 +199,7 @@ export class GameViewComponent implements OnInit, OnDestroy {
     const dialogData: AppDialogData = {
       title: 'Abandon de la partie',
       message: 'Etes-vous sur de vouloir abandonner la partie?',
-      type: 'warning',
+      type: DialogType.WARNING,
       confirmText: 'Abandonner',
       cancelText: 'Annuler',
     };
@@ -245,7 +246,7 @@ export class GameViewComponent implements OnInit, OnDestroy {
           title: event.tile.object === ObjectType.HealingSanctuary
             ? 'Sanctuaire de soin' : 'Sanctuaire de combat',
           message: 'Choisissez votre mode d\'interaction.',
-          type: 'info',
+          type: DialogType.INFO,
           confirmText: 'Normal',
           thirdOptionText: 'Double ou rien',
           cancelText: 'Annuler',

@@ -3,6 +3,7 @@ import { Component, computed, EventEmitter, inject, Input, OnInit, Output, signa
 import { MatDialog } from '@angular/material/dialog';
 import { RouterLink } from '@angular/router';
 import { AppDialogComponent } from '@app/components/game-edition-components/app-dialog/app-dialog.component';
+import { DialogType } from '@app/constants/dialog-type.enum';
 import { GameListMode } from '@app/constants/game-list-mode.enum';
 import { Game } from '@app/interfaces/game';
 import { CommunicationService } from '@app/services/communication/communication/communication.service';
@@ -49,7 +50,7 @@ export class GameListComponent implements OnInit {
     }
 
     selectGame(gameId: string): void {
-        if (this.mode !== 'creation') {
+        if (this.mode !== GameListMode.CREATION) {
             return;
         }
         this.selectedGameId.set(gameId);
@@ -89,7 +90,7 @@ export class GameListComponent implements OnInit {
                     data: {
                         title: 'Erreur',
                         message: err.error?.message || 'Impossible de modifier la visibilité',
-                        type: 'error',
+                        type: DialogType.ERROR,
                     },
                 });
             },
@@ -102,7 +103,7 @@ export class GameListComponent implements OnInit {
             data: {
                 title: 'Confirmation de suppression',
                 message: `Êtes-vous sûr de vouloir supprimer le jeu "${game.name}" ?`,
-                type: 'warning',
+                type: DialogType.WARNING,
             },
         });
 
@@ -114,7 +115,7 @@ export class GameListComponent implements OnInit {
                             data: {
                                 title: 'Succès',
                                 message: 'Jeu supprimé avec succès !',
-                                type: 'success',
+                                type: DialogType.SUCCESS,
                             },
                         });
                     },
@@ -123,7 +124,7 @@ export class GameListComponent implements OnInit {
                             data: {
                                 title: 'Erreur',
                                 message: err.error?.message || 'Impossible de supprimer ce jeu',
-                                type: 'error',
+                                type: DialogType.ERROR,
                             },
                         });
                     },

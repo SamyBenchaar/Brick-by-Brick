@@ -3,6 +3,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { Tile } from '@app/classes/tile/tile';
 import { AppDialogComponent } from '@app/components/game-edition-components/app-dialog/app-dialog.component';
 import { AVATARS } from '@app/constants/character-constants';
+import { DialogType } from '@app/constants/dialog-type.enum';
 import { Character } from '@common/character';
 import { DoorState, MULTI_TILE_OBJECTS, ObjectType, PLAYABLE_TYPES, TILE_COST, TileType } from '@common/map';
 import { Position } from '@common/position';
@@ -17,7 +18,7 @@ export class GameGridUtilService {
                 title: 'Informations du joueur',
                 message: `Joueur: ${player.name}\nVictoires: ${player.victories}`,
                 image: this.getAvatarImage(player.avatarId),
-                type: 'info',
+                type: DialogType.INFO,
             },
         });
     }
@@ -27,7 +28,7 @@ export class GameGridUtilService {
             data: {
                 title: 'Informations de la tuile',
                 message: `Type: ${tile.type}\nCoût: ${TILE_COST[tile.type] ?? 0}`,
-                type: 'info',
+                type: DialogType.INFO,
             },
         });
     }

@@ -1,28 +1,36 @@
 import { GameModeDisplay } from '@common/interfaces/game-mode-display';
 
-export type GameSizeId = 'Small' | 'Medium' | 'Large';
-export type GameModeValue = 'classic' | 'ctf';
+export enum GameSizeId {
+    Small = 'Small',
+    Medium = 'Medium',
+    Large = 'Large',
+}
+
+export enum GameModeValue {
+    Classic = 'classic',
+    Ctf = 'ctf',
+}
 
 export const GAME_MODES_DISPLAY: GameModeDisplay[] = [
-    { value: 'classic', label: 'Classique', disabled: false },
-    { value: 'ctf', label: 'Capture du drapeau', disabled: false },
+    { value: GameModeValue.Classic, label: 'Classique', disabled: false },
+    { value: GameModeValue.Ctf, label: 'Capture du drapeau', disabled: false },
 ];
 
 export const GAME_SIZES_DISPLAY = [
     {
-        id: 'Small' as const,
+        id: GameSizeId.Small,
         label: 'Petite',
         gridSize: 10,
         maxPlayers: 2,
     },
     {
-        id: 'Medium' as const,
+        id: GameSizeId.Medium,
         label: 'Moyenne',
         gridSize: 15,
         maxPlayers: 4,
     },
     {
-        id: 'Large' as const,
+        id: GameSizeId.Large,
         label: 'Grande',
         gridSize: 20,
         maxPlayers: 6,

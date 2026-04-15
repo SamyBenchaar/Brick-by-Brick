@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Tile } from '@app/classes/tile/tile';
 import { AppDialogComponent } from '@app/components/game-edition-components/app-dialog/app-dialog.component';
+import { DialogType } from '@app/constants/dialog-type.enum';
 import { GameSession } from '@app/interfaces/game-session';
 import { FlagTransferSocketService } from '@app/services/communication/game-session-socket/flag-transfer-socket.service';
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
@@ -64,7 +65,7 @@ export class GameGridDialogService {
             data: {
                 title: 'Transfert de drapeau',
                 message: message.trim(),
-                type: 'info',
+                type: DialogType.INFO,
                 confirmText: canTransferFlag ? 'Offrir' : 'Demander',
                 cancelText: 'Annuler',
             },
@@ -83,7 +84,7 @@ export class GameGridDialogService {
             data: {
                 title: 'Informations du joueur',
                 message: `Joueur: ${player.name}\nVictoires: ${player.victories}`,
-                type: 'info',
+                type: DialogType.INFO,
             },
         });
     }
@@ -93,7 +94,7 @@ export class GameGridDialogService {
             data: {
                 title: 'Informations de la tuile',
                 message: `Type: ${tile.type}\nCoût: ${this.gameGridHelperService.getTileCost(tile.type)}`,
-                type: 'info',
+                type: DialogType.INFO,
             },
         });
     }

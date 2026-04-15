@@ -1,5 +1,7 @@
+import { GameModeValue } from '@common/constants/game-config-constants';
+
 export interface GameModeDisplay {
-    value: 'classic' | 'ctf';
+    value: GameModeValue;
     label: string;
     disabled: boolean;
 }

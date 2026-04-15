@@ -27,8 +27,8 @@ export class EditionPageComponent implements OnInit {
   private static readonly httpNotFound = 404;
   @ViewChild(GameGridComponent) gameGridComponent!: GameGridComponent;
 
-  selectedSize: GameSizeId = 'Small';
-  gameMode: GameModeValue = 'classic';
+  selectedSize: GameSizeId = GameSizeId.Small;
+  gameMode: GameModeValue = GameModeValue.Classic;
 
   gameName: string = '';
   gameDescription: string = '';

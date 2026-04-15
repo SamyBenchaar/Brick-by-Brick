@@ -2,6 +2,7 @@ import { inject, Injectable, Injector, signal, WritableSignal } from '@angular/c
 import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { AppDialogComponent } from '@app/components/game-edition-components/app-dialog/app-dialog.component';
+import { DialogType } from '@app/constants/dialog-type.enum';
 import { Game } from '@app/interfaces/game';
 import { GameSession } from '@app/interfaces/game-session';
 import { FlagTransferSocketService } from '@app/services/communication/game-session-socket/flag-transfer-socket.service';
@@ -158,7 +159,7 @@ export class GameSessionSocketService {
                     data: {
                         title: 'Capacité atteinte',
                         message: 'La salle est pleine. Vous ne pouvez plus ajouter de joueur virtuel.',
-                        type: 'info',
+                        type: DialogType.INFO,
                         confirmText: 'OK',
                     },
                 });
@@ -170,7 +171,7 @@ export class GameSessionSocketService {
                     data: {
                         title: 'Attention',
                         message,
-                        type: 'info',
+                        type: DialogType.INFO,
                         confirmText: 'OK',
                     },
                 });
@@ -179,7 +180,7 @@ export class GameSessionSocketService {
                     data: {
                         title: 'Erreur de jointure',
                         message,
-                        type: 'warning',
+                        type: DialogType.WARNING,
                         confirmText: 'Réessayer',
                         cancelText: "Retour a l'accueil",
                     },
@@ -205,7 +206,7 @@ export class GameSessionSocketService {
             this.hasAbandoned.set(false);
             this.router.navigate(['/']).then(() => {
                 this.dialog.open(AppDialogComponent, {
-                    data: { title: 'Exclu de la salle', message: data.message, type: 'error' },
+                    data: { title: 'Exclu de la salle', message: data.message, type: DialogType.ERROR },
                     disableClose: true,
                 });
             });
@@ -218,7 +219,7 @@ export class GameSessionSocketService {
             this.hasAbandoned.set(false);
             this.router.navigate(['/']).then(() => {
                 this.dialog.open(AppDialogComponent, {
-                    data: { title: 'Salle annulée', message: data.message, type: 'info' }, disableClose: true,
+                    data: { title: 'Salle annulée', message: data.message, type: DialogType.INFO }, disableClose: true,
                 });
             });
         });
@@ -235,7 +236,7 @@ export class GameSessionSocketService {
                     data: {
                         title: 'La partie a commencé',
                         message: "La partie a commencé avant que vous ne rejoigniez. Vous retournez à l'accueil",
-                        type: 'info',
+                        type: DialogType.INFO,
                         confirmText: 'OK',
                     },
                 });
