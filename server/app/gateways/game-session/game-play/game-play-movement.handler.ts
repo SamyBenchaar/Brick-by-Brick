@@ -6,12 +6,14 @@ import { MovementService } from '@app/services/game-session/movement.service';
 import { Character } from '@common/character';
 import { GameSessionEvents } from '@common/game.events';
 import { Position } from '@common/position';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable, forwardRef } from '@nestjs/common';
 import { Socket } from 'socket.io';
+import { GameModeValue } from '@common/constants/game-config-constants';
 
 @Injectable()
 export class GamePlayMovementHandler {
     constructor(
+        @Inject(forwardRef(() => GameSessionService))
         private readonly gameSessionService: GameSessionService,
         private readonly movementService: MovementService,
     ) {}
@@ -31,7 +33,7 @@ export class GamePlayMovementHandler {
         }
 
         const currentPlayer = gameSession.getCurrentPlayer();
-        const requestingPlayer = gameSession.players.find(p => p.socketId === socket.id);
+        const requestingPlayer = gameSession.players.find(player => player.socketId === socket.id);
 
         if (!currentPlayer || !requestingPlayer || currentPlayer.id !== requestingPlayer.character.id) {
             return;
@@ -48,7 +50,7 @@ export class GamePlayMovementHandler {
                 remainingActions: currentPlayer.remainingActions,
             });
 
-            if (gameSession.gameMode === 'ctf') {
+            if (gameSession.gameMode === GameModeValue.Ctf) {
                 const ctfGameEnded = this.handleCtfMovement(gameSession, context, payload.roomId);
                 if (ctfGameEnded) {
                     return;
@@ -74,6 +76,7 @@ export class GamePlayMovementHandler {
 
         if (!gameSession.getFlagHolder() && flagPos && currentPlayer.position?.x === flagPos.x && currentPlayer.position?.y === flagPos.y) {
             gameSession.setFlagHolder(currentPlayer.id);
+            context.logService.log(roomId, `Drapeau pris du sol par ${currentPlayer.name}`);
             context.server.to(roomId).emit(GameSessionEvents.GameSessionUpdated, gameSession);
         }
 
@@ -123,7 +126,7 @@ export class GamePlayMovementHandler {
         if (!gameSession || gameSession.isTurnStarting || gameSession.getActiveCombat()) return;
 
         const currentPlayer = gameSession.getCurrentPlayer();
-        const requestingPlayer = gameSession.players.find(p => p.socketId === socket.id);
+        const requestingPlayer = gameSession.players.find(player => player.socketId === socket.id);
 
         if (!currentPlayer || !requestingPlayer || currentPlayer.id !== requestingPlayer.character.id) return;
         if ((currentPlayer.remainingActions ?? 0) <= 0) return;
@@ -153,6 +156,7 @@ export class GamePlayMovementHandler {
         context: GamePlayHandlerContext,
     ): void {
         tile.doorState = tile.doorState === 'opened' ? 'closed' : 'opened';
+        gameSession.usedDoors.add(`${position.x},${position.y}`);
         currentPlayer.remainingActions -= 1;
 
         context.server.to(gameSession.roomId).emit(GameSessionEvents.InteractResult, {

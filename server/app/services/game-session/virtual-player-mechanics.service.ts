@@ -1,22 +1,25 @@
 import { GameSession } from '@app/domain/game-session';
+import { GamePlayGateway } from '@app/gateways/game-session/game-play/game-play.gateway';
 import { GameGateway } from '@app/gateways/game/game.gateway';
 import { LogService } from '@app/services/log/log.service';
-import { COMBAT_SANCTUARY_BONUS, HEALING_SANCTUARY_BONUS } from '@common/constants/santuary-constants';
-import { GameSessionEvents, CombatEvents } from '@common/game.events';
+import { COMBAT_SANCTUARY_BONUS, HEALING_SANCTUARY_BONUS, SANCTUARY_COOLDOWN_TURNS } from '@common/constants/santuary-constants';
+import { GameSessionEvents } from '@common/game.events';
 import { DoorState, ObjectType, TileType } from '@common/map';
 import { Player } from '@common/player';
 import { Position } from '@common/position';
-import { Inject, Injectable } from '@nestjs/common';
-import { CombatService } from './combat.service';
+import { forwardRef, Inject, Injectable, Optional } from '@nestjs/common';
 import { MovementService } from './movement.service';
 import { VirtualPlayerPathfindingService } from './virtual-player-mechanics/virtual-player-pathfinding.service';
 import { VirtualPlayerTargetingService } from './virtual-player-mechanics/virtual-player-targeting.service';
+import { GameModeValue } from '@common/constants/game-config-constants';
 
 @Injectable()
 export class VirtualPlayerMechanicsService {
-    @Inject() private readonly combatService: CombatService;
     @Inject() private readonly movementService: MovementService;
     @Inject() private readonly gameGateway: GameGateway;
+    @Optional()
+    @Inject(forwardRef(() => GamePlayGateway))
+    private readonly gamePlayGateway?: GamePlayGateway;
     @Inject() private readonly pathfinding: VirtualPlayerPathfindingService;
     @Inject() private readonly targeting: VirtualPlayerTargetingService;
     @Inject() private readonly logService: LogService;
@@ -80,32 +83,17 @@ export class VirtualPlayerMechanicsService {
             return false;
         }
 
-        const mapCopy = session.getMapCopy();
-        if (!mapCopy) {
-            return false;
-        }
-
         await this.randomDelay();
         if (!this.isBotCurrentPlayer(session, bot) || !this.hasAction(bot)) {
             return false;
         }
-        const result = this.combatService.executeCombat(
-            session,
-            bot.character,
-            target.character,
-            mapCopy,
-        );
 
-        this.gameGateway.notifyRoomEvent(session.roomId, CombatEvents.CombatResult, {
-            winner: result.winner,
-            loser: result.loser,
-            attackerVictories: result.attackerVictories,
-            defenderNewPosition: target.character.position,
-            remainingActions: bot.character.remainingActions,
-        });
+        if (!this.gamePlayGateway) {
+            return false;
+        }
 
-        this.gameGateway.notifyRoomEvent(session.roomId, GameSessionEvents.GameSessionUpdated, session);
-        return true;
+        this.gamePlayGateway.triggerBotCombat(session.roomId, bot.character.id, target.character.id);
+        return !!session.getActiveCombat();
     }
 
     findFleeTarget(session: GameSession, bot: Player, enemy: Player): Position | null {
@@ -207,6 +195,10 @@ export class VirtualPlayerMechanicsService {
     }
 
     async tryAttackAdjacent(session: GameSession, bot: Player): Promise<boolean> {
+        if (session.gameMode === GameModeValue.Ctf) {
+            return false;
+        }
+
         if (!this.isBotCurrentPlayer(session, bot) || !this.hasAction(bot)) {
             return false;
         }
@@ -216,33 +208,17 @@ export class VirtualPlayerMechanicsService {
             return false;
         }
 
-        const mapCopy = session.getMapCopy();
-        if (!mapCopy) {
-            return false;
-        }
-
         await this.randomDelay();
         if (!this.isBotCurrentPlayer(session, bot) || !this.hasAction(bot)) {
             return false;
         }
-        const result = this.combatService.executeCombat(
-            session,
-            bot.character,
-            target.character,
-            mapCopy,
-        );
 
-        this.gameGateway.notifyRoomEvent(session.roomId, CombatEvents.CombatResult, {
-            winner: result.winner,
-            loser: result.loser,
-            attackerVictories: result.attackerVictories,
-            defenderNewPosition: target.character.position,
-            remainingActions: bot.character.remainingActions,
-        });
+        if (!this.gamePlayGateway) {
+            return false;
+        }
 
-        this.gameGateway.notifyRoomEvent(session.roomId, GameSessionEvents.GameSessionUpdated, session);
-
-        return true;
+        this.gamePlayGateway.triggerBotCombat(session.roomId, bot.character.id, target.character.id);
+        return !!session.getActiveCombat();
     }
 
     async tryUseAdjacentSanctuary(session: GameSession, bot: Player): Promise<boolean> {
@@ -256,6 +232,18 @@ export class VirtualPlayerMechanicsService {
         }
 
         this.applySanctuaryEffect(bot, sanctuaryData.type);
+
+        const map = session.mapCopy;
+        if (map && map.tiles) {
+            const tile = map.tiles[sanctuaryData.position.y]?.[sanctuaryData.position.x];
+            const origin = tile?.sanctuaryOrigin;
+            if (origin) {
+                const originTile = map.tiles[origin.y]?.[origin.x];
+                if (originTile) {
+                    originTile.sanctuaryCooldown = SANCTUARY_COOLDOWN_TURNS;
+                }
+            }
+        }
 
         await this.randomDelay();
         if (!this.canFinalizeSanctuaryUse(session, bot)) {
@@ -298,7 +286,7 @@ export class VirtualPlayerMechanicsService {
             return null;
         }
 
-        const tileObject = session.getMapCopy()?.tiles?.[sanctuaryPosition.y]?.[sanctuaryPosition.x]?.object;
+        const tileObject = session.mapCopy?.tiles?.[sanctuaryPosition.y]?.[sanctuaryPosition.x]?.object;
         if (!tileObject) {
             return null;
         }
@@ -336,7 +324,7 @@ export class VirtualPlayerMechanicsService {
     }
 
     private findAdjacentSanctuaryTile(session: GameSession, botPosition: Position): Position | null {
-        const tiles = session.getMapCopy()?.tiles;
+        const tiles = session.mapCopy?.tiles;
         if (!tiles) {
             return null;
         }
@@ -349,7 +337,13 @@ export class VirtualPlayerMechanicsService {
             }
 
             if (tile.object?.type === ObjectType.HealingSanctuary || tile.object?.type === ObjectType.CombatSanctuary) {
-                return position;
+                const origin = tile.sanctuaryOrigin;
+                if (origin) {
+                    const originTile = tiles[origin.y]?.[origin.x];
+                    if (originTile && (originTile.sanctuaryCooldown ?? 0) === 0) {
+                        return position;
+                    }
+                }
             }
         }
 
@@ -357,7 +351,7 @@ export class VirtualPlayerMechanicsService {
     }
 
     private handleCtfFlagPickup(session: GameSession, bot: Player): void {
-        if (session.gameMode !== 'ctf' || !bot.character.position || session.getFlagHolder()) {
+        if (session.gameMode !== GameModeValue.Ctf || !bot.character.position || session.getFlagHolder()) {
             return;
         }
 
@@ -371,6 +365,7 @@ export class VirtualPlayerMechanicsService {
         }
 
         session.setFlagHolder(bot.character.id);
+        this.logService.log(session.roomId, `Drapeau pris du sol par ${bot.character.name}`);
         this.gameGateway.notifyRoomEvent(session.roomId, GameSessionEvents.GameSessionUpdated, session);
     }
 
@@ -385,7 +380,7 @@ export class VirtualPlayerMechanicsService {
             return false;
         }
 
-        const tile = session.getMapCopy()?.tiles?.[doorPosition.y]?.[doorPosition.x];
+        const tile = session.mapCopy?.tiles?.[doorPosition.y]?.[doorPosition.x];
         if (!tile || tile.type !== TileType.Door || tile.doorState === DoorState.Opened) {
             return false;
         }
@@ -395,6 +390,7 @@ export class VirtualPlayerMechanicsService {
             return false;
         }
         tile.doorState = DoorState.Opened;
+        session.usedDoors.add(`${doorPosition.x},${doorPosition.y}`);
         bot.character.remainingActions = (bot.character.remainingActions ?? 0) - 1;
 
         this.gameGateway.notifyRoomEvent(session.roomId, GameSessionEvents.InteractResult, {

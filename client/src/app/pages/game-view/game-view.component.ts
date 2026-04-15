@@ -2,25 +2,26 @@ import { CommonModule } from '@angular/common';
 import { Component, computed, effect, ElementRef, HostListener, inject, Injector, OnDestroy, OnInit, signal, ViewChild } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
+import { Tile } from '@app/classes/tile/tile';
 import { ChatComponent } from '@app/components/chat/chat.component';
 import { AppDialogComponent } from '@app/components/game-edition-components/app-dialog/app-dialog.component';
 import { GameGridComponent } from '@app/components/game-edition-components/game-grid/game-grid.component';
+import { CombatViewComponent } from '@app/components/game-view-components/combat-view/combat-view.component';
 import { PlayerBoardComponent } from '@app/components/game-view-components/player-board/player-board/player-board.component';
 import { PlayerSignComponent } from '@app/components/game-view-components/player-sign/player-sign/player-sign.component';
 import { AVATARS } from '@app/constants/character-constants';
-import { KEY_DEBUG, KEY_DIRECTION_MAP, KEY_ENTER } from '@common/constants/key-event.constants';
+import { DialogType } from '@app/constants/dialog-type.enum';
 import { AppDialogData } from '@app/interfaces/dialog-model';
 import { Game } from '@app/interfaces/game';
-import { Tile } from '@app/classes/tile/tile';
+import { CombatSocketService } from '@app/services/communication/game-session-socket/combat-socket.service';
 import { GamePlaySocketService } from '@app/services/communication/game-session-socket/game-play-socket.service';
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
+import { getGameSizeConfig } from '@app/utils/game-config.utils';
 import { Character } from '@common/character';
-import { getGameSizeConfig } from '@common/constants/game-config-constants';
+import { KEY_DEBUG, KEY_DIRECTION_MAP, KEY_ENTER } from '@common/constants/key-event.constants';
 import { MapSize, ObjectType } from '@common/map';
 import { Position } from '@common/position';
 import { Subscription } from 'rxjs';
-import { CombatViewComponent } from '@app/components/game-view-components/combat-view/combat-view.component';
-import { CombatSocketService } from '@app/services/communication/game-session-socket/combat-socket.service';
 
 @Component({
   selector: 'app-game-view',
@@ -52,7 +53,7 @@ export class GameViewComponent implements OnInit, OnDestroy {
   playerCount = computed(() => this.gameSessionSocketService.currentSession()?.players?.length ?? 0);
   currentPlayer = computed(() => {
     const socketId = this.gameSessionSocketService.getSocketId();
-    return this.gameSessionSocketService.currentSession()?.players.find(p => p.socketId === socketId) ?? null;
+    return this.gameSessionSocketService.currentSession()?.players.find(player => player.socketId === socketId) ?? null;
   });
   currentPlayerTurn = computed(() => this.gamePlaySocketService.currentPlayerTurn());
   isDebugModeActivated = computed(() => this.gamePlaySocketService.isDebugModeActivated());
@@ -157,7 +158,7 @@ export class GameViewComponent implements OnInit, OnDestroy {
   }
 
   get hostId(): string {
-    return this.gameSessionSocketService.hostSocketId() ?? '';
+    return this.gameSessionSocketService.currentSession()?.host?.socketId ?? '';
   }
 
   isMyTurn(): boolean {
@@ -174,7 +175,7 @@ export class GameViewComponent implements OnInit, OnDestroy {
 
   getCurrentTurnPlayerName(): string {
     const currentPlayerId = this.gamePlaySocketService.currentPlayerTurn();
-    const player = this.gameSessionSocketService.currentSession()?.players.find(p => p.character.id === currentPlayerId);
+    const player = this.gameSessionSocketService.currentSession()?.players.find(playerEntry => playerEntry.character.id === currentPlayerId);
     return player?.character.name ?? '';
   }
 
@@ -198,7 +199,7 @@ export class GameViewComponent implements OnInit, OnDestroy {
     const dialogData: AppDialogData = {
       title: 'Abandon de la partie',
       message: 'Etes-vous sur de vouloir abandonner la partie?',
-      type: 'warning',
+      type: DialogType.WARNING,
       confirmText: 'Abandonner',
       cancelText: 'Annuler',
     };
@@ -207,14 +208,14 @@ export class GameViewComponent implements OnInit, OnDestroy {
       data: dialogData,
       disableClose: true,
     }).afterClosed().subscribe((confirmed: boolean) => {
-      if (confirmed) {
+      if (confirmed === true) {
         this.gameSessionSocketService.abandonGame();
       }
     });
   }
 
   getPlayers(): Character[] {
-    return this.gameSessionSocketService.currentSession()?.players.map(p => p.character) ?? [];
+    return this.gameSessionSocketService.currentSession()?.players.map(player => player.character) ?? [];
   }
 
   getSelectedTarget(): string | null {
@@ -226,37 +227,37 @@ export class GameViewComponent implements OnInit, OnDestroy {
   }
 
   canInteract(): boolean {
-    return this.gamePlaySocketService.canPlayerInteractDoor() || this.gamePlaySocketService.canPlayerInteractSanctuary();
+    return this.gamePlaySocketService.canPlayerInteractDoor() || this.gamePlaySocketService.canPlayerInteractSanctuary()
+      || this.gamePlaySocketService.canPlayerInteractFlag();
   }
 
   onActionClick(): void {
     this.isActionSelectionMode.set(true);
-
   }
 
-  onActionTargetSelected(event: {tile: Tile, position: Position}): void {
+  onActionTargetSelected(event: { tile: Tile, position: Position }): void {
     if (!this.gamePlaySocketService.canInteractWithTarget(event.tile, event.position)) return;
-    
+
     const isSanctuary = event.tile.object === ObjectType.HealingSanctuary || event.tile.object === ObjectType.CombatSanctuary;
     if (isSanctuary) {
       const ref = this.dialog.open(AppDialogComponent, {
         id: 'sanctuary-dialog',
         data: {
-            title: event.tile.object === ObjectType.HealingSanctuary
-                ? 'Sanctuaire de soin' : 'Sanctuaire de combat',
-            message: 'Choisissez votre mode d\'interaction.',
-            type: 'info',
-            confirmText: 'Normal',
-            cancelText: 'Double ou rien',
-            thirdOptionText: 'Annuler',
+          title: event.tile.object === ObjectType.HealingSanctuary
+            ? 'Sanctuaire de soin' : 'Sanctuaire de combat',
+          message: 'Choisissez votre mode d\'interaction.',
+          type: DialogType.INFO,
+          confirmText: 'Normal',
+          thirdOptionText: 'Double ou rien',
+          cancelText: 'Annuler',
         },
-    });
-    ref.afterClosed().subscribe((result) => {
+      });
+      ref.afterClosed().subscribe((result) => {
         if (result === true) this.gamePlaySocketService.requestInteract(event.position, 'normal');
         else if (result === false) this.gamePlaySocketService.requestInteract(event.position, 'double');
-    });
-    this.isActionSelectionMode.set(false);
-    return;
+      });
+      this.isActionSelectionMode.set(false);
+      return;
     }
     this.gamePlaySocketService.requestInteract(event.position, 'normal');
     this.isActionSelectionMode.set(false);
@@ -278,7 +279,7 @@ export class GameViewComponent implements OnInit, OnDestroy {
   }
 
   getAvatarImage(avatarId: number): string {
-    return AVATARS.find(a => a.id === avatarId)?.image ?? 'assets/images/lily.jpg';
+    return AVATARS.find(avatarOption => avatarOption.id === avatarId)?.image ?? 'assets/images/lily.jpg';
   }
 
   ngOnDestroy(): void {

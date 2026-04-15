@@ -1,12 +1,19 @@
+import { SANCTUARY_ADJACENT_POSITIONS } from '@app/constants/sanctuary-validation-constants';
+import { Direction, GridPosition } from '@app/interfaces/map-validation-interfaces';
 import { Game } from '@app/model/game';
 import { Tile } from '@app/model/tile';
 import { MapSize, MIN_TERRAIN_COVERAGE, ObjectType, PERCENTAGE_MULTIPLIER, PLAYABLE_TYPES, TileType } from '@common/map';
 import { Injectable } from '@nestjs/common';
-import { Direction, GridPosition } from '@app/interfaces/map-validation-interfaces';
-import { SANCTUARY_ADJACENT_POSITIONS } from '@app/constants/sanctuary-validation-constants';
+import { GameModeValue } from '@common/constants/game-config-constants';
 
 @Injectable()
 export class MapValidationService {
+    private readonly cardinalDirections: Direction[] = [
+        { dx: 0, dy: -1 },
+        { dx: 0, dy: 1 },
+        { dx: -1, dy: 0 },
+        { dx: 1, dy: 0 },
+    ];
 
     async validateMap(gameData: Partial<Game>): Promise<string[]> {
         const errors: string[] = [];
@@ -71,65 +78,13 @@ export class MapValidationService {
         const gridSize = MapSize[gameData.mapConfig.size as keyof typeof MapSize];
         const totalPlayableTiles = this.countPlayableTiles(gameData);
 
-        // Trouver une tuile de départ
         const startPoint = this.findStartingPoint(tiles);
         if (!startPoint) {
             return ['Aucun point de départ trouvé pour vérifier l\'accessibilité'];
         }
 
-        // BFS pour compter les tuiles accessibles
-        const visited = Array(gridSize).fill(null).map(
-            () => Array(gridSize).fill(false),
-        );
-        const queue: GridPosition[] = [];
+        const accessibleTiles = this.countAccessibleTilesFromStart(tiles, gridSize, startPoint);
 
-        queue.push(startPoint);
-        visited[startPoint.y][startPoint.x] = true;
-        let accessibleTiles = 1;
-
-        const directions: Direction[] = [
-            { dx: 0, dy: -1 },
-            { dx: 0, dy: 1 },
-            { dx: -1, dy: 0 },
-            { dx: 1, dy: 0 },
-        ];
-
-        while (queue.length > 0) {
-            const current = queue.shift();
-            if (!current) {
-                continue;
-            }
-
-            for (const dir of directions) {
-                const newX = current.x + dir.dx;
-                const newY = current.y + dir.dy;
-
-                // Vérifier les limites
-                if (newX < 0 || newX >= gridSize || newY < 0 || newY >= gridSize) {
-                    continue;
-                }
-
-                // Vérifier si déjà visité
-                if (visited[newY][newX]) {
-                    continue;
-                }
-
-                // Vérifier si la tuile est jouable
-                const tile = tiles[newY][newX];
-                const objectType = tile.object?.type;
-                if (!PLAYABLE_TYPES.includes(tile.type as TileType) 
-                    || objectType === ObjectType.HealingSanctuary || objectType === ObjectType.CombatSanctuary) {
-                    continue;
-                }
-
-                // Marquer comme visité et ajouter à la queue
-                visited[newY][newX] = true;
-                queue.push({ x: newX, y: newY });
-                accessibleTiles++;
-            }
-        }
-
-        // Vérifier si toutes les tuiles jouables sont accessibles
         if (accessibleTiles !== totalPlayableTiles) {
             return [
                 `Certaines tuiles de terrain sont inaccessibles. ` +
@@ -137,6 +92,62 @@ export class MapValidationService {
             ];
         }
         return [];
+    }
+
+    private countAccessibleTilesFromStart(tiles: Tile[][], gridSize: number, startPoint: GridPosition): number {
+        const visited = this.createVisitedGrid(gridSize);
+        const queue: GridPosition[] = [startPoint];
+        visited[startPoint.y][startPoint.x] = true;
+
+        let accessibleTiles = 1;
+
+        while (queue.length > 0) {
+            const current = queue.shift();
+            if (!current) {
+                continue;
+            }
+
+            for (const neighbor of this.getValidNeighbors(current, gridSize, visited, tiles)) {
+                visited[neighbor.y][neighbor.x] = true;
+                queue.push(neighbor);
+                accessibleTiles++;
+            }
+        }
+
+        return accessibleTiles;
+    }
+
+    private createVisitedGrid(gridSize: number): boolean[][] {
+        return Array(gridSize).fill(null).map(() => Array(gridSize).fill(false));
+    }
+
+    private getValidNeighbors(current: GridPosition, gridSize: number, visited: boolean[][], tiles: Tile[][]): GridPosition[] {
+        const neighbors: GridPosition[] = [];
+
+        for (const direction of this.cardinalDirections) {
+            const neighbor: GridPosition = { x: current.x + direction.dx, y: current.y + direction.dy };
+
+            if (!this.isWithinBounds(neighbor, gridSize) || visited[neighbor.y][neighbor.x]) {
+                continue;
+            }
+
+            if (this.isAccessibleTile(tiles[neighbor.y][neighbor.x])) {
+                neighbors.push(neighbor);
+            }
+        }
+
+        return neighbors;
+    }
+
+    private isWithinBounds(position: GridPosition, gridSize: number): boolean {
+        return position.x >= 0 && position.x < gridSize && position.y >= 0 && position.y < gridSize;
+    }
+
+    private isAccessibleTile(tile: Tile): boolean {
+        const objectType = tile.object?.type;
+        return PLAYABLE_TYPES.includes(tile.type as TileType)
+            && objectType !== ObjectType.HealingSanctuary
+            && objectType !== ObjectType.CombatSanctuary;
     }
 
     private validateSanctuaries(gameData: Partial<Game>): string[] {
@@ -165,7 +176,7 @@ export class MapValidationService {
         for (const row of tiles) {
             for (const tile of row) {
                 const objectType = tile.object?.type;
-                if (PLAYABLE_TYPES.includes(tile.type as TileType) 
+                if (PLAYABLE_TYPES.includes(tile.type as TileType)
                     && objectType !== ObjectType.HealingSanctuary && objectType !== ObjectType.CombatSanctuary
                 ) {
                     count++;
@@ -189,7 +200,7 @@ export class MapValidationService {
 
     private checkMapEdge(tiles: Tile[][]): boolean {
         for (let y = 0; y < tiles.length; y++) {
-            for (let x = 0; x < tiles[y].length;  x++) {
+            for (let x = 0; x < tiles[y].length; x++) {
                 const tile = tiles[y][x];
                 if (tile.type === TileType.Door) {
                     if (x === 0 || x === tiles[y].length - 1 || y === 0 || y === tiles.length - 1) {
@@ -224,18 +235,18 @@ export class MapValidationService {
 
     private checkDoorNeighbors(tiles: Tile[][]): boolean {
         for (let y = 0; y < tiles.length; y++) {
-            for (let x = 0; x < tiles[y].length;  x++) {
+            for (let x = 0; x < tiles[y].length; x++) {
                 const tile = tiles[y][x];
                 if (tile.type === TileType.Door) {
-                    const leftNeighborType = tiles[y][x-1].type;
-                    const rightNeighborType = tiles[y][x+1].type;
-                    const topNeighborType = tiles[y-1][x].type;
-                    const bottomNeighborType = tiles[y+1][x].type;
-                    
-                    const isConfig1 = 
+                    const leftNeighborType = tiles[y][x - 1].type;
+                    const rightNeighborType = tiles[y][x + 1].type;
+                    const topNeighborType = tiles[y - 1][x].type;
+                    const bottomNeighborType = tiles[y + 1][x].type;
+
+                    const isConfig1 =
                         leftNeighborType === TileType.Wall && rightNeighborType === TileType.Wall &&
                         PLAYABLE_TYPES.includes(topNeighborType as TileType) && PLAYABLE_TYPES.includes(bottomNeighborType as TileType);
-                    
+
                     const isConfig2 =
                         topNeighborType === TileType.Wall && bottomNeighborType === TileType.Wall &&
                         PLAYABLE_TYPES.includes(leftNeighborType as TileType) && PLAYABLE_TYPES.includes(rightNeighborType as TileType);
@@ -249,7 +260,7 @@ export class MapValidationService {
     }
 
     private validateFlagForCTF(gameData: Partial<Game>): string[] {
-        if (gameData.gameMode !== 'ctf') {
+        if (gameData.gameMode !== GameModeValue.Ctf) {
             return [];
         }
         const tiles = gameData.mapConfig.tiles;

@@ -50,12 +50,12 @@ export class GameObjectService {
             { x: position.x, y: position.y + 1 }, { x: position.x + 1, y: position.y + 1 },
         ];
         const tiles = positions.map(pos => getTile(pos));
-        if (tiles.some(t => !t || !isTileObjectFree(t) || t.type === TileType.Wall || t.type === TileType.Door)) return;
+        if (tiles.some(tile => !tile || !isTileObjectFree(tile) || tile.type === TileType.Wall || tile.type === TileType.Door)) return;
 
-        (tiles as Tile[]).forEach((t, i) => {
-            t.object = selectedObject;
-            t.sanctuaryOrigin = position;
-            this.mapEditorService.setObject(positions[i], selectedObject);
+        (tiles as Tile[]).forEach((tile, index) => {
+            tile.object = selectedObject;
+            tile.sanctuaryOrigin = position;
+            this.mapEditorService.setObject(positions[index], selectedObject);
         });
         this.objectCounterService.place(selectedObject);
         this.mapEditorService.setOrigin(position, true);
@@ -69,10 +69,10 @@ export class GameObjectService {
             { x: origin.x, y: origin.y + 1 }, { x: origin.x + 1, y: origin.y + 1 },
         ];
         positions.forEach(pos => {
-            const t = getTile(pos);
-            if (t) {
-                t.object = undefined;
-                t.sanctuaryOrigin = undefined;
+            const currentTile = getTile(pos);
+            if (currentTile) {
+                currentTile.object = undefined;
+                currentTile.sanctuaryOrigin = undefined;
             }
             this.mapEditorService.setObject(pos, null);
             this.mapEditorService.setOrigin(pos, false);

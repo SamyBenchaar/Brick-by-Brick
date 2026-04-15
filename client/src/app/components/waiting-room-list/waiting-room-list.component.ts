@@ -38,7 +38,7 @@ export class WaitingRoomListComponent {
     }
 
     getAvatarImage(character: Character): string {
-        return AVATARS.find(a => a.id === character?.avatarId)?.image ?? './assets/images/lily.jpg';
+        return AVATARS.find(avatarOption => avatarOption.id === character?.avatarId)?.image ?? './assets/images/lily.jpg';
     }
 
     onKick(socketId: string): void {

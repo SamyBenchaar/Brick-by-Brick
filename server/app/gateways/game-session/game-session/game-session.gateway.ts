@@ -80,7 +80,7 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
         const gameSession = this.getSessionOrFail(socket, payload.roomId);
         if (!gameSession) return;
 
-        const existingPlayerIndex = gameSession.players.findIndex(p => p.socketId === socket.id);
+        const existingPlayerIndex = gameSession.players.findIndex(sessionPlayer => sessionPlayer.socketId === socket.id);
         if (existingPlayerIndex !== -1) {
             gameSession.removePlayer(socket.id);
             this.logger.log(`Joueur existant ${socket.id} supprimé avant mise à jour du personnage`);
@@ -174,13 +174,13 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
         if (!this.statsPageSockets.has(payload.roomId)) {
             this.statsPageSockets.set(payload.roomId, new Set());
         }
-        this.statsPageSockets.get(payload.roomId)!.add(socket.id);
+        this.statsPageSockets.get(payload.roomId)?.add(socket.id);
     }
 
     @SubscribeMessage(GameSessionEvents.LeaveStatsPage)
-handleLeaveStatsPage(socket: Socket, payload: { roomId: string }): void {
-    this.removeFromStatsPage(socket.id, payload.roomId);
-}
+    handleLeaveStatsPage(socket: Socket, payload: { roomId: string }): void {
+        this.removeFromStatsPage(socket.id, payload.roomId);
+    }
 
     private handlePlayingDisconnect(socket: Socket, roomId: string) {
         const gameSession = this.gameSessionService.getGameSession(roomId);

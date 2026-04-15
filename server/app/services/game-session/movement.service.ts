@@ -1,25 +1,32 @@
 import { GameSession, Position } from '@app/domain/game-session';
-import { MapTile, MovementCost } from '@app/interfaces/game-map-interfaces';
+import { MapTile } from '@app/interfaces/game-map-interfaces';
+import { Direction } from '@app/interfaces/map-validation-interfaces';
 import { Character } from '@common/character';
 import { KEY_DIRECTION_MAP } from '@common/constants/key-event.constants';
 import { DoorState, ObjectType, TILE_COST, TileType } from '@common/map';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+
+type NeighborsProcessingContext = {
+    queue: { pos: Position; cost: number }[];
+    bestCosts: Map<string, number>;
+    reachable: Set<string>;
+    movementPoints: number;
+    mapData: MapTile[][];
+    occupiedPositions: Set<string>;
+};
 
 @Injectable()
 export class MovementService {
-    private logger = new Logger(MovementService.name);
-    private readonly cost: MovementCost = {
-        base: 1,
-        water: 2,
-        ice: 0,
+    private readonly directions: Record<string, Direction> = {
+        arrowUp: { dx: 0, dy: -1 },
+        arrowDown: { dx: 0, dy: 1 },
+        arrowLeft: { dx: -1, dy: 0 },
+        arrowRight: { dx: 1, dy: 0 },
     };
 
-    private readonly directions = {
-        arrowUp: { x: 0, y: -1 },
-        arrowDown: { x: 0, y: 1 },
-        arrowLeft: { x: -1, y: 0 },
-        arrowRight: { x: 1, y: 0 },
-    };
+    private toPositionKey(position: Position): string {
+        return `${position.x},${position.y}`;
+    }
 
     private getTileCost(tileType: string): number {
         return TILE_COST[tileType] ?? 0;
@@ -58,54 +65,79 @@ export class MovementService {
         const reachable = new Set<string>();
         const bestCosts = new Map<string, number>();
         const occupiedPositions = this.getOccupiedPositions(gameSession);
-        occupiedPositions.delete(`${currentPosition.x},${currentPosition.y}`);
+        occupiedPositions.delete(this.toPositionKey(currentPosition));
 
-        const startKey = `${currentPosition.x},${currentPosition.y}`;
+        const startKey = this.toPositionKey(currentPosition);
         reachable.add(startKey);
         bestCosts.set(startKey, 0);
 
         const queue: { pos: Position; cost: number }[] = [{ pos: currentPosition, cost: 0 }];
 
         while (queue.length > 0) {
-            let currentIndex = 0;
-            for (let i = 1; i < queue.length; i++) {
-                if (queue[i].cost < queue[currentIndex].cost) {
-                    currentIndex = i;
-                }
-            }
+            const current = this.extractLowestCostNode(queue);
+            this.processNeighbors(current, {
+                queue,
+                bestCosts,
+                reachable,
+                movementPoints,
+                mapData,
+                occupiedPositions,
+            });
+        }
 
-            const [current] = queue.splice(currentIndex, 1);
-            const { pos, cost } = current;
+        return this.toPositions(reachable);
+    }
 
-            for (const direction of Object.values(this.directions)) {
-                const newPos: Position = {
-                    x: pos.x + direction.x,
-                    y: pos.y + direction.y,
-                };
-
-                const newPosKey = `${newPos.x},${newPos.y}`;
-
-                if (!this.isValidTile(mapData, newPos, occupiedPositions)) {
-                    continue;
-                }
-
-                const tileType = mapData[newPos.y][newPos.x].type;
-                const moveCost = this.getTileCost(tileType);
-                const totalCost = cost + moveCost;
-
-                if (totalCost <= movementPoints) {
-                    const previousBest = bestCosts.get(newPosKey);
-                    if (previousBest !== undefined && totalCost >= previousBest) {
-                        continue;
-                    }
-
-                    bestCosts.set(newPosKey, totalCost);
-                    reachable.add(newPosKey);
-                    queue.push({ pos: newPos, cost: totalCost });
-                }
+    private extractLowestCostNode(queue: { pos: Position; cost: number }[]): { pos: Position; cost: number } {
+        let currentIndex = 0;
+        for (let i = 1; i < queue.length; i++) {
+            if (queue[i].cost < queue[currentIndex].cost) {
+                currentIndex = i;
             }
         }
 
+        const [current] = queue.splice(currentIndex, 1);
+        return current;
+    }
+
+    private processNeighbors(
+        current: { pos: Position; cost: number },
+        context: NeighborsProcessingContext,
+    ): void {
+        const { queue, bestCosts, reachable, movementPoints, mapData, occupiedPositions } = context;
+        const { pos, cost } = current;
+
+        for (const direction of Object.values(this.directions)) {
+            const newPos: Position = {
+                x: pos.x + direction.dx,
+                y: pos.y + direction.dy,
+            };
+
+            if (!this.isValidTile(mapData, newPos, occupiedPositions)) {
+                continue;
+            }
+
+            const newPosKey = this.toPositionKey(newPos);
+            const tileType = mapData[newPos.y][newPos.x].type;
+            const moveCost = this.getTileCost(tileType);
+            const totalCost = cost + moveCost;
+
+            if (totalCost > movementPoints) {
+                continue;
+            }
+
+            const existingCost = bestCosts.get(newPosKey);
+            if (existingCost !== undefined && totalCost >= existingCost) {
+                continue;
+            }
+
+            bestCosts.set(newPosKey, totalCost);
+            reachable.add(newPosKey);
+            queue.push({ pos: newPos, cost: totalCost });
+        }
+    }
+
+    private toPositions(reachable: Set<string>): Position[] {
         return Array.from(reachable).map((key) => {
             const [x, y] = key.split(',');
             return { x: parseInt(x, 10), y: parseInt(y, 10) };
@@ -116,7 +148,7 @@ export class MovementService {
         const occupied = new Set<string>();
 
         for (const player of gameSession.players) {
-            const posKey = `${player.character.position.x},${player.character.position.y}`;
+            const posKey = this.toPositionKey(player.character.position);
             occupied.add(posKey);
         }
 
@@ -139,8 +171,8 @@ export class MovementService {
         }
 
         const newPos: Position = {
-            x: player.position.x + directionDelta.x,
-            y: player.position.y + directionDelta.y,
+            x: player.position.x + directionDelta.dx,
+            y: player.position.y + directionDelta.dy,
         };
 
         const occupiedPositions = this.getOccupiedPositions(gameSession);
@@ -157,7 +189,7 @@ export class MovementService {
         }
 
         player.position = newPos;
-        if(gameSession.isTileVisited(player.id, newPos)) {
+        if (gameSession.isTileVisited(player.id, newPos)) {
             player.tilesVisited++;
         }
         player.remainingMovement -= moveCost;

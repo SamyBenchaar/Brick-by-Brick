@@ -6,7 +6,7 @@ export interface MapTile {
     doorState?: string;
     isOrigin?: boolean;
     sanctuaryOrigin?: Position;
-    sanctuaryCooldown?:number;
+    sanctuaryCooldown?: number;
 }
 
 export interface GameMap {
@@ -33,18 +33,15 @@ export interface CombatResult {
     gameWon: boolean;
 }
 
+export interface CombatParticipant {
+    id: string;
+    name: string;
+    avatarId: number;
+    victories: number;
+}
+
 export interface CombatInfo {
-    attacker: {
-        id: string;
-        name: string;
-        avatarId: number;
-        victories: number;
-    };
-    defender: {
-        id: string;
-        name: string;
-        avatarId: number;
-        victories: number;
-    };
+    attacker: CombatParticipant;
+    defender: CombatParticipant;
 }
 

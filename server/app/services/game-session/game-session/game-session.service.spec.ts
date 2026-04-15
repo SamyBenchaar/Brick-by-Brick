@@ -242,7 +242,7 @@ describe('GameSessionService', () => {
             service.kickPlayer(session.roomId, 'h1');
 
             // Le nom de p2 reste "Hero-2", il ne revient pas à "Hero"
-            const player = session.players.find(p => p.socketId === 'p2');
+            const player = session.players.find(sessionPlayer => sessionPlayer.socketId === 'p2');
             expect(player?.character.name).toBe('Hero-2');
         });
 

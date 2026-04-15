@@ -1,0 +1,45 @@
+.global-stats {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0;
+    gap: 0.2rem;
+}
+.stats-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 0.1rem;
+}
+.stats-table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: rgba(255, 255, 255, 0.85);
+    border: 3px solid #000000;
+  
+    th {
+      background-color: rgba(253, 95, 3, 0.85);
+      color: #fff;
+      padding: 0.35rem 0.5rem;
+      text-transform: uppercase;
+      font-size:  1rem; 
+      letter-spacing: 1px;
+      border: 2px solid #000;
+      text-align: center;
+    }
+  
+    td {
+      padding: 0.35rem 0.5rem;
+      border: 1px solid #000;
+      text-align: center;
+      font-size: 1rem;
+    }
+  
+    tbody tr:nth-child(even) {
+      background-color: rgba(246, 145, 145, 0.25);
+    }
+  
+    tbody tr:hover {
+      background-color: rgba(255, 156, 156, 0.5);
+    }
+  }

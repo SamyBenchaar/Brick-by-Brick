@@ -16,7 +16,7 @@ const WAITING_ROOM_ACCESS_KEY = 'waitingRoomAccess';
 export class WaitingRoomPage implements OnInit, OnDestroy {
     private router = inject(Router);
     private activatedRoute = inject(ActivatedRoute);
-    protected gameSessionSocketService = inject(GameSessionSocketService);
+    private gameSessionSocketService = inject(GameSessionSocketService);
 
     username: string = 'Player';
     roomIdFromRoute: string = '';
