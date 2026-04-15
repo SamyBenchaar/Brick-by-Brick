@@ -24,6 +24,10 @@ export class VirtualPlayerService {
             if (!this.virtualPlayerMechanicsService.isBotCurrentPlayer(session, bot)) {
                 return;
             }
+            if (session.getActiveCombat()) {
+                return;
+            }
+
             if (ctfOutcome === 'continue') {
                 continue;
             }
@@ -34,6 +38,10 @@ export class VirtualPlayerService {
             const classicOutcome = bot.virtualProfile === VirtualPlayerProfile.Aggressive
                 ? await this.aggressiveStep(session, bot)
                 : await this.defensiveStep(session, bot);
+
+            if (session.getActiveCombat()) {
+                return;
+            }
 
             if (classicOutcome === 'continue') {
                 continue;

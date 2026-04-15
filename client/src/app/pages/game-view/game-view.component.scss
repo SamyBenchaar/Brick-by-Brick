@@ -27,25 +27,6 @@ $turn-info-color: #f88400ec;
     pointer-events: none;
 }
 
-.top-bar {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    padding: 0.5rem 1rem;
-    flex-shrink: 0;
-}
-
-.debug-mode {
-    left: 45%;
-    position: absolute;
-    font-size: 20px;
-}
-
-.return-button    {
-    height: 50px;
-    padding: 14px 20px;
-}
-
 .chat-sidebar,
 .return-button {
     position: relative;
@@ -62,6 +43,20 @@ app-combat-view {
     position: fixed;
     inset: 0;
     z-index: 10;
+}
+
+.top-bar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.5rem 1rem;
+    flex-shrink: 0;
+}
+
+.debug-mode {
+    left: 45%;
+    position: absolute;
+    font-size: 20px;
 }
 
 .info-panel {
@@ -137,6 +132,39 @@ app-combat-view {
     font-weight: bold;
     color: $primary-color;
     animation: pulse 1s ease-in-out infinite;
+}
+
+.combat-result-notification {
+    position: absolute;
+    top: 1.5rem;
+    right: 1.5rem;
+    z-index: 35;
+    min-width: 260px;
+    max-width: 360px;
+    padding: 1rem 2.5rem 1rem 1rem;
+    border-radius: 12px;
+    border: 3px solid #000000;
+    background: $turn-info-color;
+    color: $primary-color;
+    font-weight: bold;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
+    pointer-events: auto;
+}
+
+.combat-result-notification p {
+    margin: 0;
+}
+
+.combat-result-notification-close {
+    position: absolute;
+    top: 0.35rem;
+    right: 0.45rem;
+    border: none;
+    background: transparent;
+    color: $primary-color;
+    font-size: 1.2rem;
+    font-weight: bold;
+    cursor: pointer;
 }
 
 @keyframes pulse {

@@ -3,7 +3,7 @@ import { Character } from '@common/character';
 import { ActiveCombat } from '@common/combat';
 import { COMBAT_TURN_TIME } from '@common/constants/combat-constants';
 import { MAX_PLAYER, ROOM_ID_LENGTH } from '@common/constants/game-config-constants';
-import { EXPIRED_FLAG_TIME, SHUFFLE_FACTOR } from '@common/map';
+import { SHUFFLE_FACTOR } from '@common/map';
 import { Player } from '@common/player';
 import { Position } from '@common/position';
 import { SessionStatus } from '@common/session.status';
@@ -49,6 +49,11 @@ export class GameSession {
 
     addPlayer(player: Player): void {
         this.players = this.players.filter(p => p.socketId !== player.socketId);
+        if(this.status === SessionStatus.Waiting) {
+            this.players.push(player);
+            this.socketToAvatar.set(player.socketId, player.character.avatarId);
+            return;
+        }
         const newPlayerList = [...this.players, player];
         this.players = newPlayerList.sort((a, b) => b.character.speed - a.character.speed);
         this.socketToAvatar.set(player.socketId, player.character.avatarId);
@@ -372,28 +377,42 @@ export class GameSession {
         requestsToReject.forEach(toPlayerId => this.flagTransferRequests.delete(toPlayerId));
     }
 
-    clearExpiredFlagTransfers(expiryTimeMs: number = EXPIRED_FLAG_TIME): void {
-        const now = Date.now();
-        const expiredRequests: string[] = [];
-
-        this.flagTransferRequests.forEach((request, playerId) => {
-            if (now - request.timestamp > expiryTimeMs) {
-                expiredRequests.push(playerId);
-            }
-        });
-
-        expiredRequests.forEach(playerId => this.flagTransferRequests.delete(playerId));
-    }
-
     isTileVisited(playerId: string, position: Position): boolean {
         if (!this.visitedTiles.has(playerId)) {
             this.visitedTiles.set(playerId, new Set());
         }
         const key = `${position.x},${position.y}`;
-        const playerTiles= this.visitedTiles.get(playerId);
+        const playerTiles = this.visitedTiles.get(playerId);
         if (playerTiles.has(key)) return false;
         playerTiles.add(key);
         return true;
+    }
+
+    toJSON(): unknown {
+        return {
+            players: this.players,
+            leftPlayers: this.leftPlayers,
+            status: this.status,
+            roomId: this.roomId,
+            maxPlayers: this.maxPlayers,
+            mapCopy: this.mapCopy,
+            host: this.host,
+            mapId: this.mapId,
+            socketToAvatar: Object.fromEntries(this.socketToAvatar),
+            playerOrder: this.playerOrder,
+            currentPlayerIndex: this.currentPlayerIndex,
+            currentTurnTime: this.currentTurnTime,
+            currentInterTurnTime: this.currentInterTurnTime,
+            activeCombat: this.activeCombat,
+            currentCombatTurnTime: this.currentCombatTurnTime,
+            startingPoints: Object.fromEntries(this.startingPoints),
+            isTurnStarting: this.isTurnStarting,
+            isDebugModeActivated: this.isDebugModeActivated,
+            gameMode: this.gameMode,
+            playerTeams: Object.fromEntries(this.playerTeams),
+            flagPosition: this.flagPosition,
+            flagHolderId: this.flagHolderId,
+        };
     }
 }
 

@@ -54,6 +54,7 @@ export class GameViewComponent implements OnInit, OnDestroy {
     const socketId = this.gameSessionSocketService.getSocketId();
     return this.gameSessionSocketService.currentSession()?.players.find(p => p.socketId === socketId) ?? null;
   });
+  currentPlayerTurn = computed(() => this.gamePlaySocketService.currentPlayerTurn());
   isDebugModeActivated = computed(() => this.gamePlaySocketService.isDebugModeActivated());
 
   displayedTurnTimer = computed(() => {
@@ -69,6 +70,13 @@ export class GameViewComponent implements OnInit, OnDestroy {
     const combatTime = this.combatSocketService.combatTurnTimeRemaining();
     return combatTime === null ? '--' : `${combatTime}s`;
   });
+
+  combatNotification = computed(() => this.combatSocketService.combatNotification());
+
+  closeCombatNotification(): void {
+    this.combatSocketService.clearCombatNotification();
+  }
+
   ngOnInit(): void {
     if (!this.gameSessionSocketService.currentSession() || !this.gamePlaySocketService.mapCopy()) {
       this.router.navigate(['/']);
@@ -199,7 +207,7 @@ export class GameViewComponent implements OnInit, OnDestroy {
       data: dialogData,
       disableClose: true,
     }).afterClosed().subscribe((confirmed: boolean) => {
-      if (confirmed) {
+      if (confirmed === true) {
         this.gameSessionSocketService.abandonGame();
       }
     });
@@ -218,12 +226,12 @@ export class GameViewComponent implements OnInit, OnDestroy {
   }
 
   canInteract(): boolean {
-    return this.gamePlaySocketService.canPlayerInteractDoor() || this.gamePlaySocketService.canPlayerInteractSanctuary();
+    return this.gamePlaySocketService.canPlayerInteractDoor() || this.gamePlaySocketService.canPlayerInteractSanctuary()
+      || this.gamePlaySocketService.canPlayerInteractFlag();
   }
 
   onActionClick(): void {
     this.isActionSelectionMode.set(true);
-
   }
 
   onActionTargetSelected(event: { tile: Tile, position: Position }): void {
@@ -239,8 +247,8 @@ export class GameViewComponent implements OnInit, OnDestroy {
           message: 'Choisissez votre mode d\'interaction.',
           type: 'info',
           confirmText: 'Normal',
-          cancelText: 'Double ou rien',
-          thirdOptionText: 'Annuler',
+          thirdOptionText: 'Double ou rien',
+          cancelText: 'Annuler',
         },
       });
       ref.afterClosed().subscribe((result) => {

@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, Input, inject } from '@angular/core';
 import { BaseSignComponent } from '@app/components/game-view-components/base-sign/base-sign.component';
+import { AVATARS } from '@app/constants/character-constants';
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
 import { Player } from '@common/player';
 
@@ -15,14 +16,10 @@ export class PlayerBoardComponent {
   @Input() leftPlayers: Player[] = [];
   @Input() host: Player | undefined = undefined;
   @Input() gameMode: string = 'classic';
+  @Input() currentPlayerTurn: string | null = null;
   name: string = 'Joueurs';
 
   private gameSessionService = inject(GameSessionSocketService);
-
-  getTeamLabel(player: Player): string {
-    if (!player.character.team) return '';
-    return player.character.team === 'team1' ? 'Équipe 1' : 'Équipe 2';
-  }
 
   isCtfMode(): boolean {
     return this.gameMode === 'ctf';
@@ -34,36 +31,36 @@ export class PlayerBoardComponent {
     return session?.players.find(p => p.socketId === socketId)?.character;
   }
 
-  canTransferFlagTo(targetPlayer: Player): boolean {
-    if (!this.isCtfMode()) return false;
-
-    const currentPlayer = this.getCurrentPlayerCharacter();
-    if (!currentPlayer?.hasFlag) return false;
-    if ((currentPlayer.remainingActions ?? 0) <= 0) return false;
-
-    if (currentPlayer.id === targetPlayer.character.id) return false;
-    if (currentPlayer.team !== targetPlayer.character.team) return false;
-
-    return true;
+  isVirtualPlayer(player: Player): boolean {
+    return player.virtualProfile !== undefined;
   }
 
-  canRequestFlagFrom(targetPlayer: Player): boolean {
-    if (!this.isCtfMode()) return false;
+  isActivePlayer(player: Player): boolean {
+    return player.character.id === this.currentPlayerTurn;
+  }
 
-    const currentPlayer = this.getCurrentPlayerCharacter();
-    if (!currentPlayer) return false;
-    if ((currentPlayer.remainingActions ?? 0) <= 0) return false;
-
-    if (!currentPlayer.hasFlag && targetPlayer.character.hasFlag) {
-      if (currentPlayer.id !== targetPlayer.character.id && currentPlayer.team === targetPlayer.character.team) {
-        return true;
-      }
+  getSortedPlayers(): Player[] {
+    const session = this.gameSessionService.currentSession();
+    if (!session?.playerOrder || session.playerOrder.length === 0) {
+      return [...this.players];
     }
 
-    return false;
+    return [...this.players].sort((a, b) => {
+      const indexA = session.playerOrder.indexOf(a.character.id);
+      const indexB = session.playerOrder.indexOf(b.character.id);
+
+      if (indexA !== -1 && indexB !== -1) {
+        return indexA - indexB;
+      }
+
+      if (indexA !== -1) return -1;
+      if (indexB !== -1) return 1;
+
+      return 0;
+    });
   }
 
-  requestFlagTransfer(targetPlayer: Player): void {
-    this.gameSessionService.requestFlagTransfer(targetPlayer.character.id);
+  getAvatarImage(player: Player): string {
+    return AVATARS.find(a => a.id === player.character.avatarId)?.image ?? './assets/images/lily.jpg';
   }
 }
