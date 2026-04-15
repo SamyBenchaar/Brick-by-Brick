@@ -155,6 +155,7 @@ export class GamePlayMovementHandler {
         context: GamePlayHandlerContext,
     ): void {
         tile.doorState = tile.doorState === 'opened' ? 'closed' : 'opened';
+        gameSession.usedDoors.add(`${position.x},${position.y}`);
         currentPlayer.remainingActions -= 1;
 
         context.server.to(gameSession.roomId).emit(GameSessionEvents.InteractResult, {

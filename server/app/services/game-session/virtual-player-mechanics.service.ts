@@ -389,6 +389,7 @@ export class VirtualPlayerMechanicsService {
             return false;
         }
         tile.doorState = DoorState.Opened;
+        session.usedDoors.add(`${doorPosition.x},${doorPosition.y}`);
         bot.character.remainingActions = (bot.character.remainingActions ?? 0) - 1;
 
         this.gameGateway.notifyRoomEvent(session.roomId, GameSessionEvents.InteractResult, {

@@ -21,7 +21,11 @@ export class GameSession {
     mapId: string;
     socketToAvatar: Map<string, number> = new Map();
     visitedTiles: Map<string, Set<string>> = new Map();
-
+    startTime: Date |null=null;
+    totalTurns: number = 0;
+    usedSanctuaries: Set<string> = new Set();
+    usedDoors: Set<string> = new Set();
+    flagHolders: Set<string> = new Set();
     playerOrder: string[] = [];
     currentPlayerIndex: number = 0;
     currentTurnTime: number = 30;
@@ -317,6 +321,7 @@ export class GameSession {
     setFlagHolder(playerId: string | null): void {
         if (playerId) {
             this.flagPosition = null;
+            this.flagHolders.add(playerId);
         }
         this.flagHolderId = playerId;
         this.players.forEach(p => {

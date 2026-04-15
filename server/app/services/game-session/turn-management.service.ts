@@ -171,6 +171,7 @@ export class TurnManagementService {
         if (gameSession.mapCopy) {
             this.sanctuaryService.decrementCooldowns(gameSession.mapCopy.tiles);
         }
+        gameSession.totalTurns++;
         gameSession.advanceToNextPlayer();
     }
 
