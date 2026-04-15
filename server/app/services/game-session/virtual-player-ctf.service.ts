@@ -3,6 +3,7 @@ import { Player } from '@common/player';
 import { VirtualPlayerProfile } from '@common/virtual.player.profile';
 import { Inject, Injectable } from '@nestjs/common';
 import { VirtualPlayerMechanicsService } from './virtual-player-mechanics.service';
+import { GameModeValue } from '@common/constants/game-config-constants';
 
 export type VirtualPlayerStepOutcome = 'continue' | 'stop' | 'none';
 
@@ -11,7 +12,7 @@ export class VirtualPlayerCtfService {
     @Inject() private readonly mechanics: VirtualPlayerMechanicsService;
 
     async handleStep(session: GameSession, bot: Player, profile: VirtualPlayerProfile): Promise<VirtualPlayerStepOutcome> {
-        if (session.gameMode !== 'ctf') {
+        if (session.gameMode !== GameModeValue.Ctf) {
             return 'none';
         }
 

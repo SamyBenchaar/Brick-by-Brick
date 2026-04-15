@@ -6,6 +6,7 @@ import { ActiveCombat } from '@common/combat';
 import { TileType } from '@common/map';
 import { Position } from '@common/position';
 import { Injectable } from '@nestjs/common';
+import { GameModeValue } from '@common/constants/game-config-constants';
 
 @Injectable()
 export class CombatEndService {
@@ -107,7 +108,7 @@ export class CombatEndService {
     }
 
     private dropFlagIfNeeded(gameSession: GameSession, player: Character, defeatPosition: Position): void {
-        if (!player.hasFlag || gameSession.gameMode !== 'ctf') {
+        if (!player.hasFlag || gameSession.gameMode !== GameModeValue.Ctf) {
             return;
         }
 

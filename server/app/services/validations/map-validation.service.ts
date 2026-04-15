@@ -4,6 +4,7 @@ import { Game } from '@app/model/game';
 import { Tile } from '@app/model/tile';
 import { MapSize, MIN_TERRAIN_COVERAGE, ObjectType, PERCENTAGE_MULTIPLIER, PLAYABLE_TYPES, TileType } from '@common/map';
 import { Injectable } from '@nestjs/common';
+import { GameModeValue } from '@common/constants/game-config-constants';
 
 @Injectable()
 export class MapValidationService {
@@ -259,7 +260,7 @@ export class MapValidationService {
     }
 
     private validateFlagForCTF(gameData: Partial<Game>): string[] {
-        if (gameData.gameMode !== 'ctf') {
+        if (gameData.gameMode !== GameModeValue.Ctf) {
             return [];
         }
         const tiles = gameData.mapConfig.tiles;

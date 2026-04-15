@@ -11,6 +11,7 @@ import { forwardRef, Inject, Injectable, Optional } from '@nestjs/common';
 import { MovementService } from './movement.service';
 import { VirtualPlayerPathfindingService } from './virtual-player-mechanics/virtual-player-pathfinding.service';
 import { VirtualPlayerTargetingService } from './virtual-player-mechanics/virtual-player-targeting.service';
+import { GameModeValue } from '@common/constants/game-config-constants';
 
 @Injectable()
 export class VirtualPlayerMechanicsService {
@@ -194,7 +195,7 @@ export class VirtualPlayerMechanicsService {
     }
 
     async tryAttackAdjacent(session: GameSession, bot: Player): Promise<boolean> {
-        if (session.gameMode === 'ctf') {
+        if (session.gameMode === GameModeValue.Ctf) {
             return false;
         }
 
@@ -350,7 +351,7 @@ export class VirtualPlayerMechanicsService {
     }
 
     private handleCtfFlagPickup(session: GameSession, bot: Player): void {
-        if (session.gameMode !== 'ctf' || !bot.character.position || session.getFlagHolder()) {
+        if (session.gameMode !== GameModeValue.Ctf || !bot.character.position || session.getFlagHolder()) {
             return;
         }
 

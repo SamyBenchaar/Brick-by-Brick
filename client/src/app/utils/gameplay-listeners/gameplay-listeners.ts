@@ -11,7 +11,7 @@ import type { GameSessionSocketService } from '@app/services/communication/game-
 import { SocketService } from '@app/services/communication/socket/socket.service';
 import { handleCombatResult, handleTurnEnded } from '@app/utils/gameplay-listeners/gameplay-listeners-helper.service';
 import { CombatResultPayload } from '@common/combat';
-import { CTF_VICTORY_ANNOUNCE_DELAY } from '@common/constants/game-config-constants';
+import { CTF_VICTORY_ANNOUNCE_DELAY, GameModeValue } from '@common/constants/game-config-constants';
 import { ORIGIN_CANDIDATES, SANCTUARY_COOLDOWN_TURNS, SANCTUARY_TILE_OFFSETS } from '@common/constants/santuary-constants';
 import { CombatEvents, GameSessionEvents } from '@common/game.events';
 import { ObjectType, TileType } from '@common/map';
@@ -182,8 +182,10 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
             }
         });
 
-    socketService.on<{ playerId: string; mapCopyTiles: Tile[][]; 
-        flagPosition?: Position | null; flagHolderId?: string | null }>(GameSessionEvents.PlayerAbandoned, (data) => {
+    socketService.on<{
+        playerId: string; mapCopyTiles: Tile[][];
+        flagPosition?: Position | null; flagHolderId?: string | null
+    }>(GameSessionEvents.PlayerAbandoned, (data) => {
         const session = service.currentSession();
         if (session) {
             const leftPlayer = session.players.find(player => player.character.id === data.playerId);
@@ -220,10 +222,10 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
         winner:
         { id: string; name: string; avatarId: number }
         | null; winningTeam?: 'team1' | 'team2';
-          gameMode?: string;
+        gameMode?: string;
         reason: string; players?: Player[];
-        durationSeconds?: number; totalTurns?: 
-        number; sanctuariesUsedPercent?: number | null; 
+        durationSeconds?: number; totalTurns?:
+        number; sanctuariesUsedPercent?: number | null;
         tilesVisitedPercent?: number | null;
         doorsUsedPercent?: number | null;
         flagHoldersCount?: number | null;
@@ -241,7 +243,7 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
             let title = 'Partie terminée';
 
             if (data.reason === 'victory' && data.winner) {
-                if (data.gameMode === 'ctf' && data.winningTeam) {
+                if (data.gameMode === GameModeValue.Ctf && data.winningTeam) {
                     const teamName = data.winningTeam === 'team1' ? 'bleue' : 'rouge';
                     title = 'Victoire!';
                     message = `L'équipe ${teamName} a gagné la partie!`;
@@ -264,7 +266,10 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
                 message = 'La partie est terminée.';
             }
 
-            const delay = data.gameMode === 'ctf' && data.reason === 'victory' ? CTF_VICTORY_ANNOUNCE_DELAY : gameSessionSocketService.endGameDelay;
+            const delay =
+                data.gameMode === GameModeValue.Ctf && data.reason === 'victory'
+                    ? CTF_VICTORY_ANNOUNCE_DELAY
+                    : gameSessionSocketService.endGameDelay;
 
             setTimeout(() => {
                 if (data.reason === 'victory') {
@@ -281,12 +286,12 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
                             winningTeam: data.winningTeam,
                             gameMode: data.gameMode,
                             walkableTiles,
-                            durationSeconds: data.durationSeconds?? 0,
-                            totalTurns: data.totalTurns?? 0,
-                            sanctuariesUsedPercent: data.sanctuariesUsedPercent?? null,
-                            tilesVisitedPercent: data.tilesVisitedPercent?? 0,
-                            doorsUsedPercent: data.doorsUsedPercent?? null,
-                            flagHoldersCount: data.flagHoldersCount?? null,
+                            durationSeconds: data.durationSeconds ?? 0,
+                            totalTurns: data.totalTurns ?? 0,
+                            sanctuariesUsedPercent: data.sanctuariesUsedPercent ?? null,
+                            tilesVisitedPercent: data.tilesVisitedPercent ?? 0,
+                            doorsUsedPercent: data.doorsUsedPercent ?? null,
+                            flagHoldersCount: data.flagHoldersCount ?? null,
                         },
                     });
                 } else {

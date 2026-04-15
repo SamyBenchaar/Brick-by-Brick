@@ -5,6 +5,7 @@ import { GameSessionSocketService } from '@app/services/communication/game-sessi
 import { Character } from '@common/character';
 import { TILE_COST, TileType } from '@common/map';
 import { Position } from '@common/position';
+import { GameModeValue } from '@common/constants/game-config-constants';
 
 @Injectable({
     providedIn: 'root',
@@ -36,7 +37,7 @@ export class GameGridHelperService {
         const session = this.gameSessionSocketService.currentSession() as GameSession | null;
 
         if (!session) return '';
-        if (session.gameMode !== 'ctf') return '';
+        if (session.gameMode !== GameModeValue.Ctf) return '';
         if (!session.playerTeams) return '';
 
         let team: string | undefined;

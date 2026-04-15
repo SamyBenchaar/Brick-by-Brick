@@ -18,6 +18,7 @@ import { Position } from '@common/position';
 import { SessionStatus } from '@common/session.status';
 import { VirtualPlayerProfile } from '@common/virtual.player.profile';
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
+import { GameModeValue } from '@common/constants/game-config-constants';
 
 const BASE_LIFE = 6;
 const BASE_SPEED = 6;
@@ -214,7 +215,7 @@ export class GameSessionService {
     }
 
     checkGameWinner(gameSession: GameSession): Character | null {
-        if (gameSession.gameMode === 'ctf') {
+        if (gameSession.gameMode === GameModeValue.Ctf) {
             return null;
         }
 
@@ -223,7 +224,7 @@ export class GameSessionService {
     }
 
     checkCtfFlagWinner(gameSession: GameSession): Character | null {
-        if (gameSession.gameMode !== 'ctf') {
+        if (gameSession.gameMode !== GameModeValue.Ctf) {
             return null;
         }
 

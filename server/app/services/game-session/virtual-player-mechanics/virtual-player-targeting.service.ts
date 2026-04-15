@@ -3,6 +3,7 @@ import { Player } from '@common/player';
 import { Position } from '@common/position';
 import { Inject, Injectable } from '@nestjs/common';
 import { VirtualPlayerPathfindingService } from './virtual-player-pathfinding.service';
+import { GameModeValue } from '@common/constants/game-config-constants';
 
 @Injectable()
 export class VirtualPlayerTargetingService {
@@ -57,7 +58,7 @@ export class VirtualPlayerTargetingService {
 
         const botTeam = session.getPlayerTeam(bot.character.id);
         const holderTeam = session.getPlayerTeam(flagHolder.character.id);
-        if (session.gameMode === 'ctf' && botTeam && holderTeam && botTeam === holderTeam) {
+        if (session.gameMode === GameModeValue.Ctf && botTeam && holderTeam && botTeam === holderTeam) {
             return null;
         }
 
@@ -156,7 +157,7 @@ export class VirtualPlayerTargetingService {
                 return false;
             }
 
-            if (session.gameMode !== 'ctf') {
+            if (session.gameMode !== GameModeValue.Ctf) {
                 return true;
             }
 

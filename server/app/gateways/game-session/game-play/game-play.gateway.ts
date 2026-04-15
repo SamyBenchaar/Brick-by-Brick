@@ -16,6 +16,7 @@ import {
     OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
+import { GameModeValue } from '@common/constants/game-config-constants';
 
 @WebSocketGateway({ cors: true })
 @Injectable()
@@ -56,7 +57,7 @@ export class GamePlayGateway implements OnGatewayInit {
             return;
         }
 
-        if (gameSession.gameMode === 'ctf' && gameSession.players.length % 2 !== 0) {
+        if (gameSession.gameMode === GameModeValue.Ctf && gameSession.players.length % 2 !== 0) {
             socket.emit(GameSessionEvents.GameSessionJoinError, 'Le mode CTF requiert un nombre pair de joueurs');
             return;
         }
@@ -68,12 +69,12 @@ export class GamePlayGateway implements OnGatewayInit {
         const fullMapData = await this.gameSessionService.getFullMapData(gameSession.mapId);
         this.gameSessionService.initializeGameSession(gameSession, fullMapData);
 
-        if (gameSession.gameMode === 'ctf') {
+        if (gameSession.gameMode === GameModeValue.Ctf) {
             gameSession.assignTeams();
             this.findAndSetFlagPosition(gameSession, fullMapData);
         }
 
-        if (gameSession.gameMode === 'ctf') {
+        if (gameSession.gameMode === GameModeValue.Ctf) {
             this.server.to(payload.roomId).emit(GameSessionEvents.GameSessionUpdated, gameSession);
         }
 
@@ -218,7 +219,7 @@ export class GamePlayGateway implements OnGatewayInit {
     private handleGameEnd(gameSession: GameSession, winner: Character | null): void {
         this.gameSessionService.cleanupTurnTimers(gameSession.roomId);
 
-        const winningTeam = winner && gameSession.gameMode === 'ctf' ? gameSession.getPlayerTeam(winner.id) : null;
+        const winningTeam = winner && gameSession.gameMode === GameModeValue.Ctf ? gameSession.getPlayerTeam(winner.id) : null;
         const allVisitedTiles = new Set<string>();
         gameSession.visitedTiles.forEach(playerTiles =>
             playerTiles.forEach(tile => allVisitedTiles.add(tile)),
@@ -266,7 +267,7 @@ export class GamePlayGateway implements OnGatewayInit {
             sanctuariesUsedPercent,
             tilesVisitedPercent,
             doorsUsedPercent,
-            flagHoldersCount: gameSession.gameMode === 'ctf' ? gameSession.flagHolders.size : null,
+            flagHoldersCount: gameSession.gameMode === GameModeValue.Ctf ? gameSession.flagHolders.size : null,
         });
 
         const activePlayers = gameSession.players.map(player => player.character.name).join(', ');

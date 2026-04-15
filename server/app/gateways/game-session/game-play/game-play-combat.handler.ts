@@ -13,6 +13,7 @@ import { COMBAT_TURN_TIME } from '@common/constants/combat-constants';
 import { CombatEvents, GameSessionEvents } from '@common/game.events';
 import { Injectable, Logger } from '@nestjs/common';
 import { Socket } from 'socket.io';
+import { GameModeValue } from '@common/constants/game-config-constants';
 @Injectable()
 export class GamePlayCombatHandler {
     private readonly logger = new Logger(GamePlayCombatHandler.name);
@@ -272,10 +273,10 @@ export class GamePlayCombatHandler {
             remainingActions: combatState.attacker.remainingActions,
             remainingTurnTime: gameSession.getCurrentTurnTime(),
             turnShouldContinue: combatState.turnShouldContinue,
-            flagPosition: gameSession.gameMode === 'ctf' ? gameSession.getFlagPosition() : null,
-            flagHolderId: gameSession.gameMode === 'ctf' ? gameSession.getFlagHolder() : null,
+            flagPosition: gameSession.gameMode === GameModeValue.Ctf ? gameSession.getFlagPosition() : null,
+            flagHolderId: gameSession.gameMode === GameModeValue.Ctf ? gameSession.getFlagHolder() : null,
         });
-        if (gameSession.gameMode === 'ctf') {
+        if (gameSession.gameMode === GameModeValue.Ctf) {
             context.server.to(gameSession.roomId).emit(GameSessionEvents.GameSessionUpdated, gameSession);
         }
         context.emitReachableTiles(gameSession);

@@ -4,6 +4,7 @@ import { BaseSignComponent } from '@app/components/game-view-components/base-sig
 import { AVATARS } from '@app/constants/character-constants';
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
 import { Player } from '@common/player';
+import { GameModeValue } from '@common/constants/game-config-constants';
 
 @Component({
   selector: 'app-player-board',
@@ -22,7 +23,7 @@ export class PlayerBoardComponent {
   private gameSessionService = inject(GameSessionSocketService);
 
   isCtfMode(): boolean {
-    return this.gameMode === 'ctf';
+    return this.gameMode === GameModeValue.Ctf;
   }
 
   getCurrentPlayerCharacter() {

@@ -7,6 +7,7 @@ import { DialogType } from '@app/constants/dialog-type.enum';
 import { Character } from '@common/character';
 import { DoorState, MULTI_TILE_OBJECTS, ObjectType, PLAYABLE_TYPES, TILE_COST, TileType } from '@common/map';
 import { Position } from '@common/position';
+import { GameModeValue } from '@common/constants/game-config-constants';
 
 @Injectable({ providedIn: 'root' })
 export class GameGridUtilService {
@@ -56,7 +57,7 @@ export class GameGridUtilService {
     }
 
     getPlayerTeamClass(player: Character, gameMode: string): string {
-        return gameMode !== 'ctf' || !player.team ? '' : `player-team-${player.team}`;
+        return gameMode !== GameModeValue.Ctf || !player.team ? '' : `player-team-${player.team}`;
     }
 
     getAvatarImage(avatarId: number): string {
@@ -72,14 +73,14 @@ export class GameGridUtilService {
     }
 
     isFlagVisible(tile: Tile, gameMode: string, flagPosition: Position | null, flagHolderId: string | null): boolean {
-        if (gameMode !== 'ctf') return true;
+        if (gameMode !== GameModeValue.Ctf) return true;
         if (tile.object?.toString() !== ObjectType.Flag.toString()) return true;
         if (flagPosition) return false;
         return !flagHolderId;
     }
 
     isFlagAtPosition(position: Position, gameMode: string, flagHolderId: string | null, flagPosition: Position | null): boolean {
-        if (gameMode !== 'ctf') return false;
+        if (gameMode !== GameModeValue.Ctf) return false;
         if (flagHolderId) return false;
         if (!flagPosition) return false;
         return flagPosition.x === position.x && flagPosition.y === position.y;

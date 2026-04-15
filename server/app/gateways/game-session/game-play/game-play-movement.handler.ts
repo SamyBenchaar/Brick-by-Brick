@@ -8,6 +8,7 @@ import { GameSessionEvents } from '@common/game.events';
 import { Position } from '@common/position';
 import { Inject, Injectable, forwardRef } from '@nestjs/common';
 import { Socket } from 'socket.io';
+import { GameModeValue } from '@common/constants/game-config-constants';
 
 @Injectable()
 export class GamePlayMovementHandler {
@@ -49,7 +50,7 @@ export class GamePlayMovementHandler {
                 remainingActions: currentPlayer.remainingActions,
             });
 
-            if (gameSession.gameMode === 'ctf') {
+            if (gameSession.gameMode === GameModeValue.Ctf) {
                 const ctfGameEnded = this.handleCtfMovement(gameSession, context, payload.roomId);
                 if (ctfGameEnded) {
                     return;

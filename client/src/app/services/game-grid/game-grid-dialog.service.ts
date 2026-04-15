@@ -8,6 +8,7 @@ import { FlagTransferSocketService } from '@app/services/communication/game-sess
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
 import { GameGridHelperService } from '@app/services/game-grid/game-grid-helper.service';
 import { Character } from '@common/character';
+import { GameModeValue } from '@common/constants/game-config-constants';
 
 @Injectable({
     providedIn: 'root',
@@ -21,7 +22,7 @@ export class GameGridDialogService {
     openPlayerDialog(player: Character): void {
         const session = this.gameSessionSocketService.currentSession();
         const currentPlayer = this.gameGridHelperService.getCurrentPlayer();
-        const isCtfMode = session?.gameMode === 'ctf';
+        const isCtfMode = session?.gameMode === GameModeValue.Ctf;
 
         if (isCtfMode && currentPlayer && this.shouldShowFlagTransferDialog(player, currentPlayer, session)) {
             this.showFlagTransferDialog(player, currentPlayer);

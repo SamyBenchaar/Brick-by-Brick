@@ -11,6 +11,7 @@ import { GameObjectService } from '@app/services/game-object/game-object.service
 import { MapEditorService } from '@app/services/map-editor/map-editor.service';
 import { ObjectCounterService } from '@app/services/object-counter/object-counter.service';
 import { Character } from '@common/character';
+import { GameModeValue } from '@common/constants/game-config-constants';
 import { DoorState, GRID_SIZE, MapSize, ObjectType, TileType } from '@common/map';
 import { Position } from '@common/position';
 import html2canvas from 'html2canvas';
@@ -24,6 +25,8 @@ import html2canvas from 'html2canvas';
 export class GameGridComponent implements OnInit, OnChanges {
   private static readonly defaultPreviewMaxWidth = 400;
   private static readonly jpegQuality = 0.3;
+
+  gameModeValue = GameModeValue;
 
   @Input() mapSize: MapSize = MapSize.Small;
 

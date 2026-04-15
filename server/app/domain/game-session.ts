@@ -2,7 +2,7 @@ import { GameMap } from '@app/interfaces/game-map-interfaces';
 import { Character } from '@common/character';
 import { ActiveCombat } from '@common/combat';
 import { COMBAT_TURN_TIME } from '@common/constants/combat-constants';
-import { MAX_PLAYER, ROOM_ID_LENGTH } from '@common/constants/game-config-constants';
+import { MAX_PLAYER, ROOM_ID_LENGTH, GameModeValue } from '@common/constants/game-config-constants';
 import { SHUFFLE_FACTOR } from '@common/map';
 import { Player } from '@common/player';
 import { Position } from '@common/position';
@@ -92,7 +92,7 @@ export class GameSession {
 
         this.playerTeams.delete(removedPlayer.character.id);
 
-        if (this.flagHolderId === removedPlayer.character.id && this.gameMode === 'ctf') {
+        if (this.flagHolderId === removedPlayer.character.id && this.gameMode === GameModeValue.Ctf) {
             this.dropFlag(removedPlayer.character.position);
         } else if (this.flagHolderId === removedPlayer.character.id) {
             this.flagHolderId = null;
@@ -269,7 +269,7 @@ export class GameSession {
     }
 
     assignTeams(): void {
-        if (this.gameMode !== 'ctf' || this.players.length % 2 !== 0) {
+        if (this.gameMode !== GameModeValue.Ctf || this.players.length % 2 !== 0) {
             return;
         }
 
