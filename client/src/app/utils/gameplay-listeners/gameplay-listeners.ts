@@ -182,7 +182,8 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
             }
         });
 
-    socketService.on<{ playerId: string; mapCopyTiles: Tile[][] }>(GameSessionEvents.PlayerAbandoned, (data) => {
+    socketService.on<{ playerId: string; mapCopyTiles: Tile[][]; 
+        flagPosition?: Position | null; flagHolderId?: string | null }>(GameSessionEvents.PlayerAbandoned, (data) => {
         const session = service.currentSession();
         if (session) {
             const leftPlayer = session.players.find(player => player.character.id === data.playerId);
@@ -202,6 +203,14 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
                     });
                 }
             }
+
+            if (data.flagPosition !== undefined) {
+                session.flagPosition = data.flagPosition;
+            }
+            if (data.flagHolderId !== undefined) {
+                session.flagHolderId = data.flagHolderId;
+            }
+
             combatSocketService.activeCombat.set(null);
             gameSessionSocketService.currentSession.set({ ...session });
         }
