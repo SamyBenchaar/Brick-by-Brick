@@ -21,7 +21,7 @@ export class PlayerSignComponent {
 
   get avatar(): AvatarOption | undefined {
     if (!this.player) return undefined;
-    return AVATARS.find(a => a.id === this.player?.character.avatarId);
+    return AVATARS.find(avatarOption => avatarOption.id === this.player?.character.avatarId);
   }
 
   onActionClick(): void {

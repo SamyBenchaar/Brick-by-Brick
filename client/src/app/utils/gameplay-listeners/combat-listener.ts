@@ -61,8 +61,8 @@ export function setupCombatListeners(
         combatSocketService.combatTurnTimeRemaining.set(null);
         const session = service.currentSession();
         if (session) {
-            const attacker = session.players.find(p => p.character.id === data.winner);
-            const defender = session.players.find(p => p.character.id === data.loser);
+            const attacker = session.players.find(player => player.character.id === data.winner);
+            const defender = session.players.find(player => player.character.id === data.loser);
             if (attacker) {
                 attacker.character.victories = data.attackerVictories;
                 attacker.character.remainingActions = data.remainingActions;

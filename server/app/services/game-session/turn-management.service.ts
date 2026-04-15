@@ -23,7 +23,7 @@ export class TurnManagementService {
             return b.speed - a.speed;
         });
 
-        const playerOrder = sortedPlayers.map(p => p.id);
+        const playerOrder = sortedPlayers.map(player => player.id);
         gameSession.setPlayerOrder(playerOrder);
         gameSession.setCurrentPlayerIndex(0);
 

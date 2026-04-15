@@ -21,18 +21,18 @@ export class AdminPageComponent {
 
     showGameCreationModal = false;
     selectedSize: GameSizeId | null = null;
-    selectedGameMode: GameModeValue = 'classic';
+    selectedGameMode: GameModeValue = GameModeValue.Classic;
 
     openGameCreationModal(): void {
         this.showGameCreationModal = true;
         this.selectedSize = null;
-        this.selectedGameMode = 'classic';
+        this.selectedGameMode = GameModeValue.Classic;
     }
 
     closeGameCreationModal(): void {
         this.showGameCreationModal = false;
         this.selectedSize = null;
-        this.selectedGameMode = 'classic';
+        this.selectedGameMode = GameModeValue.Classic;
     }
 
     selectSize(size: GameSizeId): void {

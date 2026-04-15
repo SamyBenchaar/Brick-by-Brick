@@ -1,9 +1,9 @@
 
 import { Component, Input } from '@angular/core';
-import { Character } from '@common/character';
-import { CombatValueDetail, COMBAT_POSTURE } from '@common/combat';
-import { AVATARS } from '@app/constants/character-constants';
 import { HpBarComponent } from '@app/components/hp-bar/hp-bar.component';
+import { AVATARS } from '@app/constants/character-constants';
+import { Character } from '@common/character';
+import { COMBAT_POSTURE, CombatValueDetail } from '@common/combat';
 
 @Component({
   selector: 'app-player-combat-card',
@@ -21,7 +21,7 @@ export class PlayerCombatCardComponent {
   hasChosen: boolean = false;
 
   getAvatarPath(avatarId: number): string {
-    const avatar = AVATARS.find(a => a.id === avatarId);
+    const avatar = AVATARS.find(avatarOption => avatarOption.id === avatarId);
     return avatar ? avatar.image : './assets/images/lily.jpg';
   }
 

@@ -5,6 +5,7 @@ import { GameSessionSocketService } from '@app/services/communication/game-sessi
 import { Character } from '@common/character';
 import { TILE_COST, TileType } from '@common/map';
 import { Position } from '@common/position';
+import { GameModeValue } from '@common/constants/game-config-constants';
 
 @Injectable({
     providedIn: 'root',
@@ -13,15 +14,15 @@ export class GameGridHelperService {
     private gameSessionSocketService = inject(GameSessionSocketService);
 
     getPlayerAtPosition(players: Character[], position: Position): Character | null {
-        return players.find(p => p.position?.x === position.x && p.position?.y === position.y) ?? null;
+        return players.find(player => player.position?.x === position.x && player.position?.y === position.y) ?? null;
     }
 
     isReachableTile(reachableTiles: Position[], position: Position): boolean {
-        return reachableTiles.some(t => t.x === position.x && t.y === position.y);
+        return reachableTiles.some(tilePosition => tilePosition.x === position.x && tilePosition.y === position.y);
     }
 
     getAvatarImage(avatarId: number): string {
-        return AVATARS.find(a => a.id === avatarId)?.image ?? 'assets/images/lily.jpg';
+        return AVATARS.find(avatarOption => avatarOption.id === avatarId)?.image ?? 'assets/images/lily.jpg';
     }
 
     getTileCost(tileType: TileType): number {
@@ -29,14 +30,14 @@ export class GameGridHelperService {
     }
 
     isFlagHeldByPlayer(players: Character[], position: Position): boolean {
-        return players.some(p => p.position?.x === position.x && p.position?.y === position.y && p.hasFlag);
+        return players.some(player => player.position?.x === position.x && player.position?.y === position.y && player.hasFlag);
     }
 
     getPlayerTeamClass(player: Character): string {
         const session = this.gameSessionSocketService.currentSession() as GameSession | null;
 
         if (!session) return '';
-        if (session.gameMode !== 'ctf') return '';
+        if (session.gameMode !== GameModeValue.Ctf) return '';
         if (!session.playerTeams) return '';
 
         let team: string | undefined;
@@ -53,7 +54,7 @@ export class GameGridHelperService {
         const session = this.gameSessionSocketService.currentSession();
         if (!session) return null;
 
-        const playerData = session.players.find(p => p.socketId === socketId);
+        const playerData = session.players.find(player => player.socketId === socketId);
         return playerData?.character ?? null;
     }
 }

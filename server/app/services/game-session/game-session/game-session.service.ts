@@ -8,9 +8,9 @@ import { StartingPointService } from '@app/services/game-session/starting-point.
 import { TurnManagementService } from '@app/services/game-session/turn-management.service';
 import { VirtualPlayerService } from '@app/services/game-session/virtual-player.service';
 import { GameService } from '@app/services/game/game.service';
+import { getGameSizeConfig } from '@app/utils/game-config.utils';
 import { Character } from '@common/character';
 import { AVATAR_IDS } from '@common/constants/avatar-constants';
-import { getGameSizeConfig } from '@common/constants/game-config-constants';
 import { VIRTUAL_PLAYER_ID_PREFIX, VIRTUAL_PLAYER_NAMES } from '@common/constants/virtual-player-constants';
 import { Dice } from '@common/dice';
 import { Player } from '@common/player';
@@ -18,6 +18,7 @@ import { Position } from '@common/position';
 import { SessionStatus } from '@common/session.status';
 import { VirtualPlayerProfile } from '@common/virtual.player.profile';
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
+import { GameModeValue } from '@common/constants/game-config-constants';
 
 const BASE_LIFE = 6;
 const BASE_SPEED = 6;
@@ -117,7 +118,7 @@ export class GameSessionService {
         this.startingPointService.assignStartingPoints(gameSession, mapConfig);
         this.startingPointService.cleanupUnusedStartingPoints(gameSession, mapConfig.tiles);
         gameSession.setStatus(SessionStatus.Playing);
-        this.logger.log(`Game session ${gameSession.roomId} initialized`);
+        this.logger.log(`Game session ${gameSession.roomId} initialisée`);
     }
 
     async startCurrentTurn(
@@ -128,7 +129,7 @@ export class GameSessionService {
     ): Promise<void> {
         const currentPlayer = gameSession.getCurrentPlayer();
         if (!currentPlayer) {
-            throw new Error('No current player found');
+            throw new Error('Aucun joueur courant trouvé');
         }
 
         this.movementService.resetMovementPoints(currentPlayer);
@@ -162,7 +163,7 @@ export class GameSessionService {
             onTickCallback,
         );
 
-        const fullCurrentPlayer = gameSession.players.find(p => p.character.id === currentPlayer.id);
+        const fullCurrentPlayer = gameSession.players.find(player => player.character.id === currentPlayer.id);
         if (fullCurrentPlayer?.virtualProfile) {
             this.virtualPlayerService.playTurn(gameSession, fullCurrentPlayer)
                 .catch((error: Error) => {
@@ -213,23 +214,8 @@ export class GameSessionService {
         return success;
     }
 
-    // executeCombat(gameSession: GameSession, defenderId: string): CombatResult {
-    //     const attacker = gameSession.getCurrentPlayer();
-    //     const defender = gameSession.players.find(p => p.character.id === defenderId)?.character;
-    //     if (!attacker || !defender) {
-    //         throw new Error('Invalid player IDs');
-    //     }
-    //     if (!this.combatService.canFight(attacker, defender, gameSession)) {
-    //         throw new Error('Players are not adjacent');
-    //     }
-    //     const result = this.combatService.executeCombat(
-    //         gameSession, attacker, defender, gameSession.getMapCopy(),
-    //     );
-    //     return result;
-    // }
-
-     checkGameWinner(gameSession: GameSession): Character | null {
-        if (gameSession.gameMode === 'ctf') {
+    checkGameWinner(gameSession: GameSession): Character | null {
+        if (gameSession.gameMode === GameModeValue.Ctf) {
             return null;
         }
 
@@ -238,7 +224,7 @@ export class GameSessionService {
     }
 
     checkCtfFlagWinner(gameSession: GameSession): Character | null {
-        if (gameSession.gameMode !== 'ctf') {
+        if (gameSession.gameMode !== GameModeValue.Ctf) {
             return null;
         }
 
@@ -412,7 +398,7 @@ export class GameSessionService {
         }
 
         const hasPlayer = gameSession.players.some(
-            p => p.character.position?.x === position.x && p.character.position?.y === position.y,
+            player => player.character.position?.x === position.x && player.character.position?.y === position.y,
         );
         if (hasPlayer) {
             return false;

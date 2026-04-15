@@ -4,6 +4,7 @@ import { GameSessionService } from '@app/services/game-session/game-session/game
 import { TurnManagementService } from '@app/services/game-session/turn-management.service';
 import { GameSessionEvents } from '@common/game.events';
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
+import { GameModeValue } from '@common/constants/game-config-constants';
 
 @Injectable()
 export class GamePlayTurnHandler {
@@ -26,7 +27,7 @@ export class GamePlayTurnHandler {
         gameSession.isTurnStarting = true;
         gameSession.setCurrentInterTurnTime(this.interTurnTime);
 
-        if (gameSession.gameMode === 'ctf') {
+        if (gameSession.gameMode === GameModeValue.Ctf) {
             context.server.to(gameSession.roomId).emit(GameSessionEvents.GameSessionUpdated, gameSession);
         }
 

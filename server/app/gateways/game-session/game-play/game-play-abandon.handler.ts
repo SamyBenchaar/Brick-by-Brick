@@ -8,6 +8,7 @@ import { CombatEvents, GameSessionEvents } from '@common/game.events';
 import { Inject, Injectable, forwardRef } from '@nestjs/common';
 import { Socket } from 'socket.io';
 import { SessionStatus } from '@common/session.status';
+import { GameModeValue } from '@common/constants/game-config-constants';
 
 @Injectable()
 export class GamePlayAbandonHandler {
@@ -51,7 +52,7 @@ export class GamePlayAbandonHandler {
     }
 
     private handleAbandonedPlayerFlagPlacement(gameSession: GameSession, abandoningPlayer: Player | undefined): void {
-        if (!abandoningPlayer || gameSession.gameMode !== 'ctf') {
+        if (!abandoningPlayer || gameSession.gameMode !== GameModeValue.Ctf) {
             return;
         }
 
@@ -81,7 +82,7 @@ export class GamePlayAbandonHandler {
     }
 
     private handleAbandonedPlayerTeamCheck(gameSession: GameSession, context: GamePlayHandlerContext): boolean {
-        if (gameSession.gameMode === 'ctf') {
+        if (gameSession.gameMode === GameModeValue.Ctf) {
             const team1Count = gameSession.getTotalPlayersInTeam('team1');
             const team2Count = gameSession.getTotalPlayersInTeam('team2');
             if (team1Count === 0 || team2Count === 0) {

@@ -76,9 +76,8 @@ export class CharacterCreationPageComponent implements OnInit {
                     const taken = this.gameSessionSocketService.takenAvatars();
 
                     if (!this.character && taken.length > 0) {
-                        const freeAvatar = AVATARS.find(a => !taken.includes(a.id));
+                        const freeAvatar = AVATARS.find(avatarOption => !taken.includes(avatarOption.id));
                         if (!freeAvatar) {
-                            alert('Toutes les places sont déjà prises ! Trop de joueurs en même temps.');
                             return;
                         }
                         this.character = this.createBaseCharacter(freeAvatar.id);
@@ -130,7 +129,7 @@ export class CharacterCreationPageComponent implements OnInit {
         if (!this.avatars?.length || !this.character) {
             return '';
         }
-        const avatar = this.avatars.find(a => a.id === this.character.avatarId);
+        const avatar = this.avatars.find(avatarOption => avatarOption.id === this.character.avatarId);
         return avatar?.image ?? this.avatars[0]?.image ?? '';
     }
 
@@ -181,7 +180,6 @@ export class CharacterCreationPageComponent implements OnInit {
     }
     submitCharacter() {
         if (!this.gameId && !this.roomId) {
-            alert('Erreur: Identifiant de session manquant. Veuillez revenir à la page précédente.');
             return;
         }
 
@@ -190,7 +188,6 @@ export class CharacterCreationPageComponent implements OnInit {
         if (this.fromGameCreation && this.gameId) {
 
             this.gameSessionSocketService.currentSession.set(null);
-            this.gameSessionSocketService.roomId.set('');
             this.gamePlaySocketService.mapCopy.set(null);
 
             // Le créateur: créer la session et attendre que le roomId soit reçu du serveur

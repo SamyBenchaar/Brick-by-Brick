@@ -3,9 +3,11 @@ import { MatDialog } from '@angular/material/dialog';
 import { Tile } from '@app/classes/tile/tile';
 import { AppDialogComponent } from '@app/components/game-edition-components/app-dialog/app-dialog.component';
 import { AVATARS } from '@app/constants/character-constants';
+import { DialogType } from '@app/constants/dialog-type.enum';
 import { Character } from '@common/character';
 import { DoorState, MULTI_TILE_OBJECTS, ObjectType, PLAYABLE_TYPES, TILE_COST, TileType } from '@common/map';
 import { Position } from '@common/position';
+import { GameModeValue } from '@common/constants/game-config-constants';
 
 @Injectable({ providedIn: 'root' })
 export class GameGridUtilService {
@@ -17,7 +19,7 @@ export class GameGridUtilService {
                 title: 'Informations du joueur',
                 message: `Joueur: ${player.name}\nVictoires: ${player.victories}`,
                 image: this.getAvatarImage(player.avatarId),
-                type: 'info',
+                type: DialogType.INFO,
             },
         });
     }
@@ -27,7 +29,7 @@ export class GameGridUtilService {
             data: {
                 title: 'Informations de la tuile',
                 message: `Type: ${tile.type}\nCoût: ${TILE_COST[tile.type] ?? 0}`,
-                type: 'info',
+                type: DialogType.INFO,
             },
         });
     }
@@ -44,7 +46,7 @@ export class GameGridUtilService {
     }
 
     getObjectPath(object: ObjectType, sanctuaryCooldown?: number): string {
-        const isOnCooldown=  (sanctuaryCooldown ?? 0) > 0;
+        const isOnCooldown = (sanctuaryCooldown ?? 0) > 0;
         if (isOnCooldown && object === ObjectType.HealingSanctuary) return './assets/images/offhealingsanctuary.png';
         if (isOnCooldown && object === ObjectType.CombatSanctuary) return './assets/images/offcombatsanctuary.png';
         return `./assets/images/${object}.png`;
@@ -55,11 +57,11 @@ export class GameGridUtilService {
     }
 
     getPlayerTeamClass(player: Character, gameMode: string): string {
-        return gameMode !== 'ctf' || !player.team ? '' : `player-team-${player.team}`;
+        return gameMode !== GameModeValue.Ctf || !player.team ? '' : `player-team-${player.team}`;
     }
 
     getAvatarImage(avatarId: number): string {
-        return AVATARS.find(a => a.id === avatarId)?.image ?? 'assets/images/lily.jpg';
+        return AVATARS.find(avatarOption => avatarOption.id === avatarId)?.image ?? 'assets/images/lily.jpg';
     }
 
     isSanctuaryOriginTile(tile: Tile, position: Position): boolean {
@@ -71,14 +73,14 @@ export class GameGridUtilService {
     }
 
     isFlagVisible(tile: Tile, gameMode: string, flagPosition: Position | null, flagHolderId: string | null): boolean {
-        if (gameMode !== 'ctf') return true;
+        if (gameMode !== GameModeValue.Ctf) return true;
         if (tile.object?.toString() !== ObjectType.Flag.toString()) return true;
         if (flagPosition) return false;
         return !flagHolderId;
     }
 
     isFlagAtPosition(position: Position, gameMode: string, flagHolderId: string | null, flagPosition: Position | null): boolean {
-        if (gameMode !== 'ctf') return false;
+        if (gameMode !== GameModeValue.Ctf) return false;
         if (flagHolderId) return false;
         if (!flagPosition) return false;
         return flagPosition.x === position.x && flagPosition.y === position.y;

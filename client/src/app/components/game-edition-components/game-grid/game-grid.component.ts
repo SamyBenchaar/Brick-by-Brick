@@ -11,6 +11,7 @@ import { GameObjectService } from '@app/services/game-object/game-object.service
 import { MapEditorService } from '@app/services/map-editor/map-editor.service';
 import { ObjectCounterService } from '@app/services/object-counter/object-counter.service';
 import { Character } from '@common/character';
+import { GameModeValue } from '@common/constants/game-config-constants';
 import { DoorState, GRID_SIZE, MapSize, ObjectType, TileType } from '@common/map';
 import { Position } from '@common/position';
 import html2canvas from 'html2canvas';
@@ -24,6 +25,8 @@ import html2canvas from 'html2canvas';
 export class GameGridComponent implements OnInit, OnChanges {
   private static readonly defaultPreviewMaxWidth = 400;
   private static readonly jpegQuality = 0.3;
+
+  gameModeValue = GameModeValue;
 
   @Input() mapSize: MapSize = MapSize.Small;
 
@@ -261,11 +264,11 @@ export class GameGridComponent implements OnInit, OnChanges {
 
   private addObject(position: Position): void {
     const selectedObject = this.mapEditorService.getSelectedObject();
-    this.gameObjectService.addObject(position, selectedObject, p => this.getTile(p), t => this.isTileObjectFree(t));
+    this.gameObjectService.addObject(position, selectedObject, tilePosition => this.getTile(tilePosition), tile => this.isTileObjectFree(tile));
   }
 
   private removeObject(position: Position): void {
-    this.gameObjectService.removeObject(position, p => this.getTile(p));
+    this.gameObjectService.removeObject(position, tilePosition => this.getTile(tilePosition));
   }
 
   isMultiTileObject(object: ObjectType): boolean {
@@ -323,11 +326,11 @@ export class GameGridComponent implements OnInit, OnChanges {
   }
 
   getPlayerAtPosition(position: Position): Character | null {
-    return this.players.find(p => p.position?.x === position.x && p.position?.y === position.y) ?? null;
+    return this.players.find(player => player.position?.x === position.x && player.position?.y === position.y) ?? null;
   }
 
   isReachableTile(position: Position): boolean {
-    return this.reachableTiles.some(t => t.x === position.x && t.y === position.y);
+    return this.reachableTiles.some(tilePosition => tilePosition.x === position.x && tilePosition.y === position.y);
   }
 
   isInteractableTile(position: Position): boolean {
@@ -337,9 +340,9 @@ export class GameGridComponent implements OnInit, OnChanges {
         this.gamePlaySocketService.canTransferFlagTo(player) ||
         this.gamePlaySocketService.canRequestFlagFrom(player));
     } else {
-        const tile = this.getTile(position);
-        if(!tile) return false;
-        return this.gamePlaySocketService.canInteractWithTarget(tile, position);
+      const tile = this.getTile(position);
+      if (!tile) return false;
+      return this.gamePlaySocketService.canInteractWithTarget(tile, position);
     }
   }
 
