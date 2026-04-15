@@ -20,6 +20,36 @@
     overflow: hidden;
 }
 
+.left-column {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.winner-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    flex-shrink: 0;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.winner-title {
+    margin: 0;
+    font-size: 2.0rem;
+    font-weight: bold;
+}
+
+.winner-name,
+.winner-team {
+    margin: 0;
+    font-size: 2.0rem;
+}
+
 .stats-tables {
     flex: 1;
     display: flex;
