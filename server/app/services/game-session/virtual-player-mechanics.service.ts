@@ -2,6 +2,7 @@ import { GameSession } from '@app/domain/game-session';
 import { GamePlayGateway } from '@app/gateways/game-session/game-play/game-play.gateway';
 import { GameGateway } from '@app/gateways/game/game.gateway';
 import { LogService } from '@app/services/log/log.service';
+import { GameModeValue } from '@common/constants/game-config-constants';
 import { COMBAT_SANCTUARY_BONUS, HEALING_SANCTUARY_BONUS, SANCTUARY_COOLDOWN_TURNS } from '@common/constants/santuary-constants';
 import { GameSessionEvents } from '@common/game.events';
 import { DoorState, ObjectType, TileType } from '@common/map';
@@ -11,7 +12,6 @@ import { forwardRef, Inject, Injectable, Optional } from '@nestjs/common';
 import { MovementService } from './movement.service';
 import { VirtualPlayerPathfindingService } from './virtual-player-mechanics/virtual-player-pathfinding.service';
 import { VirtualPlayerTargetingService } from './virtual-player-mechanics/virtual-player-targeting.service';
-import { GameModeValue } from '@common/constants/game-config-constants';
 
 @Injectable()
 export class VirtualPlayerMechanicsService {
@@ -45,6 +45,11 @@ export class VirtualPlayerMechanicsService {
 
     hasFlag(bot: Player): boolean {
         return !!bot.character.hasFlag;
+    }
+
+    async selectCombatPosture(profile: string): Promise<string> {
+        await this.randomDelay();
+        return profile === 'aggressive' ? 'offensive' : 'defensive';
     }
 
     samePosition(a: Position, b: Position): boolean {
