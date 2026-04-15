@@ -150,7 +150,6 @@ export class GameSessionService {
             }
         };
 
-        // The turn may already be ended in onStartCallback (for example when no action is possible).
         if (gameSession.getCurrentPlayer()?.id !== endedPlayerId) {
             return;
         }
@@ -170,7 +169,9 @@ export class GameSessionService {
                     this.logger.error(`Erreur durant le tour JV: ${error.message}`);
                 })
                 .finally(() => {
-                    endTurnSafely();
+                    if (!gameSession.getActiveCombat()) {
+                        endTurnSafely();
+                    }
                 });
         }
     }
