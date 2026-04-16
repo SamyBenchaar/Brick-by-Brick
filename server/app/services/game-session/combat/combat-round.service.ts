@@ -1,7 +1,7 @@
 import { GameSession } from '@app/domain/game-session';
-import { CombatRoundDetails, CombatRoundOutcome } from '@app/services/game-session/combat/combat-types';
+import { CombatRoundDetails } from '@app/services/game-session/combat/combat-types';
 import { Character } from '@common/character';
-import { ActiveCombat, COMBAT_POSTURE, CombatOutcome, CombatRoundResolvedPayload, CombatValueDetail } from '@common/combat';
+import { ActiveCombat, CombatOutcome, CombatPosture, CombatRoundResolvedPayload, CombatValueDetail } from '@common/combat';
 import { Dice, DICE_FACES_MAP } from '@common/dice';
 import { TileType } from '@common/map';
 import { Injectable } from '@nestjs/common';
@@ -55,8 +55,8 @@ export class CombatRoundService {
             roundNumber: combat.roundNumber,
             attackerId: combat.attackerId,
             defenderId: combat.defenderId,
-            attackerChoice: combat.attackerPosture || COMBAT_POSTURE.NONE,
-            defenderChoice: combat.defenderPosture || COMBAT_POSTURE.NONE,
+            attackerChoice: combat.attackerPosture || CombatPosture.NONE,
+            defenderChoice: combat.defenderPosture || CombatPosture.NONE,
             attackerStrike: {
                 attack: roundDetails.attackerAttackDetail,
                 defense: roundDetails.attackerDefenseDetail,
@@ -72,20 +72,20 @@ export class CombatRoundService {
         };
     }
 
-    getCombatOutcome(combat: ActiveCombat): CombatRoundOutcome | null {
+    getCombatOutcome(combat: ActiveCombat): CombatOutcome | null {
         const attackerDefeated = combat.attackerHp === 0;
         const defenderDefeated = combat.defenderHp === 0;
 
         if (attackerDefeated && defenderDefeated) {
-            return 'draw';
+            return CombatOutcome.DRAW;
         }
 
         if (defenderDefeated) {
-            return 'attacker';
+            return CombatOutcome.ATTACKER;
         }
 
         if (attackerDefeated) {
-            return 'defender';
+            return CombatOutcome.DEFENDER;
         }
 
         return null;
@@ -93,14 +93,14 @@ export class CombatRoundService {
 
     determineRoundWinner(damageToAttacker: number, damageToDefender: number): CombatOutcome {
         if (damageToDefender > damageToAttacker) {
-            return 'attacker';
+            return CombatOutcome.ATTACKER;
         }
 
         if (damageToAttacker > damageToDefender) {
-            return 'defender';
+            return CombatOutcome.DEFENDER;
         }
 
-        return 'draw';
+        return CombatOutcome.DRAW;
     }
 
     prepareNextRound(combat: ActiveCombat): void {
@@ -117,8 +117,8 @@ export class CombatRoundService {
         isAttacker: boolean,
     ): CombatValueDetail {
         const posture = isAttacker ? combat.attackerPosture : combat.defenderPosture;
-        const attackBonus = posture === COMBAT_POSTURE.OFFENSIVE ? 2 : 0;
-        const defenseBonus = posture === COMBAT_POSTURE.DEFENSIVE ? 2 : 0;
+        const attackBonus = posture === CombatPosture.OFFENSIVE ? 2 : 0;
+        const defenseBonus = posture === CombatPosture.DEFENSIVE ? 2 : 0;
 
         const baseStat = isAttackMode ? character.attack : character.defense;
         const postureBonus = isAttackMode ? attackBonus : defenseBonus;

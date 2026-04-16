@@ -32,6 +32,10 @@ export class TileOperationsService {
             this.removeObject(tile, position);
         }
 
+        if (selectedType === TileType.Door && tile.object) {
+            this.removeObject(tile, position);
+        }
+
         if (selectedType === TileType.Door) {
             tile.doorState = tile.doorState === DoorState.Closed ? DoorState.Opened : DoorState.Closed;
         } else {

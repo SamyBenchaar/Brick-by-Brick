@@ -1,11 +1,13 @@
-import { Component, OnInit, inject, OnDestroy } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { Player } from '@common/player';
-import { PlayerStatisticsComponent } from '@app/components/game-statistics-components/player-statistics/player-statistics.component';
 import { ChatComponent } from '@app/components/chat/chat.component';
-import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
 import { GlobalGameStatisticsComponent } from '@app/components/game-statistics-components/global-game-statistics/global-game-statistics.component';
+import { PlayerStatisticsComponent } from '@app/components/game-statistics-components/player-statistics/player-statistics.component';
+import { WinnerSummary, WinningTeam } from '@app/interfaces/game-play';
+import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
 import { GameModeValue } from '@common/constants/game-config-constants';
+import { Player } from '@common/player';
+import { TeamId } from '@common/team';
 
 @Component({
   selector: 'app-game-statistics',
@@ -14,9 +16,10 @@ import { GameModeValue } from '@common/constants/game-config-constants';
   styleUrl: './game-statistics.component.scss',
 })
 export class GameStatisticsComponent implements OnInit, OnDestroy {
+  readonly teamId = TeamId;
   private router = inject(Router);
-  winner: { id: string; name: string; avatarId: number } | null = null;
-  winningTeam: 'team1' | 'team2' | undefined;
+  winner: WinnerSummary | null = null;
+  winningTeam: WinningTeam | undefined;
   gameMode: string = 'classic';
   players: Player[] = [];
   walkableTiles: number = 0;
@@ -30,7 +33,7 @@ export class GameStatisticsComponent implements OnInit, OnDestroy {
   tilesVisitedPercent: number = 0;
   doorsUsedPercent: number | null = null;
   flagHoldersCount: number | null = null;
-  
+
   ngOnInit(): void {
     this.loadStateFromHistory();
     if (this.gameId) {
@@ -45,8 +48,8 @@ export class GameStatisticsComponent implements OnInit, OnDestroy {
   }
 
   private loadPlayerState(state: Record<string, unknown>): void {
-    this.winner = (state.winner as { id: string; name: string; avatarId: number }) ?? null;
-    this.winningTeam = (state.winningTeam as 'team1' | 'team2') ?? undefined;
+    this.winner = (state.winner as WinnerSummary) ?? null;
+    this.winningTeam = (state.winningTeam as WinningTeam) ?? undefined;
     this.gameMode = (state.gameMode as GameModeValue) ?? GameModeValue.Classic;
     this.players = (state.players as Player[]) ?? [];
     this.walkableTiles = (state.walkableTiles as number) ?? 0;

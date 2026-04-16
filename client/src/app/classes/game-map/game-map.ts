@@ -24,7 +24,10 @@ export class GameMap {
     }
 
     getTile(position: Position): Tile | null {
-        if (position.x >= 0 && position.x < this.size && position.y >= 0 && position.y < this.size) {
+        const inBoundsX = position.x >= 0 && position.x < this.size;
+        const inBoundsY = position.y >= 0 && position.y < this.size;
+
+        if (inBoundsX && inBoundsY) {
             return this.grid[position.y][position.x];
         }
         return null;
