@@ -26,7 +26,7 @@ export class GameSessionSocketService {
     takenAvatars: WritableSignal<number[]> = signal<number[]>([]);
     private lastJoinRoomId: string | null = null;
     private lastJoinPlayer: Character | null = null;
-    readonly endGameDelay = 3000;
+    readonly endGameDelay = 5000;
 
     private socketService = inject(SocketService);
     private router = inject(Router);
