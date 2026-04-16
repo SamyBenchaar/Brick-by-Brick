@@ -39,7 +39,7 @@ export class GameGridDialogService {
     ): boolean {
         const currentPlayerTeam = (session?.playerTeams as Record<string, string> | undefined)?.[currentPlayer.id];
         const targetPlayerTeam = (session?.playerTeams as Record<string, string> | undefined)?.[targetPlayer.id];
-        const isTeammate = currentPlayerTeam === targetPlayerTeam && currentPlayerTeam !== undefined;
+        const isTeammate = currentPlayerTeam === targetPlayerTeam && !!currentPlayerTeam;
         return isTeammate && currentPlayer.id !== targetPlayer.id;
     }
 

@@ -212,7 +212,7 @@ export class GamePlayCombatHandler {
         }
 
         const outcome = this.combatRoundService.getCombatOutcome(combat);
-        if (outcome !== null) {
+        if (outcome) {
             if (context) {
                 this.endCombat(gameSession, outcome, context);
             }

@@ -43,7 +43,7 @@ export class GameSessionListComponent implements OnInit, OnDestroy {
 
   isSelectedAvailable(): boolean {
     const selected = this.selectedGameSessionId();
-    return selected !== null && this.availableGameSessions().some(gameSession => gameSession.roomId === selected);
+    return !!selected && this.availableGameSessions().some(gameSession => gameSession.roomId === selected);
   }
 
   getPreviewImage(gameSession: GameSession): string {

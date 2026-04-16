@@ -73,7 +73,7 @@ export class WaitingRoomListComponent {
     }
 
     isVirtualPlayer(player: Player): boolean {
-        return player.virtualProfile !== undefined;
+        return !!player.virtualProfile;
     }
 
     isAggressiveVirtualPlayer(player: Player): boolean {

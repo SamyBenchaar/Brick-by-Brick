@@ -1,7 +1,7 @@
-import { GamePlaySocketService } from '@app/services/communication/game-session-socket/game-play-socket.service';
 import {
     InteractResultPayload,
 } from '@app/interfaces/game-play';
+import { GamePlaySocketService } from '@app/services/communication/game-session-socket/game-play-socket.service';
 import type { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
 import { SocketService } from '@app/services/communication/socket/socket.service';
 import { SANCTUARY_COOLDOWN_TURNS } from '@common/constants/santuary-constants';
@@ -70,15 +70,15 @@ function updateCurrentPlayerAfterInteraction(
 
     player.character.remainingActions = data.remainingActions;
 
-    if (data.newLife !== undefined) {
+    if (data.newLife) {
         player.character.life = data.newLife;
     }
 
-    if (data.newAttack !== undefined) {
+    if (data.newAttack) {
         player.character.attack = data.newAttack;
     }
 
-    if (data.newDefense !== undefined) {
+    if (data.newDefense) {
         player.character.defense = data.newDefense;
     }
 

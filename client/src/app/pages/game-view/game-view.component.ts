@@ -70,7 +70,7 @@ export class GameViewComponent implements OnInit, OnDestroy {
     }
 
     const combatTime = this.combatSocketService.combatTurnTimeRemaining();
-    return combatTime === null ? '--' : `${combatTime}s`;
+    return Number.isFinite(combatTime) ? `${combatTime}s` : '--';
   });
 
   combatNotification = computed(() => this.combatSocketService.combatNotification());
