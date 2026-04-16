@@ -2,6 +2,7 @@ import { Component, computed, effect, EventEmitter, inject, OnDestroy, OnInit, O
 import { GameSession } from '@app/interfaces/game-session';
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
 import { getGameModeLabel, getGameSizeLabel } from '@app/utils/game-config.utils';
+import { SessionStatus } from '@common/session.status';
 
 @Component({
   selector: 'app-game-session-list',
@@ -15,7 +16,7 @@ export class GameSessionListComponent implements OnInit, OnDestroy {
   @Output() gameSessionSelected = new EventEmitter<string>();
 
   availableGameSessions = computed(() => this.gameSessionSocketService.gameSessions().filter(
-    session => session.status === 'waiting' && session.players.length < session.maxPlayers));
+    session => session.status === SessionStatus.Waiting && session.players.length < session.maxPlayers));
 
   private clearUnavailableSelection = effect(() => {
     const selected = this.selectedGameSessionId();

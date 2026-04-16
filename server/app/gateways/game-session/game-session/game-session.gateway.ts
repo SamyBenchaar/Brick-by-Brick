@@ -4,6 +4,7 @@ import { GameSessionService } from '@app/services/game-session/game-session/game
 import { Character } from '@common/character';
 import { GameSessionEvents } from '@common/game.events';
 import { Player } from '@common/player';
+import { SessionStatus } from '@common/session.status';
 import { VirtualPlayerProfile } from '@common/virtual.player.profile';
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import {
@@ -42,7 +43,7 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
         const roomId = this.socketToRoom.get(socket.id);
         if (roomId) {
             const gameSession = this.gameSessionService.getGameSession(roomId);
-            if (gameSession?.status === 'playing') {
+            if (gameSession?.status === SessionStatus.Playing) {
                 this.handlePlayingDisconnect(socket, roomId);
             } else {
                 this.handleLeaveLogic(socket, roomId);
