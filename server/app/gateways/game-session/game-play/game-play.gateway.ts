@@ -17,15 +17,16 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { GameModeValue } from '@common/constants/game-config-constants';
+import { TurnManagementService } from '@app/services/game-session/turn-management.service';
 
 @WebSocketGateway({ cors: true })
 @Injectable()
 export class GamePlayGateway implements OnGatewayInit {
     @WebSocketServer() private server: Server;
 
+    private readonly logger = new Logger(GamePlayGateway.name);
 
     constructor(
-        private readonly logger: Logger,
         @Inject(forwardRef(() => GameSessionService))
         private gameSessionService: GameSessionService,
         @Inject(forwardRef(() => GameSessionGateway))
@@ -33,6 +34,7 @@ export class GamePlayGateway implements OnGatewayInit {
         @Inject(forwardRef(() => GamePlayHandlersProvider))
         private handlersProvider: GamePlayHandlersProvider,
         private logService: LogService,
+        private turnManagementService: TurnManagementService,
     ) {}
 
     afterInit() {
@@ -215,6 +217,27 @@ export class GamePlayGateway implements OnGatewayInit {
         );
     }
 
+    handleResumeTurn(gameSession: GameSession): void {
+        const currentPlayer = gameSession.getCurrentPlayer();
+        if (!currentPlayer) return;
+        this.turnManagementService.resumeTurnTimer(
+            gameSession,
+            () => {
+                this.gameSessionService.endCurrentTurn(gameSession);
+                this.handleTurnEnd(gameSession);
+            },
+            (timeRemaining) => {
+                this.server.to(gameSession.roomId).emit(GameSessionEvents.TurnTimeUpdate, { timeRemaining });
+            },
+        );
+        this.server.to(gameSession.roomId).emit(GameSessionEvents.TurnStarted, {
+            playerId: currentPlayer.id,
+            playerName: currentPlayer.name,
+            turnTime: gameSession.getCurrentTurnTime(),
+            remainingMovement: currentPlayer.remainingMovement,
+            remainingActions: currentPlayer.remainingActions,
+        });
+    }
     private handleGameEnd(gameSession: GameSession, winner: Character | null): void {
         this.gameSessionService.cleanupTurnTimers(gameSession.roomId);
 
@@ -267,6 +290,7 @@ export class GamePlayGateway implements OnGatewayInit {
             tilesVisitedPercent,
             doorsUsedPercent,
             flagHoldersCount: gameSession.gameMode === GameModeValue.Ctf ? gameSession.flagHolders.size : null,
+            leftPlayers: gameSession.leftPlayers,
         });
 
         const activePlayers = gameSession.players.map(player => player.character.name).join(', ');
@@ -328,6 +352,7 @@ export class GamePlayGateway implements OnGatewayInit {
             onGameEndCanceled: (gameSession: GameSession) => this.handleGameEndCanceled(gameSession),
             onTurnEnd: (gameSession: GameSession) => this.handleTurnEnd(gameSession),
             emitReachableTiles: (gameSession: GameSession) => this.emitReachableTiles(gameSession),
+            resumeTurn: (gameSession: GameSession)=>this.handleResumeTurn(gameSession),
         };
     }
 

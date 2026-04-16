@@ -84,6 +84,9 @@ export class GamePlayMovementHandler {
         if (flagHolder) {
             const flagHolderStarting = gameSession.getStartingPoint(flagHolder.id);
             if (flagHolderStarting && flagHolder.position?.x === flagHolderStarting.x && flagHolder.position?.y === flagHolderStarting.y) {
+                if (gameSession.playerOrder.length > 0) {
+                    this.gameSessionService.endCurrentTurn(gameSession);
+                }
                 context.onGameEnd(gameSession, flagHolder);
                 return true;
             }

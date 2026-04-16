@@ -39,6 +39,11 @@ function findSanctuaryOrigin(position: Position, tiles: Tile[][]): Position | un
         );
 }
 
+function getWalkableTiles(service: GamePlaySocketService): number {
+    return service.mapCopy()?.mapConfig.tiles?.flat().filter(t =>
+        t.type === TileType.Base || t.type === TileType.Water || t.type === TileType.Ice).length ?? 0;
+}
+
 type GameEndedPayload = {
     winner: { id: string; name: string; avatarId: number } | null;
     winningTeam?: 'team1' | 'team2';
@@ -51,6 +56,7 @@ type GameEndedPayload = {
     tilesVisitedPercent?: number | null;
     doorsUsedPercent?: number | null;
     flagHoldersCount?: number | null;
+    leftPlayers?: Player[];
 };
 
 function buildGameEndedMessage(data: GameEndedPayload, socketId: string): { title: string; message: string } {
@@ -90,11 +96,10 @@ function buildGlobalStats(data: GameEndedPayload) {
 }
 
 function buildPlayerStatsState(data: GameEndedPayload, session: GameSession | null, service: GamePlaySocketService) {
-    const tiles = service.mapCopy()?.mapConfig.tiles;
-    const walkableTiles = tiles?.flat().filter(t =>
-        t.type === TileType.Base || t.type === TileType.Water || t.type === TileType.Ice).length;
+    const walkableTiles = getWalkableTiles(service);
     return {
-        players: [...(data.players ?? session?.players ?? []), ...(session?.leftPlayers ?? [])],
+        players: [...(data.players ?? session?.players ?? []),
+        ...(data.leftPlayers ?? session?.leftPlayers ?? [])],
         winner: data.winner,
         winningTeam: data.winningTeam,
         gameMode: data.gameMode,

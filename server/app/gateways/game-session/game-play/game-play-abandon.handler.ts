@@ -29,7 +29,7 @@ export class GamePlayAbandonHandler {
         const wasCurrentPlayer = currentPlayer && abandoningPlayer && currentPlayer.id === abandoningPlayer.character.id;
 
         this.handleAbandonedPlayerFlagPlacement(gameSession, abandoningPlayer);
-        this.handleAbandonedPlayerCombatCleanup(gameSession, payload.roomId, abandoningPlayer?.character.id, context);
+        const combatInterrupted = this.handleAbandonedPlayerCombatCleanup(gameSession, payload.roomId, abandoningPlayer?.character.id, context);
 
         this.gameSessionService.removePlayer(payload.roomId, socket.id);
         socket.leave(payload.roomId);
@@ -48,7 +48,12 @@ export class GamePlayAbandonHandler {
 
         if (this.handleAbandonedPlayerPostRemovalState(gameSession, context)) return;
 
-        if (wasCurrentPlayer) context.onTurnEnd(gameSession);
+        if (wasCurrentPlayer) {
+            context.onTurnEnd(gameSession);
+        } else if (combatInterrupted) {
+            context.emitReachableTiles(gameSession);
+            context.resumeTurn(gameSession);
+        }
     }
 
     private handleAbandonedPlayerFlagPlacement(gameSession: GameSession, abandoningPlayer: Player | undefined): void {
@@ -62,17 +67,30 @@ export class GamePlayAbandonHandler {
     }
 
     private handleAbandonedPlayerCombatCleanup(gameSession: GameSession, roomId: string,
-         abandonedPlayerId: string | undefined, context: GamePlayHandlerContext): void {
+         abandonedPlayerId: string | undefined, context: GamePlayHandlerContext): boolean {
         const combat = gameSession.getActiveCombat();
-        if (combat && abandonedPlayerId && gameSession.isPlayerInActiveCombat(abandonedPlayerId)) {
-            gameSession.clearActiveCombat();
-            context.server.to(roomId).emit(CombatEvents.CombatEnded, { reason: 'playerLeft', abandonedPlayerId });
+        if (!combat || !abandonedPlayerId || !gameSession.isPlayerInActiveCombat(abandonedPlayerId)) {
+            return false;
         }
+        const survivorId = combat.attackerId === abandonedPlayerId ? combat.defenderId : combat.attackerId;
+        const survivor = gameSession.getCharacterById(survivorId);
+        const leaver = gameSession.getCharacterById(abandonedPlayerId);
+        if (survivor) survivor.victories = (survivor.victories ?? 0) + 1;
+        if (leaver) leaver.defeats = (leaver.defeats ?? 0) + 1;
+        gameSession.clearActiveCombat();
+        context.server.to(roomId).emit(CombatEvents.CombatEnded, {
+            reason: 'playerLeft',
+            abandonedPlayerId,
+            survivorId,
+            survivorVictories: survivor?.victories,
+        });
+        return true;
     }
 
     private handleAbandonedPlayerPostRemovalState(gameSession: GameSession, context: GamePlayHandlerContext): boolean {
         const hasHumanPlayersRemaining = gameSession.players.some(p => !p.virtualProfile);
         if (!hasHumanPlayersRemaining) {
+            this.endCurrentTurnBeforeGameEndIfPossible(gameSession);
             context.onGameEnd(gameSession, null);
             return true;
         }
@@ -96,6 +114,7 @@ export class GamePlayAbandonHandler {
     private handleAbandonedPlayerWinnerCheck(gameSession: GameSession, context: GamePlayHandlerContext): boolean {
         const winner = this.gameSessionService.checkGameWinner(gameSession);
         if (winner) {
+            this.endCurrentTurnBeforeGameEndIfPossible(gameSession);
             context.onGameEnd(gameSession, winner);
             return false;
         }
@@ -104,9 +123,16 @@ export class GamePlayAbandonHandler {
 
     private handleAbandonedPlayerEmptyGame(gameSession: GameSession, context: GamePlayHandlerContext): boolean {
         if (gameSession.playerOrder.length <= 1) {
+            this.endCurrentTurnBeforeGameEndIfPossible(gameSession);
             context.onGameEnd(gameSession, null);
             return true;
         }
         return false;
+    }
+
+    private endCurrentTurnBeforeGameEndIfPossible(gameSession: GameSession): void {
+        if (gameSession.playerOrder.length > 0) {
+            this.gameSessionService.endCurrentTurn(gameSession);
+        }
     }
 }
