@@ -87,7 +87,7 @@ export class MapValidationService {
 
         if (accessibleTiles !== totalPlayableTiles) {
             return [
-                `Certaines tuiles de terrain sont inaccessibles. ` +
+                `Certaines tuiles de terrain ou portes sont inaccessibles. ` +
                 `Tuiles accessibles: ${accessibleTiles}/${totalPlayableTiles}`,
             ];
         }
@@ -237,27 +237,37 @@ export class MapValidationService {
         return true;
     }
 
+    private isDoorValid(tiles: Tile[][], x: number, y: number): boolean {
+        const tile = tiles[y][x];
+        if (tile.type === TileType.Door) {
+            const leftNeighborType = tiles[y][x - 1].type;
+            const rightNeighborType = tiles[y][x + 1].type;
+            const topNeighborType = tiles[y - 1][x].type;
+            const bottomNeighborType = tiles[y + 1][x].type;
+            if (leftNeighborType === TileType.Door || rightNeighborType === TileType.Door ||
+                topNeighborType === TileType.Door || bottomNeighborType === TileType.Door) {
+                return false;
+            }
+
+            const isConfig1 =
+                leftNeighborType === TileType.Wall && rightNeighborType === TileType.Wall &&
+                PLAYABLE_TYPES.includes(topNeighborType as TileType) && PLAYABLE_TYPES.includes(bottomNeighborType as TileType);
+
+            const isConfig2 =
+                topNeighborType === TileType.Wall && bottomNeighborType === TileType.Wall &&
+                PLAYABLE_TYPES.includes(leftNeighborType as TileType) && PLAYABLE_TYPES.includes(rightNeighborType as TileType);
+
+            if (!isConfig1 && !isConfig2) return false;
+        }
+        return true;
+
+    }
     private checkDoorNeighbors(tiles: Tile[][]): boolean {
         for (let y = 0; y < tiles.length; y++) {
             for (let x = 0; x < tiles[y].length; x++) {
-                const tile = tiles[y][x];
-                if (tile.type === TileType.Door) {
-                    const leftNeighborType = tiles[y][x - 1].type;
-                    const rightNeighborType = tiles[y][x + 1].type;
-                    const topNeighborType = tiles[y - 1][x].type;
-                    const bottomNeighborType = tiles[y + 1][x].type;
-
-                    const isConfig1 =
-                        leftNeighborType === TileType.Wall && rightNeighborType === TileType.Wall &&
-                        PLAYABLE_TYPES.includes(topNeighborType as TileType) && PLAYABLE_TYPES.includes(bottomNeighborType as TileType);
-
-                    const isConfig2 =
-                        topNeighborType === TileType.Wall && bottomNeighborType === TileType.Wall &&
-                        PLAYABLE_TYPES.includes(leftNeighborType as TileType) && PLAYABLE_TYPES.includes(rightNeighborType as TileType);
-
-                    if (!isConfig1 && !isConfig2) return false;
+                if (!this.isDoorValid(tiles, x, y)) {
+                    return false;
                 }
-
             }
         }
         return true;
