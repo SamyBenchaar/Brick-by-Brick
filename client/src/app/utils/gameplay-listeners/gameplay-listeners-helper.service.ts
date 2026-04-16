@@ -1,4 +1,5 @@
 import { MatDialog } from '@angular/material/dialog';
+import { CombatResultListenerDependencies } from '@app/interfaces/gameplay-listener-dependencies';
 import { CombatSocketService } from '@app/services/communication/game-session-socket/combat-socket.service';
 import { FlagTransferSocketService } from '@app/services/communication/game-session-socket/flag-transfer-socket.service';
 import { GamePlaySocketService } from '@app/services/communication/game-session-socket/game-play-socket.service';
@@ -20,10 +21,14 @@ export function handleTurnEnded(
 
 export function handleCombatResult(
     data: CombatResultPayload,
-    gamePlaySocketService: GamePlaySocketService,
-    gameSessionSocketService: GameSessionSocketService,
-    combatSocketService: CombatSocketService,
+    dependencies: CombatResultListenerDependencies,
 ): void {
+    const {
+        gamePlaySocketService,
+        gameSessionSocketService,
+        combatSocketService,
+    } = dependencies;
+
     gamePlaySocketService.reachableTiles.set([]);
     combatSocketService.activeCombat.set(null);
     combatSocketService.latestRound.set(null);

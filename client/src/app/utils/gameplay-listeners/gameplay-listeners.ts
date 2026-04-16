@@ -1,3 +1,4 @@
+import { GameplayListenersContext } from '@app/interfaces/gameplay-listeners';
 import { setupCombatListeners } from '@app/utils/gameplay-listeners/combat-listener';
 import { handleCombatResult } from '@app/utils/gameplay-listeners/gameplay-listeners-helper.service';
 import { CombatResultPayload } from '@common/combat';
@@ -5,7 +6,6 @@ import { CombatEvents } from '@common/game.events';
 import { registerAbandonEventListeners } from './abandon-events.listener';
 import { registerFlagTransferEventListeners } from './flag-transfer-events.listener';
 import { registerGameEndEventListeners } from './game-end-events.listener';
-import { GameplayListenersContext } from '@app/interfaces/gameplay-listeners';
 import { registerInteractionEventListeners } from './interaction-events.listener';
 import { registerSessionUpdateEventListeners } from './session-update-events.listener';
 import { registerTurnEventListeners } from './turn-events.listener';
@@ -37,7 +37,11 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
     );
 
     socketService.on<CombatResultPayload>(CombatEvents.CombatResult, (data) => {
-        handleCombatResult(data, gamePlaySocketService, gameSessionSocketService, combatSocketService);
+        handleCombatResult(data, {
+            gamePlaySocketService,
+            gameSessionSocketService,
+            combatSocketService,
+        });
     });
 
     registerInteractionEventListeners(
@@ -53,13 +57,13 @@ export function setupGameplayEventListeners(context: GameplayListenersContext): 
         combatSocketService,
     );
 
-    registerGameEndEventListeners(
+    registerGameEndEventListeners({
         socketService,
         gamePlaySocketService,
         gameSessionSocketService,
         router,
         dialog,
-    );
+    });
 
     registerFlagTransferEventListeners(
         socketService,

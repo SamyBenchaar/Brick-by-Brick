@@ -1,23 +1,17 @@
-import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { AppDialogComponent } from '@app/components/game-edition-components/app-dialog/app-dialog.component';
 import { DialogType } from '@app/constants/dialog-type.enum';
-import { GamePlaySocketService } from '@app/services/communication/game-session-socket/game-play-socket.service';
 import { GameEndedPayload } from '@app/interfaces/game-play';
+import { GameEndListenersDependencies } from '@app/interfaces/gameplay-listener-dependencies';
+import { HomeNavigationDependencies } from '@app/interfaces/gameplay-listeners';
+import { GamePlaySocketService } from '@app/services/communication/game-session-socket/game-play-socket.service';
 import type { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
-import { SocketService } from '@app/services/communication/socket/socket.service';
 import { CTF_VICTORY_ANNOUNCE_DELAY, GameModeValue } from '@common/constants/game-config-constants';
 import { GameSessionEvents } from '@common/game.events';
 import { buildGameEndedMessage, buildStatisticsNavigationState } from './gameplay-listeners.shared';
-import { HomeNavigationDependencies } from '@app/interfaces/gameplay-listeners';
 
-export function registerGameEndEventListeners(
-    socketService: SocketService,
-    gamePlaySocketService: GamePlaySocketService,
-    gameSessionSocketService: GameSessionSocketService,
-    router: Router,
-    dialog: MatDialog,
-): void {
+export function registerGameEndEventListeners(dependencies: GameEndListenersDependencies): void {
+    const { socketService, gamePlaySocketService, gameSessionSocketService, router, dialog } = dependencies;
     socketService.on<GameEndedPayload>(GameSessionEvents.GameEnded, (data) => {
         if (gameSessionSocketService.hasAbandoned()) {
             gameSessionSocketService.hasAbandoned.set(false);
@@ -32,7 +26,11 @@ export function registerGameEndEventListeners(
 
         setTimeout(() => {
             if (data.reason === 'victory') {
-                navigateToStatisticsPage(data, gamePlaySocketService, gameSessionSocketService, router);
+                navigateToStatisticsPage(data, {
+                    gamePlaySocketService,
+                    gameSessionSocketService,
+                    router,
+                });
                 return;
             }
 
@@ -56,10 +54,13 @@ function getEndGameDelay(
 
 function navigateToStatisticsPage(
     data: GameEndedPayload,
-    gamePlaySocketService: GamePlaySocketService,
-    gameSessionSocketService: GameSessionSocketService,
-    router: Router,
+    dependencies: {
+        gamePlaySocketService: GamePlaySocketService;
+        gameSessionSocketService: GameSessionSocketService;
+        router: Router;
+    },
 ): void {
+    const { gamePlaySocketService, gameSessionSocketService, router } = dependencies;
     const session = gamePlaySocketService.currentSession();
     const navigationState = buildStatisticsNavigationState(data, session, gamePlaySocketService);
 
