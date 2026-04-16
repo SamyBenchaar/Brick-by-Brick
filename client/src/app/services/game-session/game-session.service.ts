@@ -35,11 +35,9 @@ export class GameSessionService {
         });
 
         this.socket.on(SocketConnectionEvent.Connect, () => {
-            // connection 
         });
 
         this.socket.on(SocketConnectionEvent.Disconnect, () => {
-            // deconnection
         });
 
         this.socket.on(SocketConnectionEvent.Error, (error: unknown) => {
