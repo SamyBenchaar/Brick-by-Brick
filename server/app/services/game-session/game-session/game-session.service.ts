@@ -306,8 +306,8 @@ export class GameSessionService {
 
         const socketId = `${VIRTUAL_PLAYER_ID_PREFIX}_${crypto.randomUUID()}`;
         const avatarId = this.pickRandom(availableAvatarIds);
-        const baseName = this.pickRandom(VIRTUAL_PLAYER_NAMES);
-        const name = session.verifyUniqueName(baseName);
+        const availableNames = VIRTUAL_PLAYER_NAMES.filter((validName) => session.isNameUnique(validName));
+        const name = availableNames.length > 0 ? this.pickRandom(availableNames) : session.verifyUniqueName(this.pickRandom(VIRTUAL_PLAYER_NAMES));
         const bonusTarget = Math.random() < LIFE_BONUS_THRESHOLD ? 'life' : 'speed';
 
         const speed = bonusTarget === 'speed' ? BASE_SPEED + BONUS_AMOUNT : BASE_SPEED;
