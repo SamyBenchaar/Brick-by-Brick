@@ -12,7 +12,7 @@
                 }
                 @if (gameMode === 'ctf') {
                     <h2 class="winner-title">Équipe gagnante:</h2>
-                    <p class="winner-team">{{ winningTeam === 'team1' ? 'bleue' : 'rouge' }}</p>
+                    <p class="winner-team">{{ winningTeam === teamId.Team1 ? 'bleue' : 'rouge' }}</p>
                 }
             </div>
             <div class="stats-tables">

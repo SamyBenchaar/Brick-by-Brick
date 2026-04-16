@@ -9,8 +9,17 @@ export interface GridDimensions {
 
 export interface TileData {
     type: string;
-    object?: { type: string };
+    object?: TileObjectRef;
     isOrigin?: boolean;
+}
+
+export interface TileObjectRef {
+    type: string;
+}
+
+export interface SizedGameMapConfig<TTile, TSize> {
+    size: TSize;
+    tiles: TTile[][];
 }
 
 export interface GameCreationData {
@@ -20,10 +29,7 @@ export interface GameCreationData {
     numberOfPlayers: number;
     gameMode: GameModeValue;
     previewImage: string;
-    mapConfig: {
-        size: GameSizeId;
-        tiles: TileData[][];
-    };
+    mapConfig: SizedGameMapConfig<TileData, GameSizeId>;
 }
 
 export interface DialogData {

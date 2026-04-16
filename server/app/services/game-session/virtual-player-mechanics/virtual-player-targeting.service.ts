@@ -1,9 +1,9 @@
 import { GameSession } from '@app/domain/game-session';
+import { GameModeValue } from '@common/constants/game-config-constants';
 import { Player } from '@common/player';
 import { Position } from '@common/position';
 import { Inject, Injectable } from '@nestjs/common';
 import { VirtualPlayerPathfindingService } from './virtual-player-pathfinding.service';
-import { GameModeValue } from '@common/constants/game-config-constants';
 
 @Injectable()
 export class VirtualPlayerTargetingService {
@@ -58,7 +58,10 @@ export class VirtualPlayerTargetingService {
 
         const botTeam = session.getPlayerTeam(bot.character.id);
         const holderTeam = session.getPlayerTeam(flagHolder.character.id);
-        if (session.gameMode === GameModeValue.Ctf && botTeam && holderTeam && botTeam === holderTeam) {
+        const isCtfMode = session.gameMode === GameModeValue.Ctf;
+        const areTeammates = botTeam && holderTeam && botTeam === holderTeam;
+
+        if (isCtfMode && areTeammates) {
             return null;
         }
 

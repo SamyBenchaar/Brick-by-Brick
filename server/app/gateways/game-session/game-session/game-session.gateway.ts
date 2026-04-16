@@ -130,7 +130,8 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
             message: "Vous avez été exclu de la salle d'attente.",
         });
 
-        const targetSocket = this.server.sockets.sockets.get(payload.targetId);
+        const activeSockets = this.server.sockets.sockets;
+        const targetSocket = activeSockets.get(payload.targetId);
         if (targetSocket) targetSocket.leave(payload.roomId);
 
         const updatedSession = this.getSessionOrFail(socket, payload.roomId);
