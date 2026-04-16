@@ -27,7 +27,7 @@ describe('JoinGamePageComponent', () => {
         selectedId = signal<string | null>(null);
         gameSessionListComponentSpy = {
             selectedGameSessionId: selectedId,
-            isSelectedAvailable: () => selectedId() !== null,
+            isSelectedAvailable: () => !!selectedId(),
         };
 
         await TestBed.configureTestingModule({

@@ -1,6 +1,7 @@
 import { Injectable, Injector, WritableSignal, inject, signal } from '@angular/core';
 import { Tile } from '@app/classes/tile/tile';
 import { Game } from '@app/interfaces/game';
+import { CombatPosture, InteractionMode } from '@app/interfaces/game-play';
 import { GameSession } from '@app/interfaces/game-session';
 import { SocketService } from '@app/services/communication/socket/socket.service';
 import { Character } from '@common/character';
@@ -11,7 +12,6 @@ import { CombatActionRulesService } from './combat-action-rules.service';
 import { CombatSocketService } from './combat-socket.service';
 import { FlagActionRulesService } from './flag-action-rules.service';
 import { FlagTransferStateService } from './flag-transfer-state.service';
-import { CombatPosture, InteractionMode } from '@app/interfaces/game-play';
 import { GameSessionSocketService } from './game-session-socket.service';
 import { InteractionActionRulesService } from './interaction-action-rules.service';
 import { PlayerSessionQueryService } from './player-session-query.service';
@@ -60,6 +60,7 @@ export class GamePlaySocketService {
         this.socketService.off(GameSessionEvents.TurnEnded);
         this.socketService.off(GameSessionEvents.MoveExecuted);
         this.socketService.off(CombatEvents.CombatResult);
+        this.socketService.off(CombatEvents.CombatEnded);
         this.flagTransferStateService.clearAllPendingTransfers();
     }
 
@@ -217,7 +218,7 @@ export class GamePlaySocketService {
             return false;
         }
 
-        return this.combatActionRulesService.getAutoAttackTarget(this.currentSession(), currentPlayer) !== null;
+        return !!this.combatActionRulesService.getAutoAttackTarget(this.currentSession(), currentPlayer);
     }
 
     canTransferFlagTo(target: Character | null): boolean {

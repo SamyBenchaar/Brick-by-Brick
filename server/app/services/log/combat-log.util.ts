@@ -17,9 +17,9 @@ export function formatCombatRoundLog(payload: CombatRoundResolvedPayload, attack
     defender: Character, result: CombatOutcome): string {
 
     const roundNumber = `Manche: ${payload.roundNumber}`;
-    const roundOutcome = result === 'draw'
+    const roundOutcome = result === CombatOutcome.DRAW
         ? `Égalité entre ${attacker.name} et ${defender.name}`
-        : result === 'attacker'
+        : result === CombatOutcome.ATTACKER
             ? `${attacker.name} remporte la manche contre ${defender.name}`
             : `${defender.name} remporte la manche contre ${attacker.name}`;
 
