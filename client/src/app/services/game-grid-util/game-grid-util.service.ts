@@ -4,10 +4,11 @@ import { Tile } from '@app/classes/tile/tile';
 import { AppDialogComponent } from '@app/components/game-edition-components/app-dialog/app-dialog.component';
 import { AVATARS } from '@app/constants/character-constants';
 import { DialogType } from '@app/constants/dialog-type.enum';
+import { FlagDisplayContext } from '@app/interfaces/game-grid-payloads';
 import { Character } from '@common/character';
+import { GameModeValue } from '@common/constants/game-config-constants';
 import { DoorState, MULTI_TILE_OBJECTS, ObjectType, PLAYABLE_TYPES, TILE_COST, TileType } from '@common/map';
 import { Position } from '@common/position';
-import { GameModeValue } from '@common/constants/game-config-constants';
 
 @Injectable({ providedIn: 'root' })
 export class GameGridUtilService {
@@ -72,14 +73,16 @@ export class GameGridUtilService {
         return !tile?.object;
     }
 
-    isFlagVisible(tile: Tile, gameMode: string, flagPosition: Position | null, flagHolderId: string | null): boolean {
+    isFlagVisible(tile: Tile, context: FlagDisplayContext): boolean {
+        const { gameMode, flagPosition, flagHolderId } = context;
         if (gameMode !== GameModeValue.Ctf) return true;
         if (tile.object?.toString() !== ObjectType.Flag.toString()) return true;
         if (flagPosition) return false;
         return !flagHolderId;
     }
 
-    isFlagAtPosition(position: Position, gameMode: string, flagHolderId: string | null, flagPosition: Position | null): boolean {
+    isFlagAtPosition(position: Position, context: FlagDisplayContext): boolean {
+        const { gameMode, flagHolderId, flagPosition } = context;
         if (gameMode !== GameModeValue.Ctf) return false;
         if (flagHolderId) return false;
         if (!flagPosition) return false;

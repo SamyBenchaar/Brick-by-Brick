@@ -1,7 +1,8 @@
 import { GameSession } from '@app/domain/game-session';
-import { CombatRoundDetails, CombatRoundOutcome } from '@app/services/game-session/combat/combat-types';
+import { ApplyRoundDamagePayload, BuildRoundDetailsPayload, CombatScorePayload } from '@app/interfaces/combat-payloads';
+import { CombatRoundDetails } from '@app/services/game-session/combat/combat-types';
 import { Character } from '@common/character';
-import { ActiveCombat, COMBAT_POSTURE, CombatOutcome, CombatRoundResolvedPayload, CombatValueDetail } from '@common/combat';
+import { ActiveCombat, CombatOutcome, CombatPosture, CombatRoundResolvedPayload, CombatValueDetail } from '@common/combat';
 import { Dice, DICE_FACES_MAP } from '@common/dice';
 import { TileType } from '@common/map';
 import { Injectable } from '@nestjs/common';
@@ -10,16 +11,12 @@ import { Injectable } from '@nestjs/common';
 export class CombatRoundService {
     private readonly iceTilePenalty = -2;
 
-    buildRoundDetails(
-        gameSession: GameSession,
-        combat: ActiveCombat,
-        attacker: Character,
-        defender: Character,
-    ): CombatRoundDetails {
-        const attackerAttackDetail = this.calculateCombatScore(gameSession, attacker, combat, true, true);
-        const attackerDefenseDetail = this.calculateCombatScore(gameSession, attacker, combat, false, true);
-        const defenderAttackDetail = this.calculateCombatScore(gameSession, defender, combat, true, false);
-        const defenderDefenseDetail = this.calculateCombatScore(gameSession, defender, combat, false, false);
+    buildRoundDetails(payload: BuildRoundDetailsPayload): CombatRoundDetails {
+        const { gameSession, combat, attacker, defender } = payload;
+        const attackerAttackDetail = this.calculateCombatScore({ gameSession, character: attacker, combat, isAttackMode: true, isAttacker: true });
+        const attackerDefenseDetail = this.calculateCombatScore({ gameSession, character: attacker, combat, isAttackMode: false, isAttacker: true });
+        const defenderAttackDetail = this.calculateCombatScore({ gameSession, character: defender, combat, isAttackMode: true, isAttacker: false });
+        const defenderDefenseDetail = this.calculateCombatScore({ gameSession, character: defender, combat, isAttackMode: false, isAttacker: false });
 
         const damageToDefender = Math.max(attackerAttackDetail.total - defenderDefenseDetail.total, 0);
         const damageToAttacker = Math.max(defenderAttackDetail.total - attackerDefenseDetail.total, 0);
@@ -34,7 +31,8 @@ export class CombatRoundService {
         };
     }
 
-    applyRoundDamage(combat: ActiveCombat, roundDetails: CombatRoundDetails, attacker: Character, defender: Character): void {
+    applyRoundDamage(payload: ApplyRoundDamagePayload): void {
+        const { combat, roundDetails, attacker, defender } = payload;
         const effectiveDamageToDefender = Math.min(roundDetails.damageToDefender, combat.defenderHp);
         const effectiveDamageToAttacker = Math.min(roundDetails.damageToAttacker, combat.attackerHp);
 
@@ -55,8 +53,8 @@ export class CombatRoundService {
             roundNumber: combat.roundNumber,
             attackerId: combat.attackerId,
             defenderId: combat.defenderId,
-            attackerChoice: combat.attackerPosture || COMBAT_POSTURE.NONE,
-            defenderChoice: combat.defenderPosture || COMBAT_POSTURE.NONE,
+            attackerChoice: combat.attackerPosture || CombatPosture.NONE,
+            defenderChoice: combat.defenderPosture || CombatPosture.NONE,
             attackerStrike: {
                 attack: roundDetails.attackerAttackDetail,
                 defense: roundDetails.attackerDefenseDetail,
@@ -72,20 +70,20 @@ export class CombatRoundService {
         };
     }
 
-    getCombatOutcome(combat: ActiveCombat): CombatRoundOutcome | null {
+    getCombatOutcome(combat: ActiveCombat): CombatOutcome | null {
         const attackerDefeated = combat.attackerHp === 0;
         const defenderDefeated = combat.defenderHp === 0;
 
         if (attackerDefeated && defenderDefeated) {
-            return 'draw';
+            return CombatOutcome.DRAW;
         }
 
         if (defenderDefeated) {
-            return 'attacker';
+            return CombatOutcome.ATTACKER;
         }
 
         if (attackerDefeated) {
-            return 'defender';
+            return CombatOutcome.DEFENDER;
         }
 
         return null;
@@ -93,14 +91,14 @@ export class CombatRoundService {
 
     determineRoundWinner(damageToAttacker: number, damageToDefender: number): CombatOutcome {
         if (damageToDefender > damageToAttacker) {
-            return 'attacker';
+            return CombatOutcome.ATTACKER;
         }
 
         if (damageToAttacker > damageToDefender) {
-            return 'defender';
+            return CombatOutcome.DEFENDER;
         }
 
-        return 'draw';
+        return CombatOutcome.DRAW;
     }
 
     prepareNextRound(combat: ActiveCombat): void {
@@ -109,16 +107,11 @@ export class CombatRoundService {
         combat.defenderPosture = undefined;
     }
 
-    private calculateCombatScore(
-        gameSession: GameSession,
-        character: Character,
-        combat: ActiveCombat,
-        isAttackMode: boolean,
-        isAttacker: boolean,
-    ): CombatValueDetail {
+    private calculateCombatScore(payload: CombatScorePayload): CombatValueDetail {
+        const { gameSession, character, combat, isAttackMode, isAttacker } = payload;
         const posture = isAttacker ? combat.attackerPosture : combat.defenderPosture;
-        const attackBonus = posture === COMBAT_POSTURE.OFFENSIVE ? 2 : 0;
-        const defenseBonus = posture === COMBAT_POSTURE.DEFENSIVE ? 2 : 0;
+        const attackBonus = posture === CombatPosture.OFFENSIVE ? 2 : 0;
+        const defenseBonus = posture === CombatPosture.DEFENSIVE ? 2 : 0;
 
         const baseStat = isAttackMode ? character.attack : character.defense;
         const postureBonus = isAttackMode ? attackBonus : defenseBonus;

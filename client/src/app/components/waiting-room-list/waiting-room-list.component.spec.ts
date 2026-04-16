@@ -1,4 +1,5 @@
 import { signal, WritableSignal } from '@angular/core';
+import { SessionStatus } from '@common/session.status';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { GameSession } from '@app/interfaces/game-session';
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
@@ -25,7 +26,7 @@ describe('WaitingRoomListComponent', () => {
 
     const mockSession: GameSession = makeTestSession({
         roomId: 'ROOM1',
-        status: 'waiting',
+        status: SessionStatus.Waiting,
         playerCount: 2,
         maxPlayers: 4,
         hostId: 'host-1',

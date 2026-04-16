@@ -1,4 +1,5 @@
 import { MatDialog } from '@angular/material/dialog';
+import { CombatResultListenerDependencies } from '@app/interfaces/gameplay-listener-dependencies';
 import { CombatSocketService } from '@app/services/communication/game-session-socket/combat-socket.service';
 import { FlagTransferSocketService } from '@app/services/communication/game-session-socket/flag-transfer-socket.service';
 import { GamePlaySocketService } from '@app/services/communication/game-session-socket/game-play-socket.service';
@@ -6,55 +7,54 @@ import type { GameSessionSocketService } from '@app/services/communication/game-
 import type { CombatResultPayload } from '@common/combat';
 
 export function handleTurnEnded(
-    service: GamePlaySocketService,
+    gamePlaySocketService: GamePlaySocketService,
     dialog: MatDialog,
     flagTransferService: FlagTransferSocketService,
 ): void {
-    service.currentPlayerTurn.set(null);
-    service.reachableTiles.set([]);
+    gamePlaySocketService.currentPlayerTurn.set(null);
+    gamePlaySocketService.reachableTiles.set([]);
     dialog.getDialogById('sanctuary-dialog')?.close('dismiss');
 
-    closePendingFlagTransferDialogs(service, flagTransferService);
-    decrementSanctuaryCooldowns(service);
+    closePendingFlagTransferDialogs(gamePlaySocketService, flagTransferService);
+    decrementSanctuaryCooldowns(gamePlaySocketService);
 }
 
 export function handleCombatResult(
     data: CombatResultPayload,
-    service: GamePlaySocketService,
-    gameSessionSocketService: GameSessionSocketService,
-    combatSocketService: CombatSocketService,
+    dependencies: CombatResultListenerDependencies,
 ): void {
-    service.reachableTiles.set([]);
+    const {
+        gamePlaySocketService,
+        gameSessionSocketService,
+        combatSocketService,
+    } = dependencies;
+
+    gamePlaySocketService.reachableTiles.set([]);
     combatSocketService.activeCombat.set(null);
     combatSocketService.latestRound.set(null);
     combatSocketService.combatTurnTimeRemaining.set(null);
 
-    updateSessionAfterCombatResult(data, service, gameSessionSocketService);
-    notifyCurrentPlayerCombatResult(data, service, combatSocketService);
+    updateSessionAfterCombatResult(data, gamePlaySocketService, gameSessionSocketService);
+    notifyCurrentPlayerCombatResult(data, gamePlaySocketService, combatSocketService);
 }
 
 function closePendingFlagTransferDialogs(
-    service: GamePlaySocketService,
+    gamePlaySocketService: GamePlaySocketService,
     flagTransferService: FlagTransferSocketService,
 ): void {
     const pendingDialogs = flagTransferService.getPendingFlagTransferDialogs();
 
-    pendingDialogs.forEach(([, data]) => {
-        data.dialogRef.close(false);
-        service.respondToFlagTransfer(data.fromPlayerId, false);
+    pendingDialogs.forEach(([, dialogData]) => {
+        dialogData.dialogRef.close(false);
+        gamePlaySocketService.respondToFlagTransfer(dialogData.fromPlayerId, false);
     });
 
     flagTransferService.clearAllPendingFlagTransfers();
-
-    service.pendingFlagTransferTimeouts.forEach((timeout) => {
-        clearTimeout(timeout);
-    });
-    service.pendingFlagTransferTimeouts.clear();
-    service.pendingFlagTransfers.clear();
+    gamePlaySocketService.clearAllPendingFlagTransferRequests();
 }
 
-function decrementSanctuaryCooldowns(service: GamePlaySocketService): void {
-    const currentMap = service.mapCopy();
+function decrementSanctuaryCooldowns(gamePlaySocketService: GamePlaySocketService): void {
+    const currentMap = gamePlaySocketService.mapCopy();
     if (!currentMap) {
         return;
     }
@@ -71,21 +71,22 @@ function decrementSanctuaryCooldowns(service: GamePlaySocketService): void {
             if (tile.sanctuaryCooldown === 0) {
                 delete tile.sanctuaryCooldown;
             }
+
             changed = true;
         }
     }
 
     if (changed) {
-        service.mapCopy.set({ ...currentMap });
+        gamePlaySocketService.mapCopy.set({ ...currentMap });
     }
 }
 
 function updateSessionAfterCombatResult(
     data: CombatResultPayload,
-    service: GamePlaySocketService,
+    gamePlaySocketService: GamePlaySocketService,
     gameSessionSocketService: GameSessionSocketService,
 ): void {
-    const session = service.currentSession();
+    const session = gamePlaySocketService.currentSession();
     if (!session) {
         return;
     }
@@ -115,10 +116,10 @@ function updateSessionAfterCombatResult(
 
 function notifyCurrentPlayerCombatResult(
     data: CombatResultPayload,
-    service: GamePlaySocketService,
+    gamePlaySocketService: GamePlaySocketService,
     combatSocketService: CombatSocketService,
 ): void {
-    const currentPlayer = service.getCurrentPlayerCharacter();
+    const currentPlayer = gamePlaySocketService.getCurrentPlayerCharacter();
     if (!currentPlayer) {
         return;
     }

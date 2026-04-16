@@ -3,6 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { GameSession } from '@app/interfaces/game-session';
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
 import { makeTestSession } from '@app/testing/game-session-test-helpers';
+import { SessionStatus } from '@common/session.status';
 import { GameSessionListComponent } from './game-session-list.component';
 
 const DEFAULT_MAX_PLAYERS = 4;
@@ -16,7 +17,7 @@ const SIX_PLAYERS = 6;
  * Stratégie de test pour GameSessionListComponent (jointure):
  *
  * 1. Affichage de la vue de jointure : sessions disponibles visibles et sélectionnables.
- * 2. Filtrage des parties joignables (cas limites) : exclure les sessions en 'playing', les sessions pleines (0 place) et la liste vide.
+ * 2. Filtrage des parties joignables (cas limites) : exclure les sessions en SessionStatus.Playing, les sessions pleines (0 place) et la liste vide.
  * 3. Sélection d'une partie : mémorisation et changement de sélection.
  * 4. Mise à jour dynamique : retrait/ajout automatique selon disponibilité (session qui devient pleine ou passe à playing).
  * 5. Informations affichées : nombre de joueurs par partie pour aider l'utilisateur à choisir.
@@ -55,9 +56,9 @@ describe('GameSessionListComponent', () => {
     });
 
     it('devrait filtrer les sessions en attente avec places disponibles', () => {
-        const waiting = makeTestSession({ roomId: 'R1', status: 'waiting', playerCount: 2 });
-        const playing = makeTestSession({ roomId: 'R2', status: 'playing', playerCount: 2 });
-        const full = makeTestSession({ roomId: 'R3', status: 'waiting', playerCount: FULL_PLAYERS, maxPlayers: FULL_PLAYERS });
+        const waiting = makeTestSession({ roomId: 'R1', status: SessionStatus.Waiting, playerCount: 2 });
+        const playing = makeTestSession({ roomId: 'R2', status: SessionStatus.Playing, playerCount: 2 });
+        const full = makeTestSession({ roomId: 'R3', status: SessionStatus.Waiting, playerCount: FULL_PLAYERS, maxPlayers: FULL_PLAYERS });
 
         gameSessionsSignal.set([waiting, playing, full]);
 
@@ -83,8 +84,8 @@ describe('GameSessionListComponent', () => {
     });
 
     it('devrait afficher le nombre de joueurs dans chaque session disponible', () => {
-        const firstSession = makeTestSession({ roomId: 'R1', status: 'waiting', playerCount: 2 });
-        const secondSession = makeTestSession({ roomId: 'R2', status: 'waiting', playerCount: P3_COUNT });
+        const firstSession = makeTestSession({ roomId: 'R1', status: SessionStatus.Waiting, playerCount: 2 });
+        const secondSession = makeTestSession({ roomId: 'R2', status: SessionStatus.Waiting, playerCount: P3_COUNT });
         gameSessionsSignal.set([firstSession, secondSession]);
 
         const available = component.availableGameSessions();
@@ -93,38 +94,46 @@ describe('GameSessionListComponent', () => {
     });
 
     it('devrait mettre à jour la liste quand les sessions changent', () => {
-        const waitingSession = makeTestSession({ roomId: 'R1', status: 'waiting', playerCount: 1 });
+        const waitingSession = makeTestSession({ roomId: 'R1', status: SessionStatus.Waiting, playerCount: 1 });
         gameSessionsSignal.set([waitingSession]);
         expect(component.availableGameSessions().length).toBe(1);
 
         // Simuler que la session est maintenant pleine
-        const s1Full = makeTestSession({ roomId: 'R1', status: 'waiting', playerCount: FULL_PLAYERS, maxPlayers: FULL_PLAYERS });
+        const s1Full = makeTestSession({ roomId: 'R1', status: SessionStatus.Waiting, playerCount: FULL_PLAYERS, maxPlayers: FULL_PLAYERS });
         gameSessionsSignal.set([s1Full]);
         expect(component.availableGameSessions().length).toBe(0);
     });
 
     it('devrait exclure les sessions qui passent à l\'état playing', () => {
-        const waiting = makeTestSession({ roomId: 'R1', status: 'waiting', playerCount: 2 });
+        const waiting = makeTestSession({ roomId: 'R1', status: SessionStatus.Waiting, playerCount: 2 });
         gameSessionsSignal.set([waiting]);
         expect(component.availableGameSessions().length).toBe(1);
 
-        // La session passe à 'playing'
-        const playing = makeTestSession({ roomId: 'R1', status: 'playing', playerCount: 2 });
+        // La session passe à SessionStatus.Playing
+        const playing = makeTestSession({ roomId: 'R1', status: SessionStatus.Playing, playerCount: 2 });
         gameSessionsSignal.set([playing]);
         expect(component.availableGameSessions().length).toBe(0);
     });
 
     it('devrait exclure les sessions avec 0 place disponible (maxPlayers atteint)', () => {
-        const full = makeTestSession({ roomId: 'R1', status: 'waiting', playerCount: SIX_PLAYERS, maxPlayers: SIX_PLAYERS });
+        const full = makeTestSession({ roomId: 'R1', status: SessionStatus.Waiting, playerCount: SIX_PLAYERS, maxPlayers: SIX_PLAYERS });
         gameSessionsSignal.set([full]);
         expect(component.availableGameSessions().length).toBe(0);
     });
 
     it('devrait inclure uniquement les sessions en attente avec au moins 1 place', () => {
-        const waitingSession = makeTestSession({ roomId: 'R1', status: 'waiting', playerCount: P1_COUNT, maxPlayers: DEFAULT_MAX_PLAYERS });
-        const playingSession = makeTestSession({ roomId: 'R2', status: 'playing', playerCount: P2_COUNT, maxPlayers: DEFAULT_MAX_PLAYERS });
-        const fullWaitingSession = makeTestSession({ roomId: 'R3', status: 'waiting', playerCount: FULL_PLAYERS, maxPlayers: DEFAULT_MAX_PLAYERS });
-        const secondWaitingSession = makeTestSession({ roomId: 'R4', status: 'waiting', playerCount: P3_COUNT, maxPlayers: DEFAULT_MAX_PLAYERS });
+        const waitingSession = makeTestSession({
+            roomId: 'R1', status: SessionStatus.Waiting, playerCount: P1_COUNT, maxPlayers: DEFAULT_MAX_PLAYERS,
+        });
+        const playingSession = makeTestSession({
+            roomId: 'R2', status: SessionStatus.Playing, playerCount: P2_COUNT, maxPlayers: DEFAULT_MAX_PLAYERS,
+        });
+        const fullWaitingSession = makeTestSession({
+            roomId: 'R3', status: SessionStatus.Waiting, playerCount: FULL_PLAYERS, maxPlayers: DEFAULT_MAX_PLAYERS,
+        });
+        const secondWaitingSession = makeTestSession({
+            roomId: 'R4', status: SessionStatus.Waiting, playerCount: P3_COUNT, maxPlayers: DEFAULT_MAX_PLAYERS,
+        });
         gameSessionsSignal.set([waitingSession, playingSession, fullWaitingSession, secondWaitingSession]);
 
         const available = component.availableGameSessions();
@@ -141,7 +150,7 @@ describe('GameSessionListComponent', () => {
     });
 
     it('devrait réinitialiser la sélection si la session sélectionnée n\'est plus disponible', () => {
-        const waitingSession = makeTestSession({ roomId: 'R1', status: 'waiting', playerCount: 1 });
+        const waitingSession = makeTestSession({ roomId: 'R1', status: SessionStatus.Waiting, playerCount: 1 });
         gameSessionsSignal.set([waitingSession]);
         component.selectGameSession('R1');
         expect(component.isSelected('R1')).toBeTrue();
@@ -158,7 +167,7 @@ describe('GameSessionListComponent', () => {
         gameSessionsSignal.set([]);
         expect(component.availableGameSessions().length).toBe(0);
 
-        const waitingSession = makeTestSession({ roomId: 'R1', status: 'waiting', playerCount: 1 });
+        const waitingSession = makeTestSession({ roomId: 'R1', status: SessionStatus.Waiting, playerCount: 1 });
         gameSessionsSignal.set([waitingSession]);
         expect(component.availableGameSessions().length).toBe(1);
     });

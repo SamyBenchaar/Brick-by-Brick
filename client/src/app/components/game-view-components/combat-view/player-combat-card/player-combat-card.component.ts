@@ -3,7 +3,7 @@ import { Component, Input } from '@angular/core';
 import { HpBarComponent } from '@app/components/hp-bar/hp-bar.component';
 import { AVATARS } from '@app/constants/character-constants';
 import { Character } from '@common/character';
-import { COMBAT_POSTURE, CombatValueDetail } from '@common/combat';
+import { CombatPosture, CombatValueDetail } from '@common/combat';
 
 @Component({
   selector: 'app-player-combat-card',
@@ -17,7 +17,7 @@ export class PlayerCombatCardComponent {
   @Input() defenseDetail: CombatValueDetail | null = null;
   @Input() currentHp: number;
 
-  posture: string = COMBAT_POSTURE.NONE;
+  posture: string = CombatPosture.NONE;
   hasChosen: boolean = false;
 
   getAvatarPath(avatarId: number): string {

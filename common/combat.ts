@@ -1,12 +1,16 @@
 import { Position } from './position';
 
-export const COMBAT_POSTURE = {
-  NONE: 'none',
-  OFFENSIVE: 'offensive',
-  DEFENSIVE: 'defensive',
+export enum CombatPosture {
+    NONE = 'none',
+    OFFENSIVE = 'offensive',
+    DEFENSIVE = 'defensive',
 }
 
-export type CombatOutcome = 'attacker' | 'defender' | 'draw';
+export enum CombatOutcome {
+    ATTACKER = 'attacker',
+    DEFENDER = 'defender',
+    DRAW = 'draw',
+}
 
 export interface ActiveCombat {
     attackerId: string;
@@ -15,8 +19,8 @@ export interface ActiveCombat {
 
     roundNumber: number;
 
-    attackerPosture?: string;
-    defenderPosture?: string;
+    attackerPosture?: CombatPosture;
+    defenderPosture?: CombatPosture;
 
     attackerHp: number;
     defenderHp: number;
@@ -47,20 +51,20 @@ export interface CombatRoundResolvedPayload {
     roundNumber: number;
     attackerId: string;
     defenderId: string;
-    attackerChoice: string;
-    defenderChoice: string;
+    attackerChoice: CombatPosture;
+    defenderChoice: CombatPosture;
     attackerStrike: CombatStrikeDetail;
     defenderStrike: CombatStrikeDetail;
     attackerLife: number;
     defenderLife: number;
 }
 
-export interface CombatResultPayload { 
+export interface CombatResultPayload {
     attackerId: string;
-    defenderId: string; 
+    defenderId: string;
     winnerId: string | null;
     loserIds: string[];
-    outcome: 'attacker' | 'defender' | 'draw';
+    outcome: CombatOutcome;
     attackerPosition: Position;
     defenderPosition: Position;
     attackerLife: number;
@@ -76,5 +80,5 @@ export interface CombatResultPayload {
 
 export interface SubmitCombatChoicePayload {
     roomId: string;
-    posture: string;
+    posture: CombatPosture;
 }

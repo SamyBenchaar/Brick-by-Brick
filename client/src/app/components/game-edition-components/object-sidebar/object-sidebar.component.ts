@@ -24,7 +24,8 @@ export class ObjectSidebarComponent implements OnInit {
   readonly tile = Tile;
 
   ngOnInit(): void {
-    const size = this.route.snapshot.queryParams.size;
+    const queryParams = this.route.snapshot.queryParams;
+    const size = queryParams.size;
     const config = getGameSizeConfig(size);
     this.objectCounterService.startPoint = config.maxPlayers;
     this.objectCounterService.healingSanctuary = 2 ** ((config.maxPlayers - 2) / 2);

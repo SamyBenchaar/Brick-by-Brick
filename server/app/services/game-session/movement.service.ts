@@ -1,8 +1,8 @@
 import { GameSession, Position } from '@app/domain/game-session';
 import { MapTile } from '@app/interfaces/game-map-interfaces';
-import { Direction } from '@app/interfaces/map-validation-interfaces';
+import { Direction as GridDirection } from '@app/interfaces/map-validation-interfaces';
 import { Character } from '@common/character';
-import { KEY_DIRECTION_MAP } from '@common/constants/key-event.constants';
+import { Direction } from '@common/constants/key-event.constants';
 import { DoorState, ObjectType, TILE_COST, TileType } from '@common/map';
 import { Injectable } from '@nestjs/common';
 
@@ -17,11 +17,11 @@ type NeighborsProcessingContext = {
 
 @Injectable()
 export class MovementService {
-    private readonly directions: Record<string, Direction> = {
-        arrowUp: { dx: 0, dy: -1 },
-        arrowDown: { dx: 0, dy: 1 },
-        arrowLeft: { dx: -1, dy: 0 },
-        arrowRight: { dx: 1, dy: 0 },
+    private readonly directions: Record<Direction, GridDirection> = {
+        [Direction.ArrowUp]: { dx: 0, dy: -1 },
+        [Direction.ArrowDown]: { dx: 0, dy: 1 },
+        [Direction.ArrowLeft]: { dx: -1, dy: 0 },
+        [Direction.ArrowRight]: { dx: 1, dy: 0 },
     };
 
     private toPositionKey(position: Position): string {
@@ -43,7 +43,7 @@ export class MovementService {
         if (tile.type === TileType.Wall) {
             return false;
         }
-        if (tile.type === TileType.Door && tile.doorState !== 'opened') return false;
+        if (tile.type === TileType.Door && tile.doorState !== DoorState.Opened) return false;
         if (tile.object?.type === ObjectType.HealingSanctuary || tile.object?.type === ObjectType.CombatSanctuary) return false;
 
 
@@ -158,7 +158,7 @@ export class MovementService {
     executeMove(
         gameSession: GameSession,
         player: Character,
-        direction: keyof typeof KEY_DIRECTION_MAP,
+        direction: Direction,
         mapData: MapTile[][],
     ): boolean {
         const directionDelta = this.directions[direction];
@@ -214,7 +214,10 @@ export class MovementService {
                 p.character.position?.y === newPosition.y,
         );
 
-        if (occupied || tile.type === TileType.Wall || (tile.type === TileType.Door && tile.doorState !== 'opened') || !!tile.object) {
+        const isWallOrClosedDoor = tile.type === TileType.Wall || (tile.type === TileType.Door && tile.doorState !== DoorState.Opened);
+        const hasObstacle = occupied || !!tile.object;
+
+        if (isWallOrClosedDoor || hasObstacle) {
             return;
         }
 
@@ -253,8 +256,19 @@ export class MovementService {
             { x: position.x, y: position.y - 1 },
             { x: position.x, y: position.y + 1 },
         ];
-        return adjacentPositions.some(pos => gameSession.getMapCopy()?.tiles?.[pos.y]?.[pos.x]?.type === 'door');
+        return adjacentPositions.some(pos => gameSession.getMapCopy()?.tiles?.[pos.y]?.[pos.x]?.type === TileType.Door);
     }
+
+    isSanctuaryAdjacent(position: Position, gameSession: GameSession): Position| null {
+        const adjacentPositions = [
+            { x: position.x - 1, y: position.y },
+            { x: position.x + 1, y: position.y },
+            { x: position.x, y: position.y - 1 },
+            { x: position.x, y: position.y + 1 },
+        ];
+        return adjacentPositions.find(pos => {
+            const tile = gameSession.getMapCopy()?.tiles?.[pos.y]?.[pos.x];
+            return tile?.object?.type === ObjectType.CombatSanctuary || tile?.object?.type === ObjectType.HealingSanctuary;
+        }) || null;
+     }
 }
-
-

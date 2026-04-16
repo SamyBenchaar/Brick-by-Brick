@@ -1,14 +1,15 @@
 import { GameSession } from '@app/domain/game-session';
 import { TileDto } from '@app/dto/tile.dto';
-import { GamePlayHandlerContext } from '@app/gateways/game-session/game-play/game-play-handler.context';
+import { GamePlayHandlerContext } from '@app/interfaces/game-play-handler';
 import { GameSessionService } from '@app/services/game-session/game-session/game-session.service';
 import { MovementService } from '@app/services/game-session/movement.service';
 import { Character } from '@common/character';
+import { GameModeValue } from '@common/constants/game-config-constants';
+import { Direction } from '@common/constants/key-event.constants';
 import { GameSessionEvents } from '@common/game.events';
 import { Position } from '@common/position';
 import { Inject, Injectable, forwardRef } from '@nestjs/common';
 import { Socket } from 'socket.io';
-import { GameModeValue } from '@common/constants/game-config-constants';
 
 @Injectable()
 export class GamePlayMovementHandler {
@@ -39,7 +40,11 @@ export class GamePlayMovementHandler {
             return;
         }
 
-        const direction = payload.direction as 'arrowUp' | 'arrowDown' | 'arrowLeft' | 'arrowRight';
+        if (!Object.values(Direction).includes(payload.direction as Direction)) {
+            return;
+        }
+
+        const direction = payload.direction as Direction;
         const success = this.gameSessionService.executeMove(gameSession, direction);
 
         if (success) {
@@ -74,7 +79,10 @@ export class GamePlayMovementHandler {
         const flagPos = gameSession.getFlagPosition();
         const currentPlayer = gameSession.getCurrentPlayer();
 
-        if (!gameSession.getFlagHolder() && flagPos && currentPlayer.position?.x === flagPos.x && currentPlayer.position?.y === flagPos.y) {
+        const isFlagOnGround = !gameSession.getFlagHolder() && !!flagPos;
+        const isPlayerOnFlag = currentPlayer.position?.x === flagPos?.x && currentPlayer.position?.y === flagPos?.y;
+
+        if (isFlagOnGround && isPlayerOnFlag) {
             gameSession.setFlagHolder(currentPlayer.id);
             context.logService.log(roomId, `Drapeau pris du sol par ${currentPlayer.name}`);
             context.server.to(roomId).emit(GameSessionEvents.GameSessionUpdated, gameSession);
@@ -138,7 +146,13 @@ export class GamePlayMovementHandler {
         if (!tile) return;
 
         if (tile.type === 'door') {
-            this.handleDoorInteraction(gameSession, tile, payload.position, currentPlayer, context);
+            this.handleDoorInteraction({
+                gameSession,
+                tile,
+                position: payload.position,
+                currentPlayer,
+                context,
+            });
         } else {
             return;
         }
@@ -151,13 +165,14 @@ export class GamePlayMovementHandler {
         }
     }
 
-    private handleDoorInteraction(
-        gameSession: GameSession,
-        tile: TileDto,
-        position: Position,
-        currentPlayer: Character,
-        context: GamePlayHandlerContext,
-    ): void {
+    private handleDoorInteraction(payload: {
+        gameSession: GameSession;
+        tile: TileDto;
+        position: Position;
+        currentPlayer: Character;
+        context: GamePlayHandlerContext;
+    }): void {
+        const { gameSession, tile, position, currentPlayer, context } = payload;
         tile.doorState = tile.doorState === 'opened' ? 'closed' : 'opened';
         gameSession.usedDoors.add(`${position.x},${position.y}`);
         currentPlayer.remainingActions -= 1;

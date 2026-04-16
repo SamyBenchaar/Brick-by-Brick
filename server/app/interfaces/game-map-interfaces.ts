@@ -1,8 +1,16 @@
 import { Position } from '@common/position';
 
+export interface TileObjectRef {
+    type: string;
+}
+
+export interface GameMapConfig<TTile> {
+    tiles: TTile[][];
+}
+
 export interface MapTile {
     type: string;
-    object?: { type: string };
+    object?: TileObjectRef;
     doorState?: string;
     isOrigin?: boolean;
     sanctuaryOrigin?: Position;
@@ -20,9 +28,7 @@ export interface MovementCost {
 }
 
 export interface GameDataForInit {
-    mapConfig: {
-        tiles: MapTile[][];
-    };
+    mapConfig: GameMapConfig<MapTile>;
 }
 
 export interface CombatResult {

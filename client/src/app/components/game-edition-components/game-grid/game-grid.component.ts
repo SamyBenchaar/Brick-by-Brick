@@ -7,6 +7,7 @@ import { GameSize } from '@app/constants/game-size.enum';
 import { Game } from '@app/interfaces/game';
 import { GamePlaySocketService } from '@app/services/communication/game-session-socket/game-play-socket.service';
 import { GameGridUtilService } from '@app/services/game-grid-util/game-grid-util.service';
+import { TileOperationsService } from '@app/services/game-grid/tile-operations.service';
 import { GameObjectService } from '@app/services/game-object/game-object.service';
 import { MapEditorService } from '@app/services/map-editor/map-editor.service';
 import { ObjectCounterService } from '@app/services/object-counter/object-counter.service';
@@ -53,6 +54,7 @@ export class GameGridComponent implements OnInit, OnChanges {
   private gamePlaySocketService = inject(GamePlaySocketService);
   private gameGridUtilService = inject(GameGridUtilService);
   private gameObjectService = inject(GameObjectService);
+  private tileOperationsService = inject(TileOperationsService);
   private isDrawing = false;
   private isDeleting = false;
   private isShiftPressed = false;
@@ -242,20 +244,8 @@ export class GameGridComponent implements OnInit, OnChanges {
   }
 
   private changeTileType(position: Position): void {
-    const selectedType = this.mapEditorService.getSelectedTileType();
     const tile = this.getTile(position);
-    if (tile && selectedType) {
-      if (selectedType === TileType.Wall && tile.object) this.removeObject(position);
-      if (selectedType === TileType.Door && tile.object) this.removeObject(position);
-      if (selectedType === TileType.Door) {
-        tile.doorState = tile.doorState === DoorState.Closed ? DoorState.Opened : DoorState.Closed;
-      } else {
-        tile.doorState = undefined;
-      }
-      tile.type = selectedType;
-      this.mapEditorService.setTileType(position, selectedType);
-      this.mapEditorService.setDoorState(position, tile.doorState);
-    }
+    this.tileOperationsService.changeTileType(tile, position);
   }
 
   isTileObjectFree(tile: Tile): boolean {
@@ -264,7 +254,10 @@ export class GameGridComponent implements OnInit, OnChanges {
 
   private addObject(position: Position): void {
     const selectedObject = this.mapEditorService.getSelectedObject();
-    this.gameObjectService.addObject(position, selectedObject, tilePosition => this.getTile(tilePosition), tile => this.isTileObjectFree(tile));
+    this.gameObjectService.addObject(position, selectedObject, {
+      getTile: tilePosition => this.getTile(tilePosition),
+      isTileObjectFree: tile => this.isTileObjectFree(tile),
+    });
   }
 
   private removeObject(position: Position): void {
@@ -351,11 +344,19 @@ export class GameGridComponent implements OnInit, OnChanges {
   }
 
   isFlagVisible(tile: Tile): boolean {
-    return this.gameGridUtilService.isFlagVisible(tile, this.gameMode, this.flagPosition, this.flagHolderId);
+    return this.gameGridUtilService.isFlagVisible(tile, {
+      gameMode: this.gameMode,
+      flagPosition: this.flagPosition,
+      flagHolderId: this.flagHolderId,
+    });
   }
 
   isFlagAtPosition(position: Position): boolean {
-    return this.gameGridUtilService.isFlagAtPosition(position, this.gameMode, this.flagHolderId, this.flagPosition);
+    return this.gameGridUtilService.isFlagAtPosition(position, {
+      gameMode: this.gameMode,
+      flagHolderId: this.flagHolderId,
+      flagPosition: this.flagPosition,
+    });
   }
 
   private handleActionTargetSelection(position: Position): void {

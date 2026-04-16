@@ -1,11 +1,10 @@
+import { VirtualPlayerStepOutcome } from '@app/constants/virtual-player.constants';
 import { GameSession } from '@app/domain/game-session';
+import { GameModeValue } from '@common/constants/game-config-constants';
 import { Player } from '@common/player';
 import { VirtualPlayerProfile } from '@common/virtual.player.profile';
 import { Inject, Injectable } from '@nestjs/common';
 import { VirtualPlayerMechanicsService } from './virtual-player-mechanics.service';
-import { GameModeValue } from '@common/constants/game-config-constants';
-
-export type VirtualPlayerStepOutcome = 'continue' | 'stop' | 'none';
 
 @Injectable()
 export class VirtualPlayerCtfService {
@@ -13,7 +12,7 @@ export class VirtualPlayerCtfService {
 
     async handleStep(session: GameSession, bot: Player, profile: VirtualPlayerProfile): Promise<VirtualPlayerStepOutcome> {
         if (session.gameMode !== GameModeValue.Ctf) {
-            return 'none';
+            return VirtualPlayerStepOutcome.None;
         }
 
         if (this.mechanics.hasFlag(bot)) {
@@ -36,11 +35,11 @@ export class VirtualPlayerCtfService {
     private async returnToBase(session: GameSession, bot: Player): Promise<VirtualPlayerStepOutcome> {
         const ownStart = this.mechanics.getOwnStartingPoint(session, bot);
         if (!ownStart) {
-            return 'stop';
+            return VirtualPlayerStepOutcome.Stop;
         }
 
         const movedToBase = await this.mechanics.moveTowardPosition(session, bot, ownStart);
-        return movedToBase ? 'continue' : 'stop';
+        return movedToBase ? VirtualPlayerStepOutcome.Continue : VirtualPlayerStepOutcome.Stop;
     }
 
     private async aggressiveAgainstFlagHolder(
@@ -50,20 +49,20 @@ export class VirtualPlayerCtfService {
     ): Promise<VirtualPlayerStepOutcome> {
         const attackedFlagHolder = await this.mechanics.tryAttackSpecificAdjacent(session, bot, enemyFlagHolder);
         if (attackedFlagHolder) {
-            return 'continue';
+            return VirtualPlayerStepOutcome.Continue;
         }
 
         const usedSanctuary = await this.mechanics.tryUseAdjacentSanctuary(session, bot);
         if (usedSanctuary) {
-            return 'continue';
+            return VirtualPlayerStepOutcome.Continue;
         }
 
         if (!this.mechanics.canMove(bot)) {
-            return 'stop';
+            return VirtualPlayerStepOutcome.Stop;
         }
 
         const movedTowardFlagHolder = await this.mechanics.moveTowardEnemy(session, bot, enemyFlagHolder);
-        return movedTowardFlagHolder ? 'continue' : 'stop';
+        return movedTowardFlagHolder ? VirtualPlayerStepOutcome.Continue : VirtualPlayerStepOutcome.Stop;
     }
 
     private async defensiveAgainstFlagHolder(
@@ -82,7 +81,7 @@ export class VirtualPlayerCtfService {
             bot.character.position &&
             this.mechanics.samePosition(interceptionTarget, bot.character.position)
         ) {
-            return 'stop';
+            return VirtualPlayerStepOutcome.Stop;
         }
 
         if (
@@ -93,34 +92,34 @@ export class VirtualPlayerCtfService {
         ) {
             const movedToIntercept = await this.mechanics.moveTowardPosition(session, bot, interceptionTarget);
             if (movedToIntercept) {
-                return 'stop';
+                return VirtualPlayerStepOutcome.Stop;
             }
         }
 
         const attackedHolder = await this.mechanics.tryAttackSpecificAdjacent(session, bot, enemyFlagHolder);
         if (attackedHolder) {
-            return 'continue';
+            return VirtualPlayerStepOutcome.Continue;
         }
 
         const usedSanctuary = await this.mechanics.tryUseAdjacentSanctuary(session, bot);
         if (usedSanctuary) {
-            return 'continue';
+            return VirtualPlayerStepOutcome.Continue;
         }
 
-        return 'none';
+        return VirtualPlayerStepOutcome.None;
     }
 
     private async tryCaptureFlag(session: GameSession, bot: Player): Promise<VirtualPlayerStepOutcome> {
         if (!this.mechanics.canMove(bot)) {
-            return 'none';
+            return VirtualPlayerStepOutcome.None;
         }
 
         const flagPosition = this.mechanics.getFlagPosition(session);
         if (!flagPosition) {
-            return 'none';
+            return VirtualPlayerStepOutcome.None;
         }
 
         const movedTowardFlag = await this.mechanics.moveTowardPosition(session, bot, flagPosition);
-        return movedTowardFlag ? 'continue' : 'none';
+        return movedTowardFlag ? VirtualPlayerStepOutcome.Continue : VirtualPlayerStepOutcome.None;
     }
 }

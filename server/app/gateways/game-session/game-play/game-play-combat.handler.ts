@@ -1,16 +1,16 @@
 import { GameSession } from '@app/domain/game-session';
-import { GamePlayHandlerContext } from '@app/gateways/game-session/game-play/game-play-handler.context';
+import { GamePlayHandlerContext } from '@app/interfaces/game-play-handler';
 import { CombatEndService } from '@app/services/game-session/combat/combat-end.service';
 import { CombatRequestValidatorService } from '@app/services/game-session/combat/combat-request-validator.service';
 import { CombatRoundService } from '@app/services/game-session/combat/combat-round.service';
-import { CombatEndState, CombatRoundOutcome } from '@app/services/game-session/combat/combat-types';
+import { CombatEndState } from '@app/services/game-session/combat/combat-types';
 import { GameSessionService } from '@app/services/game-session/game-session/game-session.service';
 import { TurnManagementService } from '@app/services/game-session/turn-management.service';
 import { VirtualPlayerMechanicsService } from '@app/services/game-session/virtual-player-mechanics.service';
 import { VirtualPlayerService } from '@app/services/game-session/virtual-player.service';
 import { formatCombatRoundLog } from '@app/services/log/combat-log.util';
 import { Character } from '@common/character';
-import { ActiveCombat, COMBAT_POSTURE, CombatRoundResolvedPayload } from '@common/combat';
+import { ActiveCombat, CombatOutcome, CombatPosture, CombatRoundResolvedPayload } from '@common/combat';
 import { COMBAT_TURN_TIME } from '@common/constants/combat-constants';
 import { GameModeValue } from '@common/constants/game-config-constants';
 import { CombatEvents, GameSessionEvents } from '@common/game.events';
@@ -88,7 +88,10 @@ export class GamePlayCombatHandler {
         const defender = gameSession.players.find((p) => p.character.id === defenderId)?.character;
         const outOfActions = (attacker.remainingActions ?? 0) <= 0;
         const tooFar = defender && (Math.abs(attacker.position.x - defender.position.x) + Math.abs(attacker.position.y - defender.position.y)) !== 1;
-        if (!defender || gameSession.isTurnStarting || gameSession.getActiveCombat() || outOfActions || tooFar) {
+
+        const isNotReady = !defender || gameSession.isTurnStarting || !!gameSession.getActiveCombat();
+
+        if (isNotReady || outOfActions || tooFar) {
             return;
         }
         try {
@@ -154,10 +157,10 @@ export class GamePlayCombatHandler {
         const defenderPlayer = gameSession.players.find(player => player.character.id === combat.defenderId);
 
         const choosePostureAsync = async (playerId: string, profile: string) => {
-            let posture = profile === 'aggressive' ? COMBAT_POSTURE.OFFENSIVE : COMBAT_POSTURE.DEFENSIVE;
+            let posture = profile === 'aggressive' ? CombatPosture.OFFENSIVE : CombatPosture.DEFENSIVE;
 
             if (this.virtualPlayerMechanicsService) {
-                posture = await this.virtualPlayerMechanicsService.selectCombatPosture(profile);
+                posture = await this.virtualPlayerMechanicsService.selectCombatPosture(profile) as CombatPosture;
             } else {
                 const delay = Math.floor(Math.random() * VIRTUAL_PLAYER_DELAY_RANGE_MS) + VIRTUAL_PLAYER_DELAY_MS;
                 await new Promise((resolve) => setTimeout(resolve, delay));
@@ -184,8 +187,8 @@ export class GamePlayCombatHandler {
     }
 
     private applyChosenPosture(combat: ActiveCombat, playerId: string, posture: string): void {
-        if (playerId === combat.attackerId) combat.attackerPosture = posture;
-        else if (playerId === combat.defenderId) combat.defenderPosture = posture;
+        if (playerId === combat.attackerId) combat.attackerPosture = posture as CombatPosture;
+        else if (playerId === combat.defenderId) combat.defenderPosture = posture as CombatPosture;
     }
     private resolveCombatRound(gameSession: GameSession, context?: GamePlayHandlerContext): void {
         const combat = gameSession.getActiveCombat();
@@ -195,14 +198,17 @@ export class GamePlayCombatHandler {
             return;
         }
 
-        const roundDetails = this.combatRoundService.buildRoundDetails(gameSession, combat, attacker, defender);
-        this.combatRoundService.applyRoundDamage(combat, roundDetails, attacker, defender);
+        const roundDetails = this.combatRoundService.buildRoundDetails({ gameSession, combat, attacker, defender });
+        this.combatRoundService.applyRoundDamage({ combat, roundDetails, attacker, defender });
         const payload = this.combatRoundService.buildRoundResolvedPayload(combat, roundDetails);
         const roundOutcome = this.combatRoundService.determineRoundWinner(roundDetails.damageToAttacker, roundDetails.damageToDefender);
 
         if (context) {
             const logMessage = formatCombatRoundLog(payload, attacker, defender, roundOutcome);
-            context.logService.log(gameSession.roomId, logMessage, 'combat', [attacker.name, defender.name]);
+            context.logService.log(gameSession.roomId, logMessage, {
+                type: 'combat',
+                playersInvolved: [attacker.name, defender.name],
+            });
         }
 
         const outcome = this.combatRoundService.getCombatOutcome(combat);
@@ -231,7 +237,7 @@ export class GamePlayCombatHandler {
     }
     private endCombat(
         gameSession: GameSession,
-        outcome: CombatRoundOutcome,
+        outcome: CombatOutcome,
         context: GamePlayHandlerContext,
     ): void {
         this.turnManagementService.stopCombatTimer(gameSession.roomId);
@@ -244,13 +250,13 @@ export class GamePlayCombatHandler {
         if (!attacker || !defender) {
             return;
         }
-        const combatState = this.combatEndService.buildCombatEndState(
+        const combatState = this.combatEndService.buildCombatEndState({
             gameSession,
             attacker,
             defender,
             combat,
             outcome,
-        );
+        });
         gameSession.clearActiveCombat();
         this.emitCombatResult(gameSession, combatState, context);
 

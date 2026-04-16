@@ -1,8 +1,9 @@
+import { VirtualPlayerStepOutcome } from '@app/constants/virtual-player.constants';
 import { GameSession } from '@app/domain/game-session';
 import { Player } from '@common/player';
 import { VirtualPlayerProfile } from '@common/virtual.player.profile';
 import { Inject, Injectable } from '@nestjs/common';
-import { VirtualPlayerCtfService, VirtualPlayerStepOutcome } from './virtual-player-ctf.service';
+import { VirtualPlayerCtfService } from './virtual-player-ctf.service';
 import { VirtualPlayerMechanicsService } from './virtual-player-mechanics.service';
 
 @Injectable()
@@ -28,10 +29,10 @@ export class VirtualPlayerService {
                 return;
             }
 
-            if (ctfOutcome === 'continue') {
+            if (ctfOutcome === VirtualPlayerStepOutcome.Continue) {
                 continue;
             }
-            if (ctfOutcome === 'stop') {
+            if (ctfOutcome === VirtualPlayerStepOutcome.Stop) {
                 return;
             }
 
@@ -43,7 +44,7 @@ export class VirtualPlayerService {
                 return;
             }
 
-            if (classicOutcome === 'continue') {
+            if (classicOutcome === VirtualPlayerStepOutcome.Continue) {
                 continue;
             }
 
@@ -54,36 +55,36 @@ export class VirtualPlayerService {
     private async aggressiveStep(session: GameSession, bot: Player): Promise<VirtualPlayerStepOutcome> {
         const attacked = await this.virtualPlayerMechanicsService.tryAttackAdjacent(session, bot);
         if (attacked) {
-            return 'continue';
+            return VirtualPlayerStepOutcome.Continue;
         }
 
         const usedSanctuary = await this.virtualPlayerMechanicsService.tryUseAdjacentSanctuary(session, bot);
         if (usedSanctuary) {
-            return 'continue';
+            return VirtualPlayerStepOutcome.Continue;
         }
 
         if (!this.virtualPlayerMechanicsService.canMove(bot)) {
-            return 'stop';
+            return VirtualPlayerStepOutcome.Stop;
         }
 
         const nearestEnemy = this.virtualPlayerMechanicsService.findNearestEnemy(session, bot);
         if (!nearestEnemy?.character.position) {
-            return 'stop';
+            return VirtualPlayerStepOutcome.Stop;
         }
 
         const moved = await this.virtualPlayerMechanicsService.moveTowardEnemy(session, bot, nearestEnemy);
-        return moved ? 'continue' : 'stop';
+        return moved ? VirtualPlayerStepOutcome.Continue : VirtualPlayerStepOutcome.Stop;
     }
 
     private async defensiveStep(session: GameSession, bot: Player): Promise<VirtualPlayerStepOutcome> {
         const attackedAdjacent = await this.virtualPlayerMechanicsService.tryAttackAdjacent(session, bot);
         if (attackedAdjacent) {
-            return 'continue';
+            return VirtualPlayerStepOutcome.Continue;
         }
 
         const usedSanctuary = await this.virtualPlayerMechanicsService.tryUseAdjacentSanctuary(session, bot);
         if (usedSanctuary) {
-            return 'continue';
+            return VirtualPlayerStepOutcome.Continue;
         }
 
         if (this.virtualPlayerMechanicsService.canMove(bot)) {
@@ -93,13 +94,13 @@ export class VirtualPlayerService {
                 if (fleeTarget && !this.virtualPlayerMechanicsService.samePosition(fleeTarget, bot.character.position)) {
                     const moved = await this.virtualPlayerMechanicsService.moveTowardPosition(session, bot, fleeTarget);
                     if (moved) {
-                        return 'continue';
+                        return VirtualPlayerStepOutcome.Continue;
                     }
                 }
             }
         }
 
-        return 'stop';
+        return VirtualPlayerStepOutcome.Stop;
     }
 
 }
