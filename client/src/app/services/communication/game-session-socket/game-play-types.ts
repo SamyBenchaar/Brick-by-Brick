@@ -1,8 +1,8 @@
-import { Position } from '@common/position';
-import { Player } from '@common/player';
 import { Game } from '@app/interfaces/game';
 import { GameSession } from '@app/interfaces/game-session';
 import { Character } from '@common/character';
+import { Player } from '@common/player';
+import { Position } from '@common/position';
 
 export type InteractionMode = 'normal' | 'double';
 export type CombatPosture = 'offensive' | 'defensive';

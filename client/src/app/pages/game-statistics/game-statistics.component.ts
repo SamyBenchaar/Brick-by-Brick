@@ -5,6 +5,7 @@ import { PlayerStatisticsComponent } from '@app/components/game-statistics-compo
 import { ChatComponent } from '@app/components/chat/chat.component';
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
 import { GlobalGameStatisticsComponent } from '@app/components/game-statistics-components/global-game-statistics/global-game-statistics.component';
+import { WinnerSummary, WinningTeam } from '@app/services/communication/game-session-socket/game-play-types';
 import { GameModeValue } from '@common/constants/game-config-constants';
 
 @Component({
@@ -15,8 +16,8 @@ import { GameModeValue } from '@common/constants/game-config-constants';
 })
 export class GameStatisticsComponent implements OnInit, OnDestroy {
   private router = inject(Router);
-  winner: { id: string; name: string; avatarId: number } | null = null;
-  winningTeam: 'team1' | 'team2' | undefined;
+  winner: WinnerSummary | null = null;
+  winningTeam: WinningTeam | undefined;
   gameMode: string = 'classic';
   players: Player[] = [];
   walkableTiles: number = 0;
@@ -45,8 +46,8 @@ export class GameStatisticsComponent implements OnInit, OnDestroy {
   }
 
   private loadPlayerState(state: Record<string, unknown>): void {
-    this.winner = (state.winner as { id: string; name: string; avatarId: number }) ?? null;
-    this.winningTeam = (state.winningTeam as 'team1' | 'team2') ?? undefined;
+    this.winner = (state.winner as WinnerSummary) ?? null;
+    this.winningTeam = (state.winningTeam as WinningTeam) ?? undefined;
     this.gameMode = (state.gameMode as GameModeValue) ?? GameModeValue.Classic;
     this.players = (state.players as Player[]) ?? [];
     this.walkableTiles = (state.walkableTiles as number) ?? 0;

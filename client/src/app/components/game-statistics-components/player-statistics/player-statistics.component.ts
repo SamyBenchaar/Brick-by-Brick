@@ -1,6 +1,7 @@
 import { Component, Input } from '@angular/core';
 import {Player} from '@common/player';
 import {PERCENTAGE_MULTIPLIER, LARGE_TABLE_THRESHOLD, MEDIUM_TABLE_THRESHOLD} from '@app/constants/statistics-constants';
+import { WinnerSummary, WinningTeam } from '@app/services/communication/game-session-socket/game-play-types';
 
 type SortColumn = 'combats' | 'victories' | 'defeats' | 'lifeLost' | 'damageDealt' | 'tilesVisited';
 type SortDirection = 'asc' | 'desc';
@@ -14,8 +15,8 @@ export class PlayerStatisticsComponent {
   @Input() players: Player[]=[];
   @Input() walkableTiles: number=0;
   @Input() gameMode: string='classic';
-  @Input() winner: {id:string; name:string; avatarId:number} | null=null;
-  @Input() winningTeam: 'team1' | 'team2' | undefined=undefined;
+  @Input() winner: WinnerSummary | null=null;
+  @Input() winningTeam: WinningTeam | undefined=undefined;
 
   sortColumn: SortColumn | null =null;
   sortDirection: SortDirection = 'asc';

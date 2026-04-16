@@ -2,12 +2,19 @@ import { GameMap } from '@app/interfaces/game-map-interfaces';
 import { Character } from '@common/character';
 import { ActiveCombat } from '@common/combat';
 import { COMBAT_TURN_TIME } from '@common/constants/combat-constants';
-import { MAX_PLAYER, ROOM_ID_LENGTH, GameModeValue } from '@common/constants/game-config-constants';
+import { GameModeValue, MAX_PLAYER, ROOM_ID_LENGTH } from '@common/constants/game-config-constants';
 import { SHUFFLE_FACTOR } from '@common/map';
 import { Player } from '@common/player';
 import { Position } from '@common/position';
 import { SessionStatus } from '@common/session.status';
 
+type TeamId = 'team1' | 'team2';
+
+interface FlagTransferRequest {
+    from: string;
+    to: string;
+    timestamp: number;
+}
 
 export class GameSession {
 
@@ -21,7 +28,7 @@ export class GameSession {
     mapId: string;
     socketToAvatar: Map<string, number> = new Map();
     visitedTiles: Map<string, Set<string>> = new Map();
-    startTime: Date |null=null;
+    startTime: Date | null = null;
     totalTurns: number = 0;
     usedSanctuaries: Set<string> = new Set();
     usedDoors: Set<string> = new Set();
@@ -37,10 +44,10 @@ export class GameSession {
     isDebugModeActivated = false;
 
     gameMode: string = 'classic';
-    playerTeams: Map<string, 'team1' | 'team2'> = new Map();
+    playerTeams: Map<string, TeamId> = new Map();
     flagPosition: Position | null = null;
     flagHolderId: string | null = null;
-    flagTransferRequests: Map<string, { from: string; to: string; timestamp: number }> = new Map();
+    flagTransferRequests: Map<string, FlagTransferRequest> = new Map();
 
     constructor(hostplayer: Player, mapId: string, gameMode: string = 'classic') {
         this.host = hostplayer;
@@ -287,7 +294,7 @@ export class GameSession {
         });
     }
 
-    getPlayerTeam(playerId: string): 'team1' | 'team2' | undefined {
+    getPlayerTeam(playerId: string): TeamId | undefined {
         return this.playerTeams.get(playerId);
     }
 
@@ -300,11 +307,11 @@ export class GameSession {
             .map(player => player.character);
     }
 
-    getTotalPlayersInTeam(team: 'team1' | 'team2'): number {
+    getTotalPlayersInTeam(team: TeamId): number {
         return this.players.filter(player => this.playerTeams.get(player.character.id) === team).length;
     }
 
-    getTeamPlayers(team: 'team1' | 'team2'): Character[] {
+    getTeamPlayers(team: TeamId): Character[] {
         return this.players
             .filter(player => this.playerTeams.get(player.character.id) === team)
             .map(player => player.character);
@@ -349,7 +356,7 @@ export class GameSession {
         this.flagTransferRequests.set(toId, { from: fromId, to: toId, timestamp: Date.now() });
     }
 
-    getFlagTransferRequest(playerId: string): { from: string; to: string; timestamp: number } | undefined {
+    getFlagTransferRequest(playerId: string): FlagTransferRequest | undefined {
         return this.flagTransferRequests.get(playerId);
     }
 
