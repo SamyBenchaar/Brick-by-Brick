@@ -1,11 +1,6 @@
 import {MapTile} from '@app/interfaces/game-map-interfaces';
 import { Injectable } from '@nestjs/common';
 import { Position } from '@common/position';
-import {  ADJACENT_TO_ORIGIN_POSITION, SANCTUARY_TILE_OFFSETS } from '@common/constants/santuary-constants';
-import { ObjectType } from '@common/map';
-import { GameSession } from '@app/domain/game-session';
-import { Character } from '@common/character';
-import { Tile } from '@app/model/tile';
 
 @Injectable()
 export class SanctuaryService {
