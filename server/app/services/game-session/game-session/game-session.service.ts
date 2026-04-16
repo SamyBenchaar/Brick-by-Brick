@@ -269,15 +269,15 @@ export class GameSessionService {
             return false;
         }
         const isDoorAdjacent = this.movementService.isDoorAdjacent(currentPlayer.position, gameSession);
+        if(isDoorAdjacent){
+            return true;
+        }
         const isSanctuaryAdjacent = this.movementService.isSanctuaryAdjacent(currentPlayer.position, gameSession);
-
-        const map = gameSession.getMapCopy()?.tiles;
-        const tile = map[currentPlayer.position.y]?.[currentPlayer.position.x];
-
-        const canUseSanctuary = !this.sanctuaryService.isSanctuaryOnCooldown(tile, map);
-        const canInteractWithSanctuary = isSanctuaryAdjacent && canUseSanctuary;
-
-        return isDoorAdjacent || canInteractWithSanctuary;
+        if(isSanctuaryAdjacent){
+            const canInteractWithSanctuary = this.sanctuaryService.canInteractWithSanctuary(isSanctuaryAdjacent, gameSession.getMapCopy()?.tiles || []);
+            return canInteractWithSanctuary;
+        }
+        return false;
     }
 
     private canCurrentPlayerFight(gameSession: GameSession, currentPlayer: Character): boolean {

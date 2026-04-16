@@ -1,7 +1,11 @@
 import {MapTile} from '@app/interfaces/game-map-interfaces';
 import { Injectable } from '@nestjs/common';
 import { Position } from '@common/position';
-import {  SANCTUARY_TILE_OFFSETS } from '@common/constants/santuary-constants';
+import {  ADJACENT_TO_ORIGIN_POSITION, SANCTUARY_TILE_OFFSETS } from '@common/constants/santuary-constants';
+import { ObjectType } from '@common/map';
+import { GameSession } from '@app/domain/game-session';
+import { Character } from '@common/character';
+import { Tile } from '@app/model/tile';
 
 @Injectable()
 export class SanctuaryService {
@@ -31,14 +35,16 @@ export class SanctuaryService {
         }
     }
 
-    isSanctuaryOnCooldown(tile: MapTile, tiles: MapTile[][]): boolean {
-        const origin = tile.sanctuaryOrigin;
-        if (!origin) return false;
+    canInteractWithSanctuary(position: Position, tiles: MapTile[][]): boolean {
+        const tile = tiles[position.y]?.[position.x];
+        if (!tile?.sanctuaryOrigin) return false;
 
-        const originTile = tiles[origin.y]?.[origin.x];
-        if (!originTile) return false;
+        const originPos = tile.sanctuaryOrigin;
+        const originTile = tiles[originPos.y]?.[originPos.x];
 
-        return (originTile.sanctuaryCooldown ?? 0) > 0;
+        const cooldown = originTile?.sanctuaryCooldown ?? 0;
+
+        return cooldown === 0;
     }
 
 }
