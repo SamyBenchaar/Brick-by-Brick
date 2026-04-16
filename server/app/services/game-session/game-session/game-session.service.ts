@@ -12,6 +12,7 @@ import { getGameSizeConfig } from '@app/utils/game-config.utils';
 import { Character } from '@common/character';
 import { AVATAR_IDS } from '@common/constants/avatar-constants';
 import { GameModeValue } from '@common/constants/game-config-constants';
+import { Direction } from '@common/constants/key-event.constants';
 import { VIRTUAL_PLAYER_ID_PREFIX, VIRTUAL_PLAYER_NAMES } from '@common/constants/virtual-player-constants';
 import { Dice } from '@common/dice';
 import { Player } from '@common/player';
@@ -199,7 +200,7 @@ export class GameSessionService {
 
     executeMove(
         gameSession: GameSession,
-        direction: 'arrowUp' | 'arrowDown' | 'arrowLeft' | 'arrowRight',
+        direction: Direction,
     ): boolean {
         const currentPlayer = gameSession.getCurrentPlayer();
         if (!currentPlayer || !currentPlayer.position || currentPlayer.remainingMovement === undefined) {

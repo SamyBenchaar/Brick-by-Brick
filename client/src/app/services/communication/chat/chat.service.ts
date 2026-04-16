@@ -1,4 +1,5 @@
 import { inject, Injectable, signal, WritableSignal } from '@angular/core';
+import { SendChatMessagePayload } from '@app/interfaces/chat-payloads';
 import { SocketService } from '@app/services/communication/socket/socket.service';
 import { ChatEvents } from '@common/game.events';
 import { ChatMessage } from '@common/message';
@@ -37,7 +38,8 @@ export class ChatService {
         });
     }
 
-    sendMessage(username: string, content: string, gameId?: string, hostPlayerId?: string): void {
+    sendMessage(payload: SendChatMessagePayload): void {
+        const { username, content, gameId, hostPlayerId } = payload;
         if (!content.trim()) {
             return;
         }
