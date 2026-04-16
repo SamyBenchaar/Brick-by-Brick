@@ -1,6 +1,6 @@
 import { GameSession } from '@app/domain/game-session';
 import { PathNode } from '@app/interfaces/path-node';
-import { KEY_DIRECTION_MAP } from '@common/constants/key-event.constants';
+import { Direction, KEY_DIRECTION_MAP } from '@common/constants/key-event.constants';
 import { ObjectType, TILE_COST, TileType } from '@common/map';
 import { Player } from '@common/player';
 import { Position } from '@common/position';
@@ -21,7 +21,7 @@ export class VirtualPlayerPathfindingService {
         ];
     }
 
-    getDirection(from: Position, to: Position): keyof typeof KEY_DIRECTION_MAP | null {
+    getDirection(from: Position, to: Position): Direction | null {
         if (to.x === from.x && to.y === from.y - 1) {
             return KEY_DIRECTION_MAP.w;
         }

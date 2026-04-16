@@ -12,6 +12,7 @@ import { getGameSizeConfig } from '@app/utils/game-config.utils';
 import { Character } from '@common/character';
 import { AVATAR_IDS } from '@common/constants/avatar-constants';
 import { GameModeValue } from '@common/constants/game-config-constants';
+import { Direction } from '@common/constants/key-event.constants';
 import { VIRTUAL_PLAYER_ID_PREFIX, VIRTUAL_PLAYER_NAMES } from '@common/constants/virtual-player-constants';
 import { Dice } from '@common/dice';
 import { ObjectType } from '@common/map';
@@ -200,7 +201,7 @@ export class GameSessionService {
 
     executeMove(
         gameSession: GameSession,
-        direction: 'arrowUp' | 'arrowDown' | 'arrowLeft' | 'arrowRight',
+        direction: Direction,
     ): boolean {
         const currentPlayer = gameSession.getCurrentPlayer();
         if (!currentPlayer || !currentPlayer.position || currentPlayer.remainingMovement === undefined) {
@@ -332,8 +333,8 @@ export class GameSessionService {
 
         const socketId = `${VIRTUAL_PLAYER_ID_PREFIX}_${crypto.randomUUID()}`;
         const avatarId = this.pickRandom(availableAvatarIds);
-        const baseName = this.pickRandom(VIRTUAL_PLAYER_NAMES);
-        const name = session.verifyUniqueName(baseName);
+        const availableNames = VIRTUAL_PLAYER_NAMES.filter((validName) => session.isNameUnique(validName));
+        const name = availableNames.length > 0 ? this.pickRandom(availableNames) : session.verifyUniqueName(this.pickRandom(VIRTUAL_PLAYER_NAMES));
         const bonusTarget = Math.random() < LIFE_BONUS_THRESHOLD ? 'life' : 'speed';
 
         const speed = bonusTarget === 'speed' ? BASE_SPEED + BONUS_AMOUNT : BASE_SPEED;
