@@ -82,3 +82,10 @@ export interface SubmitCombatChoicePayload {
     roomId: string;
     posture: CombatPosture;
 }
+
+export interface CombatEndedPayload {
+    reason: string;
+    abandonedPlayerId?: string;
+    survivorId?: string;
+    survivorVictories?: number;
+}

@@ -4,7 +4,7 @@ import { CombatSocketService } from '@app/services/communication/game-session-so
 import { FlagTransferSocketService } from '@app/services/communication/game-session-socket/flag-transfer-socket.service';
 import { GamePlaySocketService } from '@app/services/communication/game-session-socket/game-play-socket.service';
 import type { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
-import type { CombatResultPayload } from '@common/combat';
+import type { CombatEndedPayload, CombatResultPayload } from '@common/combat';
 
 export function handleTurnEnded(
     gamePlaySocketService: GamePlaySocketService,
@@ -142,4 +142,52 @@ function notifyCurrentPlayerCombatResult(
         : 'Vous avez perdu le combat.';
 
     combatSocketService.showCombatNotification(notificationMessage);
+}
+
+export function handleCombatEnded(
+    data: CombatEndedPayload,
+    dependencies: CombatResultListenerDependencies,
+): void {
+    const {
+        gamePlaySocketService,
+        gameSessionSocketService,
+        combatSocketService,
+    } = dependencies;
+
+    gamePlaySocketService.reachableTiles.set([]);
+    combatSocketService.activeCombat.set(null);
+    combatSocketService.latestRound.set(null);
+    combatSocketService.combatTurnTimeRemaining.set(null);
+
+    if (data.reason !== 'playerLeft' || data.survivorId === undefined || data.survivorVictories === undefined) {
+        return;
+    }
+
+    const session = gamePlaySocketService.currentSession();
+    if (session) {
+        const survivor = session.players.find((player) => player.character.id === data.survivorId);
+        if (survivor) {
+            survivor.character.victories = data.survivorVictories;
+        }
+        gameSessionSocketService.currentSession.set({ ...session });
+    }
+
+    notifySurvivorOfForfeitWin(data, gamePlaySocketService, combatSocketService);
+}
+
+function notifySurvivorOfForfeitWin(
+    data: CombatEndedPayload,
+    gamePlaySocketService: GamePlaySocketService,
+    combatSocketService: CombatSocketService,
+): void {
+    const currentPlayer = gamePlaySocketService.getCurrentPlayerCharacter();
+    if (!currentPlayer || data.survivorId === undefined) {
+        return;
+    }
+
+    if (currentPlayer.id !== data.survivorId) {
+        return;
+    }
+
+    combatSocketService.showCombatNotification('Vous avez remporté le combat.');
 }
