@@ -88,4 +88,5 @@ export interface CombatEndedPayload {
     abandonedPlayerId?: string;
     survivorId?: string;
     survivorVictories?: number;
+    survivorLife?: number;
 }

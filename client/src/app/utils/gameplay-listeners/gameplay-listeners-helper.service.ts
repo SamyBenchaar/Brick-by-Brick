@@ -168,6 +168,9 @@ export function handleCombatEnded(
         const survivor = session.players.find((player) => player.character.id === data.survivorId);
         if (survivor) {
             survivor.character.victories = data.survivorVictories;
+            if (data.survivorLife !== undefined) {
+                survivor.character.life = data.survivorLife;
+            }
         }
         gameSessionSocketService.currentSession.set({ ...session });
     }

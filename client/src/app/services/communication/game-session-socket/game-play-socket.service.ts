@@ -299,6 +299,10 @@ export class GamePlaySocketService {
     }
 
     private canCurrentPlayerAct(currentPlayer?: Character | null): boolean {
+        if (this.turnStarting()) {
+            return false;
+        }
+
         return this.combatActionRulesService.canCurrentPlayerAct(
             currentPlayer ?? this.getCurrentPlayerCharacter(),
             this.isMyTurn(),
