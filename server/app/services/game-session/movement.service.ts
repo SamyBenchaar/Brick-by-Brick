@@ -127,7 +127,7 @@ export class MovementService {
             }
 
             const existingCost = bestCosts.get(newPosKey);
-            if (existingCost !== undefined && totalCost >= existingCost) {
+            if (bestCosts.has(newPosKey) && totalCost >= existingCost) {
                 continue;
             }
 
@@ -166,7 +166,7 @@ export class MovementService {
             return false;
         }
 
-        if (player.remainingMovement === undefined) {
+        if (!player.remainingMovement) {
             return false;
         }
 
@@ -259,7 +259,7 @@ export class MovementService {
         return adjacentPositions.some(pos => gameSession.getMapCopy()?.tiles?.[pos.y]?.[pos.x]?.type === TileType.Door);
     }
 
-    isSanctuaryAdjacent(position: Position, gameSession: GameSession): Position| null {
+    isSanctuaryAdjacent(position: Position, gameSession: GameSession): Position | null {
         const adjacentPositions = [
             { x: position.x - 1, y: position.y },
             { x: position.x + 1, y: position.y },
@@ -270,5 +270,5 @@ export class MovementService {
             const tile = gameSession.getMapCopy()?.tiles?.[pos.y]?.[pos.x];
             return tile?.object?.type === ObjectType.CombatSanctuary || tile?.object?.type === ObjectType.HealingSanctuary;
         }) || null;
-     }
+    }
 }

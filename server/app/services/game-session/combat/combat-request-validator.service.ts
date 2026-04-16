@@ -1,13 +1,13 @@
 import { GameSession } from '@app/domain/game-session';
 import { CombatParticipants } from '@app/services/game-session/combat/combat-types';
 import { Character } from '@common/character';
-import { Injectable } from '@nestjs/common';
 import { GameModeValue } from '@common/constants/game-config-constants';
+import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class CombatRequestValidatorService {
     isCombatUnavailable(gameSession: GameSession): boolean {
-        return gameSession.isTurnStarting || gameSession.getActiveCombat() !== null;
+        return gameSession.isTurnStarting || !!gameSession.getActiveCombat();
     }
 
     getCombatParticipantsFromRequest(

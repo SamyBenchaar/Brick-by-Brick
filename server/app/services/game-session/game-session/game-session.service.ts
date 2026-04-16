@@ -183,7 +183,7 @@ export class GameSessionService {
 
     getReachableTiles(gameSession: GameSession): Position[] {
         const currentPlayer = gameSession.getCurrentPlayer();
-        if (!currentPlayer || !currentPlayer.position || currentPlayer.remainingMovement === undefined) {
+        if (!currentPlayer || !currentPlayer.position || !currentPlayer.remainingMovement) {
             return [];
         }
         const mapData = gameSession.getMapCopy()?.tiles;
@@ -203,7 +203,7 @@ export class GameSessionService {
         direction: Direction,
     ): boolean {
         const currentPlayer = gameSession.getCurrentPlayer();
-        if (!currentPlayer || !currentPlayer.position || currentPlayer.remainingMovement === undefined) {
+        if (!currentPlayer || !currentPlayer.position || !currentPlayer.remainingMovement) {
             return false;
         }
         const mapData = gameSession.getMapCopy()?.tiles;

@@ -145,7 +145,7 @@ export class GameGridComponent implements OnInit, OnChanges {
     }
 
     if (event.button === ClickEvent.Left) {
-      if (this.mapEditorService.getSelectedTileType() == null) {
+      if (!this.mapEditorService.getSelectedTileType()) {
         this.addObject(position);
       } else {
         this.isDrawing = true;

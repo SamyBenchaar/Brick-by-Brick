@@ -1,9 +1,9 @@
+import { PlayerAbandonedPayload } from '@app/interfaces/gameplay-listeners';
 import { CombatSocketService } from '@app/services/communication/game-session-socket/combat-socket.service';
 import { GamePlaySocketService } from '@app/services/communication/game-session-socket/game-play-socket.service';
 import type { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
 import { SocketService } from '@app/services/communication/socket/socket.service';
 import { GameSessionEvents } from '@common/game.events';
-import { PlayerAbandonedPayload } from '@app/interfaces/gameplay-listeners';
 
 export function registerAbandonEventListeners(
     socketService: SocketService,
@@ -41,11 +41,11 @@ export function registerAbandonEventListeners(
             }
         }
 
-        if (data.flagPosition !== undefined) {
+        if (data.flagPosition) {
             session.flagPosition = data.flagPosition;
         }
 
-        if (data.flagHolderId !== undefined) {
+        if (data.flagHolderId) {
             session.flagHolderId = data.flagHolderId;
         }
 

@@ -12,7 +12,7 @@ export class StartingPointService {
         const validStartingPoints = this.getValidStartingPoints(mapData);
 
         if (validStartingPoints.length === 0) {
-            throw new Error('No valid starting points found on the map');
+            throw new Error('Aucun point de départ valide trouvé sur la carte.');
         }
 
         const players = gameSession.getActivePlayers();

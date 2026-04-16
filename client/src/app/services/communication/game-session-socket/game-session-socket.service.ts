@@ -188,7 +188,7 @@ export class GameSessionSocketService {
                 });
 
                 dialogRef.afterClosed().subscribe((retry) => {
-                    if (retry === true && this.lastJoinPlayer && this.lastJoinRoomId) {
+                    if (retry && this.lastJoinPlayer && this.lastJoinRoomId) {
                         this.joinGameSession(this.lastJoinRoomId, this.lastJoinPlayer);
                     } else {
                         this.router.navigate(['/']);

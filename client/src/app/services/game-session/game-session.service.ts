@@ -34,13 +34,9 @@ export class GameSessionService {
             reconnectionAttempts: 5,
         });
 
-        this.socket.on(SocketConnectionEvent.Connect, () => {
-            // connection 
-        });
+        this.socket.on(SocketConnectionEvent.Connect, () => undefined);
 
-        this.socket.on(SocketConnectionEvent.Disconnect, () => {
-            // deconnection
-        });
+        this.socket.on(SocketConnectionEvent.Disconnect, () => undefined);
 
         this.socket.on(SocketConnectionEvent.Error, (error: unknown) => {
             const subject = this.on(SocketConnectionEvent.Error);
