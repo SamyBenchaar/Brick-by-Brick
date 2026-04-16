@@ -5,7 +5,7 @@ import { CombatEvents } from '@common/game.events';
 import { registerAbandonEventListeners } from './abandon-events.listener';
 import { registerFlagTransferEventListeners } from './flag-transfer-events.listener';
 import { registerGameEndEventListeners } from './game-end-events.listener';
-import { GameplayListenersContext } from './gameplay-listeners.types';
+import { GameplayListenersContext } from '@app/interfaces/gameplay-listeners';
 import { registerInteractionEventListeners } from './interaction-events.listener';
 import { registerSessionUpdateEventListeners } from './session-update-events.listener';
 import { registerTurnEventListeners } from './turn-events.listener';

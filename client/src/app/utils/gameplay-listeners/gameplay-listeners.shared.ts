@@ -1,7 +1,7 @@
 import { Tile } from '@app/interfaces/game';
 import { GameSession } from '@app/interfaces/game-session';
 import { GamePlaySocketService } from '@app/services/communication/game-session-socket/game-play-socket.service';
-import { GameEndedPayload } from '@app/services/communication/game-session-socket/game-play-types';
+import { GameEndedPayload } from '@app/interfaces/game-play';
 import { GameModeValue } from '@common/constants/game-config-constants';
 import {
     ORIGIN_CANDIDATES,
@@ -10,7 +10,7 @@ import {
 import { ObjectType, TileType } from '@common/map';
 import { Player } from '@common/player';
 import { Position } from '@common/position';
-import { GameStatisticsNavigationState } from './gameplay-listeners.types';
+import { GameStatisticsNavigationState } from '@app/interfaces/gameplay-listeners';
 
 const WALKABLE_TILE_TYPES = new Set<string>([TileType.Base, TileType.Water, TileType.Ice]);
 

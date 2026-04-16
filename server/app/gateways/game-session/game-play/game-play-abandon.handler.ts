@@ -1,4 +1,4 @@
-import { GamePlayHandlerContext } from '@app/gateways/game-session/game-play/game-play-handler.context';
+import { GamePlayHandlerContext } from '@app/interfaces/game-play-handler';
 import { GameSessionGateway } from '@app/gateways/game-session/game-session/game-session.gateway';
 import { GameSession } from '@app/domain/game-session';
 import { GameSessionService } from '@app/services/game-session/game-session/game-session.service';

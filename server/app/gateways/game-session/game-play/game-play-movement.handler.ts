@@ -1,6 +1,6 @@
 import { GameSession } from '@app/domain/game-session';
 import { TileDto } from '@app/dto/tile.dto';
-import { GamePlayHandlerContext } from '@app/gateways/game-session/game-play/game-play-handler.context';
+import { GamePlayHandlerContext } from '@app/interfaces/game-play-handler';
 import { GameSessionService } from '@app/services/game-session/game-session/game-session.service';
 import { MovementService } from '@app/services/game-session/movement.service';
 import { Character } from '@common/character';

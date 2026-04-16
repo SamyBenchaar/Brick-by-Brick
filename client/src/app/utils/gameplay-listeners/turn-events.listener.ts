@@ -6,7 +6,7 @@ import {
     ReachableTilesPayload,
     TurnStartedPayload,
     TurnStartingPayload,
-} from '@app/services/communication/game-session-socket/game-play-types';
+} from '@app/interfaces/game-play';
 import type { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
 import { SocketService } from '@app/services/communication/socket/socket.service';
 import { handleTurnEnded } from '@app/utils/gameplay-listeners/gameplay-listeners-helper.service';

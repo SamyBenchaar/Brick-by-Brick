@@ -11,7 +11,7 @@ import {
 } from '@common/constants/santuary-constants';
 import { ObjectType, TileType } from '@common/map';
 import { Position } from '@common/position';
-import { InteractionContext } from './game-play-types';
+import { InteractionContext } from '@app/interfaces/game-play';
 
 @Injectable({
     providedIn: 'root',

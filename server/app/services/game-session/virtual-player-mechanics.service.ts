@@ -204,26 +204,12 @@ export class VirtualPlayerMechanicsService {
             return false;
         }
 
-        if (!this.isBotCurrentPlayer(session, bot) || !this.hasAction(bot)) {
-            return false;
-        }
-
         const target = this.targeting.getAdjacentEnemy(session, bot);
         if (!target) {
             return false;
         }
 
-        await this.randomDelay();
-        if (!this.isBotCurrentPlayer(session, bot) || !this.hasAction(bot)) {
-            return false;
-        }
-
-        if (!this.gamePlayGateway) {
-            return false;
-        }
-
-        this.gamePlayGateway.triggerBotCombat(session.roomId, bot.character.id, target.character.id);
-        return !!session.getActiveCombat();
+        return this.tryAttackSpecificAdjacent(session, bot, target);
     }
 
     async tryUseAdjacentSanctuary(session: GameSession, bot: Player): Promise<boolean> {

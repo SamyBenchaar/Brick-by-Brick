@@ -5,7 +5,7 @@ import { PlayerStatisticsComponent } from '@app/components/game-statistics-compo
 import { ChatComponent } from '@app/components/chat/chat.component';
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
 import { GlobalGameStatisticsComponent } from '@app/components/game-statistics-components/global-game-statistics/global-game-statistics.component';
-import { WinnerSummary, WinningTeam } from '@app/services/communication/game-session-socket/game-play-types';
+import { WinnerSummary, WinningTeam } from '@app/interfaces/game-play';
 import { GameModeValue } from '@common/constants/game-config-constants';
 
 @Component({

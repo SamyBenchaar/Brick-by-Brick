@@ -1,5 +1,5 @@
 ﻿import { GameSession } from '@app/domain/game-session';
-import { GamePlayHandlerContext } from '@app/gateways/game-session/game-play/game-play-handler.context';
+import { GamePlayHandlerContext } from '@app/interfaces/game-play-handler';
 import { GamePlayHandlersProvider } from '@app/gateways/game-session/game-play/game-play-handlers.provider';
 import { GameSessionGateway } from '@app/gateways/game-session/game-session/game-session.gateway';
 import { GameDataForInit } from '@app/interfaces/game-map-interfaces';

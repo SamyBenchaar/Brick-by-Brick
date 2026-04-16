@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { FLAG_TRANSFER_TIMEOUT_MS } from '@app/constants/flag-transfer-constants';
-import { PendingFlagTransferEntry } from './game-play-types';
+import { PendingFlagTransferEntry } from '@app/interfaces/game-play';
 
 @Injectable({
     providedIn: 'root',

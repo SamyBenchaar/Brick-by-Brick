@@ -11,7 +11,7 @@ import { CombatActionRulesService } from './combat-action-rules.service';
 import { CombatSocketService } from './combat-socket.service';
 import { FlagActionRulesService } from './flag-action-rules.service';
 import { FlagTransferStateService } from './flag-transfer-state.service';
-import { CombatPosture, InteractionMode } from './game-play-types';
+import { CombatPosture, InteractionMode } from '@app/interfaces/game-play';
 import { GameSessionSocketService } from './game-session-socket.service';
 import { InteractionActionRulesService } from './interaction-action-rules.service';
 import { PlayerSessionQueryService } from './player-session-query.service';

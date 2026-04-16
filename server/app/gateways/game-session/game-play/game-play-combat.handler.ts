@@ -1,5 +1,5 @@
 import { GameSession } from '@app/domain/game-session';
-import { GamePlayHandlerContext } from '@app/gateways/game-session/game-play/game-play-handler.context';
+import { GamePlayHandlerContext } from '@app/interfaces/game-play-handler';
 import { CombatEndService } from '@app/services/game-session/combat/combat-end.service';
 import { CombatRequestValidatorService } from '@app/services/game-session/combat/combat-request-validator.service';
 import { CombatRoundService } from '@app/services/game-session/combat/combat-round.service';

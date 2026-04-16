@@ -1,14 +1,10 @@
 import { GameSession } from '@app/domain/game-session';
+import { PathNode } from '@app/interfaces/path-node';
 import { KEY_DIRECTION_MAP } from '@common/constants/key-event.constants';
 import { ObjectType, TILE_COST, TileType } from '@common/map';
 import { Player } from '@common/player';
 import { Position } from '@common/position';
 import { Injectable } from '@nestjs/common';
-
-export interface PathNode {
-    cost: number;
-    from: Position | null;
-}
 
 @Injectable()
 export class VirtualPlayerPathfindingService {

@@ -1,7 +1,7 @@
 import { Component, Input } from '@angular/core';
 import {Player} from '@common/player';
 import {PERCENTAGE_MULTIPLIER, LARGE_TABLE_THRESHOLD, MEDIUM_TABLE_THRESHOLD} from '@app/constants/statistics-constants';
-import { WinnerSummary, WinningTeam } from '@app/services/communication/game-session-socket/game-play-types';
+import { WinnerSummary, WinningTeam } from '@app/interfaces/game-play';
 
 type SortColumn = 'combats' | 'victories' | 'defeats' | 'lifeLost' | 'damageDealt' | 'tilesVisited';
 type SortDirection = 'asc' | 'desc';

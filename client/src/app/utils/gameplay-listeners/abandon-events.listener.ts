@@ -3,7 +3,7 @@ import { GamePlaySocketService } from '@app/services/communication/game-session-
 import type { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
 import { SocketService } from '@app/services/communication/socket/socket.service';
 import { GameSessionEvents } from '@common/game.events';
-import { PlayerAbandonedPayload } from './gameplay-listeners.types';
+import { PlayerAbandonedPayload } from '@app/interfaces/gameplay-listeners';
 
 export function registerAbandonEventListeners(
     socketService: SocketService,

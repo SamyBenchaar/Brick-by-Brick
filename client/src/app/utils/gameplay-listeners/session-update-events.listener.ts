@@ -1,6 +1,6 @@
 import { GameSession } from '@app/interfaces/game-session';
 import { GamePlaySocketService } from '@app/services/communication/game-session-socket/game-play-socket.service';
-import { ToggleDebugModePayload } from '@app/services/communication/game-session-socket/game-play-types';
+import { ToggleDebugModePayload } from '@app/interfaces/game-play';
 import type { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
 import { SocketService } from '@app/services/communication/socket/socket.service';
 import { GameSessionEvents } from '@common/game.events';
