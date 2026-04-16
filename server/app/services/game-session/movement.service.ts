@@ -1,8 +1,8 @@
 import { GameSession, Position } from '@app/domain/game-session';
-import { Direction } from '@app/interfaces/direction.enum';
 import { MapTile } from '@app/interfaces/game-map-interfaces';
 import { Direction as GridDirection } from '@app/interfaces/map-validation-interfaces';
 import { Character } from '@common/character';
+import { Direction } from '@common/constants/key-event.constants';
 import { DoorState, ObjectType, TILE_COST, TileType } from '@common/map';
 import { Injectable } from '@nestjs/common';
 
