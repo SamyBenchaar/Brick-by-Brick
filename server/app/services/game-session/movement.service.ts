@@ -258,6 +258,17 @@ export class MovementService {
         ];
         return adjacentPositions.some(pos => gameSession.getMapCopy()?.tiles?.[pos.y]?.[pos.x]?.type === TileType.Door);
     }
+
+    isSanctuaryAdjacent(position: Position, gameSession: GameSession): Position| null {
+        const adjacentPositions = [
+            { x: position.x - 1, y: position.y },
+            { x: position.x + 1, y: position.y },
+            { x: position.x, y: position.y - 1 },
+            { x: position.x, y: position.y + 1 },
+        ];
+        return adjacentPositions.find(pos => {
+            const tile = gameSession.getMapCopy()?.tiles?.[pos.y]?.[pos.x];
+            return tile?.object?.type === ObjectType.CombatSanctuary || tile?.object?.type === ObjectType.HealingSanctuary;
+        }) || null;
+     }
 }
-
-
