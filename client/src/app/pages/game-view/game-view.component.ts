@@ -11,6 +11,7 @@ import { PlayerBoardComponent } from '@app/components/game-view-components/playe
 import { PlayerSignComponent } from '@app/components/game-view-components/player-sign/player-sign/player-sign.component';
 import { AVATARS } from '@app/constants/character-constants';
 import { DialogType } from '@app/constants/dialog-type.enum';
+import { InteractionMode } from '@app/constants/game-play.constants';
 import { AppDialogData } from '@app/interfaces/dialog-model';
 import { Game } from '@app/interfaces/game';
 import { CombatSocketService } from '@app/services/communication/game-session-socket/combat-socket.service';
@@ -255,13 +256,13 @@ export class GameViewComponent implements OnInit, OnDestroy {
         },
       });
       ref.afterClosed().subscribe((result) => {
-        if (result === true) this.gamePlaySocketService.requestInteract(event.position, 'normal');
-        else if (result === false) this.gamePlaySocketService.requestInteract(event.position, 'double');
+        if (result === true) this.gamePlaySocketService.requestInteract(event.position, InteractionMode.Normal);
+        else if (result === false) this.gamePlaySocketService.requestInteract(event.position, InteractionMode.Double);
       });
       this.isActionSelectionMode.set(false);
       return;
     }
-    this.gamePlaySocketService.requestInteract(event.position, 'normal');
+    this.gamePlaySocketService.requestInteract(event.position, InteractionMode.Normal);
     this.isActionSelectionMode.set(false);
   }
 

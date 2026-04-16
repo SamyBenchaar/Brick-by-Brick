@@ -1,7 +1,8 @@
 import { Tile } from '@app/interfaces/game';
-import { GameSession } from '@app/interfaces/game-session';
-import { GamePlaySocketService } from '@app/services/communication/game-session-socket/game-play-socket.service';
 import { GameEndedPayload } from '@app/interfaces/game-play';
+import { GameSession } from '@app/interfaces/game-session';
+import { GameStatisticsNavigationState } from '@app/interfaces/gameplay-listeners';
+import { GamePlaySocketService } from '@app/services/communication/game-session-socket/game-play-socket.service';
 import { GameModeValue } from '@common/constants/game-config-constants';
 import {
     ORIGIN_CANDIDATES,
@@ -10,7 +11,7 @@ import {
 import { ObjectType, TileType } from '@common/map';
 import { Player } from '@common/player';
 import { Position } from '@common/position';
-import { GameStatisticsNavigationState } from '@app/interfaces/gameplay-listeners';
+import { TeamId } from '@common/team';
 
 const WALKABLE_TILE_TYPES = new Set<string>([TileType.Base, TileType.Water, TileType.Ice]);
 
@@ -37,7 +38,7 @@ export function buildGameEndedMessage(
 
     if (data.reason === 'victory' && data.winner) {
         if (data.gameMode === GameModeValue.Ctf && data.winningTeam) {
-            const teamName = data.winningTeam === 'team1' ? 'bleue' : 'rouge';
+            const teamName = data.winningTeam === TeamId.Team1 ? 'bleue' : 'rouge';
             title = 'Victoire!';
             message = `L'équipe ${teamName} a gagné la partie!`;
             return { title, message };

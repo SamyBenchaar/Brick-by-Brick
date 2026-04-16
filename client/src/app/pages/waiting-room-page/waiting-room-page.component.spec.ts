@@ -5,6 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { GameSession } from '@app/interfaces/game-session';
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
 import { makeTestSession } from '@app/testing/game-session-test-helpers';
+import { SessionStatus } from '@common/session.status';
 import { WaitingRoomPage } from './waiting-room-page.component';
 
 /**
@@ -35,7 +36,7 @@ describe('WaitingRoomPage', () => {
 
     const mockSession: GameSession = makeTestSession({
         roomId: 'ROOM1',
-        status: 'waiting',
+        status: SessionStatus.Waiting,
         playerCount: 2,
         maxPlayers: 4,
         hostId: 'host-1',

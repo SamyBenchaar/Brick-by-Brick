@@ -29,19 +29,19 @@ export class FlagActionRulesService {
         target: Character | null,
         canAct: boolean,
     ): boolean {
-        if (this.isInvalidFlagActionState(session, currentPlayer, target, canAct)) {
+        if (!currentPlayer || !target || this.isInvalidFlagActionState(session, currentPlayer, target, canAct)) {
             return false;
         }
 
-        if (this.flagTransferStateService.hasPendingTransfer(target!.id)) {
+        if (this.flagTransferStateService.hasPendingTransfer(target.id)) {
             return false;
         }
 
-        const currentPlayerHasFlag = !!currentPlayer!.hasFlag;
-        const targetHasFlag = !!target!.hasFlag;
+        const currentPlayerHasFlag = !!currentPlayer.hasFlag;
+        const targetHasFlag = !!target.hasFlag;
         const hasCompatibleFlagState = currentPlayerHasFlag !== targetHasFlag;
 
-        return hasCompatibleFlagState && this.isValidFlagTransferTarget(currentPlayer!, target!);
+        return hasCompatibleFlagState && this.isValidFlagTransferTarget(currentPlayer, target);
     }
 
     canRequestFlagFrom(
@@ -50,17 +50,17 @@ export class FlagActionRulesService {
         target: Character | null,
         canAct: boolean,
     ): boolean {
-        if (this.isInvalidFlagActionState(session, currentPlayer, target, canAct)) {
+        if (!currentPlayer || !target || this.isInvalidFlagActionState(session, currentPlayer, target, canAct)) {
             return false;
         }
 
-        if (this.flagTransferStateService.hasPendingTransfer(target!.id)) {
+        if (this.flagTransferStateService.hasPendingTransfer(target.id)) {
             return false;
         }
 
-        const hasCompatibleFlagState = !currentPlayer!.hasFlag && !!target!.hasFlag;
+        const hasCompatibleFlagState = !currentPlayer.hasFlag && !!target.hasFlag;
 
-        return hasCompatibleFlagState && this.isValidFlagTransferTarget(currentPlayer!, target!);
+        return hasCompatibleFlagState && this.isValidFlagTransferTarget(currentPlayer, target);
     }
 
     canPlayerInteractFlag(

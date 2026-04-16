@@ -3,9 +3,10 @@ import { GameSession } from '@app/interfaces/game-session';
 import { Character } from '@common/character';
 import { Player } from '@common/player';
 import { Position } from '@common/position';
+export { CombatPosture } from '@common/combat';
 
-export type InteractionMode = 'normal' | 'double';
-export type CombatPosture = 'offensive' | 'defensive';
+export { InteractionMode } from '@app/constants/game-play.constants';
+export { TeamId as WinningTeam } from '@common/team';
 
 export interface PendingFlagTransferEntry {
     targetPlayerId: string;
@@ -25,7 +26,7 @@ export interface WinnerSummary {
     avatarId: number;
 }
 
-export type WinningTeam = 'team1' | 'team2';
+import { TeamId as WinningTeam } from '@common/team';
 
 export interface GameEndedPayload {
     winner: WinnerSummary | null;

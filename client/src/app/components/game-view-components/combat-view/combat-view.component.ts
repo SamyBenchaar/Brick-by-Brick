@@ -2,8 +2,7 @@ import { Component, computed, effect, inject, signal } from '@angular/core';
 import { PlayerCombatCardComponent } from '@app/components/game-view-components/combat-view/player-combat-card/player-combat-card.component';
 import { CombatSocketService } from '@app/services/communication/game-session-socket/combat-socket.service';
 import { GamePlaySocketService } from '@app/services/communication/game-session-socket/game-play-socket.service';
-import { CombatPosture } from '@app/interfaces/game-play';
-import { COMBAT_POSTURE } from '@common/combat';
+import { CombatPosture } from '@common/combat';
 
 @Component({
   selector: 'app-combat-view',
@@ -12,7 +11,7 @@ import { COMBAT_POSTURE } from '@common/combat';
   styleUrl: './combat-view.component.scss',
 })
 export class CombatViewComponent {
-  combatPosture = COMBAT_POSTURE;
+  combatPosture = CombatPosture;
   gamePlaySocketService = inject(GamePlaySocketService);
   combatSocketService = inject(CombatSocketService);
 
@@ -25,7 +24,7 @@ export class CombatViewComponent {
   combatTurnTimeRemaining = this.combatSocketService.combatTurnTimeRemaining;
 
   hasChosen = signal<boolean>(false);
-  posture = signal<string>(COMBAT_POSTURE.NONE);
+  posture = signal<string>(CombatPosture.NONE);
 
   isSelfAttacker = computed(() => {
     const round = this.latestRound();

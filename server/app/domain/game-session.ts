@@ -8,13 +8,13 @@ import { Player } from '@common/player';
 import { Position } from '@common/position';
 import { SessionStatus } from '@common/session.status';
 
-type TeamId = 'team1' | 'team2';
-
 interface FlagTransferRequest {
     from: string;
     to: string;
     timestamp: number;
 }
+
+import { TeamId } from '@common/team';
 
 export class GameSession {
 
@@ -284,13 +284,13 @@ export class GameSession {
         const midpoint = shuffledPlayers.length / 2;
 
         shuffledPlayers.slice(0, midpoint).forEach(player => {
-            this.playerTeams.set(player.character.id, 'team1');
-            player.character.team = 'team1';
+            this.playerTeams.set(player.character.id, TeamId.Team1);
+            player.character.team = TeamId.Team1;
         });
 
         shuffledPlayers.slice(midpoint).forEach(player => {
-            this.playerTeams.set(player.character.id, 'team2');
-            player.character.team = 'team2';
+            this.playerTeams.set(player.character.id, TeamId.Team2);
+            player.character.team = TeamId.Team2;
         });
     }
 

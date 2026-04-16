@@ -4,6 +4,8 @@ import { Position } from '@common/position';
 import { SessionStatus } from '@common/session.status';
 import { Game } from './game';
 
+import { TeamId } from '@common/team';
+
 export interface GameSession {
     players: Player[];
     leftPlayers: Player[];
@@ -21,7 +23,7 @@ export interface GameSession {
     isTurnStarting: boolean;
     isDebugModeActivated: boolean;
     gameMode: string;
-    playerTeams?: Map<string, 'team1' | 'team2'>;
+    playerTeams?: Map<string, TeamId>;
     flagPosition?: Position | null;
     flagHolderId?: string | null;
     activeCombat?: ActiveCombat | null;

@@ -1,7 +1,7 @@
 import { GameSession } from '@app/interfaces/game-session';
 import { Character } from '@common/character';
 
-export type SessionStatus = 'waiting' | 'playing';
+import { SessionStatus } from '@common/session.status';
 
 const DEFAULT_AVATAR_ID = 1;
 const DEFAULT_MAX_PLAYERS = 4;
@@ -16,7 +16,7 @@ export const makeTestCharacter = (name = 'Player', avatarId = DEFAULT_AVATAR_ID)
 export const makeTestSession = (
     {
         roomId,
-        status = 'waiting',
+        status = SessionStatus.Waiting,
         playerCount = 1,
         maxPlayers = DEFAULT_MAX_PLAYERS,
         hostId = 'host-1',

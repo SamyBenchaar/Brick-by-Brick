@@ -3,14 +3,14 @@ import { GamePlayHandlerContext } from '@app/interfaces/game-play-handler';
 import { CombatEndService } from '@app/services/game-session/combat/combat-end.service';
 import { CombatRequestValidatorService } from '@app/services/game-session/combat/combat-request-validator.service';
 import { CombatRoundService } from '@app/services/game-session/combat/combat-round.service';
-import { CombatEndState, CombatRoundOutcome } from '@app/services/game-session/combat/combat-types';
+import { CombatEndState } from '@app/services/game-session/combat/combat-types';
 import { GameSessionService } from '@app/services/game-session/game-session/game-session.service';
 import { TurnManagementService } from '@app/services/game-session/turn-management.service';
 import { VirtualPlayerMechanicsService } from '@app/services/game-session/virtual-player-mechanics.service';
 import { VirtualPlayerService } from '@app/services/game-session/virtual-player.service';
 import { formatCombatRoundLog } from '@app/services/log/combat-log.util';
 import { Character } from '@common/character';
-import { ActiveCombat, COMBAT_POSTURE, CombatRoundResolvedPayload } from '@common/combat';
+import { ActiveCombat, CombatOutcome, CombatPosture, CombatRoundResolvedPayload } from '@common/combat';
 import { COMBAT_TURN_TIME } from '@common/constants/combat-constants';
 import { GameModeValue } from '@common/constants/game-config-constants';
 import { CombatEvents, GameSessionEvents } from '@common/game.events';
@@ -157,10 +157,10 @@ export class GamePlayCombatHandler {
         const defenderPlayer = gameSession.players.find(player => player.character.id === combat.defenderId);
 
         const choosePostureAsync = async (playerId: string, profile: string) => {
-            let posture = profile === 'aggressive' ? COMBAT_POSTURE.OFFENSIVE : COMBAT_POSTURE.DEFENSIVE;
+            let posture = profile === 'aggressive' ? CombatPosture.OFFENSIVE : CombatPosture.DEFENSIVE;
 
             if (this.virtualPlayerMechanicsService) {
-                posture = await this.virtualPlayerMechanicsService.selectCombatPosture(profile);
+                posture = await this.virtualPlayerMechanicsService.selectCombatPosture(profile) as CombatPosture;
             } else {
                 const delay = Math.floor(Math.random() * VIRTUAL_PLAYER_DELAY_RANGE_MS) + VIRTUAL_PLAYER_DELAY_MS;
                 await new Promise((resolve) => setTimeout(resolve, delay));
@@ -187,8 +187,8 @@ export class GamePlayCombatHandler {
     }
 
     private applyChosenPosture(combat: ActiveCombat, playerId: string, posture: string): void {
-        if (playerId === combat.attackerId) combat.attackerPosture = posture;
-        else if (playerId === combat.defenderId) combat.defenderPosture = posture;
+        if (playerId === combat.attackerId) combat.attackerPosture = posture as CombatPosture;
+        else if (playerId === combat.defenderId) combat.defenderPosture = posture as CombatPosture;
     }
     private resolveCombatRound(gameSession: GameSession, context?: GamePlayHandlerContext): void {
         const combat = gameSession.getActiveCombat();
@@ -234,7 +234,7 @@ export class GamePlayCombatHandler {
     }
     private endCombat(
         gameSession: GameSession,
-        outcome: CombatRoundOutcome,
+        outcome: CombatOutcome,
         context: GamePlayHandlerContext,
     ): void {
         this.turnManagementService.stopCombatTimer(gameSession.roomId);

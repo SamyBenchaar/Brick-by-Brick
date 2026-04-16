@@ -1,14 +1,15 @@
-import { GamePlayHandlerContext } from '@app/interfaces/game-play-handler';
-import { GameSessionGateway } from '@app/gateways/game-session/game-session/game-session.gateway';
 import { GameSession } from '@app/domain/game-session';
+import { GameSessionGateway } from '@app/gateways/game-session/game-session/game-session.gateway';
+import { GamePlayHandlerContext } from '@app/interfaces/game-play-handler';
 import { GameSessionService } from '@app/services/game-session/game-session/game-session.service';
 import { LogService } from '@app/services/log/log.service';
-import { Player } from '@common/player';
+import { GameModeValue } from '@common/constants/game-config-constants';
 import { CombatEvents, GameSessionEvents } from '@common/game.events';
+import { Player } from '@common/player';
+import { SessionStatus } from '@common/session.status';
+import { TeamId } from '@common/team';
 import { Inject, Injectable, forwardRef } from '@nestjs/common';
 import { Socket } from 'socket.io';
-import { SessionStatus } from '@common/session.status';
-import { GameModeValue } from '@common/constants/game-config-constants';
 
 @Injectable()
 export class GamePlayAbandonHandler {
@@ -62,7 +63,7 @@ export class GamePlayAbandonHandler {
     }
 
     private handleAbandonedPlayerCombatCleanup(gameSession: GameSession, roomId: string,
-         abandonedPlayerId: string | undefined, context: GamePlayHandlerContext): void {
+        abandonedPlayerId: string | undefined, context: GamePlayHandlerContext): void {
         const combat = gameSession.getActiveCombat();
         if (combat && abandonedPlayerId && gameSession.isPlayerInActiveCombat(abandonedPlayerId)) {
             gameSession.clearActiveCombat();
@@ -83,8 +84,8 @@ export class GamePlayAbandonHandler {
 
     private handleAbandonedPlayerTeamCheck(gameSession: GameSession, context: GamePlayHandlerContext): boolean {
         if (gameSession.gameMode === GameModeValue.Ctf) {
-            const team1Count = gameSession.getTotalPlayersInTeam('team1');
-            const team2Count = gameSession.getTotalPlayersInTeam('team2');
+            const team1Count = gameSession.getTotalPlayersInTeam(TeamId.Team1);
+            const team2Count = gameSession.getTotalPlayersInTeam(TeamId.Team2);
             if (team1Count === 0 || team2Count === 0) {
                 context.onGameEndCanceled(gameSession);
                 return false;
