@@ -43,7 +43,10 @@ export class CombatActionRulesService {
         const targetPosition = target.position;
         const isDifferentCharacter = currentPlayer.id !== target.id;
 
-        if (!hasAction || !currentPlayerPosition || !targetPosition || !isDifferentCharacter) {
+        const invalidActionDist = !hasAction || !currentPlayerPosition;
+        const invalidTargetChar = !targetPosition || !isDifferentCharacter;
+
+        if (invalidActionDist || invalidTargetChar) {
             return false;
         }
 

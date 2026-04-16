@@ -214,7 +214,10 @@ export class MovementService {
                 p.character.position?.y === newPosition.y,
         );
 
-        if (occupied || tile.type === TileType.Wall || (tile.type === TileType.Door && tile.doorState !== DoorState.Opened) || !!tile.object) {
+        const isWallOrClosedDoor = tile.type === TileType.Wall || (tile.type === TileType.Door && tile.doorState !== DoorState.Opened);
+        const hasObstacle = occupied || !!tile.object;
+
+        if (isWallOrClosedDoor || hasObstacle) {
             return;
         }
 

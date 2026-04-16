@@ -43,7 +43,12 @@ export class VirtualPlayerPathfindingService {
 
     getMoveCost(session: GameSession, to: Position, bot: Player): number {
         const mapData = session.getMapCopy()?.tiles;
-        if (!mapData || to.y < 0 || to.y >= mapData.length || to.x < 0 || to.x >= mapData[0].length) {
+        if (!mapData) return Infinity;
+
+        const isYValid = to.y >= 0 && to.y < mapData.length;
+        const isXValid = to.x >= 0 && to.x < mapData[0].length;
+
+        if (!isYValid || !isXValid) {
             return Infinity;
         }
 

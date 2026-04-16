@@ -12,25 +12,36 @@ import { FlagTransferStateService } from './flag-transfer-state.service';
 export class FlagActionRulesService {
     constructor(private readonly flagTransferStateService: FlagTransferStateService) {}
 
+    private isInvalidFlagActionState(
+        session: GameSession | null,
+        currentPlayer: Character | null,
+        target: Character | null,
+        canAct: boolean,
+    ): boolean {
+        const invalidModeOrPlayer = session?.gameMode !== GameModeValue.Ctf || !currentPlayer;
+        const invalidTargetOrAct = !target || !canAct;
+        return invalidModeOrPlayer || invalidTargetOrAct;
+    }
+
     canTransferFlagTo(
         session: GameSession | null,
         currentPlayer: Character | null,
         target: Character | null,
         canAct: boolean,
     ): boolean {
-        if (session?.gameMode !== GameModeValue.Ctf || !currentPlayer || !target || !canAct) {
+        if (this.isInvalidFlagActionState(session, currentPlayer, target, canAct)) {
             return false;
         }
 
-        if (this.flagTransferStateService.hasPendingTransfer(target.id)) {
+        if (this.flagTransferStateService.hasPendingTransfer(target!.id)) {
             return false;
         }
 
-        const hasCompatibleFlagState =
-            (currentPlayer.hasFlag === true && target.hasFlag === false)
-            || (currentPlayer.hasFlag === false && target.hasFlag === true);
+        const currentPlayerHasFlag = !!currentPlayer!.hasFlag;
+        const targetHasFlag = !!target!.hasFlag;
+        const hasCompatibleFlagState = currentPlayerHasFlag !== targetHasFlag;
 
-        return hasCompatibleFlagState && this.isValidFlagTransferTarget(currentPlayer, target);
+        return hasCompatibleFlagState && this.isValidFlagTransferTarget(currentPlayer!, target!);
     }
 
     canRequestFlagFrom(
@@ -39,16 +50,17 @@ export class FlagActionRulesService {
         target: Character | null,
         canAct: boolean,
     ): boolean {
-        if (session?.gameMode !== GameModeValue.Ctf || !currentPlayer || !target || !canAct) {
+        if (this.isInvalidFlagActionState(session, currentPlayer, target, canAct)) {
             return false;
         }
 
-        if (this.flagTransferStateService.hasPendingTransfer(target.id)) {
+        if (this.flagTransferStateService.hasPendingTransfer(target!.id)) {
             return false;
         }
 
-        const hasCompatibleFlagState = !currentPlayer.hasFlag && !!target.hasFlag;
-        return hasCompatibleFlagState && this.isValidFlagTransferTarget(currentPlayer, target);
+        const hasCompatibleFlagState = !currentPlayer!.hasFlag && !!target!.hasFlag;
+
+        return hasCompatibleFlagState && this.isValidFlagTransferTarget(currentPlayer!, target!);
     }
 
     canPlayerInteractFlag(

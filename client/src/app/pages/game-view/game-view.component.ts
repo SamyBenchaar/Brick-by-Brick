@@ -122,7 +122,9 @@ export class GameViewComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (!this.isMyTurn() || this.isWriting() || this.combatSocketService.activeCombat() || this.dialog.openDialogs.length > 0) return;
+    const isInteracting = this.isWriting() || this.dialog.openDialogs.length > 0;
+    const isGameActionRestricted = !this.isMyTurn() || !!this.combatSocketService.activeCombat();
+    if (isInteracting || isGameActionRestricted) return;
     const direction = KEY_DIRECTION_MAP[key];
 
     if (direction) {

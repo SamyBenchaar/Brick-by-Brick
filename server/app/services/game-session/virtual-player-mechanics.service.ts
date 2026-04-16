@@ -76,8 +76,14 @@ export class VirtualPlayerMechanicsService {
         return this.targeting.findNearestWalkableTile(session, bot, target);
     }
 
+    private isAttackPossible(session: GameSession, bot: Player, target: Player): boolean {
+        const isReady = this.isBotCurrentPlayer(session, bot) && this.hasAction(bot);
+        const hasPositions = !!bot.character.position && !!target.character.position;
+        return isReady && hasPositions;
+    }
+
     async tryAttackSpecificAdjacent(session: GameSession, bot: Player, target: Player): Promise<boolean> {
-        if (!this.isBotCurrentPlayer(session, bot) || !this.hasAction(bot) || !bot.character.position || !target.character.position) {
+        if (!this.isAttackPossible(session, bot, target)) {
             return false;
         }
 

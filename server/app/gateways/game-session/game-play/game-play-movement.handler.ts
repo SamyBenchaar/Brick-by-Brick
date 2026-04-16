@@ -4,11 +4,11 @@ import { GamePlayHandlerContext } from '@app/interfaces/game-play-handler';
 import { GameSessionService } from '@app/services/game-session/game-session/game-session.service';
 import { MovementService } from '@app/services/game-session/movement.service';
 import { Character } from '@common/character';
+import { GameModeValue } from '@common/constants/game-config-constants';
 import { GameSessionEvents } from '@common/game.events';
 import { Position } from '@common/position';
 import { Inject, Injectable, forwardRef } from '@nestjs/common';
 import { Socket } from 'socket.io';
-import { GameModeValue } from '@common/constants/game-config-constants';
 
 @Injectable()
 export class GamePlayMovementHandler {
@@ -74,7 +74,10 @@ export class GamePlayMovementHandler {
         const flagPos = gameSession.getFlagPosition();
         const currentPlayer = gameSession.getCurrentPlayer();
 
-        if (!gameSession.getFlagHolder() && flagPos && currentPlayer.position?.x === flagPos.x && currentPlayer.position?.y === flagPos.y) {
+        const isFlagOnGround = !gameSession.getFlagHolder() && !!flagPos;
+        const isPlayerOnFlag = currentPlayer.position?.x === flagPos?.x && currentPlayer.position?.y === flagPos?.y;
+
+        if (isFlagOnGround && isPlayerOnFlag) {
             gameSession.setFlagHolder(currentPlayer.id);
             context.logService.log(roomId, `Drapeau pris du sol par ${currentPlayer.name}`);
             context.server.to(roomId).emit(GameSessionEvents.GameSessionUpdated, gameSession);

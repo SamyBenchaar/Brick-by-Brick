@@ -1,11 +1,12 @@
 ﻿import { GameSession } from '@app/domain/game-session';
-import { GamePlayHandlerContext } from '@app/interfaces/game-play-handler';
 import { GamePlayHandlersProvider } from '@app/gateways/game-session/game-play/game-play-handlers.provider';
 import { GameSessionGateway } from '@app/gateways/game-session/game-session/game-session.gateway';
 import { GameDataForInit } from '@app/interfaces/game-map-interfaces';
+import { GamePlayHandlerContext } from '@app/interfaces/game-play-handler';
 import { GameSessionService } from '@app/services/game-session/game-session/game-session.service';
 import { LogService } from '@app/services/log/log.service';
 import { Character } from '@common/character';
+import { GameModeValue } from '@common/constants/game-config-constants';
 import { MS_TO_SECONDS_CONVERSION } from '@common/constants/game-statistics-constants';
 import { CombatEvents, GameSessionEvents } from '@common/game.events';
 import { DoorState, ObjectType, PERCENTAGE_MULTIPLIER, TileType } from '@common/map';
@@ -16,7 +17,6 @@ import {
     OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { GameModeValue } from '@common/constants/game-config-constants';
 
 @WebSocketGateway({ cors: true })
 @Injectable()
@@ -121,7 +121,13 @@ export class GamePlayGateway implements OnGatewayInit {
 
         const currentPlayer = gameSession.getCurrentPlayer();
         const requestingPlayer = gameSession.players.find(player => player.socketId === socket.id);
-        if (!currentPlayer || !requestingPlayer || currentPlayer.id !== requestingPlayer.character.id && !gameSession.isDebugModeActivated) {
+        if (!currentPlayer || !requestingPlayer) {
+            return;
+        }
+
+        const isWrongPlayer = currentPlayer.id !== requestingPlayer.character.id;
+        const debugDisabled = !gameSession.isDebugModeActivated;
+        if (isWrongPlayer && debugDisabled) {
             return;
         }
 

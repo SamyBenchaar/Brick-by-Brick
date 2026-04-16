@@ -88,7 +88,10 @@ export class GamePlayCombatHandler {
         const defender = gameSession.players.find((p) => p.character.id === defenderId)?.character;
         const outOfActions = (attacker.remainingActions ?? 0) <= 0;
         const tooFar = defender && (Math.abs(attacker.position.x - defender.position.x) + Math.abs(attacker.position.y - defender.position.y)) !== 1;
-        if (!defender || gameSession.isTurnStarting || gameSession.getActiveCombat() || outOfActions || tooFar) {
+
+        const isNotReady = !defender || gameSession.isTurnStarting || !!gameSession.getActiveCombat();
+
+        if (isNotReady || outOfActions || tooFar) {
             return;
         }
         try {

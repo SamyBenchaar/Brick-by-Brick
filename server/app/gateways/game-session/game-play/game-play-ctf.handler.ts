@@ -64,7 +64,10 @@ export class GamePlayCtfHandler {
 
         const fromHasFlag = fromPlayer.character.hasFlag;
         const toHasFlag = toPlayer.character.hasFlag;
-        if ((fromHasFlag && toHasFlag) || (!fromHasFlag && !toHasFlag)) return false;
+
+        const hasSameFlagState = fromHasFlag === toHasFlag;
+
+        if (hasSameFlagState) return false;
 
         const currentPlayer = gameSession.getCurrentPlayer();
         if (!currentPlayer || fromPlayer.character.id !== currentPlayer.id) return false;
