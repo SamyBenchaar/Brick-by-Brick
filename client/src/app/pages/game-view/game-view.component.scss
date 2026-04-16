@@ -54,10 +54,13 @@ app-combat-view {
 }
 
 .debug-mode {
-    left: 45%;
+    top: 7%;
+    left: 35%;
     position: absolute;
     font-size: 20px;
+    z-index: 15;
 }
+
 
 .info-panel {
     font-size: 20px;

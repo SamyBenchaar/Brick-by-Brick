@@ -27,7 +27,7 @@
         }
 
         @if (otherDamage() > 0) {
-            <div class="result-line green">Vous infligez {{ otherDamage() }} dégâts à {{ self()?.name }}</div>
+            <div class="result-line green">Vous infligez {{ otherDamage() }} dégâts à {{ other()?.name }}</div>
         } @else {
             <div class="result-line">Vous n'infligez aucun dégât</div>
         }
