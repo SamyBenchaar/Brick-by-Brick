@@ -1,13 +1,13 @@
 import { signal } from '@angular/core';
 import { GameSession } from '@app/interfaces/game-session';
-import { CombatSocketService } from '@app/services/communication/game-session-socket/combat/combat-socket.service';
+import { CombatSocketService } from '@app/services/communication/game-session-socket/combat-socket.service';
 import { FlagTransferSocketService } from '@app/services/communication/game-session-socket/flag-transfer-socket.service';
 import { GamePlaySocketService } from '@app/services/communication/game-session-socket/game-play-socket.service';
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
+import { handleCombatResult, handleTurnEnded } from '@app/utils/gameplay-listeners/gameplay-listeners-helper.service';
 import { Character } from '@common/character';
-import { CombatResultPayload } from '@common/combat';
+import { CombatOutcome, CombatResultPayload } from '@common/combat';
 import { Dice } from '@common/dice';
-import { handleCombatResult, handleTurnEnded } from './gameplay-listeners-helper.service';
 
 const DEFAULT_LIFE = 6;
 
@@ -80,9 +80,15 @@ describe('gameplay-listeners-helper', () => {
             pendingFlagTransferTimeouts: new Map<string, ReturnType<typeof setTimeout>>(),
             pendingFlagTransfers: new Map<string, unknown>(),
             respondToFlagTransfer: jasmine.createSpy('respondToFlagTransfer'),
+            clearAllPendingFlagTransferRequests: jasmine.createSpy('clearAllPendingFlagTransferRequests'),
             currentSession: jasmine.createSpy('currentSession'),
             getCurrentPlayerCharacter: jasmine.createSpy('getCurrentPlayerCharacter'),
         };
+
+        service.clearAllPendingFlagTransferRequests.and.callFake(() => {
+            service.pendingFlagTransferTimeouts.clear();
+            service.pendingFlagTransfers.clear();
+        });
 
         const timeoutId = setTimeout(() => undefined, 1000);
         service.pendingFlagTransferTimeouts.set('p1', timeoutId);
@@ -96,9 +102,9 @@ describe('gameplay-listeners-helper', () => {
         const pendingDialogCloseSpy = jasmine.createSpy('pendingDialogClose');
         flagTransferService = {
             getPendingFlagTransferDialogs: jasmine.createSpy('getPendingFlagTransferDialogs').and.returnValue(
-                new Map([
+                [
                     ['p1', { fromPlayerId: 'from-1', dialogRef: { close: pendingDialogCloseSpy } }],
-                ]),
+                ],
             ),
             clearAllPendingFlagTransfers: jasmine.createSpy('clearAllPendingFlagTransfers'),
         };
@@ -127,6 +133,7 @@ describe('gameplay-listeners-helper', () => {
         expect(dialog.getDialogById).toHaveBeenCalledWith('sanctuary-dialog');
         expect(service.respondToFlagTransfer).toHaveBeenCalledWith('from-1', false);
         expect(flagTransferService.clearAllPendingFlagTransfers).toHaveBeenCalled();
+        expect(service.clearAllPendingFlagTransferRequests).toHaveBeenCalled();
         expect(service.pendingFlagTransferTimeouts.size).toBe(0);
         expect(service.pendingFlagTransfers.size).toBe(0);
 
@@ -158,7 +165,7 @@ describe('gameplay-listeners-helper', () => {
             defenderId: 'defender',
             winnerId: 'attacker',
             loserIds: ['defender'],
-            outcome: 'attacker',
+            outcome: CombatOutcome.ATTACKER,
             attackerPosition: { x: 1, y: 1 },
             defenderPosition: { x: 5, y: 5 },
             attackerLife: 4,
@@ -207,7 +214,7 @@ describe('gameplay-listeners-helper', () => {
                 defenderId: 'defender',
                 winnerId: null,
                 loserIds: ['attacker', 'defender'],
-                outcome: 'draw',
+                outcome: CombatOutcome.DRAW,
                 attackerPosition: { x: 1, y: 1 },
                 defenderPosition: { x: 2, y: 1 },
                 attackerLife: 0,
@@ -238,7 +245,7 @@ describe('gameplay-listeners-helper', () => {
                 defenderId: 'defender',
                 winnerId: 'attacker',
                 loserIds: ['defender'],
-                outcome: 'attacker',
+                outcome: CombatOutcome.ATTACKER,
                 attackerPosition: { x: 1, y: 1 },
                 defenderPosition: { x: 2, y: 1 },
                 attackerLife: 4,

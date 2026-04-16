@@ -3,14 +3,16 @@ import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { Tile } from '@app/interfaces/game';
 import { GameSession } from '@app/interfaces/game-session';
-import { CombatSocketService } from '@app/services/communication/game-session-socket/combat/combat-socket.service';
+import { CombatSocketService } from '@app/services/communication/game-session-socket/combat-socket.service';
 import { FlagTransferSocketService } from '@app/services/communication/game-session-socket/flag-transfer-socket.service';
 import { GamePlaySocketService } from '@app/services/communication/game-session-socket/game-play-socket.service';
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
 import { SocketService } from '@app/services/communication/socket/socket.service';
+import { setupGameplayEventListeners } from '@app/utils/gameplay-listeners/gameplay-listeners';
+import { ActiveCombat, CombatOutcome, CombatPosture, CombatRoundResolvedPayload } from '@common/combat';
+import { SANCTUARY_COOLDOWN_TURNS } from '@common/constants/santuary-constants';
 import { CombatEvents, GameSessionEvents } from '@common/game.events';
 import { ObjectType, TileType } from '@common/map';
-import { setupGameplayEventListeners } from './gameplay-listeners';
 
 type ListenerCallback<T> = (payload: T) => void;
 
@@ -37,7 +39,7 @@ type ListenerCallback<T> = (payload: T) => void;
 describe('setupGameplayEventListeners', () => {
     const callbacks = new Map<string, ListenerCallback<unknown>>();
     let currentSessionSignal: WritableSignal<GameSession | null>;
-    let mapCopySignal: WritableSignal<unknown>;
+    let mapCopySignal: WritableSignal<{ mapConfig: { tiles: Tile[][] } }>;
 
     const socketServiceMock = {
         on<T>(event: string, callback: ListenerCallback<T>): void {
@@ -63,8 +65,12 @@ describe('setupGameplayEventListeners', () => {
         pendingFlagTransfers: new Map<string, unknown>(),
         respondToFlagTransfer: jasmine.createSpy('respondToFlagTransfer'),
         getSocketId: jasmine.createSpy('getSocketId').and.returnValue('socket-1'),
+        getCurrentPlayerCharacter: jasmine.createSpy('getCurrentPlayerCharacter').and.callFake(() => {
+            const session = currentSessionSignal();
+            return session?.players?.[0]?.character ?? null;
+        }),
         currentSession: (): GameSession | null => currentSessionSignal(),
-        mapCopy: (): unknown => mapCopySignal(),
+        mapCopy: signal<{ mapConfig: { tiles: Tile[][] } }>({ mapConfig: { tiles: [] as Tile[][] } }),
     };
 
     const dialogMock = {
@@ -134,7 +140,7 @@ describe('setupGameplayEventListeners', () => {
             mapConfig: {
                 tiles: [
                     [
-                        { type: TileType.Base } as Tile,
+                        { type: TileType.Base, object: { type: ObjectType.HealingSanctuary } } as unknown as Tile,
                         { type: TileType.Base, object: { type: ObjectType.HealingSanctuary } } as unknown as Tile,
                     ],
                     [
@@ -144,6 +150,7 @@ describe('setupGameplayEventListeners', () => {
                 ],
             },
         });
+        gamePlaySocketServiceMock.mapCopy = mapCopySignal;
 
         gameSessionSocketServiceMock.currentSession.set(currentSessionSignal());
         gamePlaySocketServiceMock.currentPlayerTurn.set(null);
@@ -217,13 +224,38 @@ describe('setupGameplayEventListeners', () => {
             interactionType: 'healingsanctuary',
         });
 
-        expect(mapCopySignal().mapConfig.tiles[0][0].sanctuaryCooldown).toBe(2);
+        expect(mapCopySignal().mapConfig.tiles[0][0].sanctuaryCooldown).toBe(SANCTUARY_COOLDOWN_TURNS);
         expect(gameSessionSocketServiceMock.currentSession()?.players[0].character.remainingActions).toBe(0);
     });
 
     it('devrait vider l etat de combat local a la reception de CombatResult', () => {
-        combatSocketServiceMock.activeCombat.set({ attackerId: 'p1', defenderId: 'p2' });
-        combatSocketServiceMock.latestRound.set({ roundNumber: 1 });
+        combatSocketServiceMock.activeCombat.set({
+            attackerId: 'p1',
+            defenderId: 'p2',
+            initiatorId: 'p1',
+            roundNumber: 1,
+            attackerHp: 6,
+            defenderHp: 6,
+        } as ActiveCombat);
+        combatSocketServiceMock.latestRound.set({
+            roundNumber: 1,
+            attackerId: 'p1',
+            defenderId: 'p2',
+            attackerChoice: CombatPosture.OFFENSIVE,
+            defenderChoice: CombatPosture.DEFENSIVE,
+            attackerStrike: {
+                attack: { base: 4, postureBonus: 2, dice: 1, tilePenalty: 0, total: 7 },
+                defense: { base: 4, postureBonus: 0, dice: 1, tilePenalty: 0, total: 5 },
+                damage: 1,
+            },
+            defenderStrike: {
+                attack: { base: 4, postureBonus: 0, dice: 1, tilePenalty: 0, total: 5 },
+                defense: { base: 4, postureBonus: 2, dice: 1, tilePenalty: 0, total: 7 },
+                damage: 0,
+            },
+            attackerLife: 6,
+            defenderLife: 5,
+        } as CombatRoundResolvedPayload);
         combatSocketServiceMock.combatTurnTimeRemaining.set(5);
         gamePlaySocketServiceMock.reachableTiles.set([{ x: 9, y: 9 }]);
 
@@ -232,7 +264,7 @@ describe('setupGameplayEventListeners', () => {
             defenderId: 'p2',
             winnerId: 'p1',
             loserIds: ['p2'],
-            outcome: 'attacker',
+            outcome: CombatOutcome.ATTACKER,
             attackerPosition: { x: 1, y: 1 },
             defenderPosition: { x: 5, y: 5 },
             attackerLife: 4,

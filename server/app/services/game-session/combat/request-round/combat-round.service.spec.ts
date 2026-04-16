@@ -1,7 +1,7 @@
 ﻿import { GameSession } from '@app/domain/game-session';
 import { CombatRoundDetails } from '@app/services/game-session/combat/combat-types';
 import { Character } from '@common/character';
-import { ActiveCombat, COMBAT_POSTURE } from '@common/combat';
+import { ActiveCombat, CombatPosture } from '@common/combat';
 import { Dice } from '@common/dice';
 import { TileType } from '@common/map';
 import { CombatRoundService } from './combat-round.service';
@@ -58,6 +58,7 @@ function createCombat(overrides: Partial<ActiveCombat> = {}): ActiveCombat {
 /**
  * Strategie de test:
  * - Verifier les calculs de round (posture, des, terrain, degats).
+ * - Verifier le comportement du mode debug (max/min) et sa bascule entre rounds d'un meme combat.
  * - Verifier les transitions d'etat du combat (HP, outcome, round suivant).
  * - Valider les formats de sortie envoyes aux clients (payload resolu).
  * Cas limites couverts:
@@ -101,8 +102,8 @@ describe('CombatRoundService', () => {
         } as unknown as GameSession;
 
         const combat = createCombat({
-            attackerPosture: COMBAT_POSTURE.OFFENSIVE,
-            defenderPosture: COMBAT_POSTURE.DEFENSIVE,
+            attackerPosture: CombatPosture.OFFENSIVE,
+            defenderPosture: CombatPosture.DEFENSIVE,
         });
 
         const details = service.buildRoundDetails(gameSession, combat, attacker, defender);
@@ -125,6 +126,40 @@ describe('CombatRoundService', () => {
         expect(details.damageToAttacker).toBe(0);
     });
 
+    it('devrait appliquer puis retirer les des forces quand le debug est active puis desactive entre deux rounds', () => {
+        const gameSession = {
+            isDebugModeActivated: true,
+            getMapCopy: jest.fn(() => ({
+                tiles: [
+                    [{ type: TileType.Base }, { type: TileType.Base }],
+                ],
+            })),
+        } as unknown as GameSession;
+
+        const combat = createCombat({
+            attackerPosture: CombatPosture.NONE,
+            defenderPosture: CombatPosture.NONE,
+        });
+
+        const debugRound = service.buildRoundDetails(gameSession, combat, attacker, defender);
+        expect(debugRound.attackerAttackDetail.dice).toBe(4);
+        expect(debugRound.defenderAttackDetail.dice).toBe(1);
+        expect(debugRound.attackerDefenseDetail.dice).toBe(6);
+        expect(debugRound.defenderDefenseDetail.dice).toBe(1);
+
+        gameSession.isDebugModeActivated = false;
+        const randomSpy = jest.spyOn(Math, 'random').mockReturnValue(0);
+
+        const normalRound = service.buildRoundDetails(gameSession, combat, attacker, defender);
+
+        expect(normalRound.attackerAttackDetail.dice).toBe(1);
+        expect(normalRound.defenderAttackDetail.dice).toBe(1);
+        expect(normalRound.attackerDefenseDetail.dice).toBe(1);
+        expect(normalRound.defenderDefenseDetail.dice).toBe(1);
+
+        randomSpy.mockRestore();
+    });
+
     it('devrait calculer sans penalite de tuile quand la case est absente', () => {
         const gameSession = {
             isDebugModeActivated: true,
@@ -143,8 +178,8 @@ describe('CombatRoundService', () => {
         const details = service.buildRoundDetails(
             gameSession,
             createCombat({
-                attackerPosture: COMBAT_POSTURE.NONE,
-                defenderPosture: COMBAT_POSTURE.NONE,
+                attackerPosture: CombatPosture.NONE,
+                defenderPosture: CombatPosture.NONE,
             }),
             attacker,
             offMapDefender,
@@ -197,8 +232,8 @@ describe('CombatRoundService', () => {
             },
         );
 
-        expect(payload.attackerChoice).toBe(COMBAT_POSTURE.NONE);
-        expect(payload.defenderChoice).toBe(COMBAT_POSTURE.NONE);
+        expect(payload.attackerChoice).toBe(CombatPosture.NONE);
+        expect(payload.defenderChoice).toBe(CombatPosture.NONE);
         expect(payload.attackerStrike.damage).toBe(1);
         expect(payload.defenderStrike.damage).toBe(0);
     });
@@ -233,8 +268,8 @@ describe('CombatRoundService', () => {
 
     it('devrait préparer le prochain round en incrémentant le numéro et en vidant les postures', () => {
         const combat = createCombat({
-            attackerPosture: COMBAT_POSTURE.OFFENSIVE,
-            defenderPosture: COMBAT_POSTURE.DEFENSIVE,
+            attackerPosture: CombatPosture.OFFENSIVE,
+            defenderPosture: CombatPosture.DEFENSIVE,
         });
 
         service.prepareNextRound(combat);

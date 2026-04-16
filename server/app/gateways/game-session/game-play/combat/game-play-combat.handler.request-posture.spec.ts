@@ -1,18 +1,19 @@
 import { GameSession } from '@app/domain/game-session';
-import { GamePlayHandlerContext } from '@app/gateways/game-session/game-play/game-play-handler.context';
+import { GamePlayHandlerContext } from '@app/interfaces/game-play-handler';
 import { CombatParticipants } from '@app/services/game-session/combat/combat-types';
-import { COMBAT_POSTURE } from '@common/combat';
+import { CombatPosture } from '@common/combat';
 import { CombatEvents } from '@common/game.events';
 import { Socket } from 'socket.io';
-import { createCombatHandlerHarness, createPlayer, createSession, DEFAULT_LIFE } from './game-play-combat.handler.spec-utils';
+import { createCombatHandlerHarness, createPlayer, createSession, DEFAULT_LIFE } from '../game-play-combat.handler.spec-utils';
 
 /**
  * Strategie de test:
- * - Couvre les entrees de combat (requestCombat) et choix de posture.
- * - Verifie tous les early-return critiques.
+ * - Couvre les entrees de combat (requestCombat), le demarrage du timer de round (10s) et les choix de posture.
+ * - Verifie les early-return critiques et la resolution anticipee d'un round quand les deux joueurs choisissent avant timeout.
  * Cas limites couverts:
  * - Session absente, combat indisponible, validation refusee.
  * - Posture recue sans session/combat/joueur.
+ * - Aucun choix de posture avant timeout: round resolu automatiquement.
  */
 describe('GamePlayCombatHandler - request/posture', () => {
     it('devrait demarrer un combat valide, consommer une action et emettre CombatStarted', () => {
@@ -49,6 +50,45 @@ describe('GamePlayCombatHandler - request/posture', () => {
             'ROOM1',
             'Début de combat: Attacker attaque Defender',
         );
+        expect(session.setCurrentCombatTurnTime).toHaveBeenCalledWith(10);
+        expect(harness.startCombatTimerSpy).toHaveBeenCalled();
+    });
+
+    it('devrait resoudre automatiquement le round au timeout quand aucun joueur ne choisit de posture', () => {
+        const harness = createCombatHandlerHarness();
+        const session = createSession(harness.attacker, harness.defender);
+        const participants: CombatParticipants = {
+            attacker: harness.attacker,
+            defender: harness.defender,
+            requestingPlayer: createPlayer('socket-1', harness.attacker),
+        };
+
+        harness.getGameSessionSpy.mockReturnValue(session as unknown as GameSession);
+        harness.getCombatParticipantsFromRequestSpy.mockReturnValue(participants);
+
+        const resolveCombatRoundSpy = jest
+            .spyOn(
+                harness.handler as unknown as {
+                    resolveCombatRound: (gameSession: GameSession, handlerContext: GamePlayHandlerContext) => void;
+                },
+                'resolveCombatRound',
+            )
+            .mockImplementation(() => undefined);
+
+        harness.handler.handleRequestCombat(
+            { id: 'socket-1' } as unknown as Socket,
+            { roomId: 'ROOM1', defenderId: 'defender' },
+            harness.context,
+        );
+
+        const [, timeoutCallback] = harness.startCombatTimerSpy.mock.calls[0] as [
+            GameSession,
+            () => void,
+            (timeRemaining: number) => void,
+        ];
+        timeoutCallback();
+
+        expect(resolveCombatRoundSpy).toHaveBeenCalledWith(session, harness.context);
     });
 
     it('ne devrait rien faire si la session est introuvable lors de la demande de combat', () => {
@@ -131,11 +171,11 @@ describe('GamePlayCombatHandler - request/posture', () => {
 
         harness.handler.handlePostureChosen(
             { id: 'socket-1' } as unknown as Socket,
-            { roomId: 'ROOM1', posture: COMBAT_POSTURE.OFFENSIVE },
+            { roomId: 'ROOM1', posture: CombatPosture.OFFENSIVE },
             harness.context,
         );
 
-        expect(session.activeCombat.attackerPosture).toBe(COMBAT_POSTURE.OFFENSIVE);
+        expect(session.activeCombat.attackerPosture).toBe(CombatPosture.OFFENSIVE);
         expect(harness.stopCombatTimerSpy).not.toHaveBeenCalled();
         expect(resolveCombatRoundSpy).not.toHaveBeenCalled();
     });
@@ -145,7 +185,7 @@ describe('GamePlayCombatHandler - request/posture', () => {
 
         harness.handler.handlePostureChosen(
             { id: 'socket-1' } as unknown as Socket,
-            { roomId: 'ROOM1', posture: COMBAT_POSTURE.OFFENSIVE },
+            { roomId: 'ROOM1', posture: CombatPosture.OFFENSIVE },
             harness.context,
         );
 
@@ -154,7 +194,7 @@ describe('GamePlayCombatHandler - request/posture', () => {
 
         harness.handler.handlePostureChosen(
             { id: 'socket-inconnu' } as unknown as Socket,
-            { roomId: 'ROOM1', posture: COMBAT_POSTURE.OFFENSIVE },
+            { roomId: 'ROOM1', posture: CombatPosture.OFFENSIVE },
             harness.context,
         );
 
@@ -170,7 +210,7 @@ describe('GamePlayCombatHandler - request/posture', () => {
             defenderId: 'defender',
             initiatorId: 'attacker',
             roundNumber: 1,
-            attackerPosture: COMBAT_POSTURE.OFFENSIVE,
+            attackerPosture: CombatPosture.OFFENSIVE,
             attackerHp: DEFAULT_LIFE,
             defenderHp: DEFAULT_LIFE,
         };
@@ -188,11 +228,11 @@ describe('GamePlayCombatHandler - request/posture', () => {
 
         harness.handler.handlePostureChosen(
             { id: 'socket-2' } as unknown as Socket,
-            { roomId: 'ROOM1', posture: COMBAT_POSTURE.DEFENSIVE },
+            { roomId: 'ROOM1', posture: CombatPosture.DEFENSIVE },
             harness.context,
         );
 
-        expect(session.activeCombat.defenderPosture).toBe(COMBAT_POSTURE.DEFENSIVE);
+        expect(session.activeCombat.defenderPosture).toBe(CombatPosture.DEFENSIVE);
         expect(harness.stopCombatTimerSpy).toHaveBeenCalledWith('ROOM1');
         expect(resolveCombatRoundSpy).toHaveBeenCalledWith(session, harness.context);
     });

@@ -3,6 +3,7 @@ import { CombatParticipants } from '@app/services/game-session/combat/combat-typ
 import { Character } from '@common/character';
 import { Dice } from '@common/dice';
 import { Player } from '@common/player';
+import { TeamId } from '@common/team';
 import { CombatRequestValidatorService } from './combat-request-validator.service';
 
 const DEFAULT_LIFE = 6;
@@ -237,12 +238,12 @@ describe('CombatRequestValidatorService', () => {
                 id: 'attacker',
                 remainingActions: 1,
                 position: { x: 1, y: 1 },
-                team: 'team1',
+                team: TeamId.Team1,
             }),
             defender: createCharacter({
                 id: 'defender',
                 position: { x: 2, y: 1 },
-                team: 'team1',
+                team: TeamId.Team1,
             }),
             requestingPlayer: createPlayer('socket-1', createCharacter({ id: 'attacker' })),
         };
@@ -256,12 +257,12 @@ describe('CombatRequestValidatorService', () => {
                 id: 'attacker',
                 remainingActions: 1,
                 position: { x: 1, y: 1 },
-                team: 'team1',
+                team: TeamId.Team1,
             }),
             defender: createCharacter({
                 id: 'defender',
                 position: { x: 2, y: 1 },
-                team: 'team2',
+                team: TeamId.Team2,
             }),
             requestingPlayer: createPlayer('socket-1', createCharacter({ id: 'attacker' })),
         };
@@ -275,7 +276,7 @@ describe('CombatRequestValidatorService', () => {
                 id: 'attacker',
                 remainingActions: 1,
                 position: { x: 1, y: 1 },
-                team: 'team1',
+                team: TeamId.Team1,
             }),
             defender: createCharacter({
                 id: 'defender',

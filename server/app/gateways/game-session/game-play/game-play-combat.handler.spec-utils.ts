@@ -1,8 +1,8 @@
 import { GameSession } from '@app/domain/game-session';
-import { GamePlayHandlerContext } from '@app/gateways/game-session/game-play/game-play-handler.context';
-import { CombatEndService } from '@app/services/game-session/combat/combat-end.service';
-import { CombatRequestValidatorService } from '@app/services/game-session/combat/combat-request-validator.service';
-import { CombatRoundService } from '@app/services/game-session/combat/combat-round.service';
+import { GamePlayHandlerContext } from '@app/interfaces/game-play-handler';
+import { CombatEndService } from '@app/services/game-session/combat/combat-end/combat-end.service';
+import { CombatRoundService } from '@app/services/game-session/combat/request-round/combat-round.service';
+import { CombatRequestValidatorService } from '@app/services/game-session/combat/request-validator/combat-request-validator.service';
 import { GameSessionService } from '@app/services/game-session/game-session/game-session.service';
 import { TurnManagementService } from '@app/services/game-session/turn-management.service';
 import { Character } from '@common/character';

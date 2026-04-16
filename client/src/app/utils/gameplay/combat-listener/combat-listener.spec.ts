@@ -1,16 +1,16 @@
 ﻿import { signal, WritableSignal } from '@angular/core';
 import { GameSession } from '@app/interfaces/game-session';
-import { CombatSocketService } from '@app/services/communication/game-session-socket/combat/combat-socket.service';
+import { CombatSocketService } from '@app/services/communication/game-session-socket/combat-socket.service';
 import { GamePlaySocketService } from '@app/services/communication/game-session-socket/game-play-socket.service';
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
 import { SocketService } from '@app/services/communication/socket/socket.service';
+import { setupCombatListeners } from '@app/utils/gameplay-listeners/combat-listener';
 import { Character } from '@common/character';
-import { ActiveCombat, CombatRoundResolvedPayload } from '@common/combat';
+import { ActiveCombat, CombatPosture, CombatRoundResolvedPayload } from '@common/combat';
 import { Dice } from '@common/dice';
 import { CombatEvents } from '@common/game.events';
 import { Player } from '@common/player';
 import { Position } from '@common/position';
-import { setupCombatListeners } from './combat-listener';
 
 type ListenerCallback<T> = (payload: T) => void;
 
@@ -200,8 +200,8 @@ describe('setupCombatListeners', () => {
             defenderId: 'player-2',
             initiatorId: 'player-1',
             roundNumber: 1,
-            attackerPosture: 'offensive',
-            defenderPosture: 'defensive',
+            attackerPosture: CombatPosture.OFFENSIVE,
+            defenderPosture: CombatPosture.DEFENSIVE,
             attackerHp: DEFAULT_LIFE,
             defenderHp: DEFAULT_LIFE,
         });
@@ -210,8 +210,8 @@ describe('setupCombatListeners', () => {
             roundNumber: 2,
             attackerId: 'player-1',
             defenderId: 'player-2',
-            attackerChoice: 'offensive',
-            defenderChoice: 'defensive',
+            attackerChoice: CombatPosture.OFFENSIVE,
+            defenderChoice: CombatPosture.DEFENSIVE,
             attackerStrike: {
                 attack: { base: DEFAULT_ATTACK, postureBonus: 2, dice: DEFAULT_ATTACK, tilePenalty: 0, total: 10 },
                 defense: { base: DEFAULT_DEFENSE, postureBonus: 0, dice: 2, tilePenalty: 0, total: DEFAULT_LIFE },
@@ -245,8 +245,8 @@ describe('setupCombatListeners', () => {
             roundNumber: 1,
             attackerId: 'player-1',
             defenderId: 'player-2',
-            attackerChoice: 'none',
-            defenderChoice: 'none',
+            attackerChoice: CombatPosture.NONE,
+            defenderChoice: CombatPosture.NONE,
             attackerStrike: {
                 attack: { base: DEFAULT_ATTACK, postureBonus: 0, dice: 1, tilePenalty: 0, total: 5 },
                 defense: { base: DEFAULT_DEFENSE, postureBonus: 0, dice: 1, tilePenalty: 0, total: 5 },

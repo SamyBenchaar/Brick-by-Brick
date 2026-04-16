@@ -1,12 +1,11 @@
 ﻿import { GameSession } from '@app/domain/game-session';
 import { GameSessionService } from '@app/services/game-session/game-session/game-session.service';
-import { CombatEndService } from './combat-end.service';
 import { Character } from '@common/character';
-import { ActiveCombat } from '@common/combat';
+import { ActiveCombat, CombatOutcome } from '@common/combat';
 import { Dice } from '@common/dice';
 import { DoorState, TileType } from '@common/map';
 import { Player } from '@common/player';
-import { Position } from '@common/position';
+import { CombatEndService } from './combat-end.service';
 
 const DEFAULT_LIFE = 6;
 const DEFAULT_ATTACK = 4;
@@ -107,7 +106,7 @@ describe('CombatEndService', () => {
             attacker,
             defender,
             createCombat({ attackerHp: 4, defenderHp: 0 }),
-            'attacker',
+            CombatOutcome.ATTACKER,
         );
 
         expect(result.winner?.id).toBe('attacker');
@@ -146,7 +145,7 @@ describe('CombatEndService', () => {
             attacker,
             defender,
             createCombat({ attackerHp: DEFAULT_LIFE, defenderHp: 0 }),
-            'attacker',
+            CombatOutcome.ATTACKER,
         );
 
         expect(findNearestFreeTileSpy).toHaveBeenCalledWith(gameSession, occupiedStart);
@@ -176,7 +175,7 @@ describe('CombatEndService', () => {
             attacker,
             defender,
             createCombat({ attackerHp: 0, defenderHp: 0 }),
-            'draw',
+            CombatOutcome.DRAW,
         );
 
         expect(result.winner).toBeNull();
@@ -210,7 +209,7 @@ describe('CombatEndService', () => {
             attacker,
             defender,
             createCombat({ attackerHp: 0, defenderHp: 3 }),
-            'defender',
+            CombatOutcome.DEFENDER,
         );
 
         expect(result.winner?.id).toBe('defender');
@@ -236,7 +235,7 @@ describe('CombatEndService', () => {
             attacker,
             defender,
             createCombat({ attackerHp: DEFAULT_LIFE, defenderHp: 0 }),
-            'attacker',
+            CombatOutcome.ATTACKER,
         );
 
         expect(defender.position).toEqual({ x: 2, y: 1 });
@@ -275,7 +274,7 @@ describe('CombatEndService', () => {
             attacker,
             defender,
             createCombat({ attackerHp: DEFAULT_LIFE, defenderHp: 0 }),
-            'attacker',
+            CombatOutcome.ATTACKER,
         );
 
         expect(gameSession.dropFlag).toHaveBeenCalledWith({ x: 3, y: 1 });
@@ -300,7 +299,7 @@ describe('CombatEndService', () => {
             attacker,
             defender,
             createCombat({ attackerHp: DEFAULT_LIFE, defenderHp: 0 }),
-            'attacker',
+            CombatOutcome.ATTACKER,
         );
 
         expect(gameSession.dropFlag).not.toHaveBeenCalled();
@@ -323,7 +322,7 @@ describe('CombatEndService', () => {
             attacker,
             defender,
             createCombat({ attackerHp: DEFAULT_LIFE, defenderHp: 0 }),
-            'attacker',
+            CombatOutcome.ATTACKER,
         );
 
         expect(gameSession.dropFlag).not.toHaveBeenCalled();

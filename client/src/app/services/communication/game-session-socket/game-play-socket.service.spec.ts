@@ -1,18 +1,21 @@
 ﻿import { signal, WritableSignal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Tile } from '@app/classes/tile/tile';
+import { InteractionMode } from '@app/constants/game-play.constants';
 import { Game } from '@app/interfaces/game';
 import { GameSession } from '@app/interfaces/game-session';
-import { CombatSocketService } from '@app/services/communication/game-session-socket/combat/combat-socket.service';
+import { CombatSocketService } from '@app/services/communication/game-session-socket/combat-socket.service';
 import { GamePlaySocketService } from '@app/services/communication/game-session-socket/game-play-socket.service';
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
 import { SocketService } from '@app/services/communication/socket/socket.service';
 import { Character } from '@common/character';
+import { CombatPosture } from '@common/combat';
 import { Dice } from '@common/dice';
 import { CombatEvents, GameSessionEvents } from '@common/game.events';
 import { ObjectType, TileType } from '@common/map';
 import { Player } from '@common/player';
 import { Position } from '@common/position';
+import { TeamId } from '@common/team';
 
 const DEFAULT_ROOM_ID = 'ROOM1';
 const DEFAULT_LIFE = 6;
@@ -25,6 +28,37 @@ const DEFAULT_REMAINING_MOVEMENT = 3;
 const DEFAULT_REMAINING_ACTIONS = 1;
 const DEFAULT_TURN_TIME = 30;
 const MAP_SIZE = '10x10';
+
+/**
+ * Stratégie de test pour GamePlaySocketService:
+ *
+ * 1. Émissions socket orientées actions:
+ *    vérifier que les intents utilisateur émettent les bons événements/payloads
+ *    (`RequestCombat`, `SubmitCombatPosture`, `RequestInteract`, `EndTurnRequest`).
+ *    Vérifier aussi le cas limite `roomId` absent: aucune émission ne doit partir.
+ *
+ * 2. Garde "combat actif":
+ *    confirmer que les actions incompatibles avec un combat en cours
+ *    (demander un combat, interagir, terminer le tour) sont bloquées.
+ *
+ * 3. Règles métier d'attaque:
+ *    valider `canAttackTarget` selon l'adjacence, le tour courant et les équipes
+ *    (incluant la contrainte allié interdit en mode CTF),
+ *    ainsi que les cas limites cible nulle et attaque hors tour.
+ *
+ * 4. Règles métier d'interaction carte:
+ *    valider `canInteractWithTarget` pour les portes et sanctuaires,
+ *    incluant les cas limites (porte avec drapeau, cooldown/bonus de sanctuaire).
+ *
+ * 5. Fiabilité des préconditions locales:
+ *    stabiliser les tests avec des états contrôlés (session, map, joueur courant, roomId)
+ *    afin d'isoler chaque règle et éviter les faux positifs.
+ * Cas limites couverts:
+ * - roomId absent: aucune emission sur RequestCombat/SubmitCombatPosture/RequestInteract/EndTurnRequest.
+ * - cible d'attaque nulle ou hors tour.
+ * - porte sur position du drapeau (interaction refusee).
+ * - interaction et fin de tour bloquees en combat actif.
+ */
 
 function createCharacter(overrides: Partial<Character> = {}): Character {
     return {
@@ -121,16 +155,23 @@ function createGameSession(
     };
 }
 
+
 describe('GamePlaySocketService', () => {
     let service: GamePlaySocketService;
     let socketServiceSpy: jasmine.SpyObj<SocketService>;
     let currentSessionSignal: WritableSignal<GameSession | null>;
+    let gameSessionSocketServiceMock: {
+        getRoomId: jasmine.Spy;
+        getSocketId: jasmine.Spy;
+        currentSession: WritableSignal<GameSession | null>;
+        isCurrentUserHost: jasmine.Spy;
+    };
 
     const currentPlayer = createCharacter({
         id: 'player-1',
         name: 'Attacker',
         avatarId: 1,
-        team: 'team1',
+        team: TeamId.Team1,
         position: { x: 1, y: 1 },
     });
 
@@ -138,7 +179,7 @@ describe('GamePlaySocketService', () => {
         id: 'player-2',
         name: 'Defender',
         avatarId: 2,
-        team: 'team2',
+        team: TeamId.Team2,
         position: { x: 2, y: 1 },
     });
 
@@ -146,7 +187,7 @@ describe('GamePlaySocketService', () => {
         id: 'player-3',
         name: 'Ally',
         avatarId: 3,
-        team: 'team1',
+        team: TeamId.Team1,
         position: { x: 2, y: 1 },
     });
 
@@ -172,7 +213,7 @@ describe('GamePlaySocketService', () => {
             ]),
         );
 
-        const gameSessionSocketServiceMock = {
+        gameSessionSocketServiceMock = {
             getRoomId: jasmine.createSpy('getRoomId').and.returnValue(DEFAULT_ROOM_ID),
             getSocketId: jasmine.createSpy('getSocketId').and.returnValue('socket-1'),
             currentSession: currentSessionSignal,
@@ -213,16 +254,34 @@ describe('GamePlaySocketService', () => {
     });
 
     it('devrait émettre la posture choisie', () => {
-        service.chooseCombatPosture('offensive');
+        service.chooseCombatPosture(CombatPosture.OFFENSIVE);
 
         expect(socketServiceSpy.emit).toHaveBeenCalledWith(CombatEvents.SubmitCombatPosture, {
             roomId: DEFAULT_ROOM_ID,
-            posture: 'offensive',
+            posture: CombatPosture.OFFENSIVE,
         });
+    });
+
+    it('ne devrait pas émettre la posture choisie si roomId est absent', () => {
+        gameSessionSocketServiceMock.getRoomId.and.returnValue(undefined);
+
+        service.chooseCombatPosture(CombatPosture.OFFENSIVE);
+
+        expect(socketServiceSpy.emit).not.toHaveBeenCalledWith(CombatEvents.SubmitCombatPosture, jasmine.anything());
     });
 
     it('devrait permettre d’attaquer une cible adjacente ennemie pendant son tour', () => {
         expect(service.canAttackTarget(defender)).toBeTrue();
+    });
+
+    it('ne devrait pas permettre d’attaquer si la cible est nulle', () => {
+        expect(service.canAttackTarget(null)).toBeFalse();
+    });
+
+    it('ne devrait pas permettre d engager une attaque automatique hors de son tour', () => {
+        service.currentPlayerTurn.set('player-2');
+
+        expect(service.canCurrentPlayerAttack()).toBeFalse();
     });
 
     it('ne devrait pas permettre d’attaquer un allié en mode CTF', () => {
@@ -264,19 +323,27 @@ describe('GamePlaySocketService', () => {
     it('ne devrait pas émettre RequestInteract pendant un combat actif', () => {
         combatSocketServiceMock.activeCombat.set({ attackerId: 'player-1', defenderId: 'player-2' });
 
-        service.requestInteract({ x: 2, y: 1 }, 'normal');
+        service.requestInteract({ x: 2, y: 1 }, InteractionMode.Normal);
 
         expect(socketServiceSpy.emit).not.toHaveBeenCalledWith(GameSessionEvents.RequestInteract, jasmine.anything());
     });
 
     it('devrait émettre RequestInteract pour une interaction valide hors combat', () => {
-        service.requestInteract({ x: 2, y: 1 }, 'normal');
+        service.requestInteract({ x: 2, y: 1 }, InteractionMode.Normal);
 
         expect(socketServiceSpy.emit).toHaveBeenCalledWith(GameSessionEvents.RequestInteract, {
             roomId: DEFAULT_ROOM_ID,
             position: { x: 2, y: 1 },
-            mode: 'normal',
+            mode: InteractionMode.Normal,
         });
+    });
+
+    it('ne devrait pas émettre RequestInteract si roomId est absent', () => {
+        gameSessionSocketServiceMock.getRoomId.and.returnValue(undefined);
+
+        service.requestInteract({ x: 2, y: 1 }, InteractionMode.Normal);
+
+        expect(socketServiceSpy.emit).not.toHaveBeenCalledWith(GameSessionEvents.RequestInteract, jasmine.anything());
     });
 
     it('ne devrait pas émettre EndTurnRequest pendant un combat actif', () => {
@@ -285,6 +352,30 @@ describe('GamePlaySocketService', () => {
         service.endTurn();
 
         expect(socketServiceSpy.emit).not.toHaveBeenCalledWith(GameSessionEvents.EndTurnRequest, jasmine.anything());
+    });
+
+    it('devrait émettre EndTurnRequest hors combat', () => {
+        service.endTurn();
+
+        expect(socketServiceSpy.emit).toHaveBeenCalledWith(GameSessionEvents.EndTurnRequest, {
+            roomId: DEFAULT_ROOM_ID,
+        });
+    });
+
+    it('ne devrait pas émettre EndTurnRequest si roomId est absent', () => {
+        gameSessionSocketServiceMock.getRoomId.and.returnValue(undefined);
+
+        service.endTurn();
+
+        expect(socketServiceSpy.emit).not.toHaveBeenCalledWith(GameSessionEvents.EndTurnRequest, jasmine.anything());
+    });
+
+    it('ne devrait pas émettre RequestCombat si roomId est absent', () => {
+        gameSessionSocketServiceMock.getRoomId.and.returnValue(undefined);
+
+        service.requestCombat('player-2');
+
+        expect(socketServiceSpy.emit).not.toHaveBeenCalledWith(CombatEvents.RequestCombat, jasmine.anything());
     });
 
     it('devrait permettre d’interagir avec un sanctuaire de combat si le joueur peut agir et qu’il n’a pas déjà le bonus', () => {
