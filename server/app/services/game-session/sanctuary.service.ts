@@ -31,4 +31,14 @@ export class SanctuaryService {
         }
     }
 
+    isSanctuaryOnCooldown(tile: MapTile, tiles: MapTile[][]): boolean {
+        const origin = tile.sanctuaryOrigin;
+        if (!origin) return false;
+
+        const originTile = tiles[origin.y]?.[origin.x];
+        if (!originTile) return false;
+
+        return (originTile.sanctuaryCooldown ?? 0) > 0;
+    }
+
 }

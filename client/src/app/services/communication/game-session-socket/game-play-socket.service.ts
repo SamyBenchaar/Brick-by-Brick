@@ -305,7 +305,6 @@ export class GamePlaySocketService {
         const currentPlayer = this.getCurrentPlayerCharacter();
         if (!currentPlayer || !target) return false;
 
-        // Disable if there's a pending flag transfer request to this target
         if (this.pendingFlagTransfers.has(target.id)) return false;
 
         const canTransfer = (currentPlayer.hasFlag === true && target.hasFlag === false) ||

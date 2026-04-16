@@ -11,14 +11,15 @@ import { GameService } from '@app/services/game/game.service';
 import { getGameSizeConfig } from '@app/utils/game-config.utils';
 import { Character } from '@common/character';
 import { AVATAR_IDS } from '@common/constants/avatar-constants';
+import { GameModeValue } from '@common/constants/game-config-constants';
 import { VIRTUAL_PLAYER_ID_PREFIX, VIRTUAL_PLAYER_NAMES } from '@common/constants/virtual-player-constants';
 import { Dice } from '@common/dice';
+import { ObjectType } from '@common/map';
 import { Player } from '@common/player';
 import { Position } from '@common/position';
 import { SessionStatus } from '@common/session.status';
 import { VirtualPlayerProfile } from '@common/virtual.player.profile';
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
-import { GameModeValue } from '@common/constants/game-config-constants';
 
 const BASE_LIFE = 6;
 const BASE_SPEED = 6;
@@ -252,8 +253,9 @@ export class GameSessionService {
         const canMove = this.canCurrentPlayerMove(gameSession);
         const canInteract = this.canCurrentPlayerInteract(gameSession, currentPlayer);
         const canFight = this.canCurrentPlayerFight(gameSession, currentPlayer);
+        const canTransferOrRequestFlag = this.canCurrentPlayerTransferOrRequestFlag(gameSession, currentPlayer);
 
-        return canMove || canInteract || canFight;
+        return canMove || canInteract || canFight || canTransferOrRequestFlag;
     }
 
     private canCurrentPlayerMove(gameSession: GameSession): boolean {
@@ -266,8 +268,16 @@ export class GameSessionService {
         if (!hasRemainingActions) {
             return false;
         }
+        const isDoorAdjacent = this.movementService.isDoorAdjacent(currentPlayer.position, gameSession);
+        const isSanctuaryAdjacent = this.movementService.isSanctuaryAdjacent(currentPlayer.position, gameSession);
 
-        return this.movementService.isDoorAdjacent(currentPlayer.position, gameSession);
+        const map = gameSession.getMapCopy()?.tiles;
+        const tile = map[currentPlayer.position.y]?.[currentPlayer.position.x];
+
+        const canUseSanctuary = !this.sanctuaryService.isSanctuaryOnCooldown(tile, map);
+        const canInteractWithSanctuary = isSanctuaryAdjacent && canUseSanctuary;
+
+        return isDoorAdjacent || canInteractWithSanctuary;
     }
 
     private canCurrentPlayerFight(gameSession: GameSession, currentPlayer: Character): boolean {
@@ -275,6 +285,23 @@ export class GameSessionService {
         return adjacentPlayers.some((adjacentPlayer) =>
             this.combatService.canFight(currentPlayer, adjacentPlayer, gameSession),
         );
+    }
+
+    private canCurrentPlayerTransferOrRequestFlag(gameSession: GameSession, currentPlayer: Character): boolean {
+        if (gameSession.gameMode !== GameModeValue.Ctf) return false;
+        if ((currentPlayer.remainingActions ?? 0) <= 0) return false;
+
+        const adjacentPlayers = this.movementService.getAdjacentPlayers(gameSession, currentPlayer.position);
+        for (const adjacentPlayer of adjacentPlayers) {
+            if (adjacentPlayer.team === currentPlayer.team) {
+                const currentHasFlag = currentPlayer.hasFlag;
+                const adjacentHasFlag = adjacentPlayer.hasFlag;
+                if ((currentHasFlag && !adjacentHasFlag) || (!currentHasFlag && adjacentHasFlag)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     removePlayer(roomId: string, playerId: string): void {
