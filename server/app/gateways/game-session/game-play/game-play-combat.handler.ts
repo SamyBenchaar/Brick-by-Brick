@@ -95,7 +95,7 @@ export class GamePlayCombatHandler {
             this.initiateActiveCombat(gameSession, defenderId, attacker, context);
             context.logService.log(gameSession.roomId, `Début de combat: ${attacker.name} attaque ${defender.name}`);
         } catch (error) {
-            this.logger.error(`Combat error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            this.logger.error(`Combat error: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
         }
     }
     private initiateActiveCombat(
