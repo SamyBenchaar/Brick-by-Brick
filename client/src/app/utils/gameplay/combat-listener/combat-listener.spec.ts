@@ -168,7 +168,6 @@ describe('setupCombatListeners', () => {
         expect(callbacks.has(CombatEvents.CombatTurnTimeUpdate)).toBeTrue();
         expect(callbacks.has(CombatEvents.CombatRoundResolved)).toBeTrue();
         expect(callbacks.has(CombatEvents.CombatResult)).toBeTrue();
-        expect(callbacks.has(CombatEvents.CombatEnded)).toBeTrue();
     });
 
     it('devrait initialiser le combat et vider les cases atteignables au démarrage', () => {
@@ -232,7 +231,7 @@ describe('setupCombatListeners', () => {
         expect(combatSocketServiceMock.activeCombat()?.defenderPosture).toBeUndefined();
     });
 
-    it('devrait vider l’état local à la fin du combat', () => {
+    it('devrait vider l’état local à la réception de CombatResult', () => {
         combatSocketServiceMock.activeCombat.set({
             attackerId: 'player-1',
             defenderId: 'player-2',
@@ -262,7 +261,19 @@ describe('setupCombatListeners', () => {
         });
         combatSocketServiceMock.combatTurnTimeRemaining.set(3);
 
-        getCallback<void>(CombatEvents.CombatEnded)(undefined);
+        getCallback<{
+            winner: string;
+            loser: string;
+            attackerVictories: number;
+            defenderNewPosition: Position;
+            remainingActions: number;
+        }>(CombatEvents.CombatResult)({
+            winner: 'player-1',
+            loser: 'player-2',
+            attackerVictories: 1,
+            defenderNewPosition: { x: 3, y: 3 },
+            remainingActions: 0,
+        });
 
         expect(reachableTilesSignal()).toEqual([]);
         expect(combatSocketServiceMock.activeCombat()).toBeNull();

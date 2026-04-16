@@ -1,4 +1,6 @@
 import { signal } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
+import { Game } from '@app/interfaces/game';
 import { GameSession } from '@app/interfaces/game-session';
 import { CombatSocketService } from '@app/services/communication/game-session-socket/combat-socket.service';
 import { FlagTransferSocketService } from '@app/services/communication/game-session-socket/flag-transfer-socket.service';
@@ -6,7 +8,7 @@ import { GamePlaySocketService } from '@app/services/communication/game-session-
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
 import { handleCombatResult, handleTurnEnded } from '@app/utils/gameplay-listeners/gameplay-listeners-helper.service';
 import { Character } from '@common/character';
-import { CombatOutcome, CombatResultPayload } from '@common/combat';
+import { ActiveCombat, CombatOutcome, CombatResultPayload, CombatRoundResolvedPayload } from '@common/combat';
 import { Dice } from '@common/dice';
 
 const DEFAULT_LIFE = 6;
@@ -60,73 +62,79 @@ function createCharacter(overrides: Partial<Character> = {}): Character {
  * - Non implication: "ne devrait pas notifier si le joueur courant..."
  */
 describe('gameplay-listeners-helper', () => {
-    let service: unknown;
-    let dialog: unknown;
-    let flagTransferService: unknown;
-    let gameSessionSocketService: unknown;
-    let combatSocketService: unknown;
+    type GamePlaySocketServiceMock = Pick<
+        GamePlaySocketService,
+        | 'currentPlayerTurn'
+        | 'reachableTiles'
+        | 'mapCopy'
+        | 'respondToFlagTransfer'
+        | 'clearAllPendingFlagTransferRequests'
+        | 'currentSession'
+        | 'getCurrentPlayerCharacter'
+    > & {
+        respondToFlagTransfer: jasmine.Spy;
+        clearAllPendingFlagTransferRequests: jasmine.Spy;
+        currentSession: jasmine.Spy;
+        getCurrentPlayerCharacter: jasmine.Spy;
+    };
+
+    let service: GamePlaySocketServiceMock;
+    let dialog: jasmine.SpyObj<MatDialog>;
+    let flagTransferService: jasmine.SpyObj<FlagTransferSocketService>;
+    let gameSessionSocketService: Pick<GameSessionSocketService, 'currentSession'>;
+    let combatSocketService: Pick<
+        CombatSocketService,
+        'activeCombat' | 'latestRound' | 'combatTurnTimeRemaining' | 'showCombatNotification'
+    > & { showCombatNotification: jasmine.Spy };
 
     beforeEach(() => {
         service = {
             currentPlayerTurn: signal<string | null>('player-1'),
             reachableTiles: signal([{ x: 9, y: 9 }]),
-            mapCopy: signal<unknown>({
+            mapCopy: signal<Game | null>({
                 mapConfig: {
                     tiles: [
                         [{ sanctuaryCooldown: 2 }, { sanctuaryCooldown: 1 }, { sanctuaryCooldown: 0 }],
                     ],
                 },
-            }),
-            pendingFlagTransferTimeouts: new Map<string, ReturnType<typeof setTimeout>>(),
-            pendingFlagTransfers: new Map<string, unknown>(),
+            } as Game),
             respondToFlagTransfer: jasmine.createSpy('respondToFlagTransfer'),
             clearAllPendingFlagTransferRequests: jasmine.createSpy('clearAllPendingFlagTransferRequests'),
             currentSession: jasmine.createSpy('currentSession'),
             getCurrentPlayerCharacter: jasmine.createSpy('getCurrentPlayerCharacter'),
         };
 
-        service.clearAllPendingFlagTransferRequests.and.callFake(() => {
-            service.pendingFlagTransferTimeouts.clear();
-            service.pendingFlagTransfers.clear();
-        });
-
-        const timeoutId = setTimeout(() => undefined, 1000);
-        service.pendingFlagTransferTimeouts.set('p1', timeoutId);
-        service.pendingFlagTransfers.set('p1', { foo: 'bar' });
-
         const sanctuaryDialogCloseSpy = jasmine.createSpy('sanctuaryDialogClose');
-        dialog = {
-            getDialogById: jasmine.createSpy('getDialogById').and.returnValue({ close: sanctuaryDialogCloseSpy }),
-        };
+        dialog = jasmine.createSpyObj<MatDialog>('MatDialog', ['getDialogById']);
+        dialog.getDialogById.and.returnValue({ close: sanctuaryDialogCloseSpy } as never);
 
         const pendingDialogCloseSpy = jasmine.createSpy('pendingDialogClose');
-        flagTransferService = {
-            getPendingFlagTransferDialogs: jasmine.createSpy('getPendingFlagTransferDialogs').and.returnValue(
-                [
-                    ['p1', { fromPlayerId: 'from-1', dialogRef: { close: pendingDialogCloseSpy } }],
-                ],
-            ),
-            clearAllPendingFlagTransfers: jasmine.createSpy('clearAllPendingFlagTransfers'),
-        };
+        flagTransferService = jasmine.createSpyObj<FlagTransferSocketService>(
+            'FlagTransferSocketService',
+            ['getPendingFlagTransferDialogs', 'clearAllPendingFlagTransfers'],
+        );
+        flagTransferService.getPendingFlagTransferDialogs.and.returnValue([
+            ['p1', { fromPlayerId: 'from-1', dialogRef: { close: pendingDialogCloseSpy } } as never],
+        ]);
 
         gameSessionSocketService = {
             currentSession: signal<GameSession | null>(null),
         } as Pick<GameSessionSocketService, 'currentSession'>;
 
         combatSocketService = {
-            activeCombat: signal<unknown>({ attackerId: 'a', defenderId: 'b' }),
-            latestRound: signal<unknown>({ roundNumber: 1 }),
+            activeCombat: signal<ActiveCombat | null>({ attackerId: 'a', defenderId: 'b' } as ActiveCombat),
+            latestRound: signal<CombatRoundResolvedPayload | null>({ roundNumber: 1 } as CombatRoundResolvedPayload),
             combatTurnTimeRemaining: signal<number | null>(8),
             showCombatNotification: jasmine.createSpy('showCombatNotification'),
-        } as Partial<CombatSocketService>;
+        };
     });
 
     afterEach(() => {
-        service.pendingFlagTransferTimeouts.forEach((timeout: ReturnType<typeof setTimeout>) => clearTimeout(timeout));
+        flagTransferService.clearAllPendingFlagTransfers.calls.reset();
     });
 
     it('devrait nettoyer la fin de tour, fermer les dialogs en attente et decrementer les cooldowns', () => {
-        handleTurnEnded(service as GamePlaySocketService, dialog, flagTransferService as FlagTransferSocketService);
+        handleTurnEnded(service as unknown as GamePlaySocketService, dialog, flagTransferService as FlagTransferSocketService);
 
         expect(service.currentPlayerTurn()).toBeNull();
         expect(service.reachableTiles()).toEqual([]);
@@ -134,10 +142,13 @@ describe('gameplay-listeners-helper', () => {
         expect(service.respondToFlagTransfer).toHaveBeenCalledWith('from-1', false);
         expect(flagTransferService.clearAllPendingFlagTransfers).toHaveBeenCalled();
         expect(service.clearAllPendingFlagTransferRequests).toHaveBeenCalled();
-        expect(service.pendingFlagTransferTimeouts.size).toBe(0);
-        expect(service.pendingFlagTransfers.size).toBe(0);
 
         const updatedMap = service.mapCopy();
+        expect(updatedMap).not.toBeNull();
+        if (!updatedMap) {
+            fail('Map copy should be defined after turn end handling');
+            return;
+        }
         expect(updatedMap.mapConfig.tiles[0][0].sanctuaryCooldown).toBe(1);
         expect(updatedMap.mapConfig.tiles[0][1].sanctuaryCooldown).toBeUndefined();
         expect(updatedMap.mapConfig.tiles[0][2].sanctuaryCooldown).toBe(0);
@@ -181,9 +192,11 @@ describe('gameplay-listeners-helper', () => {
 
         handleCombatResult(
             payload,
-            service as GamePlaySocketService,
-            gameSessionSocketService as GameSessionSocketService,
-            combatSocketService as CombatSocketService,
+            {
+                gamePlaySocketService: service as unknown as GamePlaySocketService,
+                gameSessionSocketService: gameSessionSocketService as GameSessionSocketService,
+                combatSocketService: combatSocketService as unknown as CombatSocketService,
+            },
         );
 
         expect(service.reachableTiles()).toEqual([]);
@@ -227,9 +240,11 @@ describe('gameplay-listeners-helper', () => {
                 flagPosition: null,
                 flagHolderId: null,
             },
-            service as GamePlaySocketService,
-            gameSessionSocketService as GameSessionSocketService,
-            combatSocketService as CombatSocketService,
+            {
+                gamePlaySocketService: service as unknown as GamePlaySocketService,
+                gameSessionSocketService: gameSessionSocketService as GameSessionSocketService,
+                combatSocketService: combatSocketService as unknown as CombatSocketService,
+            },
         );
 
         expect(combatSocketService.showCombatNotification).toHaveBeenCalledWith('Le combat s\'est terminé par un match nul.');
@@ -258,9 +273,11 @@ describe('gameplay-listeners-helper', () => {
                 flagPosition: null,
                 flagHolderId: null,
             },
-            service as GamePlaySocketService,
-            gameSessionSocketService as GameSessionSocketService,
-            combatSocketService as CombatSocketService,
+            {
+                gamePlaySocketService: service as unknown as GamePlaySocketService,
+                gameSessionSocketService: gameSessionSocketService as GameSessionSocketService,
+                combatSocketService: combatSocketService as unknown as CombatSocketService,
+            },
         );
 
         expect(combatSocketService.showCombatNotification).not.toHaveBeenCalled();

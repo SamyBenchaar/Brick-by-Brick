@@ -3,6 +3,7 @@ import { GamePlayAbandonHandler } from '@app/gateways/game-session/game-play/gam
 import { GameSessionGateway } from '@app/gateways/game-session/game-session/game-session.gateway';
 import { GamePlayHandlerContext } from '@app/interfaces/game-play-handler';
 import { GameSessionService } from '@app/services/game-session/game-session/game-session.service';
+import { StartingPointService } from '@app/services/game-session/starting-point.service';
 import { LogService } from '@app/services/log/log.service';
 import { CombatEvents, GameSessionEvents } from '@common/game.events';
 import { Player } from '@common/player';
@@ -22,6 +23,7 @@ describe('GamePlayAbandonHandler', () => {
 
     let handler: GamePlayAbandonHandler;
     let mockGameSessionService: Record<string, jest.Mock>;
+    let mockStartingPointService: Record<string, jest.Mock>;
     let mockLogService: Record<string, jest.Mock>;
     let mockGameSessionGateway: Record<string, jest.Mock>;
 
@@ -53,6 +55,7 @@ describe('GamePlayAbandonHandler', () => {
                 attackerHp: 6,
                 defenderHp: 6,
             })),
+            getCharacterById: jest.fn((id: string) => players.find((p) => p.character.id === id)?.character ?? null),
             isPlayerInActiveCombat: jest.fn((playerId: string) => playerId === 'attacker' || playerId === 'defender'),
             clearActiveCombat: jest.fn(),
             dropFlag: jest.fn(),
@@ -123,10 +126,15 @@ describe('GamePlayAbandonHandler', () => {
             getGameSession: jest.fn(),
             removePlayer: jest.fn(),
             checkGameWinner: jest.fn(),
+            endCurrentTurn: jest.fn(),
         };
 
         mockLogService = {
             log: jest.fn(),
+        };
+
+        mockStartingPointService = {
+            getClosestAvailableTileForFlag: jest.fn(() => ({ x: 0, y: 0 })),
         };
 
         mockGameSessionGateway = {
@@ -143,10 +151,12 @@ describe('GamePlayAbandonHandler', () => {
             onGameEndCanceled: jest.fn(),
             onTurnEnd: jest.fn(),
             emitReachableTiles: jest.fn(),
+            resumeTurn: jest.fn(),
         } as unknown as GamePlayHandlerContext;
 
         handler = new GamePlayAbandonHandler(
             mockGameSessionService as unknown as GameSessionService,
+            mockStartingPointService as unknown as StartingPointService,
             mockLogService as unknown as LogService,
             mockGameSessionGateway as unknown as GameSessionGateway,
         );
@@ -172,6 +182,8 @@ describe('GamePlayAbandonHandler', () => {
         expect(roomEmitSpy).toHaveBeenCalledWith(CombatEvents.CombatEnded, {
             reason: 'playerLeft',
             abandonedPlayerId: 'attacker',
+            survivorId: 'defender',
+            survivorVictories: 1,
         });
         expect(roomEmitSpy).toHaveBeenCalledWith(
             GameSessionEvents.PlayerAbandoned,

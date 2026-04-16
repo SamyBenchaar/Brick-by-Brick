@@ -180,6 +180,7 @@ export function createCombatHandlerHarness(): CombatHandlerHarness {
         onGameEndCanceled: jest.fn(),
         onTurnEnd: jest.fn(),
         emitReachableTiles: jest.fn(),
+        resumeTurn: jest.fn(),
     };
 
     const handler = new GamePlayCombatHandler(

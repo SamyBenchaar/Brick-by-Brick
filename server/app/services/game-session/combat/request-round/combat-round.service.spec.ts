@@ -106,7 +106,7 @@ describe('CombatRoundService', () => {
             defenderPosture: CombatPosture.DEFENSIVE,
         });
 
-        const details = service.buildRoundDetails(gameSession, combat, attacker, defender);
+        const details = service.buildRoundDetails({ gameSession, combat, attacker, defender });
 
         expect(details.attackerAttackDetail).toEqual({
             base: DEFAULT_ATTACK,
@@ -141,7 +141,7 @@ describe('CombatRoundService', () => {
             defenderPosture: CombatPosture.NONE,
         });
 
-        const debugRound = service.buildRoundDetails(gameSession, combat, attacker, defender);
+        const debugRound = service.buildRoundDetails({ gameSession, combat, attacker, defender });
         expect(debugRound.attackerAttackDetail.dice).toBe(4);
         expect(debugRound.defenderAttackDetail.dice).toBe(1);
         expect(debugRound.attackerDefenseDetail.dice).toBe(6);
@@ -150,7 +150,7 @@ describe('CombatRoundService', () => {
         gameSession.isDebugModeActivated = false;
         const randomSpy = jest.spyOn(Math, 'random').mockReturnValue(0);
 
-        const normalRound = service.buildRoundDetails(gameSession, combat, attacker, defender);
+        const normalRound = service.buildRoundDetails({ gameSession, combat, attacker, defender });
 
         expect(normalRound.attackerAttackDetail.dice).toBe(1);
         expect(normalRound.defenderAttackDetail.dice).toBe(1);
@@ -175,15 +175,15 @@ describe('CombatRoundService', () => {
             defenseDice: Dice.D6,
         });
 
-        const details = service.buildRoundDetails(
+        const details = service.buildRoundDetails({
             gameSession,
-            createCombat({
+            combat: createCombat({
                 attackerPosture: CombatPosture.NONE,
                 defenderPosture: CombatPosture.NONE,
             }),
             attacker,
-            offMapDefender,
-        );
+            defender: offMapDefender,
+        });
 
         expect(details.attackerAttackDetail.tilePenalty).toBe(0);
         expect(details.defenderAttackDetail.tilePenalty).toBe(0);
@@ -205,7 +205,7 @@ describe('CombatRoundService', () => {
             damageToDefender: DEFAULT_ATTACK,
         };
 
-        service.applyRoundDamage(combat, roundDetails, attacker, defender);
+        service.applyRoundDamage({ combat, roundDetails, attacker, defender });
 
         expect(combat.attackerHp).toBe(0);
         expect(combat.defenderHp).toBe(0);

@@ -1,7 +1,7 @@
 import { signal, WritableSignal } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
-import { Tile } from '@app/interfaces/game';
+import { Game, Tile } from '@app/interfaces/game';
 import { GameSession } from '@app/interfaces/game-session';
 import { CombatSocketService } from '@app/services/communication/game-session-socket/combat-socket.service';
 import { FlagTransferSocketService } from '@app/services/communication/game-session-socket/flag-transfer-socket.service';
@@ -37,9 +37,29 @@ type ListenerCallback<T> = (payload: T) => void;
  * - Nettoyage post-combat: "devrait vider l etat de combat local..."
  */
 describe('setupGameplayEventListeners', () => {
+    type GamePlaySocketServiceMock = Pick<
+        GamePlaySocketService,
+        | 'turnStarting'
+        | 'currentPlayerTurn'
+        | 'reachableTiles'
+        | 'turnTimeRemaining'
+        | 'interTurnTimeRemaining'
+        | 'isDebugModeActivated'
+        | 'gameEnded'
+        | 'mapCopy'
+        | 'respondToFlagTransfer'
+        | 'getSocketId'
+        | 'getCurrentPlayerCharacter'
+        | 'currentSession'
+    > & {
+        respondToFlagTransfer: jasmine.Spy;
+        getSocketId: jasmine.Spy;
+        getCurrentPlayerCharacter: jasmine.Spy;
+    };
+
     const callbacks = new Map<string, ListenerCallback<unknown>>();
     let currentSessionSignal: WritableSignal<GameSession | null>;
-    let mapCopySignal: WritableSignal<{ mapConfig: { tiles: Tile[][] } }>;
+    let mapCopySignal: WritableSignal<Game>;
 
     const socketServiceMock = {
         on<T>(event: string, callback: ListenerCallback<T>): void {
@@ -53,16 +73,14 @@ describe('setupGameplayEventListeners', () => {
         endGameDelay: 10,
     } as unknown as GameSessionSocketService;
 
-    const gamePlaySocketServiceMock: unknown = {
+    const gamePlaySocketServiceMock: GamePlaySocketServiceMock = {
         turnStarting: signal(false),
         currentPlayerTurn: signal<string | null>(null),
-        reachableTiles: signal<unknown[]>([]),
-        turnTimeRemaining: signal<number | null>(null),
-        interTurnTimeRemaining: signal<number | null>(null),
+        reachableTiles: signal([] as { x: number; y: number }[]),
+        turnTimeRemaining: signal(0),
+        interTurnTimeRemaining: signal(0),
         isDebugModeActivated: signal(false),
         gameEnded: signal(false),
-        pendingFlagTransferTimeouts: new Map<string, ReturnType<typeof setTimeout>>(),
-        pendingFlagTransfers: new Map<string, unknown>(),
         respondToFlagTransfer: jasmine.createSpy('respondToFlagTransfer'),
         getSocketId: jasmine.createSpy('getSocketId').and.returnValue('socket-1'),
         getCurrentPlayerCharacter: jasmine.createSpy('getCurrentPlayerCharacter').and.callFake(() => {
@@ -70,7 +88,7 @@ describe('setupGameplayEventListeners', () => {
             return session?.players?.[0]?.character ?? null;
         }),
         currentSession: (): GameSession | null => currentSessionSignal(),
-        mapCopy: signal<{ mapConfig: { tiles: Tile[][] } }>({ mapConfig: { tiles: [] as Tile[][] } }),
+        mapCopy: signal<Game | null>(null),
     };
 
     const dialogMock = {
@@ -136,8 +154,15 @@ describe('setupGameplayEventListeners', () => {
             status: 'playing',
         } as unknown as GameSession);
 
-        mapCopySignal = signal({
+        mapCopySignal = signal<Game>({
+            _id: 'map-1',
+            name: 'Map test',
+            description: 'Map test',
+            isVisible: true,
+            numberOfPlayers: 2,
+            gameMode: 'classic',
             mapConfig: {
+                size: 'small',
                 tiles: [
                     [
                         { type: TileType.Base, object: { type: ObjectType.HealingSanctuary } } as unknown as Tile,
@@ -157,7 +182,7 @@ describe('setupGameplayEventListeners', () => {
         gamePlaySocketServiceMock.reachableTiles.set([]);
 
         setupGameplayEventListeners({
-            gamePlaySocketService: gamePlaySocketServiceMock as GamePlaySocketService,
+            gamePlaySocketService: gamePlaySocketServiceMock as unknown as GamePlaySocketService,
             gameSessionSocketService: gameSessionSocketServiceMock,
             socketService: socketServiceMock,
             router: routerMock,

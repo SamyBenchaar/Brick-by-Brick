@@ -101,13 +101,13 @@ describe('CombatEndService', () => {
             getMapCopy: jest.fn(() => null),
         } as unknown as GameSession;
 
-        const result = service.buildCombatEndState(
+        const result = service.buildCombatEndState({
             gameSession,
             attacker,
             defender,
-            createCombat({ attackerHp: 4, defenderHp: 0 }),
-            CombatOutcome.ATTACKER,
-        );
+            combat: createCombat({ attackerHp: 4, defenderHp: 0 }),
+            outcome: CombatOutcome.ATTACKER,
+        });
 
         expect(result.winner?.id).toBe('attacker');
         expect(result.loserIds).toEqual(['defender']);
@@ -140,13 +140,13 @@ describe('CombatEndService', () => {
             getMapCopy: jest.fn(() => null),
         } as unknown as GameSession;
 
-        service.buildCombatEndState(
+        service.buildCombatEndState({
             gameSession,
             attacker,
             defender,
-            createCombat({ attackerHp: DEFAULT_LIFE, defenderHp: 0 }),
-            CombatOutcome.ATTACKER,
-        );
+            combat: createCombat({ attackerHp: DEFAULT_LIFE, defenderHp: 0 }),
+            outcome: CombatOutcome.ATTACKER,
+        });
 
         expect(findNearestFreeTileSpy).toHaveBeenCalledWith(gameSession, occupiedStart);
         expect(defender.position).toEqual({ x: 4, y: 4 });
@@ -170,13 +170,13 @@ describe('CombatEndService', () => {
             getMapCopy: jest.fn(() => null),
         } as unknown as GameSession;
 
-        const result = service.buildCombatEndState(
+        const result = service.buildCombatEndState({
             gameSession,
             attacker,
             defender,
-            createCombat({ attackerHp: 0, defenderHp: 0 }),
-            CombatOutcome.DRAW,
-        );
+            combat: createCombat({ attackerHp: 0, defenderHp: 0 }),
+            outcome: CombatOutcome.DRAW,
+        });
 
         expect(result.winner).toBeNull();
         expect(result.loserIds).toEqual(['attacker', 'defender']);
@@ -204,13 +204,13 @@ describe('CombatEndService', () => {
             getMapCopy: jest.fn(() => null),
         } as unknown as GameSession;
 
-        const result = service.buildCombatEndState(
+        const result = service.buildCombatEndState({
             gameSession,
             attacker,
             defender,
-            createCombat({ attackerHp: 0, defenderHp: 3 }),
-            CombatOutcome.DEFENDER,
-        );
+            combat: createCombat({ attackerHp: 0, defenderHp: 3 }),
+            outcome: CombatOutcome.DEFENDER,
+        });
 
         expect(result.winner?.id).toBe('defender');
         expect(result.loserIds).toEqual(['attacker']);
@@ -230,13 +230,13 @@ describe('CombatEndService', () => {
             getMapCopy: jest.fn(() => null),
         } as unknown as GameSession;
 
-        service.buildCombatEndState(
+        service.buildCombatEndState({
             gameSession,
             attacker,
             defender,
-            createCombat({ attackerHp: DEFAULT_LIFE, defenderHp: 0 }),
-            CombatOutcome.ATTACKER,
-        );
+            combat: createCombat({ attackerHp: DEFAULT_LIFE, defenderHp: 0 }),
+            outcome: CombatOutcome.ATTACKER,
+        });
 
         expect(defender.position).toEqual({ x: 2, y: 1 });
         expect(findNearestFreeTileSpy).not.toHaveBeenCalled();
@@ -269,13 +269,13 @@ describe('CombatEndService', () => {
             dropFlag: jest.fn(),
         } as unknown as GameSession;
 
-        service.buildCombatEndState(
+        service.buildCombatEndState({
             gameSession,
             attacker,
             defender,
-            createCombat({ attackerHp: DEFAULT_LIFE, defenderHp: 0 }),
-            CombatOutcome.ATTACKER,
-        );
+            combat: createCombat({ attackerHp: DEFAULT_LIFE, defenderHp: 0 }),
+            outcome: CombatOutcome.ATTACKER,
+        });
 
         expect(gameSession.dropFlag).toHaveBeenCalledWith({ x: 3, y: 1 });
     });
@@ -294,13 +294,13 @@ describe('CombatEndService', () => {
             dropFlag: jest.fn(),
         } as unknown as GameSession;
 
-        service.buildCombatEndState(
+        service.buildCombatEndState({
             gameSession,
             attacker,
             defender,
-            createCombat({ attackerHp: DEFAULT_LIFE, defenderHp: 0 }),
-            CombatOutcome.ATTACKER,
-        );
+            combat: createCombat({ attackerHp: DEFAULT_LIFE, defenderHp: 0 }),
+            outcome: CombatOutcome.ATTACKER,
+        });
 
         expect(gameSession.dropFlag).not.toHaveBeenCalled();
     });
@@ -317,13 +317,13 @@ describe('CombatEndService', () => {
             dropFlag: jest.fn(),
         } as unknown as GameSession;
 
-        service.buildCombatEndState(
+        service.buildCombatEndState({
             gameSession,
             attacker,
             defender,
-            createCombat({ attackerHp: DEFAULT_LIFE, defenderHp: 0 }),
-            CombatOutcome.ATTACKER,
-        );
+            combat: createCombat({ attackerHp: DEFAULT_LIFE, defenderHp: 0 }),
+            outcome: CombatOutcome.ATTACKER,
+        });
 
         expect(gameSession.dropFlag).not.toHaveBeenCalled();
     });

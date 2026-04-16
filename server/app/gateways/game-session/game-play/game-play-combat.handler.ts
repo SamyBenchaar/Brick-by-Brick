@@ -28,10 +28,11 @@ export class GamePlayCombatHandler {
     @Inject(forwardRef(() => VirtualPlayerMechanicsService))
     private readonly virtualPlayerMechanicsService?: VirtualPlayerMechanicsService;
 
-    @Inject(VirtualPlayerService)
+    @Inject(forwardRef(() => VirtualPlayerService))
     private readonly virtualPlayerService: VirtualPlayerService;
 
     constructor(
+        @Inject(forwardRef(() => GameSessionService))
         private readonly gameSessionService: GameSessionService,
         private readonly turnManagementService: TurnManagementService,
         private readonly combatRequestValidatorService: CombatRequestValidatorService,
