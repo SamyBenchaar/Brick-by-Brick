@@ -29,13 +29,13 @@ export function formatCombatRoundLog(payload: CombatRoundResolvedPayload, attack
     const defenderDefenseLine = `Défense ${defender.name}: ${formatCombatLog(payload.defenderStrike.defense, 'defense')}`;
 
     const diffAttackVsDefenseTotal =
-        payload.attackerStrike.attack.total - payload.attackerStrike.defense.total;
+        payload.attackerStrike.attack.total - payload.defenderStrike.defense.total;
     const diffDefenseVsAttackTotal =
-        payload.defenderStrike.attack.total - payload.defenderStrike.defense.total;
+        payload.defenderStrike.attack.total - payload.attackerStrike.defense.total;
     const diffAttackVsDefense = `Différence attaque ${attacker.name} vs défense ${defender.name}: `
-        + `${payload.attackerStrike.attack.total} - ${payload.attackerStrike.defense.total} = ${diffAttackVsDefenseTotal}`;
+        + `${payload.attackerStrike.attack.total} - ${payload.defenderStrike.defense.total} = ${diffAttackVsDefenseTotal}`;
     const diffDefenseVsAttack = `Différence attaque ${defender.name} vs défense ${attacker.name}: `
-        + `${payload.defenderStrike.attack.total} - ${payload.defenderStrike.defense.total} = ${diffDefenseVsAttackTotal}\n`;
+        + `${payload.defenderStrike.attack.total} - ${payload.attackerStrike.defense.total} = ${diffDefenseVsAttackTotal}\n`;
 
     const attackerResult = payload.attackerStrike.damage > 0
         ? `${attacker.name} inflige ${payload.attackerStrike.damage} dégâts à ${defender.name}`
