@@ -42,7 +42,7 @@ export class CombatEndService {
             ? this.respawnDefeatedPlayer(gameSession, defender)
             : defender.position;
 
-        const turnShouldContinue = outcome === 'attacker' && (attacker.remainingMovement ?? 0) > 0;
+        const turnShouldContinue = outcome === CombatOutcome.ATTACKER && (attacker.remainingMovement ?? 0) > 0;
 
         return {
             attacker,
