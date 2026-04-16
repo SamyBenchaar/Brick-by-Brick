@@ -107,7 +107,7 @@ export class StartingPointService {
         const occupied = new Set(occupiedPositions.map((p) => `${p.x},${p.y}`));
         const centerKey = `${centerPoint.x},${centerPoint.y}`;
 
-        for (let distance = 1; distance <= mapConfig.tiles.length + mapConfig.tiles[0].length; distance++) {
+        for (let distance = 1; distance <= Math.max(mapConfig.tiles.length, mapConfig.tiles[0].length); distance++) {
             const candidates: Position[] = [];
 
             for (let y = 0; y < mapConfig.tiles.length; y++) {
@@ -129,9 +129,12 @@ export class StartingPointService {
                     }
 
                     const candidate = { x, y };
-                    const orthogonalDistance = this.calculateDistance(centerPoint, candidate);
+                    const chebyshevDistance = Math.max(
+                        Math.abs(centerPoint.x - candidate.x),
+                        Math.abs(centerPoint.y - candidate.y)
+                    );
 
-                    if (orthogonalDistance === distance) {
+                    if (chebyshevDistance === distance) {
                         candidates.push(candidate);
                     }
                 }
