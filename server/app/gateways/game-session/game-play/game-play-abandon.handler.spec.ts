@@ -179,12 +179,16 @@ describe('GamePlayAbandonHandler', () => {
         handler.handlePlayerAbandoned(socket, { roomId }, context);
 
         expect(session.clearActiveCombat).toHaveBeenCalled();
-        expect(roomEmitSpy).toHaveBeenCalledWith(CombatEvents.CombatEnded, {
-            reason: 'playerLeft',
-            abandonedPlayerId: 'attacker',
-            survivorId: 'defender',
-            survivorVictories: 1,
-        });
+        expect(roomEmitSpy).toHaveBeenCalledWith(
+            CombatEvents.CombatEnded,
+            expect.objectContaining({
+                reason: 'playerLeft',
+                abandonedPlayerId: 'attacker',
+                survivorId: 'defender',
+                survivorVictories: 1,
+                survivorLife: defender.character.life,
+            }),
+        );
         expect(roomEmitSpy).toHaveBeenCalledWith(
             GameSessionEvents.PlayerAbandoned,
             expect.objectContaining({ playerId: 'attacker' }),
