@@ -1,5 +1,6 @@
 import { Dice } from './dice';
 import { Position } from './position';
+import { TeamId } from './team';
 
 export interface Character {
   id: string;
@@ -23,11 +24,11 @@ export interface Character {
   startPosition?: Position;
   hasCombatSanctuaryBonus?: boolean;
   combatSanctuaryBonus?: number;
-  team?: 'team1' | 'team2';
+  team?: TeamId;
   hasFlag?: boolean;
-  defeats:number;
-  totalDamageDealt:number
-  totalDamageReceived:number
-  tilesVisited:number
+  defeats: number;
+  totalDamageDealt: number
+  totalDamageReceived: number
+  tilesVisited: number
 }
 

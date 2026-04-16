@@ -1,14 +1,10 @@
 import { GameSession } from '@app/domain/game-session';
+import { PathNode } from '@app/interfaces/path-node';
 import { KEY_DIRECTION_MAP } from '@common/constants/key-event.constants';
 import { ObjectType, TILE_COST, TileType } from '@common/map';
 import { Player } from '@common/player';
 import { Position } from '@common/position';
 import { Injectable } from '@nestjs/common';
-
-export interface PathNode {
-    cost: number;
-    from: Position | null;
-}
 
 @Injectable()
 export class VirtualPlayerPathfindingService {
@@ -47,7 +43,12 @@ export class VirtualPlayerPathfindingService {
 
     getMoveCost(session: GameSession, to: Position, bot: Player): number {
         const mapData = session.getMapCopy()?.tiles;
-        if (!mapData || to.y < 0 || to.y >= mapData.length || to.x < 0 || to.x >= mapData[0].length) {
+        if (!mapData) return Infinity;
+
+        const isYValid = to.y >= 0 && to.y < mapData.length;
+        const isXValid = to.x >= 0 && to.x < mapData[0].length;
+
+        if (!isYValid || !isXValid) {
             return Infinity;
         }
 

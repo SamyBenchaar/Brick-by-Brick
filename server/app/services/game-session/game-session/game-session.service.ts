@@ -11,6 +11,7 @@ import { GameService } from '@app/services/game/game.service';
 import { getGameSizeConfig } from '@app/utils/game-config.utils';
 import { Character } from '@common/character';
 import { AVATAR_IDS } from '@common/constants/avatar-constants';
+import { GameModeValue } from '@common/constants/game-config-constants';
 import { VIRTUAL_PLAYER_ID_PREFIX, VIRTUAL_PLAYER_NAMES } from '@common/constants/virtual-player-constants';
 import { Dice } from '@common/dice';
 import { Player } from '@common/player';
@@ -18,7 +19,6 @@ import { Position } from '@common/position';
 import { SessionStatus } from '@common/session.status';
 import { VirtualPlayerProfile } from '@common/virtual.player.profile';
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
-import { GameModeValue } from '@common/constants/game-config-constants';
 
 const BASE_LIFE = 6;
 const BASE_SPEED = 6;
@@ -305,8 +305,8 @@ export class GameSessionService {
 
         const socketId = `${VIRTUAL_PLAYER_ID_PREFIX}_${crypto.randomUUID()}`;
         const avatarId = this.pickRandom(availableAvatarIds);
-        const baseName = this.pickRandom(VIRTUAL_PLAYER_NAMES);
-        const name = session.verifyUniqueName(baseName);
+        const availableNames = VIRTUAL_PLAYER_NAMES.filter((validName) => session.isNameUnique(validName));
+        const name = availableNames.length > 0 ? this.pickRandom(availableNames) : session.verifyUniqueName(this.pickRandom(VIRTUAL_PLAYER_NAMES));
         const bonusTarget = Math.random() < LIFE_BONUS_THRESHOLD ? 'life' : 'speed';
 
         const speed = bonusTarget === 'speed' ? BASE_SPEED + BONUS_AMOUNT : BASE_SPEED;
@@ -377,7 +377,10 @@ export class GameSessionService {
                 const nextPos = { x: pos.x + dir.x, y: pos.y + dir.y };
                 const key = `${nextPos.x},${nextPos.y}`;
 
-                if (!visited.has(key) && nextPos.x >= 0 && nextPos.x < width && nextPos.y >= 0 && nextPos.y < height) {
+                const inBoundsX = nextPos.x >= 0 && nextPos.x < width;
+                const inBoundsY = nextPos.y >= 0 && nextPos.y < height;
+
+                if (!visited.has(key) && inBoundsX && inBoundsY) {
                     visited.add(key);
                     queue.push({ pos: nextPos, distance: distance + 1 });
                 }

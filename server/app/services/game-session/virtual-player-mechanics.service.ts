@@ -76,8 +76,14 @@ export class VirtualPlayerMechanicsService {
         return this.targeting.findNearestWalkableTile(session, bot, target);
     }
 
+    private isAttackPossible(session: GameSession, bot: Player, target: Player): boolean {
+        const isReady = this.isBotCurrentPlayer(session, bot) && this.hasAction(bot);
+        const hasPositions = !!bot.character.position && !!target.character.position;
+        return isReady && hasPositions;
+    }
+
     async tryAttackSpecificAdjacent(session: GameSession, bot: Player, target: Player): Promise<boolean> {
-        if (!this.isBotCurrentPlayer(session, bot) || !this.hasAction(bot) || !bot.character.position || !target.character.position) {
+        if (!this.isAttackPossible(session, bot, target)) {
             return false;
         }
 
@@ -204,26 +210,12 @@ export class VirtualPlayerMechanicsService {
             return false;
         }
 
-        if (!this.isBotCurrentPlayer(session, bot) || !this.hasAction(bot)) {
-            return false;
-        }
-
         const target = this.targeting.getAdjacentEnemy(session, bot);
         if (!target) {
             return false;
         }
 
-        await this.randomDelay();
-        if (!this.isBotCurrentPlayer(session, bot) || !this.hasAction(bot)) {
-            return false;
-        }
-
-        if (!this.gamePlayGateway) {
-            return false;
-        }
-
-        this.gamePlayGateway.triggerBotCombat(session.roomId, bot.character.id, target.character.id);
-        return !!session.getActiveCombat();
+        return this.tryAttackSpecificAdjacent(session, bot, target);
     }
 
     async tryUseAdjacentSanctuary(session: GameSession, bot: Player): Promise<boolean> {

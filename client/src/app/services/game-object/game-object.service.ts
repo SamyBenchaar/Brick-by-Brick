@@ -10,18 +10,24 @@ export class GameObjectService {
     private mapEditorService = inject(MapEditorService);
     private objectCounterService = inject(ObjectCounterService);
 
+    private canPlaceOnTile(tile: Tile | null, isTileObjectFree: (t: Tile) => boolean): boolean {
+        if (!tile || !isTileObjectFree(tile)) return false;
+        const isObstacle = tile.type === TileType.Wall || tile.type === TileType.Door;
+        return !isObstacle;
+    }
+
     addObject(position: Position, selectedObject: ObjectType | null,
         getTile: (pos: Position) => Tile | null, isTileObjectFree: (tile: Tile) => boolean): void {
         if (!selectedObject) return;
         if (!this.objectCounterService.canPlace(selectedObject)) return;
 
         const tile = getTile(position);
-        if (!tile || !isTileObjectFree(tile) || tile.type === TileType.Wall || tile.type === TileType.Door) return;
+        if (!this.canPlaceOnTile(tile, isTileObjectFree)) return;
 
         const isSanctuary = selectedObject === ObjectType.HealingSanctuary || selectedObject === ObjectType.CombatSanctuary;
         if (isSanctuary) {
             this.addSanctuaryObject(position, selectedObject, getTile, isTileObjectFree);
-        } else {
+        } else if (tile) {
             tile.object = selectedObject;
             this.objectCounterService.place(selectedObject);
             this.mapEditorService.setObject(position, selectedObject);
@@ -50,7 +56,8 @@ export class GameObjectService {
             { x: position.x, y: position.y + 1 }, { x: position.x + 1, y: position.y + 1 },
         ];
         const tiles = positions.map(pos => getTile(pos));
-        if (tiles.some(tile => !tile || !isTileObjectFree(tile) || tile.type === TileType.Wall || tile.type === TileType.Door)) return;
+        const cannotPlace = tiles.some(tile => !this.canPlaceOnTile(tile, isTileObjectFree));
+        if (cannotPlace) return;
 
         (tiles as Tile[]).forEach((tile, index) => {
             tile.object = selectedObject;

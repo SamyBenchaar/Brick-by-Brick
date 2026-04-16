@@ -1,12 +1,12 @@
 import { GameSession } from '@app/domain/game-session';
-import { CombatEndState, CombatRoundOutcome } from '@app/services/game-session/combat/combat-types';
+import { CombatEndState } from '@app/services/game-session/combat/combat-types';
 import { GameSessionService } from '@app/services/game-session/game-session/game-session.service';
 import { Character } from '@common/character';
-import { ActiveCombat } from '@common/combat';
+import { ActiveCombat, CombatOutcome } from '@common/combat';
+import { GameModeValue } from '@common/constants/game-config-constants';
 import { TileType } from '@common/map';
 import { Position } from '@common/position';
 import { Injectable } from '@nestjs/common';
-import { GameModeValue } from '@common/constants/game-config-constants';
 
 @Injectable()
 export class CombatEndService {
@@ -17,10 +17,10 @@ export class CombatEndService {
         attacker: Character,
         defender: Character,
         combat: ActiveCombat,
-        outcome: CombatRoundOutcome,
+        outcome: CombatOutcome,
     ): CombatEndState {
-        const attackerDefeated = outcome === 'defender' || outcome === 'draw';
-        const defenderDefeated = outcome === 'attacker' || outcome === 'draw';
+        const attackerDefeated = outcome === CombatOutcome.DEFENDER || outcome === CombatOutcome.DRAW;
+        const defenderDefeated = outcome === CombatOutcome.ATTACKER || outcome === CombatOutcome.DRAW;
         const winner = this.getWinnerFromOutcome(outcome, attacker, defender);
 
         if (!attackerDefeated) {
@@ -61,15 +61,15 @@ export class CombatEndService {
     }
 
     private getWinnerFromOutcome(
-        outcome: CombatRoundOutcome,
+        outcome: CombatOutcome,
         attacker: Character,
         defender: Character,
     ): Character | null {
-        if (outcome === 'attacker') {
+        if (outcome === CombatOutcome.ATTACKER) {
             return attacker;
         }
 
-        if (outcome === 'defender') {
+        if (outcome === CombatOutcome.DEFENDER) {
             return defender;
         }
 
