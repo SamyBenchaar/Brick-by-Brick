@@ -54,11 +54,14 @@ app-combat-view {
 }
 
 .debug-mode {
-    top: 7%;
-    left: 35%;
+    top: 1%;
+    left: 40%;
     position: absolute;
     font-size: 20px;
     z-index: 15;
+    padding: 20px;
+    background-size: contain;
+    background-repeat: no-repeat;
 }
 
 
