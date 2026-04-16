@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import { GameSession } from '@app/domain/game-session';
 import { GamePlayHandlerContext } from '@app/interfaces/game-play-handler';
 import { CombatEndState, CombatParticipants, CombatRoundDetails } from '@app/services/game-session/combat/combat-types';

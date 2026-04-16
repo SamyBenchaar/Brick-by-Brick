@@ -9,6 +9,8 @@ import { PlayerCombatCardComponent } from './player-combat-card/player-combat-ca
 
 const TEST_HP = 10;
 const TURN_TIME = 15;
+const SELF_COMBAT_HP = 9;
+const OTHER_COMBAT_HP = 7;
 
 /**
  * Stratégie de test pour CombatViewComponent:
@@ -182,17 +184,17 @@ describe('CombatViewComponent', () => {
 
   it('devrait transmettre les bonnes données aux deux cartes de combat', () => {
     mockCombatSocketService.latestRound.set(roundPayload);
-    mockCombatSocketService.selfHp.set(9);
-    mockCombatSocketService.otherHp.set(7);
+    mockCombatSocketService.selfHp.set(SELF_COMBAT_HP);
+    mockCombatSocketService.otherHp.set(OTHER_COMBAT_HP);
     fixture.detectChanges();
 
     const cards = fixture.debugElement.queryAll(By.directive(PlayerCombatCardComponent));
 
     expect(cards.length).toBe(2);
     expect(cards[0].componentInstance.character.name).toBe('Player 1');
-    expect(cards[0].componentInstance.currentHp).toBe(9);
+    expect(cards[0].componentInstance.currentHp).toBe(SELF_COMBAT_HP);
     expect(cards[1].componentInstance.character.name).toBe('Player 2');
-    expect(cards[1].componentInstance.currentHp).toBe(7);
+    expect(cards[1].componentInstance.currentHp).toBe(OTHER_COMBAT_HP);
   });
 
   it('devrait réinitialiser hasChosen quand un nouveau combat devient actif', () => {

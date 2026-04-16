@@ -12,6 +12,8 @@ import { ActiveCombat, CombatOutcome, CombatResultPayload, CombatRoundResolvedPa
 import { Dice } from '@common/dice';
 
 const DEFAULT_LIFE = 6;
+const ACTIVE_COMBAT_TURN_TIME = 8;
+const ATTACKER_LIFE_AFTER_COMBAT = 4;
 
 function createCharacter(overrides: Partial<Character> = {}): Character {
     return {
@@ -124,7 +126,7 @@ describe('gameplay-listeners-helper', () => {
         combatSocketService = {
             activeCombat: signal<ActiveCombat | null>({ attackerId: 'a', defenderId: 'b' } as ActiveCombat),
             latestRound: signal<CombatRoundResolvedPayload | null>({ roundNumber: 1 } as CombatRoundResolvedPayload),
-            combatTurnTimeRemaining: signal<number | null>(8),
+            combatTurnTimeRemaining: signal<number | null>(ACTIVE_COMBAT_TURN_TIME),
             showCombatNotification: jasmine.createSpy('showCombatNotification'),
         };
     });
@@ -205,7 +207,7 @@ describe('gameplay-listeners-helper', () => {
         expect(combatSocketService.combatTurnTimeRemaining()).toBeNull();
 
         const updatedSession = gameSessionSocketService.currentSession();
-        expect(updatedSession?.players[0].character.life).toBe(4);
+        expect(updatedSession?.players[0].character.life).toBe(ATTACKER_LIFE_AFTER_COMBAT);
         expect(updatedSession?.players[0].character.victories).toBe(2);
         expect(updatedSession?.players[0].character.remainingActions).toBe(0);
         expect(updatedSession?.players[0].character.hasFlag).toBeTrue();

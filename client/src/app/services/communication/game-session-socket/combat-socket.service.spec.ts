@@ -15,6 +15,13 @@ import { GamePlaySocketService } from './game-play-socket.service';
 describe('CombatSocketService', () => {
     let service: CombatSocketService;
 
+    const ACTIVE_COMBAT_ATTACKER_HP = 4;
+    const SELF_BASE_HP = 6;
+    const NOTIFICATION_ALMOST_EXPIRED_MS = 2999;
+    const NOTIFICATION_REPLACEMENT_DELAY_MS = 1500;
+    const JUST_BEFORE_REPLACED_EXPIRY_MS = 1499;
+    const JUST_AFTER_REPLACED_EXPIRY_MS = 1501;
+
     const currentPlayer = {
         id: 'player-1',
         name: 'Attacker',
@@ -65,13 +72,13 @@ describe('CombatSocketService', () => {
             defenderId: 'player-2',
             initiatorId: 'player-1',
             roundNumber: 1,
-            attackerHp: 4,
+            attackerHp: ACTIVE_COMBAT_ATTACKER_HP,
             defenderHp: 2,
         });
 
         expect(service.self()?.id).toBe('player-1');
         expect(service.other()?.id).toBe('player-2');
-        expect(service.selfHp()).toBe(4);
+        expect(service.selfHp()).toBe(ACTIVE_COMBAT_ATTACKER_HP);
         expect(service.otherHp()).toBe(2);
     });
 
@@ -91,16 +98,16 @@ describe('CombatSocketService', () => {
             defenderId: 'player-2',
             initiatorId: 'player-1',
             roundNumber: 1,
-            attackerHp: 4,
+            attackerHp: ACTIVE_COMBAT_ATTACKER_HP,
             defenderHp: 2,
         });
 
         expect(service.selfHp()).toBe(2);
-        expect(service.otherHp()).toBe(4);
+        expect(service.otherHp()).toBe(ACTIVE_COMBAT_ATTACKER_HP);
     });
 
     it('devrait retomber sur les hp de base hors combat', () => {
-        expect(service.selfHp()).toBe(6);
+        expect(service.selfHp()).toBe(SELF_BASE_HP);
         expect(service.otherHp()).toBe(0);
     });
 
@@ -185,7 +192,7 @@ describe('CombatSocketService', () => {
 
         expect(service.combatNotification()).toBe('Victoire');
 
-        tick(2999);
+        tick(NOTIFICATION_ALMOST_EXPIRED_MS);
         expect(service.combatNotification()).toBe('Victoire');
 
         tick(1);
@@ -194,13 +201,13 @@ describe('CombatSocketService', () => {
 
     it('devrait remplacer l ancienne notification et annuler son ancien timer', fakeAsync(() => {
         service.showCombatNotification('Premiere');
-        tick(1500);
+        tick(NOTIFICATION_REPLACEMENT_DELAY_MS);
 
         service.showCombatNotification('Deuxieme');
-        tick(1499);
+        tick(JUST_BEFORE_REPLACED_EXPIRY_MS);
         expect(service.combatNotification()).toBe('Deuxieme');
 
-        tick(1501);
+        tick(JUST_AFTER_REPLACED_EXPIRY_MS);
         expect(service.combatNotification()).toBeNull();
     }));
 });

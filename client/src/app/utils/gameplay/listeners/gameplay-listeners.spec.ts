@@ -16,6 +16,12 @@ import { ObjectType, TileType } from '@common/map';
 
 type ListenerCallback<T> = (payload: T) => void;
 
+const STARTED_TURN_TIME = 20;
+const DEFENDER_LIFE_AFTER_ROUND = 5;
+const ATTACKER_LIFE_AFTER_COMBAT = 4;
+const COMBAT_TURN_TIME_REMAINING = 5;
+const COMBAT_TURN_TIME_REMAINING_ABANDON = 4;
+
 /**
  * Strategie de test:
  * - Approche par flux devenements: chaque test valide payload entrant -> effet attendu
@@ -207,14 +213,14 @@ describe('setupGameplayEventListeners', () => {
         )({
             playerId: 'p1',
             playerName: 'P1',
-            turnTime: 20,
+            turnTime: STARTED_TURN_TIME,
             remainingMovement: 2,
             remainingActions: 0,
         });
 
         expect(gamePlaySocketServiceMock.turnStarting()).toBeFalse();
         expect(gamePlaySocketServiceMock.currentPlayerTurn()).toBe('p1');
-        expect(gamePlaySocketServiceMock.turnTimeRemaining()).toBe(20);
+        expect(gamePlaySocketServiceMock.turnTimeRemaining()).toBe(STARTED_TURN_TIME);
         expect(gameSessionSocketServiceMock.currentSession()?.players[0].character.remainingMovement).toBe(2);
         expect(gameSessionSocketServiceMock.currentSession()?.players[0].character.remainingActions).toBe(0);
     });
@@ -279,9 +285,9 @@ describe('setupGameplayEventListeners', () => {
                 damage: 0,
             },
             attackerLife: 6,
-            defenderLife: 5,
+            defenderLife: DEFENDER_LIFE_AFTER_ROUND,
         } as CombatRoundResolvedPayload);
-        combatSocketServiceMock.combatTurnTimeRemaining.set(5);
+        combatSocketServiceMock.combatTurnTimeRemaining.set(COMBAT_TURN_TIME_REMAINING);
         gamePlaySocketServiceMock.reachableTiles.set([{ x: 9, y: 9 }]);
 
         getCallback<unknown>(CombatEvents.CombatResult)({
@@ -292,7 +298,7 @@ describe('setupGameplayEventListeners', () => {
             outcome: CombatOutcome.ATTACKER,
             attackerPosition: { x: 1, y: 1 },
             defenderPosition: { x: 5, y: 5 },
-            attackerLife: 4,
+            attackerLife: ATTACKER_LIFE_AFTER_COMBAT,
             defenderLife: 0,
             attackerVictories: 1,
             defenderVictories: 0,
@@ -319,7 +325,7 @@ describe('setupGameplayEventListeners', () => {
             defenderHp: 1,
         } as ActiveCombat);
         combatSocketServiceMock.latestRound.set({ roundNumber: 1 } as CombatRoundResolvedPayload);
-        combatSocketServiceMock.combatTurnTimeRemaining.set(4);
+        combatSocketServiceMock.combatTurnTimeRemaining.set(COMBAT_TURN_TIME_REMAINING_ABANDON);
 
         getCallback<unknown>(CombatEvents.CombatEnded)({
             reason: 'playerLeft',

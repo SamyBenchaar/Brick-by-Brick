@@ -24,6 +24,7 @@ const DEFAULT_REMAINING_MOVEMENT = 3;
 const DEFAULT_REMAINING_ACTIONS = 1;
 const DEFAULT_TURN_TIME = 10;
 const DEFAULT_SESSION_TURN_TIME = 30;
+const THREE_POINTS = 3;
 
 function createCharacter(overrides: Partial<Character> = {}): Character {
     return {
@@ -222,11 +223,11 @@ describe('setupCombatListeners', () => {
                 damage: 0,
             },
             attackerLife: DEFAULT_LIFE,
-            defenderLife: 3,
+            defenderLife: THREE_POINTS,
         });
 
         expect(combatSocketServiceMock.latestRound()?.roundNumber).toBe(2);
-        expect(combatSocketServiceMock.activeCombat()?.defenderHp).toBe(3);
+        expect(combatSocketServiceMock.activeCombat()?.defenderHp).toBe(THREE_POINTS);
         expect(combatSocketServiceMock.activeCombat()?.attackerPosture).toBeUndefined();
         expect(combatSocketServiceMock.activeCombat()?.defenderPosture).toBeUndefined();
     });
@@ -254,7 +255,7 @@ describe('setupCombatListeners', () => {
             defenderLife: 4,
         });
 
-        expect(combatSocketServiceMock.latestRound()?.roundNumber).toBe(3);
+        expect(combatSocketServiceMock.latestRound()?.roundNumber).toBe(THREE_POINTS);
         expect(combatSocketServiceMock.activeCombat()).toBeNull();
     });
 
@@ -286,7 +287,7 @@ describe('setupCombatListeners', () => {
             attackerLife: DEFAULT_LIFE,
             defenderLife: DEFAULT_LIFE,
         });
-        combatSocketServiceMock.combatTurnTimeRemaining.set(3);
+        combatSocketServiceMock.combatTurnTimeRemaining.set(THREE_POINTS);
 
         getCallback<{
             winner: string;
@@ -298,7 +299,7 @@ describe('setupCombatListeners', () => {
             winner: 'player-1',
             loser: 'player-2',
             attackerVictories: 1,
-            defenderNewPosition: { x: 3, y: 3 },
+            defenderNewPosition: { x: THREE_POINTS, y: THREE_POINTS },
             remainingActions: 0,
         });
 

@@ -243,10 +243,10 @@ describe('CombatRoundService', () => {
 
         expect(combat.attackerHp).toBe(0);
         expect(combat.defenderHp).toBe(0);
-        expect(attacker.totalDamageDealt).toBe(3);
+        expect(attacker.totalDamageDealt).toBe(THREE_POINTS);
         expect(attacker.totalDamageReceived).toBe(2);
         expect(defender.totalDamageDealt).toBe(2);
-        expect(defender.totalDamageReceived).toBe(3);
+        expect(defender.totalDamageReceived).toBe(THREE_POINTS);
     });
 
     it('devrait construire le payload résolu avec none si aucune posture n’a été choisie', () => {
