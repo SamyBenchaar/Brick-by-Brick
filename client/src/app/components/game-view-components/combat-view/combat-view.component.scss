@@ -22,9 +22,10 @@ $overlay-color: rgba(222, 236, 255);
     left: 40%;
     transform: translate(-50%, -50%);
     
-    width: 120vmin;
-    aspect-ratio: 16 / 11;
-    padding: 7vmin;
+    max-height: 95vh;
+    width: 110vmin;
+    aspect-ratio: 20 / 13;
+    padding: 10px;
 
     pointer-events: all;
 
@@ -75,5 +76,5 @@ $overlay-color: rgba(222, 236, 255);
 }
 
 .button {
-    font-size: 2.5rem;
+    font-size: 2rem;
 }

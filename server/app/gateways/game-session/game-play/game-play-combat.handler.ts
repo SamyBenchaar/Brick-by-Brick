@@ -16,9 +16,7 @@ import { GameModeValue } from '@common/constants/game-config-constants';
 import { CombatEvents, GameSessionEvents } from '@common/game.events';
 import { forwardRef, Inject, Injectable, Logger, Optional } from '@nestjs/common';
 import { Socket } from 'socket.io';
-
-const VIRTUAL_PLAYER_DELAY_MS = 2000;
-const VIRTUAL_PLAYER_DELAY_RANGE_MS = 3000;
+import { VIRTUAL_PLAYER_COMBAT_DELAY_MS } from '@common/constants/virtual-player-constants';
 
 @Injectable()
 export class GamePlayCombatHandler {
@@ -157,13 +155,12 @@ export class GamePlayCombatHandler {
         const defenderPlayer = gameSession.players.find(player => player.character.id === combat.defenderId);
 
         const choosePostureAsync = async (playerId: string, profile: string) => {
+            const delay = VIRTUAL_PLAYER_COMBAT_DELAY_MS;
+            await new Promise((resolve) => setTimeout(resolve, delay));
             let posture = profile === 'aggressive' ? CombatPosture.OFFENSIVE : CombatPosture.DEFENSIVE;
 
             if (this.virtualPlayerMechanicsService) {
                 posture = await this.virtualPlayerMechanicsService.selectCombatPosture(profile) as CombatPosture;
-            } else {
-                const delay = Math.floor(Math.random() * VIRTUAL_PLAYER_DELAY_RANGE_MS) + VIRTUAL_PLAYER_DELAY_MS;
-                await new Promise((resolve) => setTimeout(resolve, delay));
             }
 
             const session = this.gameSessionService.getGameSession(gameSession.roomId);
