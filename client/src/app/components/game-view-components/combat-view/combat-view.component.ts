@@ -56,6 +56,32 @@ export class CombatViewComponent {
     return this.isSelfAttacker() ? round.defenderStrike.defense : round.attackerStrike.defense;
   });
 
+  hasResolvedRound = computed(() => !!this.latestRound());
+
+  otherDamage = computed(() => {
+    const round = this.latestRound();
+    if (!round) return 0;
+    return this.isSelfAttacker() ? round.attackerStrike.damage : round.defenderStrike.damage;
+  });
+
+  selfDamage = computed(() => {
+    const round = this.latestRound();
+    if (!round) return 0;
+    return this.isSelfAttacker() ? round.defenderStrike.damage : round.attackerStrike.damage;
+  });
+
+  selfAttackMinusOtherDefense = computed(() => {
+    const selfAttack = this.selfAttackDetail()?.total ?? 0;
+    const otherDefense = this.otherDefenseDetail()?.total ?? 0;
+    return selfAttack - otherDefense;
+  });
+
+  otherAttackMinusSelfDefense = computed(() => {
+    const otherAttack = this.otherAttackDetail()?.total ?? 0;
+    const selfDefense = this.selfDefenseDetail()?.total ?? 0;
+    return otherAttack - selfDefense;
+  });
+
   constructor() {
     effect(() => {
       const combat = this.combatSocketService.activeCombat();
