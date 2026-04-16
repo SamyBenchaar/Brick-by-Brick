@@ -9,12 +9,13 @@
 
 .footer {
   pointer-events: none;
-  position: fixed;
+  position: sticky;
+  bottom: 0;
   width: 100%;
   display: flex;
   justify-content: flex-end;
-  bottom: 10px;
-  padding-right: 1rem;
+  padding: 1rem;
+  z-index: 50;
 }
 
 .footer .button {
