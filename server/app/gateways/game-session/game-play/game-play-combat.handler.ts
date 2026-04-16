@@ -6,8 +6,8 @@ import { CombatRoundService } from '@app/services/game-session/combat/combat-rou
 import { CombatEndState, CombatRoundOutcome } from '@app/services/game-session/combat/combat-types';
 import { GameSessionService } from '@app/services/game-session/game-session/game-session.service';
 import { TurnManagementService } from '@app/services/game-session/turn-management.service';
-import { VirtualPlayerService } from '@app/services/game-session/virtual-player.service';
 import { VirtualPlayerMechanicsService } from '@app/services/game-session/virtual-player-mechanics.service';
+import { VirtualPlayerService } from '@app/services/game-session/virtual-player.service';
 import { formatCombatRoundLog } from '@app/services/log/combat-log.util';
 import { Character } from '@common/character';
 import { ActiveCombat, COMBAT_POSTURE, CombatRoundResolvedPayload } from '@common/combat';
@@ -28,13 +28,15 @@ export class GamePlayCombatHandler {
     @Inject(forwardRef(() => VirtualPlayerMechanicsService))
     private readonly virtualPlayerMechanicsService?: VirtualPlayerMechanicsService;
 
+    @Inject(VirtualPlayerService)
+    private readonly virtualPlayerService: VirtualPlayerService;
+
     constructor(
         private readonly gameSessionService: GameSessionService,
         private readonly turnManagementService: TurnManagementService,
         private readonly combatRequestValidatorService: CombatRequestValidatorService,
         private readonly combatRoundService: CombatRoundService,
         private readonly combatEndService: CombatEndService,
-        private readonly virtualPlayerService: VirtualPlayerService,
     ) {}
     handleRequestCombat(
         socket: Socket,
