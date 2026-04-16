@@ -13,7 +13,7 @@ export function handleTurnEnded(
 ): void {
     gamePlaySocketService.currentPlayerTurn.set(null);
     gamePlaySocketService.reachableTiles.set([]);
-    dialog.getDialogById('sanctuary-dialog')?.close('dismiss');
+    dialog.getDialogById('sanctuary-dialog')?.close();
 
     closePendingFlagTransferDialogs(gamePlaySocketService, flagTransferService);
     decrementSanctuaryCooldowns(gamePlaySocketService);

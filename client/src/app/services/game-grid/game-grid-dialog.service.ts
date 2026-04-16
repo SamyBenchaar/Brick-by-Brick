@@ -72,9 +72,9 @@ export class GameGridDialogService {
             },
         });
 
-        dialogRef.afterClosed().subscribe((accepted) => {
+        dialogRef.afterClosed().subscribe((accepted: boolean | null | undefined) => {
             this.flagTransferService.isFlagTransferModalOpen.set(false);
-            if (accepted ) {
+            if (accepted) {
                 this.gameSessionSocketService.requestFlagTransfer(targetPlayer.id);
             }
         });
