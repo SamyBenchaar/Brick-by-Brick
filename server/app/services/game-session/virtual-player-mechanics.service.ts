@@ -198,6 +198,8 @@ export class VirtualPlayerMechanicsService {
 
             this.handleCtfFlagPickup(session, bot);
 
+            await this.tryUseAdjacentSanctuary(session, bot);
+
             moved = true;
             i++;
         }
