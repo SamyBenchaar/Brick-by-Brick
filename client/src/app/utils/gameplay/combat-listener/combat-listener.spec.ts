@@ -1,16 +1,16 @@
 ﻿import { signal, WritableSignal } from '@angular/core';
 import { GameSession } from '@app/interfaces/game-session';
-import { CombatSocketService } from '@app/services/communication/game-session-socket/combat-socket.service';
-import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
+import { CombatSocketService } from '@app/services/communication/game-session-socket/combat/combat-socket.service';
 import { GamePlaySocketService } from '@app/services/communication/game-session-socket/game-play-socket.service';
+import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
 import { SocketService } from '@app/services/communication/socket/socket.service';
-import { setupCombatListeners } from './combat-listener';
-import { ActiveCombat, CombatRoundResolvedPayload } from '@common/combat';
 import { Character } from '@common/character';
+import { ActiveCombat, CombatRoundResolvedPayload } from '@common/combat';
 import { Dice } from '@common/dice';
 import { CombatEvents } from '@common/game.events';
 import { Player } from '@common/player';
 import { Position } from '@common/position';
+import { setupCombatListeners } from './combat-listener';
 
 type ListenerCallback<T> = (payload: T) => void;
 
@@ -82,6 +82,15 @@ function createSession(players: Player[]): GameSession {
     };
 }
 
+/**
+ * Strategie de test:
+ * - Verifier le wiring de tous les evenements combat ecoutes par le client.
+ * - Verifier les transitions detat round par round (start, timer, resolved, end).
+ * - Verifier la coherence des signaux partages entre gameplay et combat.
+ * Cas limites couverts:
+ * - Reception dun round avec postures precedentes (elles doivent etre nettoyees).
+ * - Fin de combat avec etat local pre-rempli (reset complet attendu).
+ */
 describe('setupCombatListeners', () => {
     const callbacks = new Map<string, ListenerCallback<unknown>>();
     let currentSessionSignal: WritableSignal<GameSession | null>;

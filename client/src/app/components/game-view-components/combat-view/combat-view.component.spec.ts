@@ -1,7 +1,7 @@
 ﻿import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { CombatSocketService } from '@app/services/communication/game-session-socket/combat-socket.service';
+import { CombatSocketService } from '@app/services/communication/game-session-socket/combat/combat-socket.service';
 import { GamePlaySocketService } from '@app/services/communication/game-session-socket/game-play-socket.service';
 import { COMBAT_POSTURE, CombatRoundResolvedPayload } from '@common/combat';
 import { CombatViewComponent } from './combat-view.component';

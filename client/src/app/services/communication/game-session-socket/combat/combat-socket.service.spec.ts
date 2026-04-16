@@ -1,6 +1,6 @@
 ﻿import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { GamePlaySocketService } from '../game-play-socket.service';
 import { CombatSocketService } from './combat-socket.service';
-import { GamePlaySocketService } from './game-play-socket.service';
 
 describe('CombatSocketService', () => {
     let service: CombatSocketService;
