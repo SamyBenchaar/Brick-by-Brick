@@ -87,7 +87,7 @@ export class MapValidationService {
 
         if (accessibleTiles !== totalPlayableTiles) {
             return [
-                `Certaines tuiles de terrain sont inaccessibles. ` +
+                `Certaines tuiles de terrain ou portes sont inaccessibles. ` +
                 `Tuiles accessibles: ${accessibleTiles}/${totalPlayableTiles}`,
             ];
         }
@@ -244,8 +244,8 @@ export class MapValidationService {
             const rightNeighborType = tiles[y][x + 1].type;
             const topNeighborType = tiles[y - 1][x].type;
             const bottomNeighborType = tiles[y + 1][x].type;
-            if (leftNeighborType===TileType.Door || rightNeighborType===TileType.Door ||
-                 topNeighborType===TileType.Door || bottomNeighborType===TileType.Door) {
+            if (leftNeighborType === TileType.Door || rightNeighborType === TileType.Door ||
+                topNeighborType === TileType.Door || bottomNeighborType === TileType.Door) {
                 return false;
             }
 
