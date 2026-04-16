@@ -211,7 +211,7 @@ export class GameViewComponent implements OnInit, OnDestroy {
       data: dialogData,
       disableClose: true,
     }).afterClosed().subscribe((confirmed: boolean) => {
-      if (confirmed === true) {
+      if (confirmed) {
         this.gameSessionSocketService.abandonGame();
       }
     });
@@ -256,8 +256,8 @@ export class GameViewComponent implements OnInit, OnDestroy {
         },
       });
       ref.afterClosed().subscribe((result) => {
-        if (result === true) this.gamePlaySocketService.requestInteract(event.position, InteractionMode.Normal);
-        else if (result === false) this.gamePlaySocketService.requestInteract(event.position, InteractionMode.Double);
+        if (result ) this.gamePlaySocketService.requestInteract(event.position, InteractionMode.Normal);
+        else  this.gamePlaySocketService.requestInteract(event.position, InteractionMode.Double);
       });
       this.isActionSelectionMode.set(false);
       return;
