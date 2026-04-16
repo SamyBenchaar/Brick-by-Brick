@@ -76,28 +76,54 @@ export class GamePlayMovementHandler {
         context: GamePlayHandlerContext,
         roomId: string,
     ): boolean {
+        this.tryPickupFlagFromGround(gameSession, context, roomId);
+        return this.tryEndCtfWhenFlagAtStartingPoint(gameSession, context);
+    }
+
+    private tryPickupFlagFromGround(
+        gameSession: GameSession,
+        context: GamePlayHandlerContext,
+        roomId: string,
+    ): void {
         const flagPos = gameSession.getFlagPosition();
         const currentPlayer = gameSession.getCurrentPlayer();
+        const flagOnGround = !gameSession.getFlagHolder() && !!flagPos;
+        const playerOnFlag = currentPlayer.position?.x === flagPos?.x
+            && currentPlayer.position?.y === flagPos?.y;
 
-        const isFlagOnGround = !gameSession.getFlagHolder() && !!flagPos;
-        const isPlayerOnFlag = currentPlayer.position?.x === flagPos?.x && currentPlayer.position?.y === flagPos?.y;
-
-        if (isFlagOnGround && isPlayerOnFlag) {
-            gameSession.setFlagHolder(currentPlayer.id);
-            context.logService.log(roomId, `Drapeau pris du sol par ${currentPlayer.name}`);
-            context.server.to(roomId).emit(GameSessionEvents.GameSessionUpdated, gameSession);
+        if (!flagOnGround || !playerOnFlag) {
+            return;
         }
 
-        const flagHolder = gameSession.getFlagHolderCharacter();
-        if (flagHolder) {
-            const flagHolderStarting = gameSession.getStartingPoint(flagHolder.id);
-            if (flagHolderStarting && flagHolder.position?.x === flagHolderStarting.x && flagHolder.position?.y === flagHolderStarting.y) {
-                context.onGameEnd(gameSession, flagHolder);
-                return true;
-            }
+        gameSession.setFlagHolder(currentPlayer.id);
+        context.logService.log(roomId, `Drapeau pris du sol par ${currentPlayer.name}`);
+        context.server.to(roomId).emit(GameSessionEvents.GameSessionUpdated, gameSession);
+    }
+
+    private tryEndCtfWhenFlagAtStartingPoint(
+        gameSession: GameSession,
+        context: GamePlayHandlerContext,
+    ): boolean {
+        const holder = gameSession.getFlagHolderCharacter();
+        if (!holder) {
+            return false;
         }
 
-        return false;
+        const start = gameSession.getStartingPoint(holder.id);
+        if (!start || !holder.position) {
+            return false;
+        }
+
+        const atStart = holder.position.x === start.x && holder.position.y === start.y;
+        if (!atStart) {
+            return false;
+        }
+
+        if (gameSession.playerOrder.length > 0) {
+            this.gameSessionService.endCurrentTurn(gameSession);
+        }
+        context.onGameEnd(gameSession, holder);
+        return true;
     }
 
     handleRequestAssignPosition(

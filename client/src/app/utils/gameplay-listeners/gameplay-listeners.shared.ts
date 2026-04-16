@@ -99,7 +99,7 @@ function countWalkableTiles(tiles: Tile[][] | undefined): number | undefined {
 
 function buildPlayersList(data: GameEndedPayload, session: GameSession | null): Player[] {
     const currentPlayers = data.players ?? session?.players ?? [];
-    const leftPlayers = session?.leftPlayers ?? [];
+    const leftPlayers = data.leftPlayers ?? session?.leftPlayers ?? [];
 
     return [...currentPlayers, ...leftPlayers];
 }

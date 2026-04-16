@@ -73,10 +73,4 @@ export function setupCombatListeners(
             gameSessionSocketService.currentSession.set({ ...session });
         }
     });
-    socketService.on(CombatEvents.CombatEnded, () => {
-        service.reachableTiles.set([]);
-        combatSocketService.activeCombat.set(null);
-        combatSocketService.latestRound.set(null);
-        combatSocketService.combatTurnTimeRemaining.set(null);
-    });
 }

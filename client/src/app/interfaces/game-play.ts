@@ -3,6 +3,7 @@ import { GameSession } from '@app/interfaces/game-session';
 import { Character } from '@common/character';
 import { Player } from '@common/player';
 import { Position } from '@common/position';
+import { TeamId } from '@common/team';
 export { CombatPosture } from '@common/combat';
 
 export { InteractionMode } from '@app/constants/game-play.constants';
@@ -26,11 +27,9 @@ export interface WinnerSummary {
     avatarId: number;
 }
 
-import { TeamId as WinningTeam } from '@common/team';
-
 export interface GameEndedPayload {
     winner: WinnerSummary | null;
-    winningTeam?: WinningTeam;
+    winningTeam?: TeamId;
     gameMode?: string;
     reason: string;
     players?: Player[];
@@ -40,6 +39,7 @@ export interface GameEndedPayload {
     tilesVisitedPercent?: number | null;
     doorsUsedPercent?: number | null;
     flagHoldersCount?: number | null;
+    leftPlayers?: Player[];
 }
 
 export interface ReachableTilesPayload {

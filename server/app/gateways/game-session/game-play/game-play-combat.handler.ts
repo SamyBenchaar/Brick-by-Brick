@@ -275,6 +275,7 @@ export class GamePlayCombatHandler {
 
         const gameWinner = this.gameSessionService.checkGameWinner(gameSession);
         if (gameWinner) {
+            this.gameSessionService.endCurrentTurn(gameSession);
             context.onGameEnd(gameSession, gameWinner);
             return;
         }
