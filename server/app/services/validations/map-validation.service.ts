@@ -265,13 +265,12 @@ export class MapValidationService {
     private checkDoorNeighbors(tiles: Tile[][]): boolean {
         for (let y = 0; y < tiles.length; y++) {
             for (let x = 0; x < tiles[y].length; x++) {
-                if (this.isDoorValid(tiles, x, y)) {
-                    return true;
-                }else{
+                if (!this.isDoorValid(tiles, x, y)) {
                     return false;
                 }
             }
         }
+        return true;
     }
 
     private validateFlagForCTF(gameData: Partial<Game>): string[] {
