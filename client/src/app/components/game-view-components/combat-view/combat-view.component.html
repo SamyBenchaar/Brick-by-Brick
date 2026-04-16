@@ -2,12 +2,12 @@
 
 <div class="combat-container">
     Combat en cours entre vous ({{self()?.name}}) et {{other()?.name}}
-    <div class="combat-waiting">Temps de combat: {{ combatTurnTimeRemaining() ?? '--' }}s</div>
 
     <div class="combat-players">
         <app-player-combat-card [character]='self()!' [currentHp]='selfHp()' [attackDetail]='selfAttackDetail()' [defenseDetail]='selfDefenseDetail()'></app-player-combat-card>
         
-        <div class="vs-text">VS</div>
+        <div class="combat-waiting"></div>
+        <div class="vs-text"><p>{{ combatTurnTimeRemaining() ?? '--' }}s </p> VS</div>
         <app-player-combat-card [character]='other()!' [currentHp]='otherHp()' [attackDetail]='otherAttackDetail()' [defenseDetail]='otherDefenseDetail()'></app-player-combat-card>
     </div>
     <div class="combat-result"

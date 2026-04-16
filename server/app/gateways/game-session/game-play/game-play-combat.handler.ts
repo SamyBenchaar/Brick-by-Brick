@@ -157,13 +157,12 @@ export class GamePlayCombatHandler {
         const defenderPlayer = gameSession.players.find(player => player.character.id === combat.defenderId);
 
         const choosePostureAsync = async (playerId: string, profile: string) => {
+            const delay = VIRTUAL_PLAYER_DELAY_MS;
+            await new Promise((resolve) => setTimeout(resolve, delay));
             let posture = profile === 'aggressive' ? CombatPosture.OFFENSIVE : CombatPosture.DEFENSIVE;
 
             if (this.virtualPlayerMechanicsService) {
                 posture = await this.virtualPlayerMechanicsService.selectCombatPosture(profile) as CombatPosture;
-            } else {
-                const delay = Math.floor(Math.random() * VIRTUAL_PLAYER_DELAY_RANGE_MS) + VIRTUAL_PLAYER_DELAY_MS;
-                await new Promise((resolve) => setTimeout(resolve, delay));
             }
 
             const session = this.gameSessionService.getGameSession(gameSession.roomId);
