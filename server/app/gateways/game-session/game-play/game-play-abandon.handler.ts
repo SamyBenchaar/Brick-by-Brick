@@ -99,6 +99,15 @@ export class GamePlayAbandonHandler {
         if (survivor) survivor.victories = (survivor.victories ?? 0) + 1;
         if (leaver) leaver.defeats = (leaver.defeats ?? 0) + 1;
         gameSession.clearActiveCombat();
+
+        if (survivor && leaver) {
+            context.logService.log(
+                roomId,
+                `Fin du combat: ${survivor.name} a gagné contre ${leaver.name}`,
+                { type: 'combat', playersInvolved: [survivor.name, leaver.name] },
+            );
+        }
+
         context.server.to(roomId).emit(CombatEvents.CombatEnded, {
             reason: 'playerLeft',
             abandonedPlayerId,

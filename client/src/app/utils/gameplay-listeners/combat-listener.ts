@@ -73,20 +73,4 @@ export function setupCombatListeners(
             gameSessionSocketService.currentSession.set({ ...session });
         }
     });
-    socketService.on<{ reason: string; abandonedPlayerId?: string; survivorId?: string; survivorVictories?: number }>(
-        CombatEvents.CombatEnded, (data) => {
-        service.reachableTiles.set([]);
-        combatSocketService.activeCombat.set(null);
-        combatSocketService.latestRound.set(null);
-        combatSocketService.combatTurnTimeRemaining.set(null);
-
-        if (data.survivorId !== undefined && data.survivorVictories !== undefined) {
-            const session = service.currentSession();
-            if (session) {
-                const survivor = session.players.find(p => p.character.id === data.survivorId);
-                if (survivor) survivor.character.victories = data.survivorVictories;
-                gameSessionSocketService.currentSession.set({ ...session });
-            }
-        }
-    });
 }
