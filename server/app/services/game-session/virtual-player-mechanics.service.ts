@@ -3,7 +3,7 @@ import { GamePlayGateway } from '@app/gateways/game-session/game-play/game-play.
 import { GameGateway } from '@app/gateways/game/game.gateway';
 import { LogService } from '@app/services/log/log.service';
 import { GameModeValue } from '@common/constants/game-config-constants';
-import { COMBAT_SANCTUARY_BONUS, HEALING_SANCTUARY_BONUS, SANCTUARY_COOLDOWN_TURNS } from '@common/constants/santuary-constants';
+import { COMBAT_SANCTUARY_BONUS, HEALING_SANCTUARY_BONUS, SANCTUARY_COOLDOWN_TURNS, SANCTUARYLABEL } from '@common/constants/santuary-constants';
 import { GameSessionEvents } from '@common/game.events';
 import { DoorState, ObjectType, TileType } from '@common/map';
 import { Player } from '@common/player';
@@ -237,6 +237,8 @@ export class VirtualPlayerMechanicsService {
         }
 
         this.applySanctuaryEffect(bot, sanctuaryData.type);
+        const sanctuaryLabel = SANCTUARYLABEL[sanctuaryData.type] ?? 'sanctuaire inconnu';
+        this.logService.log(session.roomId, `Utilisation d'un ${sanctuaryLabel} par ${bot.character.name}`);
 
         const map = session.mapCopy;
         if (map && map.tiles) {
