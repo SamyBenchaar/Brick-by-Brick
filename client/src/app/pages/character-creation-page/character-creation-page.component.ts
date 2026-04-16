@@ -65,7 +65,7 @@ export class CharacterCreationPageComponent implements OnInit {
                 this.fromGameCreation = true;
             }
 
-            if (this.roomId && !this.fromGameCreation) {
+            if (this.roomId && this.fromGameCreation) {
                 this.gameSessionSocketService.leaveGameSession();
                 this.gameSessionSocketService.observeGameSession(this.roomId);
                 this.character = this.createBaseCharacter(AVATARS[0].id);

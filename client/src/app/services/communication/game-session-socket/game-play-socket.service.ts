@@ -60,6 +60,7 @@ export class GamePlaySocketService {
         this.socketService.off(GameSessionEvents.TurnEnded);
         this.socketService.off(GameSessionEvents.MoveExecuted);
         this.socketService.off(CombatEvents.CombatResult);
+        this.socketService.off(CombatEvents.CombatEnded);
         this.flagTransferStateService.clearAllPendingTransfers();
     }
 
