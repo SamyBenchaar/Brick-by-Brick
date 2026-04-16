@@ -19,7 +19,6 @@ import { SessionStatus } from '@common/session.status';
 
 @Component({
     selector: 'app-chat',
-    standalone: true,
     imports: [CommonModule, FormsModule, GameLogComponent],
     templateUrl: './chat.component.html',
     styleUrls: ['./chat.component.scss'],

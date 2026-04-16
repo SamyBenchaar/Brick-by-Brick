@@ -34,7 +34,7 @@ export class GamePlayCtfHandler {
         if (toPlayer.virtualProfile) {
             gameSession.acceptFlagTransfer(toPlayer.character.id);
 
-            if (fromPlayer.character.remainingActions !== undefined) {
+            if (fromPlayer.character.remainingActions) {
                 fromPlayer.character.remainingActions -= 1;
             }
             this.logService.log(payload.roomId, `Drapeau transféré par ${fromPlayer.character.name} à ${toPlayer.character.name}`);
@@ -95,7 +95,7 @@ export class GamePlayCtfHandler {
         if (payload.accepted) {
             gameSession.acceptFlagTransfer(toPlayer.character.id);
 
-            if (fromPlayer && fromPlayer.character.remainingActions !== undefined) {
+            if (fromPlayer && fromPlayer.character.remainingActions) {
                 fromPlayer.character.remainingActions -= 1;
             }
 
@@ -109,7 +109,7 @@ export class GamePlayCtfHandler {
         } else {
             gameSession.rejectFlagTransfer(toPlayer.character.id);
 
-            if (fromPlayer && fromPlayer.character.remainingActions !== undefined) {
+            if (fromPlayer && fromPlayer.character.remainingActions) {
                 fromPlayer.character.remainingActions -= 1;
             }
 

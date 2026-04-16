@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Tile } from '@app/classes/tile/tile';
 import { Game } from '@app/interfaces/game';
+import { InteractionContext } from '@app/interfaces/game-play';
 import { GameSession } from '@app/interfaces/game-session';
 import { Character } from '@common/character';
 import {
@@ -11,7 +12,6 @@ import {
 } from '@common/constants/santuary-constants';
 import { ObjectType, TileType } from '@common/map';
 import { Position } from '@common/position';
-import { InteractionContext } from '@app/interfaces/game-play';
 
 @Injectable({
     providedIn: 'root',
@@ -75,7 +75,7 @@ export class InteractionActionRulesService {
             return false;
         }
 
-        const hasCombatBonus = currentPlayer.combatSanctuaryBonus !== undefined;
+        const hasCombatBonus = !!currentPlayer.combatSanctuaryBonus;
         const { x, y } = currentPlayer.position;
 
         return ADJACENT_POSITIONS.some((offset) => {
@@ -137,7 +137,7 @@ export class InteractionActionRulesService {
         }
 
         if (
-            currentPlayer.combatSanctuaryBonus !== undefined
+            currentPlayer.combatSanctuaryBonus
             && sanctuaryObjectType === ObjectType.CombatSanctuary
         ) {
             return false;
