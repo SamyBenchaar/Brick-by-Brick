@@ -2,6 +2,7 @@ import { Component, computed, effect, inject, signal } from '@angular/core';
 import { PlayerCombatCardComponent } from '@app/components/game-view-components/combat-view/player-combat-card/player-combat-card.component';
 import { CombatSocketService } from '@app/services/communication/game-session-socket/combat-socket.service';
 import { GamePlaySocketService } from '@app/services/communication/game-session-socket/game-play-socket.service';
+import { CombatPosture } from '@app/services/communication/game-session-socket/game-play-types';
 import { COMBAT_POSTURE } from '@common/combat';
 
 @Component({
@@ -67,7 +68,7 @@ export class CombatViewComponent {
 
   setPosture(combatPosture: string): void {
     this.posture.set(combatPosture);
-    this.gamePlaySocketService.chooseCombatPosture(combatPosture);
+    this.gamePlaySocketService.chooseCombatPosture(combatPosture as CombatPosture);
     this.hasChosen.set(true);
   }
 }
