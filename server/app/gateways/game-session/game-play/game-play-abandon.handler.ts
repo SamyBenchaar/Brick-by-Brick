@@ -2,6 +2,7 @@ import { GameSession } from '@app/domain/game-session';
 import { GameSessionGateway } from '@app/gateways/game-session/game-session/game-session.gateway';
 import { GamePlayHandlerContext } from '@app/interfaces/game-play-handler';
 import { GameSessionService } from '@app/services/game-session/game-session/game-session.service';
+import { StartingPointService } from '@app/services/game-session/starting-point.service';
 import { LogService } from '@app/services/log/log.service';
 import { GameModeValue } from '@common/constants/game-config-constants';
 import { CombatEvents, GameSessionEvents } from '@common/game.events';
@@ -16,6 +17,7 @@ export class GamePlayAbandonHandler {
     constructor(
         @Inject(forwardRef(() => GameSessionService))
         private readonly gameSessionService: GameSessionService,
+        private readonly startingPointService: StartingPointService,
         private readonly logService: LogService,
         @Inject(forwardRef(() => GameSessionGateway))
         private readonly gameSessionGateway: GameSessionGateway,
@@ -61,8 +63,19 @@ export class GamePlayAbandonHandler {
             return;
         }
 
+        if (!gameSession.mapCopy) {
+            return;
+        }
+
         if (gameSession.flagHolderId === abandoningPlayer.character.id) {
-            gameSession.dropFlag(abandoningPlayer.character.position);
+            const occupiedPositions = gameSession.getActivePlayers().map(c => c.position);
+            const flagPosition = this.startingPointService.getClosestAvailableTileForFlag(
+                abandoningPlayer.character.position,
+                gameSession.mapCopy,
+                occupiedPositions,
+            );
+            gameSession.dropFlag(flagPosition);
+            gameSession.setFlagHolder(null);
         }
     }
 
