@@ -4,22 +4,30 @@
     <div class="player-life">Vie: {{ currentHp }}/{{ character.maxLife }}</div>
     <app-hp-bar [current]="currentHp" [max]="character.maxLife"></app-hp-bar>
 
-    <div class="stats-container">
-        <div class="stat-box">
+        <div class="stats-container"
+            [class.stats-hidden]="!attackDetail">
             <div class="section-title">Attaque</div>
-            <div>Valeur: {{character.attack}}</div>
-            <div>Dé: {{attackDetail?.dice ?? ''}}</div>
-            <div>Pénalité: {{attackDetail?.tilePenalty ?? ''}}</div>
-            <div class="attack-score">Total attaque: {{attackDetail?.total ?? ''}}</div>
-        </div>
+            <span>{{character.attack}} ⚔️
+                + {{attackDetail?.dice}} 🎲
+                @if (attackDetail?.postureBonus !== 0) {
+                    + {{attackDetail?.postureBonus}}
+                }
+                @if (attackDetail?.tilePenalty !== 0) {
+                    {{(attackDetail?.tilePenalty)}}
+                }
+                = {{attackDetail?.total}}
+            </span>
 
-
-        <div class="stat-box">
             <div class="section-title">Défense</div>
-            <div>Valeur: {{character.defense}}</div>
-            <div>Dé: {{defenseDetail?.dice ?? ''}}</div>
-            <div>Pénalité: {{defenseDetail?.tilePenalty ?? ''}}</div>
-            <div class="defense-score">Total défense: {{defenseDetail?.total ?? ''}}</div>
+            <span>{{character.defense}} 🛡️
+                + {{defenseDetail?.dice}} 🎲
+                @if (defenseDetail?.postureBonus !== 0) {
+                    + {{defenseDetail?.postureBonus}}
+                }
+                @if (defenseDetail?.tilePenalty !== 0) {
+                    {{(defenseDetail?.tilePenalty)}}
+                }
+                = {{defenseDetail?.total}}
+            </span>
         </div>
-    </div>
 </div>

@@ -59,12 +59,12 @@ export class CombatRoundService {
             defenderChoice: combat.defenderPosture || CombatPosture.NONE,
             attackerStrike: {
                 attack: roundDetails.attackerAttackDetail,
-                defense: roundDetails.defenderDefenseDetail,
+                defense: roundDetails.attackerDefenseDetail,
                 damage: roundDetails.damageToDefender,
             },
             defenderStrike: {
                 attack: roundDetails.defenderAttackDetail,
-                defense: roundDetails.attackerDefenseDetail,
+                defense: roundDetails.defenderDefenseDetail,
                 damage: roundDetails.damageToAttacker,
             },
             attackerLife: combat.attackerHp,
