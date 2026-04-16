@@ -13,6 +13,8 @@ const DEFAULT_SPEED = 4;
 const DEFAULT_MOVEMENTS = 3;
 const DEFAULT_ACTIONS = 1;
 const ICE_PENALTY = -2;
+const HIGH_DAMAGE_VALUE = 5;
+const THREE_POINTS = 3;
 
 function createCharacter(overrides: Partial<Character> = {}): Character {
     return {
@@ -56,15 +58,22 @@ function createCombat(overrides: Partial<ActiveCombat> = {}): ActiveCombat {
 }
 
 /**
- * Strategie de test:
- * - Verifier les calculs de round (posture, des, terrain, degats).
- * - Verifier le comportement du mode debug (max/min) et sa bascule entre rounds d'un meme combat.
- * - Verifier les transitions d'etat du combat (HP, outcome, round suivant).
- * - Valider les formats de sortie envoyes aux clients (payload resolu).
- * Cas limites couverts:
- * - Aucun tile trouve sous le joueur (pas de penalite).
- * - Egalite de degats sur un round.
- * - Outcome null quand personne n'est KO.
+ * Strategie de test (Service de logique serveur):
+ * Use cases vises:
+ * - Calcul d'un round complet: posture, des, penalites de terrain, degats infliges.
+ * - Comportement du mode debug (max/min) et retour au comportement normal entre deux rounds.
+ * - Transition d'etat du combat: mise a jour HP, determination outcome, preparation du round suivant.
+ * - Validation du payload technique envoye au gateway/client apres resolution de round.
+ *
+ * Mocks / Stubs / Spies:
+ * - Stubs de GameSession pour controler map/debug mode sans dependre d une session reelle.
+ * - Spy sur Math.random pour rendre le tirage deterministe en mode non-debug.
+ * - Assertions sur structures detaillees (round details/payload) pour verifier les contrats de sortie.
+ *
+ * Cas limites couverts et raison:
+ * - Aucun tile trouve sous le joueur: confirme qu'aucune penalite fantome n'est appliquee.
+ * - Egalite de degats: valide la branche draw du vainqueur de round.
+ * - Outcome null quand personne n'est KO: garantit que le combat continue tant que les conditions de fin ne sont pas atteintes.
  */
 describe('CombatRoundService', () => {
     let service: CombatRoundService;
@@ -120,9 +129,9 @@ describe('CombatRoundService', () => {
             postureBonus: 2,
             dice: 1,
             tilePenalty: ICE_PENALTY,
-            total: 5,
+            total: HIGH_DAMAGE_VALUE,
         });
-        expect(details.damageToDefender).toBe(5);
+        expect(details.damageToDefender).toBe(HIGH_DAMAGE_VALUE);
         expect(details.damageToAttacker).toBe(0);
     });
 
@@ -142,9 +151,9 @@ describe('CombatRoundService', () => {
         });
 
         const debugRound = service.buildRoundDetails({ gameSession, combat, attacker, defender });
-        expect(debugRound.attackerAttackDetail.dice).toBe(4);
+        expect(debugRound.attackerAttackDetail.dice).toBe(DEFAULT_ATTACK);
         expect(debugRound.defenderAttackDetail.dice).toBe(1);
-        expect(debugRound.attackerDefenseDetail.dice).toBe(6);
+        expect(debugRound.attackerDefenseDetail.dice).toBe(DEFAULT_LIFE);
         expect(debugRound.defenderDefenseDetail.dice).toBe(1);
 
         gameSession.isDebugModeActivated = false;
@@ -209,10 +218,10 @@ describe('CombatRoundService', () => {
 
         expect(combat.attackerHp).toBe(0);
         expect(combat.defenderHp).toBe(0);
-        expect(attacker.totalDamageDealt).toBe(3);
+        expect(attacker.totalDamageDealt).toBe(THREE_POINTS);
         expect(attacker.totalDamageReceived).toBe(2);
         expect(defender.totalDamageDealt).toBe(2);
-        expect(defender.totalDamageReceived).toBe(3);
+        expect(defender.totalDamageReceived).toBe(THREE_POINTS);
     });
 
     it('devrait mettre les hp a zero quand les degats sont exactement egaux aux hp restants', () => {
@@ -243,13 +252,13 @@ describe('CombatRoundService', () => {
     it('devrait construire le payload résolu avec none si aucune posture n’a été choisie', () => {
         const payload = service.buildRoundResolvedPayload(
             createCombat({
-                roundNumber: 3,
+                roundNumber: THREE_POINTS,
                 attackerHp: 5,
                 defenderHp: 2,
             }),
             {
                 attackerAttackDetail: { base: DEFAULT_ATTACK, postureBonus: 0, dice: 2, tilePenalty: 0, total: DEFAULT_LIFE },
-                attackerDefenseDetail: { base: DEFAULT_DEFENSE, postureBonus: 0, dice: 3, tilePenalty: 0, total: 7 },
+                attackerDefenseDetail: { base: DEFAULT_DEFENSE, postureBonus: 0, dice: THREE_POINTS, tilePenalty: 0, total: 7 },
                 defenderAttackDetail: { base: DEFAULT_ATTACK, postureBonus: 0, dice: 1, tilePenalty: 0, total: 5 },
                 defenderDefenseDetail: { base: DEFAULT_DEFENSE, postureBonus: 0, dice: DEFAULT_ATTACK, tilePenalty: 0, total: 8 },
                 damageToAttacker: 0,
@@ -280,11 +289,11 @@ describe('CombatRoundService', () => {
     });
 
     it('devrait determiner attacker comme vainqueur de round si le defenseur prend plus de degats', () => {
-        expect(service.determineRoundWinner(1, 3)).toBe('attacker');
+        expect(service.determineRoundWinner(1, THREE_POINTS)).toBe('attacker');
     });
 
     it('devrait determiner defender comme vainqueur de round si l attaquant prend plus de degats', () => {
-        expect(service.determineRoundWinner(4, 1)).toBe('defender');
+        expect(service.determineRoundWinner(DEFAULT_ATTACK, 1)).toBe('defender');
     });
 
     it('devrait determiner draw en cas d egalite de degats', () => {

@@ -4,12 +4,13 @@ import { CombatActionRulesService } from './combat-action-rules.service';
 
 /**
  * Strategie de test:
- * - Valider les preconditions d'action du joueur courant.
+ * - Valider les preconditions d'action du joueur courant (c est le tour, action restante > 0 et sans combat actif)
  * - Verifier la selection auto de cible adjacente attaquable.
  * - Verifier les regles d'attaque (adjacence, action restante, CTF allie/ennemi).
  * Cas limites couverts:
  * - session/joueur/cible absents.
  * - cible identique au joueur courant.
+ * - nombre d actions restantes <= 0 (0 et negatif).
  * - equipes inconnues en mode CTF (attaque autorisee).
  */
 describe('CombatActionRulesService', () => {
@@ -73,9 +74,11 @@ describe('CombatActionRulesService', () => {
 
     it('devrait refuser l action si hors tour, sans action ou combat actif', () => {
         const currentPlayer = createCharacter({ remainingActions: 0 });
+        const currentPlayerWithNegativeActions = createCharacter({ remainingActions: -1 });
 
         expect(service.canCurrentPlayerAct(currentPlayer as never, false, false)).toBeFalse();
         expect(service.canCurrentPlayerAct(currentPlayer as never, true, false)).toBeFalse();
+        expect(service.canCurrentPlayerAct(currentPlayerWithNegativeActions as never, true, false)).toBeFalse();
         expect(service.canCurrentPlayerAct(createCharacter({ remainingActions: 1 }) as never, true, true)).toBeFalse();
     });
 
@@ -125,8 +128,10 @@ describe('CombatActionRulesService', () => {
         expect(service.canCharacterAttackTarget(session, currentPlayer as never, nonAdjacent as never)).toBeFalse();
 
         const withoutAction = createCharacter({ id: 'p1', position: { x: 1, y: 1 }, remainingActions: 0 });
+        const withNegativeAction = createCharacter({ id: 'p1', position: { x: 1, y: 1 }, remainingActions: -1 });
         const adjacent = createCharacter({ id: 'p2', position: { x: 2, y: 1 } });
         expect(service.canCharacterAttackTarget(session, withoutAction as never, adjacent as never)).toBeFalse();
+        expect(service.canCharacterAttackTarget(session, withNegativeAction as never, adjacent as never)).toBeFalse();
     });
 
     it('devrait refuser l attaque si remainingActions est undefined', () => {

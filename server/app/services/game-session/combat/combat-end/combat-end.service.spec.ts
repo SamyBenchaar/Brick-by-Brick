@@ -13,6 +13,7 @@ const DEFAULT_DEFENSE = 4;
 const DEFAULT_SPEED = 4;
 const DEFAULT_MOVEMENTS = 3;
 const DEFAULT_ACTIONS = 1;
+const ATTACKER_REMAINING_HP = 4;
 
 function createCharacter(overrides: Partial<Character> = {}): Character {
     return {
@@ -63,14 +64,20 @@ function createCombat(overrides: Partial<ActiveCombat> = {}): ActiveCombat {
 }
 
 /**
- * Strategie de test:
- * - Verifier la resolution de fin de combat (winner/losers, stats, HP persistes).
- * - Verifier les regles de respawn (point de depart libre/occupe/absent).
- * - Verifier les regles CTF de drop du drapeau.
- * Cas limites couverts:
- * - Outcome defenseur gagnant.
- * - Absence de starting point.
- * - Joueur avec drapeau mais hors CTF ou sur case invalide pour drop.
+ * Strategie de test (Service de logique serveur):
+ * Use cases vises:
+ * - Resolution de fin de combat: attribution winner/losers, mise a jour HP et statistiques.
+ * - Gestion du respawn sur point de depart, et fallback sur la tuile libre la plus proche.
+ * - Application des regles CTF apres combat (gestion du drapeau).
+ *
+ * Mocks / Stubs / Spies:
+ * - Mock de GameSessionService (findNearestFreeTile) pour controler le fallback de respawn.
+ * - Stubs de GameSession (starting point, map copy, game mode) pour piloter les scenarios metier.
+ * - Assertions sur effets de bord (positions, stats, vainqueur) pour valider le comportement observable.
+ *
+ * Cas limites couverts et raison:
+ * - Absence de starting point: garantit une degradation propre sans crash ni etat invalide.
+ * - Joueur avec drapeau hors CTF ou sur case invalide: evite un drop incorrect et protege l integrite des regles CTF.
  */
 describe('CombatEndService', () => {
     let service: CombatEndService;
@@ -105,13 +112,13 @@ describe('CombatEndService', () => {
             gameSession,
             attacker,
             defender,
-            combat: createCombat({ attackerHp: 4, defenderHp: 0 }),
+            combat: createCombat({ attackerHp: ATTACKER_REMAINING_HP, defenderHp: 0 }),
             outcome: CombatOutcome.ATTACKER,
         });
 
         expect(result.winner?.id).toBe('attacker');
         expect(result.loserIds).toEqual(['defender']);
-        expect(attacker.life).toBe(4);
+        expect(attacker.life).toBe(ATTACKER_REMAINING_HP);
         expect(defender.life).toBe(DEFAULT_LIFE);
         expect(defender.position).toEqual({ x: 5, y: 5 });
         expect(attacker.victories).toBe(1);
