@@ -1,6 +1,7 @@
-import {MapTile} from '@app/interfaces/game-map-interfaces';
-import { Injectable } from '@nestjs/common';
+import { MapTile } from '@app/interfaces/game-map-interfaces';
+import { SANCTUARY_TILE_OFFSETS } from '@common/constants/santuary-constants';
 import { Position } from '@common/position';
+import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class SanctuaryService {
@@ -26,7 +27,7 @@ export class SanctuaryService {
                     tile.sanctuaryCooldown--;
                     if (tile.sanctuaryCooldown === 0) delete tile.sanctuaryCooldown;
                 }
-            }   
+            }
         }
     }
 
