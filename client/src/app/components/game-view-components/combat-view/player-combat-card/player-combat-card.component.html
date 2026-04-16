@@ -5,7 +5,7 @@
     <app-hp-bar [current]="currentHp" [max]="character.maxLife"></app-hp-bar>
 
         <div class="stats-container"
-            [class.stats-hidden]="attackDetail === null">
+            [class.stats-hidden]="!attackDetail">
             <div class="section-title">Attaque</div>
             <span>{{character.attack}} ⚔️
                 + {{attackDetail?.dice}} 🎲
