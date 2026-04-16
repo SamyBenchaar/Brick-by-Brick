@@ -62,7 +62,7 @@ export class GamePlayCombatHandler {
                 `Début de combat: ${participants.requestingPlayer.character.name} attaque ${participants.defender.name}`,
             );
         } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
             this.logger.error(`Erreur combat: ${errorMessage}`);
         }
     }
@@ -176,12 +176,12 @@ export class GamePlayCombatHandler {
 
         if (attackerPlayer?.virtualProfile && !combat.attackerPosture) {
             choosePostureAsync(attackerPlayer.character.id, attackerPlayer.virtualProfile).catch(err =>
-                this.logger.error(`Erreur bot attacker posture: ${err}`),
+                this.logger.error(`Erreur du joueur virtuel (posture attaquant): ${err}`),
             );
         }
         if (defenderPlayer?.virtualProfile && !combat.defenderPosture) {
             choosePostureAsync(defenderPlayer.character.id, defenderPlayer.virtualProfile).catch(err =>
-                this.logger.error(`Erreur bot defender posture: ${err}`),
+                this.logger.error(`Erreur du joueur virtuel (posture defenseur): ${err}`),
             );
         }
     }
