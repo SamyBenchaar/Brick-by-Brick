@@ -6,18 +6,31 @@ import { CombatRoundService } from '@app/services/game-session/combat/combat-rou
 import { CombatEndState, CombatRoundOutcome } from '@app/services/game-session/combat/combat-types';
 import { GameSessionService } from '@app/services/game-session/game-session/game-session.service';
 import { TurnManagementService } from '@app/services/game-session/turn-management.service';
+import { VirtualPlayerMechanicsService } from '@app/services/game-session/virtual-player-mechanics.service';
+import { VirtualPlayerService } from '@app/services/game-session/virtual-player.service';
 import { formatCombatRoundLog } from '@app/services/log/combat-log.util';
 import { Character } from '@common/character';
 import { ActiveCombat, COMBAT_POSTURE, CombatRoundResolvedPayload } from '@common/combat';
 import { COMBAT_TURN_TIME } from '@common/constants/combat-constants';
-import { CombatEvents, GameSessionEvents } from '@common/game.events';
-import { Injectable, Logger } from '@nestjs/common';
-import { Socket } from 'socket.io';
 import { GameModeValue } from '@common/constants/game-config-constants';
+import { CombatEvents, GameSessionEvents } from '@common/game.events';
+import { forwardRef, Inject, Injectable, Logger, Optional } from '@nestjs/common';
+import { Socket } from 'socket.io';
+
+const VIRTUAL_PLAYER_DELAY_MS = 2000;
+const VIRTUAL_PLAYER_DELAY_RANGE_MS = 3000;
+
 @Injectable()
 export class GamePlayCombatHandler {
     private readonly logger = new Logger(GamePlayCombatHandler.name);
-    private readonly virtualResolveDelayMs = 2000;
+
+    @Optional()
+    @Inject(forwardRef(() => VirtualPlayerMechanicsService))
+    private readonly virtualPlayerMechanicsService?: VirtualPlayerMechanicsService;
+
+    @Inject(VirtualPlayerService)
+    private readonly virtualPlayerService: VirtualPlayerService;
+
     constructor(
         private readonly gameSessionService: GameSessionService,
         private readonly turnManagementService: TurnManagementService,
@@ -50,7 +63,7 @@ export class GamePlayCombatHandler {
             );
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-            this.logger.error(`Combat error: ${errorMessage}`);
+            this.logger.error(`Erreur combat: ${errorMessage}`);
         }
     }
     handlePostureChosen(
@@ -64,11 +77,7 @@ export class GamePlayCombatHandler {
         if (!gameSession || !combat || !player) {
             return;
         }
-        this.applyChosenPosture(combat, player.character.id, payload.posture);
-        if (this.areBothPosturesChosen(combat)) {
-            this.turnManagementService.stopCombatTimer(gameSession.roomId);
-            this.resolveCombatRound(gameSession, context);
-        }
+        this.processCombatPosture(gameSession, combat, player.character.id, payload.posture, context);
     }
     initiateVirtualPlayerCombat(
         gameSession: GameSession,
@@ -86,7 +95,7 @@ export class GamePlayCombatHandler {
             this.initiateActiveCombat(gameSession, defenderId, attacker, context);
             context.logService.log(gameSession.roomId, `Début de combat: ${attacker.name} attaque ${defender.name}`);
         } catch (error) {
-            this.logger.error(`Combat error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            this.logger.error(`Erreur combat: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
         }
     }
     private initiateActiveCombat(
@@ -113,56 +122,70 @@ export class GamePlayCombatHandler {
         gameSession.setActiveCombat(activeCombat);
         this.turnManagementService.pauseTurnTimer(gameSession.roomId);
         gameSession.setCurrentCombatTurnTime(COMBAT_TURN_TIME);
-        this.autoSelectVirtualPlayerPostures(gameSession, activeCombat);
+
         context.server.to(gameSession.roomId).emit(CombatEvents.CombatStarted, {
             ...activeCombat,
             remainingTurnTime: gameSession.getCurrentTurnTime(),
         });
         this.startCombatTurnTimer(gameSession, context);
-        if (activeCombat.attackerPosture && activeCombat.defenderPosture) {
-            this.handleAllVirtualPlayersResolve(gameSession, context);
-        }
+
+        this.autoSelectVirtualPlayerPostures(gameSession, activeCombat, context);
     }
-    private autoSelectVirtualPlayerPostures(
+    private processCombatPosture(
         gameSession: GameSession,
         combat: ActiveCombat,
+        playerId: string,
+        posture: string,
+        context: GamePlayHandlerContext,
     ): void {
+        this.applyChosenPosture(combat, playerId, posture);
+        if (combat.attackerPosture && combat.defenderPosture) {
+            this.turnManagementService.stopCombatTimer(gameSession.roomId);
+            this.resolveCombatRound(gameSession, context);
+        }
+    }
+
+    private async autoSelectVirtualPlayerPostures(
+        gameSession: GameSession,
+        combat: ActiveCombat,
+        context: GamePlayHandlerContext,
+    ): Promise<void> {
         const attackerPlayer = gameSession.players.find(player => player.character.id === combat.attackerId);
         const defenderPlayer = gameSession.players.find(player => player.character.id === combat.defenderId);
-        if (attackerPlayer?.virtualProfile) {
-            combat.attackerPosture = attackerPlayer.virtualProfile === 'aggressive' ? COMBAT_POSTURE.OFFENSIVE : COMBAT_POSTURE.DEFENSIVE;
-        }
-        if (defenderPlayer?.virtualProfile) {
-            combat.defenderPosture = defenderPlayer.virtualProfile === 'aggressive' ? COMBAT_POSTURE.OFFENSIVE : COMBAT_POSTURE.DEFENSIVE;
-        }
-    }
-    private handleAllVirtualPlayersResolve(gameSession: GameSession, context: GamePlayHandlerContext): void {
-        setTimeout(() => {
-            const session = this.gameSessionService.getGameSession(gameSession.roomId);
-            if (session && session.getActiveCombat()) {
-                this.turnManagementService.stopCombatTimer(session.roomId);
-                this.resolveCombatRound(session, context);
+
+        const choosePostureAsync = async (playerId: string, profile: string) => {
+            let posture = profile === 'aggressive' ? COMBAT_POSTURE.OFFENSIVE : COMBAT_POSTURE.DEFENSIVE;
+
+            if (this.virtualPlayerMechanicsService) {
+                posture = await this.virtualPlayerMechanicsService.selectCombatPosture(profile);
+            } else {
+                const delay = Math.floor(Math.random() * VIRTUAL_PLAYER_DELAY_RANGE_MS) + VIRTUAL_PLAYER_DELAY_MS;
+                await new Promise((resolve) => setTimeout(resolve, delay));
             }
-        }, this.virtualResolveDelayMs);
+
+            const session = this.gameSessionService.getGameSession(gameSession.roomId);
+            const currentCombat = session?.getActiveCombat();
+
+            if (session && currentCombat && currentCombat.roundNumber === combat.roundNumber) {
+                this.processCombatPosture(session, currentCombat, playerId, posture, context);
+            }
+        };
+
+        if (attackerPlayer?.virtualProfile && !combat.attackerPosture) {
+            choosePostureAsync(attackerPlayer.character.id, attackerPlayer.virtualProfile).catch(err =>
+                this.logger.error(`Erreur bot attacker posture: ${err}`),
+            );
+        }
+        if (defenderPlayer?.virtualProfile && !combat.defenderPosture) {
+            choosePostureAsync(defenderPlayer.character.id, defenderPlayer.virtualProfile).catch(err =>
+                this.logger.error(`Erreur bot defender posture: ${err}`),
+            );
+        }
     }
+
     private applyChosenPosture(combat: ActiveCombat, playerId: string, posture: string): void {
-        if (playerId === combat.attackerId) {
-            combat.attackerPosture = posture;
-            return;
-        }
-        if (playerId === combat.defenderId) {
-            combat.defenderPosture = posture;
-        }
-    }
-    private areBothPosturesChosen(combat: ActiveCombat): boolean {
-        return !!combat.attackerPosture && !!combat.defenderPosture;
-    }
-    private handleCombatTimeout(gameSession: GameSession, context: GamePlayHandlerContext): void {
-        const combat = gameSession.getActiveCombat();
-        if (!combat) {
-            return;
-        }
-        this.resolveCombatRound(gameSession, context);
+        if (playerId === combat.attackerId) combat.attackerPosture = posture;
+        else if (playerId === combat.defenderId) combat.defenderPosture = posture;
     }
     private resolveCombatRound(gameSession: GameSession, context?: GamePlayHandlerContext): void {
         const combat = gameSession.getActiveCombat();
@@ -175,12 +198,12 @@ export class GamePlayCombatHandler {
         const roundDetails = this.combatRoundService.buildRoundDetails(gameSession, combat, attacker, defender);
         this.combatRoundService.applyRoundDamage(combat, roundDetails, attacker, defender);
         const payload = this.combatRoundService.buildRoundResolvedPayload(combat, roundDetails);
-        const roundOutcome = this.combatRoundService.determineRoundWinner(
-            roundDetails.damageToAttacker,
-            roundDetails.damageToDefender,
-        );
+        const roundOutcome = this.combatRoundService.determineRoundWinner(roundDetails.damageToAttacker, roundDetails.damageToDefender);
 
-        this.logCombatRound({ gameSession, attacker, defender, payload, roundOutcome, context });
+        if (context) {
+            const logMessage = formatCombatRoundLog(payload, attacker, defender, roundOutcome);
+            context.logService.log(gameSession.roomId, logMessage, 'combat', [attacker.name, defender.name]);
+        }
 
         const outcome = this.combatRoundService.getCombatOutcome(combat);
         if (outcome !== null) {
@@ -190,22 +213,6 @@ export class GamePlayCombatHandler {
             return;
         }
         this.prepareNextCombatRound(gameSession, combat, payload, context);
-    }
-    private logCombatRound(args: {
-        gameSession: GameSession;
-        attacker: Character;
-        defender: Character;
-        payload: CombatRoundResolvedPayload;
-        roundOutcome: CombatRoundOutcome;
-        context?: GamePlayHandlerContext;
-    }): void {
-        const { gameSession, attacker, defender, payload, roundOutcome, context } = args;
-        if (!context) {
-            return;
-        }
-        const logMessage = formatCombatRoundLog(payload, attacker, defender, roundOutcome);
-        const playersInvolved = [attacker.name, defender.name];
-        context.logService.log(gameSession.roomId, logMessage, 'combat', playersInvolved);
     }
     private prepareNextCombatRound(
         gameSession: GameSession,
@@ -220,6 +227,7 @@ export class GamePlayCombatHandler {
         context.server.to(gameSession.roomId).emit(CombatEvents.CombatRoundResolved, payload);
         gameSession.setCurrentCombatTurnTime(COMBAT_TURN_TIME);
         this.startCombatTurnTimer(gameSession, context);
+        this.autoSelectVirtualPlayerPostures(gameSession, combat, context);
     }
     private endCombat(
         gameSession: GameSession,
@@ -245,7 +253,20 @@ export class GamePlayCombatHandler {
         );
         gameSession.clearActiveCombat();
         this.emitCombatResult(gameSession, combatState, context);
-        this.logCombatResult(gameSession, combatState, context);
+
+        if (combatState.outcome === 'draw') {
+            context.logService.log(
+                gameSession.roomId,
+                `Fin du combat: ${combatState.attacker.name} et ${combatState.defender.name} sont tous deux vaincus`,
+            );
+        } else if (combatState.winner) {
+            const loser = combatState.winner.id === combatState.attacker.id ? combatState.defender : combatState.attacker;
+            context.logService.log(
+                gameSession.roomId,
+                `Fin du combat: ${combatState.winner.name} a gagné contre ${loser.name}`,
+            );
+        }
+
         const gameWinner = this.gameSessionService.checkGameWinner(gameSession);
         if (gameWinner) {
             context.onGameEnd(gameSession, gameWinner);
@@ -281,27 +302,6 @@ export class GamePlayCombatHandler {
         }
         context.emitReachableTiles(gameSession);
     }
-    private logCombatResult(
-        gameSession: GameSession,
-        combatState: Pick<CombatEndState, 'attacker' | 'defender' | 'winner' | 'outcome'>,
-        context: GamePlayHandlerContext,
-    ): void {
-        if (combatState.outcome === 'draw') {
-            context.logService.log(
-                gameSession.roomId,
-                `Fin du combat: ${combatState.attacker.name} et ${combatState.defender.name} sont tous deux vaincus`,
-            );
-            return;
-        }
-        if (!combatState.winner) {
-            return;
-        }
-        const loser = combatState.winner.id === combatState.attacker.id ? combatState.defender : combatState.attacker;
-        context.logService.log(
-            gameSession.roomId,
-            `Fin du combat: ${combatState.winner.name} a gagné contre ${loser.name}`,
-        );
-    }
     private resumeOrEndTurn(
         gameSession: GameSession,
         turnShouldContinue: boolean,
@@ -332,6 +332,20 @@ export class GamePlayCombatHandler {
             remainingMovement: currentPlayer.remainingMovement,
             remainingActions: currentPlayer.remainingActions,
         });
+
+        const fullCurrentPlayer = gameSession.players.find((player) => player.character.id === currentPlayer.id);
+        if (fullCurrentPlayer?.virtualProfile) {
+            this.virtualPlayerService.playTurn(gameSession, fullCurrentPlayer)
+                .catch((error: Error) => {
+                    this.logger.error(`Erreur durant la reprise du tour JV post-combat: ${error.message}`);
+                })
+                .finally(() => {
+                    if (!gameSession.getActiveCombat()) {
+                        this.gameSessionService.endCurrentTurn(gameSession);
+                        context.onTurnEnd(gameSession);
+                    }
+                });
+        }
     }
     private startCombatTurnTimer(gameSession: GameSession, context: GamePlayHandlerContext): void {
         context.server.to(gameSession.roomId).emit(CombatEvents.CombatTurnStarted, {
@@ -340,12 +354,10 @@ export class GamePlayCombatHandler {
         this.turnManagementService.startCombatTimer(
             gameSession,
             () => {
-                this.handleCombatTimeout(gameSession, context);
+                if (gameSession.getActiveCombat()) this.resolveCombatRound(gameSession, context);
             },
             (timeRemaining: number) => {
-                context.server.to(gameSession.roomId).emit(CombatEvents.CombatTurnTimeUpdate, {
-                    timeRemaining,
-                });
+                context.server.to(gameSession.roomId).emit(CombatEvents.CombatTurnTimeUpdate, { timeRemaining });
             },
         );
     }

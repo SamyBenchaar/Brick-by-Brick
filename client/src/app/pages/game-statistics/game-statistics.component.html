@@ -4,12 +4,30 @@
         <h1 class="header-title">Statistiques</h1>
     </header>
     <main class="stats-content">
-        <div class="stats-tables">
-            <app-player-statistics [players]="players" [walkableTiles]="walkableTiles" [gameMode]="gameMode" [winner]="winner" [winningTeam]="winningTeam"></app-player-statistics>
-            <app-global-game-statistics [durationSeconds]="durationSeconds" [totalTurns]="totalTurns" [gameMode]="gameMode" [sanctuariesUsedPercent]="sanctuariesUsedPercent" [tilesVisitedPercent]="tilesVisitedPercent" [doorsUsedPercent]="doorsUsedPercent" [flagHoldersCount]="flagHoldersCount" ></app-global-game-statistics>
+        <div class="left-column">
+            <div class="winner-info">
+                @if (gameMode === 'classic') {
+                    <h2 class="winner-title">joueur gagnant:</h2>
+                    <p class="winner-name">{{ winner?.name }}</p>
+                }
+                @if (gameMode === 'ctf') {
+                    <h2 class="winner-title">Équipe gagnante:</h2>
+                    <p class="winner-team">{{ winningTeam === 'team1' ? 'bleue' : 'rouge' }}</p>
+                }
+            </div>
+            <div class="stats-tables">
+                <app-player-statistics [players]="players" [walkableTiles]="walkableTiles" [gameMode]="gameMode" [winner]="winner" [winningTeam]="winningTeam"></app-player-statistics>
+                <app-global-game-statistics [durationSeconds]="durationSeconds" [totalTurns]="totalTurns" [gameMode]="gameMode" [sanctuariesUsedPercent]="sanctuariesUsedPercent" [tilesVisitedPercent]="tilesVisitedPercent" [doorsUsedPercent]="doorsUsedPercent" [flagHoldersCount]="flagHoldersCount" ></app-global-game-statistics>
+            </div>
         </div>
         <div class="chat-column">
-            <!-- <app-chat [username]="winner?.name ?? ''" [gameId]="gameId" [hostPlayerId]="hostId" [isWriting]="isWriting"></app-chat> -->
+            <app-chat
+            [username]="username"
+            [gameId]="gameId"
+            [hostPlayerId]="hostPlayerId"
+            [isWriting]="true"
+            [alwaysShowLog]="true"
+        ></app-chat>
         </div>
     </main>
 

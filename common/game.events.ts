@@ -65,6 +65,9 @@ export enum GameSessionEvents {
 
     RequestPlayerInfo = 'requestPlayerInfo',
     RequestTileInfo = 'requestTileInfo',
+
+    JoinStatsPage = 'joinStatsPage',
+    LeaveStatsPage = 'leaveStatsPage',
 }
 
 export enum ChatEvents {
