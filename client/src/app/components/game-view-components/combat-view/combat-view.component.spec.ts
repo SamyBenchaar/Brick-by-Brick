@@ -74,6 +74,24 @@ describe('CombatViewComponent', () => {
     };
 
     beforeEach(async () => {
+        mockCombatSocketService.self.set({
+            id: 'player-1',
+            name: 'Player 1',
+            avatarId: 1,
+            maxLife: TEST_HP,
+            life: TEST_HP,
+            attack: 4,
+            defense: 4,
+        });
+        mockCombatSocketService.other.set({
+            id: 'player-2',
+            name: 'Player 2',
+            avatarId: 2,
+            maxLife: TEST_HP,
+            life: TEST_HP,
+            attack: 5,
+            defense: 3,
+        });
         mockCombatSocketService.latestRound.set(null);
         mockCombatSocketService.activeCombat.set(null);
         mockCombatSocketService.selfHp.set(TEST_HP);

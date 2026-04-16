@@ -77,9 +77,9 @@ describe('CombatSocketService', () => {
         expect(service.otherHp()).toBe(2);
     });
 
-    it('devrait retourner les hp du personnage hors combat', () => {
+    it('devrait retourner les hp du personnage courant et 0 pour l autre hors combat', () => {
         expect(service.selfHp()).toBe(6);
-        expect(service.otherHp()).toBe(5);
+        expect(service.otherHp()).toBe(0);
     });
 
     it('devrait détecter si le joueur courant participe au combat', () => {

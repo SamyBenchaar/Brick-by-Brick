@@ -1,10 +1,10 @@
 ﻿import { GameSession } from '@app/domain/game-session';
 import { CombatRoundDetails } from '@app/services/game-session/combat/combat-types';
-import { CombatRoundService } from './combat-round.service';
 import { Character } from '@common/character';
 import { ActiveCombat, COMBAT_POSTURE } from '@common/combat';
 import { Dice } from '@common/dice';
 import { TileType } from '@common/map';
+import { CombatRoundService } from './combat-round.service';
 
 const DEFAULT_LIFE = 6;
 const DEFAULT_ATTACK = 4;
@@ -55,6 +55,16 @@ function createCombat(overrides: Partial<ActiveCombat> = {}): ActiveCombat {
     };
 }
 
+/**
+ * Strategie de test:
+ * - Verifier les calculs de round (posture, des, terrain, degats).
+ * - Verifier les transitions d'etat du combat (HP, outcome, round suivant).
+ * - Valider les formats de sortie envoyes aux clients (payload resolu).
+ * Cas limites couverts:
+ * - Aucun tile trouve sous le joueur (pas de penalite).
+ * - Egalite de degats sur un round.
+ * - Outcome null quand personne n'est KO.
+ */
 describe('CombatRoundService', () => {
     let service: CombatRoundService;
     let attacker: Character;
@@ -115,6 +125,36 @@ describe('CombatRoundService', () => {
         expect(details.damageToAttacker).toBe(0);
     });
 
+    it('devrait calculer sans penalite de tuile quand la case est absente', () => {
+        const gameSession = {
+            isDebugModeActivated: true,
+            getMapCopy: jest.fn(() => ({
+                tiles: [[{ type: TileType.Base }]],
+            })),
+        } as unknown as GameSession;
+
+        const offMapDefender = createCharacter({
+            id: 'defender',
+            position: { x: 99, y: 99 },
+            attackDice: Dice.D4,
+            defenseDice: Dice.D6,
+        });
+
+        const details = service.buildRoundDetails(
+            gameSession,
+            createCombat({
+                attackerPosture: COMBAT_POSTURE.NONE,
+                defenderPosture: COMBAT_POSTURE.NONE,
+            }),
+            attacker,
+            offMapDefender,
+        );
+
+        expect(details.attackerAttackDetail.tilePenalty).toBe(0);
+        expect(details.defenderAttackDetail.tilePenalty).toBe(0);
+        expect(details.defenderDefenseDetail.tilePenalty).toBe(0);
+    });
+
     it('devrait appliquer les dégâts sans dépasser les hp restants et mettre à jour les statistiques', () => {
         const combat = createCombat({
             attackerHp: 2,
@@ -169,6 +209,26 @@ describe('CombatRoundService', () => {
 
     it('devrait retourner attacker si seul le défenseur tombe à 0', () => {
         expect(service.getCombatOutcome(createCombat({ attackerHp: 2, defenderHp: 0 }))).toBe('attacker');
+    });
+
+    it('devrait retourner defender si seul l attaquant tombe a 0', () => {
+        expect(service.getCombatOutcome(createCombat({ attackerHp: 0, defenderHp: 2 }))).toBe('defender');
+    });
+
+    it('devrait retourner null si les deux combattants sont encore vivants', () => {
+        expect(service.getCombatOutcome(createCombat({ attackerHp: 2, defenderHp: 2 }))).toBeNull();
+    });
+
+    it('devrait determiner attacker comme vainqueur de round si le defenseur prend plus de degats', () => {
+        expect(service.determineRoundWinner(1, 3)).toBe('attacker');
+    });
+
+    it('devrait determiner defender comme vainqueur de round si l attaquant prend plus de degats', () => {
+        expect(service.determineRoundWinner(4, 1)).toBe('defender');
+    });
+
+    it('devrait determiner draw en cas d egalite de degats', () => {
+        expect(service.determineRoundWinner(2, 2)).toBe('draw');
     });
 
     it('devrait préparer le prochain round en incrémentant le numéro et en vidant les postures', () => {
