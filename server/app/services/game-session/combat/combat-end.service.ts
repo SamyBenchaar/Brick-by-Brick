@@ -2,6 +2,7 @@ import { GameSession } from '@app/domain/game-session';
 import { BuildCombatEndStatePayload, LoserResolutionPayload } from '@app/interfaces/combat-payloads';
 import { CombatEndState } from '@app/services/game-session/combat/combat-types';
 import { GameSessionService } from '@app/services/game-session/game-session/game-session.service';
+import { StartingPointService } from '@app/services/game-session/starting-point.service';
 import { Character } from '@common/character';
 import { CombatOutcome } from '@common/combat';
 import { GameModeValue } from '@common/constants/game-config-constants';
@@ -11,7 +12,10 @@ import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class CombatEndService {
-    constructor(private readonly gameSessionService: GameSessionService) {}
+    constructor(
+        private readonly gameSessionService: GameSessionService,
+        private readonly startingPointService: StartingPointService,
+    ) {}
 
     buildCombatEndState(payload: BuildCombatEndStatePayload): CombatEndState {
         const { gameSession, attacker, defender, combat, outcome } = payload;
@@ -145,7 +149,17 @@ export class CombatEndService {
 
         const defeatedOnOpenedDoor = tile.type === TileType.Door && tile.doorState === 'opened';
         if (defeatedOnOpenedDoor) {
-            return this.gameSessionService.findNearestFreeTile(gameSession, defeatPosition);
+            const mapConfig = gameSession.getMapCopy();
+            if (!mapConfig) {
+                return defeatPosition;
+            }
+
+            const occupiedPositions = gameSession.players.map(p => p.character.position);
+            return this.startingPointService.getClosestAvailableTileForFlag(
+                defeatPosition,
+                mapConfig,
+                occupiedPositions,
+            );
         }
 
         return defeatPosition;
