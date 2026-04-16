@@ -14,3 +14,5 @@ export const VIRTUAL_PLAYER_NAMES = [
     'Luna',
     'Atlas',
 ];
+
+export const VIRTUAL_PLAYER_COMBAT_DELAY_MS = 2000;
