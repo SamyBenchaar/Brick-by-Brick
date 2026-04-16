@@ -25,7 +25,7 @@ export class AdminPageComponent {
 
     openGameCreationModal(): void {
         this.showGameCreationModal = true;
-        this.selectedSize = null;
+        this.selectedSize = GameSizeId.Medium;
         this.selectedGameMode = GameModeValue.Classic;
     }
 
