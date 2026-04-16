@@ -82,8 +82,13 @@ export class InteractionActionRulesService {
             const tileX = x + offset.x;
             const tileY = y + offset.y;
             const tile = mapCopy.mapConfig.tiles[tileY]?.[tileX];
+            const objectType = tile?.object?.type;
 
-            if (!this.isSanctuary(tile?.object?.type) || hasCombatBonus) {
+            if (!this.isSanctuary(objectType)) {
+                return false;
+            }
+
+            if (hasCombatBonus && objectType === ObjectType.CombatSanctuary) {
                 return false;
             }
 
