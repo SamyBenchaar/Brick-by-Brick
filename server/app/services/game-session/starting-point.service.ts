@@ -61,7 +61,6 @@ export class StartingPointService {
         const occupied = new Set(occupiedPositions.map((p) => `${p.x},${p.y}`));
         const startKey = `${startingPoint.x},${startingPoint.y}`;
 
-        // Search by distance layers to find the closest orthogonal tile
         for (let distance = 1; distance <= mapConfig.tiles.length + mapConfig.tiles[0].length; distance++) {
             const candidates: Position[] = [];
 
@@ -92,7 +91,6 @@ export class StartingPointService {
                 }
             }
 
-            // Return the first valid tile at this distance
             if (candidates.length > 0) {
                 return candidates[0];
             }
@@ -109,7 +107,6 @@ export class StartingPointService {
         const occupied = new Set(occupiedPositions.map((p) => `${p.x},${p.y}`));
         const centerKey = `${centerPoint.x},${centerPoint.y}`;
 
-        // Search by distance layers to find the closest orthogonal tile
         for (let distance = 1; distance <= mapConfig.tiles.length + mapConfig.tiles[0].length; distance++) {
             const candidates: Position[] = [];
 
@@ -131,7 +128,6 @@ export class StartingPointService {
                         continue;
                     }
 
-                    // Only consider orthogonal movement (Manhattan distance)
                     const candidate = { x, y };
                     const orthogonalDistance = this.calculateDistance(centerPoint, candidate);
 
@@ -141,7 +137,6 @@ export class StartingPointService {
                 }
             }
 
-            // Return the first valid tile at this distance
             if (candidates.length > 0) {
                 return candidates[0];
             }
