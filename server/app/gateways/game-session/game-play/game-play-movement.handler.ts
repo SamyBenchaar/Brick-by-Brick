@@ -5,6 +5,7 @@ import { GameSessionService } from '@app/services/game-session/game-session/game
 import { MovementService } from '@app/services/game-session/movement.service';
 import { Character } from '@common/character';
 import { GameModeValue } from '@common/constants/game-config-constants';
+import { Direction } from '@common/constants/key-event.constants';
 import { GameSessionEvents } from '@common/game.events';
 import { Position } from '@common/position';
 import { Inject, Injectable, forwardRef } from '@nestjs/common';
@@ -39,7 +40,11 @@ export class GamePlayMovementHandler {
             return;
         }
 
-        const direction = payload.direction as 'arrowUp' | 'arrowDown' | 'arrowLeft' | 'arrowRight';
+        if (!Object.values(Direction).includes(payload.direction as Direction)) {
+            return;
+        }
+
+        const direction = payload.direction as Direction;
         const success = this.gameSessionService.executeMove(gameSession, direction);
 
         if (success) {
@@ -138,7 +143,13 @@ export class GamePlayMovementHandler {
         if (!tile) return;
 
         if (tile.type === 'door') {
-            this.handleDoorInteraction(gameSession, tile, payload.position, currentPlayer, context);
+            this.handleDoorInteraction({
+                gameSession,
+                tile,
+                position: payload.position,
+                currentPlayer,
+                context,
+            });
         } else {
             return;
         }
@@ -151,13 +162,14 @@ export class GamePlayMovementHandler {
         }
     }
 
-    private handleDoorInteraction(
-        gameSession: GameSession,
-        tile: TileDto,
-        position: Position,
-        currentPlayer: Character,
-        context: GamePlayHandlerContext,
-    ): void {
+    private handleDoorInteraction(payload: {
+        gameSession: GameSession;
+        tile: TileDto;
+        position: Position;
+        currentPlayer: Character;
+        context: GamePlayHandlerContext;
+    }): void {
+        const { gameSession, tile, position, currentPlayer, context } = payload;
         tile.doorState = tile.doorState === 'opened' ? 'closed' : 'opened';
         gameSession.usedDoors.add(`${position.x},${position.y}`);
         currentPlayer.remainingActions -= 1;

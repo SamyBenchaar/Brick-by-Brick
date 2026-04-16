@@ -198,14 +198,17 @@ export class GamePlayCombatHandler {
             return;
         }
 
-        const roundDetails = this.combatRoundService.buildRoundDetails(gameSession, combat, attacker, defender);
-        this.combatRoundService.applyRoundDamage(combat, roundDetails, attacker, defender);
+        const roundDetails = this.combatRoundService.buildRoundDetails({ gameSession, combat, attacker, defender });
+        this.combatRoundService.applyRoundDamage({ combat, roundDetails, attacker, defender });
         const payload = this.combatRoundService.buildRoundResolvedPayload(combat, roundDetails);
         const roundOutcome = this.combatRoundService.determineRoundWinner(roundDetails.damageToAttacker, roundDetails.damageToDefender);
 
         if (context) {
             const logMessage = formatCombatRoundLog(payload, attacker, defender, roundOutcome);
-            context.logService.log(gameSession.roomId, logMessage, 'combat', [attacker.name, defender.name]);
+            context.logService.log(gameSession.roomId, logMessage, {
+                type: 'combat',
+                playersInvolved: [attacker.name, defender.name],
+            });
         }
 
         const outcome = this.combatRoundService.getCombatOutcome(combat);
@@ -247,13 +250,13 @@ export class GamePlayCombatHandler {
         if (!attacker || !defender) {
             return;
         }
-        const combatState = this.combatEndService.buildCombatEndState(
+        const combatState = this.combatEndService.buildCombatEndState({
             gameSession,
             attacker,
             defender,
             combat,
             outcome,
-        );
+        });
         gameSession.clearActiveCombat();
         this.emitCombatResult(gameSession, combatState, context);
 

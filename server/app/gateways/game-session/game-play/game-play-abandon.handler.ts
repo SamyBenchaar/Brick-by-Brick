@@ -30,7 +30,11 @@ export class GamePlayAbandonHandler {
         const wasCurrentPlayer = currentPlayer && abandoningPlayer && currentPlayer.id === abandoningPlayer.character.id;
 
         this.handleAbandonedPlayerFlagPlacement(gameSession, abandoningPlayer);
-        this.handleAbandonedPlayerCombatCleanup(gameSession, payload.roomId, abandoningPlayer?.character.id, context);
+        this.handleAbandonedPlayerCombatCleanup(gameSession, {
+            roomId: payload.roomId,
+            abandonedPlayerId: abandoningPlayer?.character.id,
+            context,
+        });
 
         this.gameSessionService.removePlayer(payload.roomId, socket.id);
         socket.leave(payload.roomId);
@@ -62,8 +66,11 @@ export class GamePlayAbandonHandler {
         }
     }
 
-    private handleAbandonedPlayerCombatCleanup(gameSession: GameSession, roomId: string,
-        abandonedPlayerId: string | undefined, context: GamePlayHandlerContext): void {
+    private handleAbandonedPlayerCombatCleanup(
+        gameSession: GameSession,
+        payload: { roomId: string; abandonedPlayerId?: string; context: GamePlayHandlerContext },
+    ): void {
+        const { roomId, abandonedPlayerId, context } = payload;
         const combat = gameSession.getActiveCombat();
         if (combat && abandonedPlayerId && gameSession.isPlayerInActiveCombat(abandonedPlayerId)) {
             gameSession.clearActiveCombat();
