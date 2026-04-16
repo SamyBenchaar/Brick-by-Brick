@@ -3,8 +3,8 @@ import { Component, Input, inject } from '@angular/core';
 import { BaseSignComponent } from '@app/components/game-view-components/base-sign/base-sign.component';
 import { AVATARS } from '@app/constants/character-constants';
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
-import { Player } from '@common/player';
 import { GameModeValue } from '@common/constants/game-config-constants';
+import { Player } from '@common/player';
 
 @Component({
   selector: 'app-player-board',
@@ -33,7 +33,7 @@ export class PlayerBoardComponent {
   }
 
   isVirtualPlayer(player: Player): boolean {
-    return player.virtualProfile !== undefined;
+    return !!player.virtualProfile;
   }
 
   isActivePlayer(player: Player): boolean {

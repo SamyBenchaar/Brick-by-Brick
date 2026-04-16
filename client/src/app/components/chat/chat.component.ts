@@ -19,7 +19,6 @@ import { SessionStatus } from '@common/session.status';
 
 @Component({
     selector: 'app-chat',
-    standalone: true,
     imports: [CommonModule, FormsModule, GameLogComponent],
     templateUrl: './chat.component.html',
     styleUrls: ['./chat.component.scss'],
@@ -76,7 +75,12 @@ export class ChatComponent implements OnInit, OnChanges, OnDestroy {
         }
 
         const roomId = this.gameId || 'waiting-room';
-        this.chatService.sendMessage(this.username, content, roomId, this.hostPlayerId);
+        this.chatService.sendMessage({
+            username: this.username,
+            content,
+            gameId: roomId,
+            hostPlayerId: this.hostPlayerId,
+        });
         this.messageInput.set('');
         this.isWritingChange.emit(false);
     }

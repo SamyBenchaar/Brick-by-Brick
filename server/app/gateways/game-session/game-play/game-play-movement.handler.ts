@@ -5,6 +5,7 @@ import { GameSessionService } from '@app/services/game-session/game-session/game
 import { MovementService } from '@app/services/game-session/movement.service';
 import { Character } from '@common/character';
 import { GameModeValue } from '@common/constants/game-config-constants';
+import { Direction } from '@common/constants/key-event.constants';
 import { GameSessionEvents } from '@common/game.events';
 import { Position } from '@common/position';
 import { Inject, Injectable, forwardRef } from '@nestjs/common';
@@ -39,7 +40,11 @@ export class GamePlayMovementHandler {
             return;
         }
 
-        const direction = payload.direction as 'arrowUp' | 'arrowDown' | 'arrowLeft' | 'arrowRight';
+        if (!Object.values(Direction).includes(payload.direction as Direction)) {
+            return;
+        }
+
+        const direction = payload.direction as Direction;
         const success = this.gameSessionService.executeMove(gameSession, direction);
 
         if (success) {
@@ -71,28 +76,54 @@ export class GamePlayMovementHandler {
         context: GamePlayHandlerContext,
         roomId: string,
     ): boolean {
+        this.tryPickupFlagFromGround(gameSession, context, roomId);
+        return this.tryEndCtfWhenFlagAtStartingPoint(gameSession, context);
+    }
+
+    private tryPickupFlagFromGround(
+        gameSession: GameSession,
+        context: GamePlayHandlerContext,
+        roomId: string,
+    ): void {
         const flagPos = gameSession.getFlagPosition();
         const currentPlayer = gameSession.getCurrentPlayer();
+        const flagOnGround = !gameSession.getFlagHolder() && !!flagPos;
+        const playerOnFlag = currentPlayer.position?.x === flagPos?.x
+            && currentPlayer.position?.y === flagPos?.y;
 
-        const isFlagOnGround = !gameSession.getFlagHolder() && !!flagPos;
-        const isPlayerOnFlag = currentPlayer.position?.x === flagPos?.x && currentPlayer.position?.y === flagPos?.y;
-
-        if (isFlagOnGround && isPlayerOnFlag) {
-            gameSession.setFlagHolder(currentPlayer.id);
-            context.logService.log(roomId, `Drapeau pris du sol par ${currentPlayer.name}`);
-            context.server.to(roomId).emit(GameSessionEvents.GameSessionUpdated, gameSession);
+        if (!flagOnGround || !playerOnFlag) {
+            return;
         }
 
-        const flagHolder = gameSession.getFlagHolderCharacter();
-        if (flagHolder) {
-            const flagHolderStarting = gameSession.getStartingPoint(flagHolder.id);
-            if (flagHolderStarting && flagHolder.position?.x === flagHolderStarting.x && flagHolder.position?.y === flagHolderStarting.y) {
-                context.onGameEnd(gameSession, flagHolder);
-                return true;
-            }
+        gameSession.setFlagHolder(currentPlayer.id);
+        context.logService.log(roomId, `Drapeau pris du sol par ${currentPlayer.name}`);
+        context.server.to(roomId).emit(GameSessionEvents.GameSessionUpdated, gameSession);
+    }
+
+    private tryEndCtfWhenFlagAtStartingPoint(
+        gameSession: GameSession,
+        context: GamePlayHandlerContext,
+    ): boolean {
+        const holder = gameSession.getFlagHolderCharacter();
+        if (!holder) {
+            return false;
         }
 
-        return false;
+        const start = gameSession.getStartingPoint(holder.id);
+        if (!start || !holder.position) {
+            return false;
+        }
+
+        const atStart = holder.position.x === start.x && holder.position.y === start.y;
+        if (!atStart) {
+            return false;
+        }
+
+        if (gameSession.playerOrder.length > 0) {
+            this.gameSessionService.endCurrentTurn(gameSession);
+        }
+        context.onGameEnd(gameSession, holder);
+        return true;
     }
 
     handleRequestAssignPosition(
@@ -138,7 +169,13 @@ export class GamePlayMovementHandler {
         if (!tile) return;
 
         if (tile.type === 'door') {
-            this.handleDoorInteraction(gameSession, tile, payload.position, currentPlayer, context);
+            this.handleDoorInteraction({
+                gameSession,
+                tile,
+                position: payload.position,
+                currentPlayer,
+                context,
+            });
         } else {
             return;
         }
@@ -151,13 +188,14 @@ export class GamePlayMovementHandler {
         }
     }
 
-    private handleDoorInteraction(
-        gameSession: GameSession,
-        tile: TileDto,
-        position: Position,
-        currentPlayer: Character,
-        context: GamePlayHandlerContext,
-    ): void {
+    private handleDoorInteraction(payload: {
+        gameSession: GameSession;
+        tile: TileDto;
+        position: Position;
+        currentPlayer: Character;
+        context: GamePlayHandlerContext;
+    }): void {
+        const { gameSession, tile, position, currentPlayer, context } = payload;
         tile.doorState = tile.doorState === 'opened' ? 'closed' : 'opened';
         gameSession.usedDoors.add(`${position.x},${position.y}`);
         currentPlayer.remainingActions -= 1;

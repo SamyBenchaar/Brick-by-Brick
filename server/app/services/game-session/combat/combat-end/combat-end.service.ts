@@ -1,8 +1,9 @@
 import { GameSession } from '@app/domain/game-session';
+import { BuildCombatEndStatePayload, LoserResolutionPayload } from '@app/interfaces/combat-payloads';
 import { CombatEndState } from '@app/services/game-session/combat/combat-types';
 import { GameSessionService } from '@app/services/game-session/game-session/game-session.service';
 import { Character } from '@common/character';
-import { ActiveCombat, CombatOutcome } from '@common/combat';
+import { CombatOutcome } from '@common/combat';
 import { GameModeValue } from '@common/constants/game-config-constants';
 import { TileType } from '@common/map';
 import { Position } from '@common/position';
@@ -12,13 +13,8 @@ import { Injectable } from '@nestjs/common';
 export class CombatEndService {
     constructor(private readonly gameSessionService: GameSessionService) {}
 
-    buildCombatEndState(
-        gameSession: GameSession,
-        attacker: Character,
-        defender: Character,
-        combat: ActiveCombat,
-        outcome: CombatOutcome,
-    ): CombatEndState {
+    buildCombatEndState(payload: BuildCombatEndStatePayload): CombatEndState {
+        const { gameSession, attacker, defender, combat, outcome } = payload;
         const attackerDefeated = outcome === CombatOutcome.DEFENDER || outcome === CombatOutcome.DRAW;
         const defenderDefeated = outcome === CombatOutcome.ATTACKER || outcome === CombatOutcome.DRAW;
         const winner = this.getWinnerFromOutcome(outcome, attacker, defender);
@@ -46,13 +42,18 @@ export class CombatEndService {
             ? this.respawnDefeatedPlayer(gameSession, defender)
             : defender.position;
 
-        const turnShouldContinue = outcome === 'attacker' && (attacker.remainingMovement ?? 0) > 0;
+        const turnShouldContinue = outcome === CombatOutcome.ATTACKER && (attacker.remainingMovement ?? 0) > 0;
 
         return {
             attacker,
             defender,
             winner,
-            loserIds: this.getLoserIds(attacker, defender, attackerDefeated, defenderDefeated),
+            loserIds: this.getLoserIds({
+                attacker,
+                defender,
+                attackerDefeated,
+                defenderDefeated,
+            }),
             outcome,
             attackerPosition,
             defenderPosition,
@@ -76,12 +77,8 @@ export class CombatEndService {
         return null;
     }
 
-    private getLoserIds(
-        attacker: Character,
-        defender: Character,
-        attackerDefeated: boolean,
-        defenderDefeated: boolean,
-    ): string[] {
+    private getLoserIds(payload: LoserResolutionPayload): string[] {
+        const { attacker, defender, attackerDefeated, defenderDefeated } = payload;
         const loserIds: string[] = [];
 
         if (attackerDefeated) {

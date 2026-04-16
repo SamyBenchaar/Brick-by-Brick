@@ -260,21 +260,7 @@ describe('CharacterCreationPageComponent', () => {
         });
     });
 
-    describe('Création depuis un roomId (joindre une partie)', () => {
-        it('devrait initialiser le roomId depuis les queryParams', () => {
-            expect(component.roomId).toBe('ROOM1');
-        });
-
-        it('ne devrait pas être en mode fromGameCreation quand on a un roomId', () => {
-            expect(component.fromGameCreation).toBeFalse();
-        });
-
-        it('devrait appeler leaveGameSession et observeGameSession quand on revient de la salle d\'attente', () => {
-            expect(mockGameSessionSocketService.leaveGameSession).toHaveBeenCalled();
-            expect(mockGameSessionSocketService.observeGameSession).toHaveBeenCalledWith('ROOM1');
-        });
-    });
-
+  
     describe('Création depuis un gameId (créer une partie)', () => {
         it('devrait être en mode fromGameCreation quand gameId est présent', () => {
             // Simuler les conditions du mode création

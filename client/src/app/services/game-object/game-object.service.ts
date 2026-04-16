@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { Tile } from '@app/classes/tile/tile';
+import { ObjectPlacementContext } from '@app/interfaces/game-grid-payloads';
 import { MapEditorService } from '@app/services/map-editor/map-editor.service';
 import { ObjectCounterService } from '@app/services/object-counter/object-counter.service';
 import { ObjectType, TileType } from '@common/map';
@@ -16,8 +17,8 @@ export class GameObjectService {
         return !isObstacle;
     }
 
-    addObject(position: Position, selectedObject: ObjectType | null,
-        getTile: (pos: Position) => Tile | null, isTileObjectFree: (tile: Tile) => boolean): void {
+    addObject(position: Position, selectedObject: ObjectType | null, placementContext: ObjectPlacementContext): void {
+        const { getTile, isTileObjectFree } = placementContext;
         if (!selectedObject) return;
         if (!this.objectCounterService.canPlace(selectedObject)) return;
 
@@ -26,7 +27,7 @@ export class GameObjectService {
 
         const isSanctuary = selectedObject === ObjectType.HealingSanctuary || selectedObject === ObjectType.CombatSanctuary;
         if (isSanctuary) {
-            this.addSanctuaryObject(position, selectedObject, getTile, isTileObjectFree);
+            this.addSanctuaryObject(position, selectedObject, placementContext);
         } else if (tile) {
             tile.object = selectedObject;
             this.objectCounterService.place(selectedObject);
@@ -49,8 +50,8 @@ export class GameObjectService {
         this.objectCounterService.remove(objectType);
     }
 
-    private addSanctuaryObject(position: Position, selectedObject: ObjectType,
-        getTile: (pos: Position) => Tile | null, isTileObjectFree: (tile: Tile) => boolean): void {
+    private addSanctuaryObject(position: Position, selectedObject: ObjectType, placementContext: ObjectPlacementContext): void {
+        const { getTile, isTileObjectFree } = placementContext;
         const positions = [
             { x: position.x, y: position.y }, { x: position.x + 1, y: position.y },
             { x: position.x, y: position.y + 1 }, { x: position.x + 1, y: position.y + 1 },

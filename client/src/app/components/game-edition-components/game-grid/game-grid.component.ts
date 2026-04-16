@@ -145,7 +145,7 @@ export class GameGridComponent implements OnInit, OnChanges {
     }
 
     if (event.button === ClickEvent.Left) {
-      if (this.mapEditorService.getSelectedTileType() == null) {
+      if (!this.mapEditorService.getSelectedTileType()) {
         this.addObject(position);
       } else {
         this.isDrawing = true;
@@ -254,7 +254,10 @@ export class GameGridComponent implements OnInit, OnChanges {
 
   private addObject(position: Position): void {
     const selectedObject = this.mapEditorService.getSelectedObject();
-    this.gameObjectService.addObject(position, selectedObject, tilePosition => this.getTile(tilePosition), tile => this.isTileObjectFree(tile));
+    this.gameObjectService.addObject(position, selectedObject, {
+      getTile: tilePosition => this.getTile(tilePosition),
+      isTileObjectFree: tile => this.isTileObjectFree(tile),
+    });
   }
 
   private removeObject(position: Position): void {
@@ -341,11 +344,19 @@ export class GameGridComponent implements OnInit, OnChanges {
   }
 
   isFlagVisible(tile: Tile): boolean {
-    return this.gameGridUtilService.isFlagVisible(tile, this.gameMode, this.flagPosition, this.flagHolderId);
+    return this.gameGridUtilService.isFlagVisible(tile, {
+      gameMode: this.gameMode,
+      flagPosition: this.flagPosition,
+      flagHolderId: this.flagHolderId,
+    });
   }
 
   isFlagAtPosition(position: Position): boolean {
-    return this.gameGridUtilService.isFlagAtPosition(position, this.gameMode, this.flagHolderId, this.flagPosition);
+    return this.gameGridUtilService.isFlagAtPosition(position, {
+      gameMode: this.gameMode,
+      flagHolderId: this.flagHolderId,
+      flagPosition: this.flagPosition,
+    });
   }
 
   private handleActionTargetSelection(position: Position): void {

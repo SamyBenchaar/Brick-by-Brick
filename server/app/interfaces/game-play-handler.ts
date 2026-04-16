@@ -10,4 +10,6 @@ export interface GamePlayHandlerContext {
     onGameEndCanceled: (gameSession: GameSession) => void;
     onTurnEnd: (gameSession: GameSession) => void;
     emitReachableTiles: (gameSession: GameSession) => void;
+    resumeTurn: (gameSession: GameSession) => void;
+
 }

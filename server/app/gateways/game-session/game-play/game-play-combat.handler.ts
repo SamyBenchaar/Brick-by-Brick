@@ -62,7 +62,7 @@ export class GamePlayCombatHandler {
                 `Début de combat: ${participants.requestingPlayer.character.name} attaque ${participants.defender.name}`,
             );
         } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
             this.logger.error(`Erreur combat: ${errorMessage}`);
         }
     }
@@ -176,12 +176,12 @@ export class GamePlayCombatHandler {
 
         if (attackerPlayer?.virtualProfile && !combat.attackerPosture) {
             choosePostureAsync(attackerPlayer.character.id, attackerPlayer.virtualProfile).catch(err =>
-                this.logger.error(`Erreur bot attacker posture: ${err}`),
+                this.logger.error(`Erreur du joueur virtuel (posture attaquant): ${err}`),
             );
         }
         if (defenderPlayer?.virtualProfile && !combat.defenderPosture) {
             choosePostureAsync(defenderPlayer.character.id, defenderPlayer.virtualProfile).catch(err =>
-                this.logger.error(`Erreur bot defender posture: ${err}`),
+                this.logger.error(`Erreur du joueur virtuel (posture defenseur): ${err}`),
             );
         }
     }
@@ -198,18 +198,21 @@ export class GamePlayCombatHandler {
             return;
         }
 
-        const roundDetails = this.combatRoundService.buildRoundDetails(gameSession, combat, attacker, defender);
-        this.combatRoundService.applyRoundDamage(combat, roundDetails, attacker, defender);
+        const roundDetails = this.combatRoundService.buildRoundDetails({ gameSession, combat, attacker, defender });
+        this.combatRoundService.applyRoundDamage({ combat, roundDetails, attacker, defender });
         const payload = this.combatRoundService.buildRoundResolvedPayload(combat, roundDetails);
         const roundOutcome = this.combatRoundService.determineRoundWinner(roundDetails.damageToAttacker, roundDetails.damageToDefender);
 
         if (context) {
             const logMessage = formatCombatRoundLog(payload, attacker, defender, roundOutcome);
-            context.logService.log(gameSession.roomId, logMessage, 'combat', [attacker.name, defender.name]);
+            context.logService.log(gameSession.roomId, logMessage, {
+                type: 'combat',
+                playersInvolved: [attacker.name, defender.name],
+            });
         }
 
         const outcome = this.combatRoundService.getCombatOutcome(combat);
-        if (outcome !== null) {
+        if (outcome) {
             if (context) {
                 this.endCombat(gameSession, outcome, context);
             }
@@ -247,13 +250,13 @@ export class GamePlayCombatHandler {
         if (!attacker || !defender) {
             return;
         }
-        const combatState = this.combatEndService.buildCombatEndState(
+        const combatState = this.combatEndService.buildCombatEndState({
             gameSession,
             attacker,
             defender,
             combat,
             outcome,
-        );
+        });
         gameSession.clearActiveCombat();
         this.emitCombatResult(gameSession, combatState, context);
 
@@ -272,6 +275,7 @@ export class GamePlayCombatHandler {
 
         const gameWinner = this.gameSessionService.checkGameWinner(gameSession);
         if (gameWinner) {
+            this.gameSessionService.endCurrentTurn(gameSession);
             context.onGameEnd(gameSession, gameWinner);
             return;
         }

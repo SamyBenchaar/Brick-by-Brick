@@ -21,19 +21,19 @@
           <td>Tuiles visitées</td>
           <td>{{ tilesVisitedPercent }}%</td>
         </tr>
-        @if (sanctuariesUsedPercent !== null) {
+        @if (sanctuariesUsedPercent || sanctuariesUsedPercent === 0) {
           <tr>
             <td>Sanctuaires utilisés</td>
             <td>{{ sanctuariesUsedPercent }}%</td>
           </tr>
         }
-        @if (doorsUsedPercent !== null) {
+        @if (doorsUsedPercent || doorsUsedPercent === 0) {
           <tr>
             <td>Portes utilisées</td>
             <td>{{ doorsUsedPercent }}%</td>
           </tr>
         }
-        @if (gameMode === gameModeValue.Ctf && flagHoldersCount !== null) {
+        @if (gameMode === gameModeValue.Ctf && (flagHoldersCount || flagHoldersCount === 0)) {
           <tr>
             <td>Joueurs ayant détenu le drapeau </td>
             <td>{{ flagHoldersCount }}</td>

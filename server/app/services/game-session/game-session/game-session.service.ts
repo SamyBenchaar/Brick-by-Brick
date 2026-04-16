@@ -1,7 +1,7 @@
 import { GameSession } from '@app/domain/game-session';
-import { TileDto } from '@app/dto/tile.dto';
 import { GameDataForInit } from '@app/interfaces/game-map-interfaces';
 import { CombatService } from '@app/services/game-session/combat.service';
+import { findNearestFreeTilePosition } from '@app/services/game-session/game-session/game-session-pathfinding.util';
 import { MovementService } from '@app/services/game-session/movement.service';
 import { SanctuaryService } from '@app/services/game-session/sanctuary.service';
 import { StartingPointService } from '@app/services/game-session/starting-point.service';
@@ -12,6 +12,7 @@ import { getGameSizeConfig } from '@app/utils/game-config.utils';
 import { Character } from '@common/character';
 import { AVATAR_IDS } from '@common/constants/avatar-constants';
 import { GameModeValue } from '@common/constants/game-config-constants';
+import { Direction } from '@common/constants/key-event.constants';
 import { VIRTUAL_PLAYER_ID_PREFIX, VIRTUAL_PLAYER_NAMES } from '@common/constants/virtual-player-constants';
 import { Dice } from '@common/dice';
 import { Player } from '@common/player';
@@ -182,7 +183,7 @@ export class GameSessionService {
 
     getReachableTiles(gameSession: GameSession): Position[] {
         const currentPlayer = gameSession.getCurrentPlayer();
-        if (!currentPlayer || !currentPlayer.position || currentPlayer.remainingMovement === undefined) {
+        if (!currentPlayer || !currentPlayer.position || !currentPlayer.remainingMovement) {
             return [];
         }
         const mapData = gameSession.getMapCopy()?.tiles;
@@ -199,10 +200,10 @@ export class GameSessionService {
 
     executeMove(
         gameSession: GameSession,
-        direction: 'arrowUp' | 'arrowDown' | 'arrowLeft' | 'arrowRight',
+        direction: Direction,
     ): boolean {
         const currentPlayer = gameSession.getCurrentPlayer();
-        if (!currentPlayer || !currentPlayer.position || currentPlayer.remainingMovement === undefined) {
+        if (!currentPlayer || !currentPlayer.position || !currentPlayer.remainingMovement) {
             return false;
         }
         const mapData = gameSession.getMapCopy()?.tiles;
@@ -252,8 +253,9 @@ export class GameSessionService {
         const canMove = this.canCurrentPlayerMove(gameSession);
         const canInteract = this.canCurrentPlayerInteract(gameSession, currentPlayer);
         const canFight = this.canCurrentPlayerFight(gameSession, currentPlayer);
+        const canTransferOrRequestFlag = this.canCurrentPlayerTransferOrRequestFlag(gameSession, currentPlayer);
 
-        return canMove || canInteract || canFight;
+        return canMove || canInteract || canFight || canTransferOrRequestFlag;
     }
 
     private canCurrentPlayerMove(gameSession: GameSession): boolean {
@@ -266,8 +268,17 @@ export class GameSessionService {
         if (!hasRemainingActions) {
             return false;
         }
-
-        return this.movementService.isDoorAdjacent(currentPlayer.position, gameSession);
+        const isDoorAdjacent = this.movementService.isDoorAdjacent(currentPlayer.position, gameSession);
+        if (isDoorAdjacent) {
+            return true;
+        }
+        const isSanctuaryAdjacent = this.movementService.isSanctuaryAdjacent(currentPlayer.position, gameSession);
+        if (isSanctuaryAdjacent) {
+            const tiles = gameSession.getMapCopy()?.tiles || [];
+            const canInteractWithSanctuary = this.sanctuaryService.canInteractWithSanctuary(isSanctuaryAdjacent, tiles);
+            return canInteractWithSanctuary;
+        }
+        return false;
     }
 
     private canCurrentPlayerFight(gameSession: GameSession, currentPlayer: Character): boolean {
@@ -275,6 +286,23 @@ export class GameSessionService {
         return adjacentPlayers.some((adjacentPlayer) =>
             this.combatService.canFight(currentPlayer, adjacentPlayer, gameSession),
         );
+    }
+
+    private canCurrentPlayerTransferOrRequestFlag(gameSession: GameSession, currentPlayer: Character): boolean {
+        if (gameSession.gameMode !== GameModeValue.Ctf) return false;
+        if ((currentPlayer.remainingActions ?? 0) <= 0) return false;
+
+        const adjacentPlayers = this.movementService.getAdjacentPlayers(gameSession, currentPlayer.position);
+        for (const adjacentPlayer of adjacentPlayers) {
+            if (adjacentPlayer.team === currentPlayer.team) {
+                const currentHasFlag = currentPlayer.hasFlag;
+                const adjacentHasFlag = adjacentPlayer.hasFlag;
+                if ((currentHasFlag && !adjacentHasFlag) || (!currentHasFlag && adjacentHasFlag)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     removePlayer(roomId: string, playerId: string): void {
@@ -343,71 +371,6 @@ export class GameSessionService {
     }
 
     findNearestFreeTile(gameSession: GameSession, fromPosition: Position): Position | null {
-        if (!gameSession.mapCopy) {
-            return null;
-        }
-
-        const mapData = gameSession.mapCopy.tiles;
-        const height = mapData.length;
-        const width = mapData[0].length;
-
-        const queue: { pos: Position; distance: number }[] = [{ pos: fromPosition, distance: 0 }];
-        const visited = new Set<string>();
-        visited.add(`${fromPosition.x},${fromPosition.y}`);
-
-        const directions = [
-            { x: 0, y: -1 },
-            { x: 0, y: 1 },
-            { x: -1, y: 0 },
-            { x: 1, y: 0 },
-        ];
-
-        while (queue.length > 0) {
-            const item = queue.shift();
-            if (!item) {
-                break;
-            }
-            const { pos, distance } = item;
-
-            if (this.isFreeTile(gameSession, pos, mapData)) {
-                return pos;
-            }
-
-            for (const dir of directions) {
-                const nextPos = { x: pos.x + dir.x, y: pos.y + dir.y };
-                const key = `${nextPos.x},${nextPos.y}`;
-
-                const inBoundsX = nextPos.x >= 0 && nextPos.x < width;
-                const inBoundsY = nextPos.y >= 0 && nextPos.y < height;
-
-                if (!visited.has(key) && inBoundsX && inBoundsY) {
-                    visited.add(key);
-                    queue.push({ pos: nextPos, distance: distance + 1 });
-                }
-            }
-        }
-
-        return null;
-    }
-
-    private isFreeTile(gameSession: GameSession, position: Position, mapData: TileDto[][]): boolean {
-        const tile = mapData[position.y][position.x];
-
-        if (tile.type === 'wall' || tile.object) {
-            return false;
-        }
-
-        if (tile.type === 'door' && tile.doorState === 'opened') {
-            return false;
-        }
-
-        const hasPlayer = gameSession.players.some(
-            player => player.character.position?.x === position.x && player.character.position?.y === position.y,
-        );
-        if (hasPlayer) {
-            return false;
-        }
-
-        return true;
+        return findNearestFreeTilePosition(gameSession, fromPosition);
     }
 }
