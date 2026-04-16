@@ -2,7 +2,7 @@ import { Component, computed, effect, inject, signal } from '@angular/core';
 import { PlayerCombatCardComponent } from '@app/components/game-view-components/combat-view/player-combat-card/player-combat-card.component';
 import { CombatSocketService } from '@app/services/communication/game-session-socket/combat-socket.service';
 import { GamePlaySocketService } from '@app/services/communication/game-session-socket/game-play-socket.service';
-import { COMBAT_POSTURE } from '@common/combat';
+import { CombatPosture } from '@common/combat';
 
 @Component({
   selector: 'app-combat-view',
@@ -11,7 +11,7 @@ import { COMBAT_POSTURE } from '@common/combat';
   styleUrl: './combat-view.component.scss',
 })
 export class CombatViewComponent {
-  combatPosture = COMBAT_POSTURE;
+  combatPosture = CombatPosture;
   gamePlaySocketService = inject(GamePlaySocketService);
   combatSocketService = inject(CombatSocketService);
 
@@ -24,7 +24,7 @@ export class CombatViewComponent {
   combatTurnTimeRemaining = this.combatSocketService.combatTurnTimeRemaining;
 
   hasChosen = signal<boolean>(false);
-  posture = signal<string>(COMBAT_POSTURE.NONE);
+  posture = signal<string>(CombatPosture.NONE);
 
   isSelfAttacker = computed(() => {
     const round = this.latestRound();
@@ -56,6 +56,32 @@ export class CombatViewComponent {
     return this.isSelfAttacker() ? round.defenderStrike.defense : round.attackerStrike.defense;
   });
 
+  hasResolvedRound = computed(() => !!this.latestRound());
+
+  otherDamage = computed(() => {
+    const round = this.latestRound();
+    if (!round) return 0;
+    return this.isSelfAttacker() ? round.attackerStrike.damage : round.defenderStrike.damage;
+  });
+
+  selfDamage = computed(() => {
+    const round = this.latestRound();
+    if (!round) return 0;
+    return this.isSelfAttacker() ? round.defenderStrike.damage : round.attackerStrike.damage;
+  });
+
+  selfAttackMinusOtherDefense = computed(() => {
+    const selfAttack = this.selfAttackDetail()?.total ?? 0;
+    const otherDefense = this.otherDefenseDetail()?.total ?? 0;
+    return selfAttack - otherDefense;
+  });
+
+  otherAttackMinusSelfDefense = computed(() => {
+    const otherAttack = this.otherAttackDetail()?.total ?? 0;
+    const selfDefense = this.selfDefenseDetail()?.total ?? 0;
+    return otherAttack - selfDefense;
+  });
+
   constructor() {
     effect(() => {
       const combat = this.combatSocketService.activeCombat();
@@ -67,7 +93,7 @@ export class CombatViewComponent {
 
   setPosture(combatPosture: string): void {
     this.posture.set(combatPosture);
-    this.gamePlaySocketService.chooseCombatPosture(combatPosture);
+    this.gamePlaySocketService.chooseCombatPosture(combatPosture as CombatPosture);
     this.hasChosen.set(true);
   }
 }

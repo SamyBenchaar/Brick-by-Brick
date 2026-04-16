@@ -24,9 +24,9 @@ export function formatCombatRoundLog(payload: CombatRoundResolvedPayload, attack
             : `${defender.name} remporte la manche contre ${attacker.name}`;
 
     const attackerAttackLine = `Attaque ${attacker.name}: ${formatCombatLog(payload.attackerStrike.attack, 'attack')}`;
-    const attackerDefenseLine = `Défense ${attacker.name}: ${formatCombatLog(payload.defenderStrike.defense, 'defense')}`;
+    const attackerDefenseLine = `Défense ${attacker.name}: ${formatCombatLog(payload.attackerStrike.defense, 'defense')}`;
     const defenderAttackLine = `Attaque ${defender.name}: ${formatCombatLog(payload.defenderStrike.attack, 'attack')}`;
-    const defenderDefenseLine = `Défense ${defender.name}: ${formatCombatLog(payload.attackerStrike.defense, 'defense')}`;
+    const defenderDefenseLine = `Défense ${defender.name}: ${formatCombatLog(payload.defenderStrike.defense, 'defense')}`;
 
     const diffAttackVsDefenseTotal =
         payload.attackerStrike.attack.total - payload.attackerStrike.defense.total;

@@ -1,5 +1,5 @@
 import { GameSession } from '@app/domain/game-session';
-import { GamePlayHandlerContext } from '@app/gateways/game-session/game-play/game-play-handler.context';
+import { GamePlayHandlerContext } from '@app/interfaces/game-play-handler';
 import { GameSessionService } from '@app/services/game-session/game-session/game-session.service';
 import { LogService } from '@app/services/log/log.service';
 import { GameSessionEvents } from '@common/game.events';
@@ -64,7 +64,10 @@ export class GamePlayCtfHandler {
 
         const fromHasFlag = fromPlayer.character.hasFlag;
         const toHasFlag = toPlayer.character.hasFlag;
-        if ((fromHasFlag && toHasFlag) || (!fromHasFlag && !toHasFlag)) return false;
+
+        const hasSameFlagState = fromHasFlag === toHasFlag;
+
+        if (hasSameFlagState) return false;
 
         const currentPlayer = gameSession.getCurrentPlayer();
         if (!currentPlayer || fromPlayer.character.id !== currentPlayer.id) return false;

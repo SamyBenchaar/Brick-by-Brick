@@ -286,7 +286,7 @@ export class GameSessionSocketService {
     leaveStatsPage(roomId: string): void {
         this.socketService.emit(GameSessionEvents.LeaveStatsPage, { roomId });
     }
-    
+
     kickPlayer(targetId: string): void {
         const currentRoomId = this.getRoomId();
         if (currentRoomId) {

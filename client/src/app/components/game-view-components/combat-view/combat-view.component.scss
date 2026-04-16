@@ -1,4 +1,11 @@
 $overlay-color: rgba(222, 236, 255);
+.red {
+    color: red;
+}
+
+.green {
+    color: green;
+}
 
 :host {
     position: fixed;
@@ -8,14 +15,6 @@ $overlay-color: rgba(222, 236, 255);
     z-index: 10000;
     pointer-events: none;
 }
-
-// .backdrop {
-//     position: absolute;
-//     inset: 0;
-//     background: rgba(0, 0, 0, 0.2);
-//     backdrop-filter: blur(0.5px);
-//     pointer-events: none;
-// }
 
 .combat-container {
     position: absolute;
@@ -51,6 +50,16 @@ $overlay-color: rgba(222, 236, 255);
     justify-content: space-between;
     align-items: center;
     gap: 20px;
+    padding: 0 3rem;
+}
+
+.combat-result {
+    padding-top: 5px;
+    text-align: center;
+}
+
+.combat-result.hidden {
+    opacity: 0;
 }
 
 .combat-actions {

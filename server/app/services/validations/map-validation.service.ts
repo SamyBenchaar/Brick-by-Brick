@@ -2,9 +2,9 @@ import { SANCTUARY_ADJACENT_POSITIONS } from '@app/constants/sanctuary-validatio
 import { Direction, GridPosition } from '@app/interfaces/map-validation-interfaces';
 import { Game } from '@app/model/game';
 import { Tile } from '@app/model/tile';
+import { GameModeValue } from '@common/constants/game-config-constants';
 import { MapSize, MIN_TERRAIN_COVERAGE, ObjectType, PERCENTAGE_MULTIPLIER, PLAYABLE_TYPES, TileType } from '@common/map';
 import { Injectable } from '@nestjs/common';
-import { GameModeValue } from '@common/constants/game-config-constants';
 
 @Injectable()
 export class MapValidationService {
@@ -140,7 +140,9 @@ export class MapValidationService {
     }
 
     private isWithinBounds(position: GridPosition, gridSize: number): boolean {
-        return position.x >= 0 && position.x < gridSize && position.y >= 0 && position.y < gridSize;
+        const isXValid = position.x >= 0 && position.x < gridSize;
+        const isYValid = position.y >= 0 && position.y < gridSize;
+        return isXValid && isYValid;
     }
 
     private isAccessibleTile(tile: Tile): boolean {
@@ -203,7 +205,9 @@ export class MapValidationService {
             for (let x = 0; x < tiles[y].length; x++) {
                 const tile = tiles[y][x];
                 if (tile.type === TileType.Door) {
-                    if (x === 0 || x === tiles[y].length - 1 || y === 0 || y === tiles.length - 1) {
+                    const isXEdge = x === 0 || x === tiles[y].length - 1;
+                    const isYEdge = y === 0 || y === tiles.length - 1;
+                    if (isXEdge || isYEdge) {
                         return false;
                     }
                 }

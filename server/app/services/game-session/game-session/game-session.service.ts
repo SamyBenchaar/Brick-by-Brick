@@ -404,7 +404,10 @@ export class GameSessionService {
                 const nextPos = { x: pos.x + dir.x, y: pos.y + dir.y };
                 const key = `${nextPos.x},${nextPos.y}`;
 
-                if (!visited.has(key) && nextPos.x >= 0 && nextPos.x < width && nextPos.y >= 0 && nextPos.y < height) {
+                const inBoundsX = nextPos.x >= 0 && nextPos.x < width;
+                const inBoundsY = nextPos.y >= 0 && nextPos.y < height;
+
+                if (!visited.has(key) && inBoundsX && inBoundsY) {
                     visited.add(key);
                     queue.push({ pos: nextPos, distance: distance + 1 });
                 }

@@ -43,7 +43,7 @@ export class MovementService {
         if (tile.type === TileType.Wall) {
             return false;
         }
-        if (tile.type === TileType.Door && tile.doorState !== 'opened') return false;
+        if (tile.type === TileType.Door && tile.doorState !== DoorState.Opened) return false;
         if (tile.object?.type === ObjectType.HealingSanctuary || tile.object?.type === ObjectType.CombatSanctuary) return false;
 
 
@@ -214,7 +214,10 @@ export class MovementService {
                 p.character.position?.y === newPosition.y,
         );
 
-        if (occupied || tile.type === TileType.Wall || (tile.type === TileType.Door && tile.doorState !== 'opened') || !!tile.object) {
+        const isWallOrClosedDoor = tile.type === TileType.Wall || (tile.type === TileType.Door && tile.doorState !== DoorState.Opened);
+        const hasObstacle = occupied || !!tile.object;
+
+        if (isWallOrClosedDoor || hasObstacle) {
             return;
         }
 
@@ -253,7 +256,7 @@ export class MovementService {
             { x: position.x, y: position.y - 1 },
             { x: position.x, y: position.y + 1 },
         ];
-        return adjacentPositions.some(pos => gameSession.getMapCopy()?.tiles?.[pos.y]?.[pos.x]?.type === 'door');
+        return adjacentPositions.some(pos => gameSession.getMapCopy()?.tiles?.[pos.y]?.[pos.x]?.type === TileType.Door);
     }
 
     isSanctuaryAdjacent(position: Position, gameSession: GameSession): Position| null {

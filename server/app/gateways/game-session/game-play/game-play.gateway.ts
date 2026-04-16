@@ -1,14 +1,15 @@
 ﻿import { GameSession } from '@app/domain/game-session';
-import { GamePlayHandlerContext } from '@app/gateways/game-session/game-play/game-play-handler.context';
 import { GamePlayHandlersProvider } from '@app/gateways/game-session/game-play/game-play-handlers.provider';
 import { GameSessionGateway } from '@app/gateways/game-session/game-session/game-session.gateway';
 import { GameDataForInit } from '@app/interfaces/game-map-interfaces';
+import { GamePlayHandlerContext } from '@app/interfaces/game-play-handler';
 import { GameSessionService } from '@app/services/game-session/game-session/game-session.service';
 import { LogService } from '@app/services/log/log.service';
 import { Character } from '@common/character';
+import { GameModeValue } from '@common/constants/game-config-constants';
 import { MS_TO_SECONDS_CONVERSION } from '@common/constants/game-statistics-constants';
 import { CombatEvents, GameSessionEvents } from '@common/game.events';
-import { PERCENTAGE_MULTIPLIER, TileType } from '@common/map';
+import { DoorState, ObjectType, PERCENTAGE_MULTIPLIER, TileType } from '@common/map';
 import { Position } from '@common/position';
 import { SessionStatus } from '@common/session.status';
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
@@ -16,7 +17,6 @@ import {
     OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { GameModeValue } from '@common/constants/game-config-constants';
 
 @WebSocketGateway({ cors: true })
 @Injectable()
@@ -121,7 +121,13 @@ export class GamePlayGateway implements OnGatewayInit {
 
         const currentPlayer = gameSession.getCurrentPlayer();
         const requestingPlayer = gameSession.players.find(player => player.socketId === socket.id);
-        if (!currentPlayer || !requestingPlayer || currentPlayer.id !== requestingPlayer.character.id && !gameSession.isDebugModeActivated) {
+        if (!currentPlayer || !requestingPlayer) {
+            return;
+        }
+
+        const isWrongPlayer = currentPlayer.id !== requestingPlayer.character.id;
+        const debugDisabled = !gameSession.isDebugModeActivated;
+        if (isWrongPlayer && debugDisabled) {
             return;
         }
 
@@ -192,9 +198,9 @@ export class GamePlayGateway implements OnGatewayInit {
         if (gameSession.isTurnStarting || gameSession.getActiveCombat()) return;
         const tile = gameSession.mapCopy?.tiles[payload.position.y]?.[payload.position.x];
         if (!tile) return;
-        if (tile.type === 'door') {
+        if (tile.type === TileType.Door) {
             this.handlersProvider.movementHandler.handleRequestInteract(socket, payload, this.createHandlerContext());
-        } else if (tile.object?.type === 'healingsanctuary' || tile.object?.type === 'combatsanctuary') {
+        } else if (tile.object?.type === ObjectType.HealingSanctuary || tile.object?.type === ObjectType.CombatSanctuary) {
             this.handlersProvider.sanctuaryHandler.handleRequestInteract(socket, payload, this.createHandlerContext());
         }
     }
@@ -308,10 +314,10 @@ export class GamePlayGateway implements OnGatewayInit {
         const tiles = mapData.mapConfig.tiles;
         for (let y = 0; y < tiles.length; y++) {
             for (let x = 0; x < tiles[y].length; x++) {
-                if (tiles[y][x].object?.type === 'flag') {
+                if (tiles[y][x].object?.type === ObjectType.Flag) {
                     const position = { x, y };
                     const tile = tiles[y][x];
-                    if (tile.type !== 'door' || tile.doorState !== 'opened') {
+                    if (tile.type !== TileType.Door || tile.doorState !== DoorState.Opened) {
                         gameSession.setFlagPosition(position);
                         return;
                     }

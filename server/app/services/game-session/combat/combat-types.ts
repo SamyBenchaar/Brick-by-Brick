@@ -1,5 +1,5 @@
 import { Character } from '@common/character';
-import { ActiveCombat, CombatValueDetail } from '@common/combat';
+import { ActiveCombat, CombatOutcome, CombatValueDetail } from '@common/combat';
 import { Player } from '@common/player';
 import { Position } from '@common/position';
 
@@ -18,14 +18,12 @@ export type CombatRoundDetails = {
     damageToAttacker: number;
 };
 
-export type CombatRoundOutcome = 'attacker' | 'defender' | 'draw';
-
 export type CombatEndState = {
     attacker: Character;
     defender: Character;
     winner: Character | null;
     loserIds: string[];
-    outcome: CombatRoundOutcome;
+    outcome: CombatOutcome;
     attackerPosition: Position;
     defenderPosition: Position;
     turnShouldContinue: boolean;

@@ -2,7 +2,7 @@ import { CombatSocketService } from '@app/services/communication/game-session-so
 import { GamePlaySocketService } from '@app/services/communication/game-session-socket/game-play-socket.service';
 import type { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
 import { SocketService } from '@app/services/communication/socket/socket.service';
-import { CombatRoundResolvedPayload } from '@common/combat';
+import { CombatPosture, CombatRoundResolvedPayload } from '@common/combat';
 import { CombatEvents } from '@common/game.events';
 import { Position } from '@common/position';
 
@@ -17,8 +17,8 @@ export function setupCombatListeners(
         defenderId: string;
         initiatorId: string;
         roundNumber: number;
-        attackerPosture?: string;
-        defenderPosture?: string;
+        attackerPosture?: CombatPosture;
+        defenderPosture?: CombatPosture;
         attackerHp: number;
         defenderHp: number;
     }>(CombatEvents.CombatStarted, (data) => {

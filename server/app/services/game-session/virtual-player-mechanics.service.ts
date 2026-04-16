@@ -3,7 +3,7 @@ import { GamePlayGateway } from '@app/gateways/game-session/game-play/game-play.
 import { GameGateway } from '@app/gateways/game/game.gateway';
 import { LogService } from '@app/services/log/log.service';
 import { GameModeValue } from '@common/constants/game-config-constants';
-import { COMBAT_SANCTUARY_BONUS, HEALING_SANCTUARY_BONUS, SANCTUARY_COOLDOWN_TURNS } from '@common/constants/santuary-constants';
+import { COMBAT_SANCTUARY_BONUS, HEALING_SANCTUARY_BONUS, SANCTUARY_COOLDOWN_TURNS, SANCTUARYLABEL } from '@common/constants/santuary-constants';
 import { GameSessionEvents } from '@common/game.events';
 import { DoorState, ObjectType, TileType } from '@common/map';
 import { Player } from '@common/player';
@@ -76,8 +76,14 @@ export class VirtualPlayerMechanicsService {
         return this.targeting.findNearestWalkableTile(session, bot, target);
     }
 
+    private isAttackPossible(session: GameSession, bot: Player, target: Player): boolean {
+        const isReady = this.isBotCurrentPlayer(session, bot) && this.hasAction(bot);
+        const hasPositions = !!bot.character.position && !!target.character.position;
+        return isReady && hasPositions;
+    }
+
     async tryAttackSpecificAdjacent(session: GameSession, bot: Player, target: Player): Promise<boolean> {
-        if (!this.isBotCurrentPlayer(session, bot) || !this.hasAction(bot) || !bot.character.position || !target.character.position) {
+        if (!this.isAttackPossible(session, bot, target)) {
             return false;
         }
 
@@ -204,26 +210,12 @@ export class VirtualPlayerMechanicsService {
             return false;
         }
 
-        if (!this.isBotCurrentPlayer(session, bot) || !this.hasAction(bot)) {
-            return false;
-        }
-
         const target = this.targeting.getAdjacentEnemy(session, bot);
         if (!target) {
             return false;
         }
 
-        await this.randomDelay();
-        if (!this.isBotCurrentPlayer(session, bot) || !this.hasAction(bot)) {
-            return false;
-        }
-
-        if (!this.gamePlayGateway) {
-            return false;
-        }
-
-        this.gamePlayGateway.triggerBotCombat(session.roomId, bot.character.id, target.character.id);
-        return !!session.getActiveCombat();
+        return this.tryAttackSpecificAdjacent(session, bot, target);
     }
 
     async tryUseAdjacentSanctuary(session: GameSession, bot: Player): Promise<boolean> {
@@ -237,6 +229,8 @@ export class VirtualPlayerMechanicsService {
         }
 
         this.applySanctuaryEffect(bot, sanctuaryData.type);
+        const sanctuaryLabel = SANCTUARYLABEL[sanctuaryData.type] ?? 'sanctuaire inconnu';
+        this.logService.log(session.roomId, `Utilisation d'un ${sanctuaryLabel} par ${bot.character.name}`);
 
         const map = session.mapCopy;
         if (map && map.tiles) {
