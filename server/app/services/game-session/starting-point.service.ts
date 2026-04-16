@@ -131,7 +131,7 @@ export class StartingPointService {
                     const candidate = { x, y };
                     const chebyshevDistance = Math.max(
                         Math.abs(centerPoint.x - candidate.x),
-                        Math.abs(centerPoint.y - candidate.y)
+                        Math.abs(centerPoint.y - candidate.y),
                     );
 
                     if (chebyshevDistance === distance) {
