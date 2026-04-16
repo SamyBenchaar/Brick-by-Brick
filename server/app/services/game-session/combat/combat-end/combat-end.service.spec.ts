@@ -151,6 +151,38 @@ describe('CombatEndService', () => {
         expect(findNearestFreeTileSpy).toHaveBeenCalledWith(gameSession, occupiedStart);
         expect(defender.position).toEqual({ x: 4, y: 4 });
     });
+    it('devrait fallback sur le point de depart si aucun tile libre proche nest trouve', () => {
+        const attacker = createCharacter({
+            id: 'attacker',
+            position: { x: 1, y: 1 },
+            remainingMovement: 0,
+        });
+        const defender = createCharacter({
+            id: 'defender',
+            position: { x: 2, y: 1 },
+        });
+
+        const occupiedStart = { x: 1, y: 1 };
+        findNearestFreeTileSpy.mockReturnValue(null);
+
+        const gameSession = {
+            players: [createPlayer(attacker), createPlayer(defender)],
+            gameMode: 'classic',
+            getStartingPoint: jest.fn(() => occupiedStart),
+            getMapCopy: jest.fn(() => null),
+        } as unknown as GameSession;
+
+        service.buildCombatEndState({
+            gameSession,
+            attacker,
+            defender,
+            combat: createCombat({ attackerHp: DEFAULT_LIFE, defenderHp: 0 }),
+            outcome: CombatOutcome.ATTACKER,
+        });
+
+        expect(findNearestFreeTileSpy).toHaveBeenCalledWith(gameSession, occupiedStart);
+        expect(defender.position).toEqual(occupiedStart);
+    });
 
     it('devrait traiter un match nul comme une double défaite sans gagnant', () => {
         const attacker = createCharacter({

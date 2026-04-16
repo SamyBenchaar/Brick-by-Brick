@@ -173,6 +173,13 @@ describe('CombatViewComponent', () => {
     expect(component.otherDefenseDetail()).toEqual(roundPayload.attackerStrike.defense);
   });
 
+  it('devrait retourner false pour isSelfAttacker si le joueur courant est absent', () => {
+    (mockCombatSocketService.self as unknown as { set: (value: unknown) => void }).set(null);
+    mockCombatSocketService.latestRound.set(roundPayload);
+
+    expect(component.isSelfAttacker()).toBeFalse();
+  });
+
   it('devrait transmettre les bonnes données aux deux cartes de combat', () => {
     mockCombatSocketService.latestRound.set(roundPayload);
     mockCombatSocketService.selfHp.set(9);

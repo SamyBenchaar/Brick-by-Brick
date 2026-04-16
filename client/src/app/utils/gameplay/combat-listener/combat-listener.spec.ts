@@ -231,6 +231,33 @@ describe('setupCombatListeners', () => {
         expect(combatSocketServiceMock.activeCombat()?.defenderPosture).toBeUndefined();
     });
 
+    it('devrait conserver activeCombat a null si CombatRoundResolved est recu hors combat actif', () => {
+        combatSocketServiceMock.activeCombat.set(null);
+
+        getCallback<CombatRoundResolvedPayload>(CombatEvents.CombatRoundResolved)({
+            roundNumber: 3,
+            attackerId: 'player-1',
+            defenderId: 'player-2',
+            attackerChoice: CombatPosture.OFFENSIVE,
+            defenderChoice: CombatPosture.DEFENSIVE,
+            attackerStrike: {
+                attack: { base: DEFAULT_ATTACK, postureBonus: 2, dice: 3, tilePenalty: 0, total: 9 },
+                defense: { base: DEFAULT_DEFENSE, postureBonus: 0, dice: 1, tilePenalty: 0, total: 5 },
+                damage: 1,
+            },
+            defenderStrike: {
+                attack: { base: DEFAULT_ATTACK, postureBonus: 0, dice: 1, tilePenalty: 0, total: 5 },
+                defense: { base: DEFAULT_DEFENSE, postureBonus: 2, dice: 1, tilePenalty: 0, total: 7 },
+                damage: 0,
+            },
+            attackerLife: 5,
+            defenderLife: 4,
+        });
+
+        expect(combatSocketServiceMock.latestRound()?.roundNumber).toBe(3);
+        expect(combatSocketServiceMock.activeCombat()).toBeNull();
+    });
+
     it('devrait vider l’état local à la réception de CombatResult', () => {
         combatSocketServiceMock.activeCombat.set({
             attackerId: 'player-1',

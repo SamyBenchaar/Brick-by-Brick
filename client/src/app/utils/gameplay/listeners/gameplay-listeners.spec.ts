@@ -308,4 +308,29 @@ describe('setupGameplayEventListeners', () => {
         expect(combatSocketServiceMock.latestRound()).toBeNull();
         expect(combatSocketServiceMock.combatTurnTimeRemaining()).toBeNull();
     });
+
+    it('devrait traiter CombatEnded (abandon) et notifier le survivant courant', () => {
+        combatSocketServiceMock.activeCombat.set({
+            attackerId: 'p1',
+            defenderId: 'p2',
+            initiatorId: 'p1',
+            roundNumber: 1,
+            attackerHp: 6,
+            defenderHp: 1,
+        } as ActiveCombat);
+        combatSocketServiceMock.latestRound.set({ roundNumber: 1 } as CombatRoundResolvedPayload);
+        combatSocketServiceMock.combatTurnTimeRemaining.set(4);
+
+        getCallback<unknown>(CombatEvents.CombatEnded)({
+            reason: 'playerLeft',
+            abandonedPlayerId: 'p2',
+            survivorId: 'p1',
+            survivorVictories: 3,
+        });
+
+        expect(combatSocketServiceMock.activeCombat()).toBeNull();
+        expect(combatSocketServiceMock.latestRound()).toBeNull();
+        expect(combatSocketServiceMock.combatTurnTimeRemaining()).toBeNull();
+        expect(combatSocketServiceMock.showCombatNotification).toHaveBeenCalledWith('Vous avez remporté le combat.');
+    });
 });

@@ -181,6 +181,23 @@ describe('CombatRequestValidatorService', () => {
         expect(service.canStartCombat({ gameMode: 'classic' } as unknown as GameSession, participants)).toBe(false);
     });
 
+    it('devrait refuser si remainingActions est undefined', () => {
+        const participants: CombatParticipants = {
+            attacker: createCharacter({
+                id: 'attacker',
+                remainingActions: undefined as unknown as number,
+                position: { x: 1, y: 1 },
+            }),
+            defender: createCharacter({
+                id: 'defender',
+                position: { x: 2, y: 1 },
+            }),
+            requestingPlayer: createPlayer('socket-1', createCharacter({ id: 'attacker' })),
+        };
+
+        expect(service.canStartCombat({ gameMode: 'classic' } as unknown as GameSession, participants)).toBe(false);
+    });
+
     it('devrait refuser si les joueurs ne sont pas adjacents', () => {
         const participants: CombatParticipants = {
             attacker: createCharacter({

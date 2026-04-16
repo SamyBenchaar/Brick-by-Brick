@@ -52,6 +52,7 @@ describe('GamePlayCombatHandler - request/posture', () => {
         );
         expect(session.setCurrentCombatTurnTime).toHaveBeenCalledWith(10);
         expect(harness.startCombatTimerSpy).toHaveBeenCalled();
+        expect(harness.applyRoundDamageSpy).not.toHaveBeenCalled();
     });
 
     it('devrait resoudre automatiquement le round au timeout quand aucun joueur ne choisit de posture', () => {

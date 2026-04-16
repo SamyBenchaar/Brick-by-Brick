@@ -75,9 +75,39 @@ describe('CombatSocketService', () => {
         expect(service.otherHp()).toBe(2);
     });
 
+    it('devrait calculer les hp correctement quand le joueur courant est defenseur', () => {
+        gamePlaySocketServiceMock.getCurrentPlayerCharacter.and.returnValue(otherPlayer);
+        gamePlaySocketServiceMock.getCharacter.and.callFake((id: string) => {
+            if (id === 'player-1') {
+                return currentPlayer;
+            }
+            if (id === 'player-2') {
+                return otherPlayer;
+            }
+            return null;
+        });
+        service.activeCombat.set({
+            attackerId: 'player-1',
+            defenderId: 'player-2',
+            initiatorId: 'player-1',
+            roundNumber: 1,
+            attackerHp: 4,
+            defenderHp: 2,
+        });
+
+        expect(service.selfHp()).toBe(2);
+        expect(service.otherHp()).toBe(4);
+    });
+
     it('devrait retomber sur les hp de base hors combat', () => {
         expect(service.selfHp()).toBe(6);
         expect(service.otherHp()).toBe(0);
+    });
+
+    it('devrait retourner 0 pour selfHp si aucun joueur courant nest disponible', () => {
+        gamePlaySocketServiceMock.getCurrentPlayerCharacter.and.returnValue(null);
+
+        expect(service.selfHp()).toBe(0);
     });
 
     it('devrait detecter si le joueur courant participe au combat', () => {
@@ -105,6 +135,49 @@ describe('CombatSocketService', () => {
         });
 
         expect(service.isCurrentUserInCombat()).toBeFalse();
+    });
+
+    it('devrait retourner null pour other si le joueur courant est absent', () => {
+        gamePlaySocketServiceMock.getCurrentPlayerCharacter.and.returnValue(null);
+        service.activeCombat.set({
+            attackerId: 'player-1',
+            defenderId: 'player-2',
+            initiatorId: 'player-1',
+            roundNumber: 1,
+            attackerHp: 6,
+            defenderHp: 5,
+        });
+
+        expect(service.getOther()).toBeNull();
+    });
+
+    it('devrait retourner null pour other si l autre personnage est introuvable', () => {
+        gamePlaySocketServiceMock.getCharacter.and.returnValue(null);
+        service.activeCombat.set({
+            attackerId: 'player-1',
+            defenderId: 'player-2',
+            initiatorId: 'player-1',
+            roundNumber: 1,
+            attackerHp: 6,
+            defenderHp: 5,
+        });
+
+        expect(service.getOther()).toBeNull();
+    });
+
+    it('devrait calculer les participants du combat selon letat actif', () => {
+        expect(service.combatParticipantIds()).toEqual([]);
+
+        service.activeCombat.set({
+            attackerId: 'player-1',
+            defenderId: 'player-2',
+            initiatorId: 'player-1',
+            roundNumber: 1,
+            attackerHp: 6,
+            defenderHp: 5,
+        });
+
+        expect(service.combatParticipantIds()).toEqual(['player-1', 'player-2']);
     });
 
     it('devrait afficher puis effacer la notification apres delai', fakeAsync(() => {

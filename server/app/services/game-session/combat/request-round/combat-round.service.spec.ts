@@ -215,6 +215,31 @@ describe('CombatRoundService', () => {
         expect(defender.totalDamageReceived).toBe(3);
     });
 
+    it('devrait mettre les hp a zero quand les degats sont exactement egaux aux hp restants', () => {
+        const combat = createCombat({
+            attackerHp: 2,
+            defenderHp: 3,
+        });
+
+        const roundDetails: CombatRoundDetails = {
+            attackerAttackDetail: { base: 0, postureBonus: 0, dice: 0, tilePenalty: 0, total: 0 },
+            attackerDefenseDetail: { base: 0, postureBonus: 0, dice: 0, tilePenalty: 0, total: 0 },
+            defenderAttackDetail: { base: 0, postureBonus: 0, dice: 0, tilePenalty: 0, total: 0 },
+            defenderDefenseDetail: { base: 0, postureBonus: 0, dice: 0, tilePenalty: 0, total: 0 },
+            damageToAttacker: 2,
+            damageToDefender: 3,
+        };
+
+        service.applyRoundDamage({ combat, roundDetails, attacker, defender });
+
+        expect(combat.attackerHp).toBe(0);
+        expect(combat.defenderHp).toBe(0);
+        expect(attacker.totalDamageDealt).toBe(3);
+        expect(attacker.totalDamageReceived).toBe(2);
+        expect(defender.totalDamageDealt).toBe(2);
+        expect(defender.totalDamageReceived).toBe(3);
+    });
+
     it('devrait construire le payload résolu avec none si aucune posture n’a été choisie', () => {
         const payload = service.buildRoundResolvedPayload(
             createCombat({

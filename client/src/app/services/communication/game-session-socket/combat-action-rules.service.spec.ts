@@ -61,6 +61,16 @@ describe('CombatActionRulesService', () => {
         expect(service.canCurrentPlayerAct(currentPlayer as never, true, false)).toBeTrue();
     });
 
+    it('devrait refuser l action si currentPlayer est null', () => {
+        expect(service.canCurrentPlayerAct(null, true, false)).toBeFalse();
+    });
+
+    it('devrait refuser l action si remainingActions est undefined', () => {
+        const currentPlayer = createCharacter({ remainingActions: undefined as unknown as number });
+
+        expect(service.canCurrentPlayerAct(currentPlayer as never, true, false)).toBeFalse();
+    });
+
     it('devrait refuser l action si hors tour, sans action ou combat actif', () => {
         const currentPlayer = createCharacter({ remainingActions: 0 });
 
@@ -89,6 +99,19 @@ describe('CombatActionRulesService', () => {
         expect(service.getAutoAttackTarget(createSession(), null)).toBeNull();
     });
 
+    it('devrait retourner null si aucune cible attaquable nest trouvee', () => {
+        const currentPlayer = createCharacter({ id: 'p1', position: { x: 1, y: 1 } });
+        const farEnemy = createCharacter({ id: 'p2', position: { x: 4, y: 4 } });
+        const session = createSession('classic', [
+            { socketId: 's1', character: currentPlayer },
+            { socketId: 's2', character: farEnemy },
+        ]);
+
+        const target = service.getAutoAttackTarget(session, currentPlayer as never);
+
+        expect(target).toBeNull();
+    });
+
     it('devrait refuser l attaque si cible absente, meme cible, non adjacente ou sans action', () => {
         const currentPlayer = createCharacter({ id: 'p1', position: { x: 1, y: 1 }, remainingActions: 1 });
         const nonAdjacent = createCharacter({ id: 'p2', position: { x: 3, y: 1 } });
@@ -104,6 +127,17 @@ describe('CombatActionRulesService', () => {
         const withoutAction = createCharacter({ id: 'p1', position: { x: 1, y: 1 }, remainingActions: 0 });
         const adjacent = createCharacter({ id: 'p2', position: { x: 2, y: 1 } });
         expect(service.canCharacterAttackTarget(session, withoutAction as never, adjacent as never)).toBeFalse();
+    });
+
+    it('devrait refuser l attaque si remainingActions est undefined', () => {
+        const currentPlayer = createCharacter({ id: 'p1', position: { x: 1, y: 1 }, remainingActions: undefined as unknown as number });
+        const adjacent = createCharacter({ id: 'p2', position: { x: 2, y: 1 } });
+        const session = createSession('classic', [
+            { socketId: 's1', character: currentPlayer },
+            { socketId: 's2', character: adjacent },
+        ]);
+
+        expect(service.canCharacterAttackTarget(session, currentPlayer as never, adjacent as never)).toBeFalse();
     });
 
     it('devrait refuser un allie en CTF et autoriser un ennemi', () => {
