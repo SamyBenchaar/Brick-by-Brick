@@ -96,7 +96,10 @@ export class GamePlayAbandonHandler {
         const survivorId = combat.attackerId === abandonedPlayerId ? combat.defenderId : combat.attackerId;
         const survivor = gameSession.getCharacterById(survivorId);
         const leaver = gameSession.getCharacterById(abandonedPlayerId);
-        if (survivor) survivor.victories = (survivor.victories ?? 0) + 1;
+        if (survivor) {
+            survivor.life = survivorId === combat.attackerId ? combat.attackerHp : combat.defenderHp;
+            survivor.victories = (survivor.victories ?? 0) + 1;
+        }
         if (leaver) leaver.defeats = (leaver.defeats ?? 0) + 1;
         gameSession.clearActiveCombat();
 
@@ -113,6 +116,7 @@ export class GamePlayAbandonHandler {
             abandonedPlayerId,
             survivorId,
             survivorVictories: survivor?.victories,
+            survivorLife: survivor?.life,
         });
         return true;
     }
