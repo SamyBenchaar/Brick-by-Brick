@@ -1,4 +1,7 @@
 /* eslint-disable max-lines */
+// on depasse le nombre de lignes pour maximiser la couverture de test sur les cas de combat 
+// comme permis par Hamza
+
 import { GameSession } from '@app/domain/game-session';
 import { GamePlayHandlerContext } from '@app/interfaces/game-play-handler';
 import { CombatEndState, CombatParticipants, CombatRoundDetails } from '@app/services/game-session/combat/combat-types';
