@@ -198,7 +198,7 @@ export class EditionPageComponent implements OnInit {
     const gameDeletedDialogData: DialogData = {
       title: 'Jeu supprimé',
       message: 'Ce jeu a été supprimé. Voulez-vous le recréer avec vos modifications ?',
-      type: DialogType.ERROR,
+      type: DialogType.WARNING,
       cancelText: 'Annuler',
       confirmText: 'Recréer',
     };
