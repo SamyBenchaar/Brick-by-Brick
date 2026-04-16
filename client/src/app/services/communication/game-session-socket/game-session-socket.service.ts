@@ -187,7 +187,7 @@ export class GameSessionSocketService {
                     disableClose: true,
                 });
 
-                dialogRef.afterClosed().subscribe((retry) => {
+                dialogRef.afterClosed().subscribe((retry: boolean | null | undefined) => {
                     if (retry && this.lastJoinPlayer && this.lastJoinRoomId) {
                         this.joinGameSession(this.lastJoinRoomId, this.lastJoinPlayer);
                     } else {
