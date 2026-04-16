@@ -185,6 +185,11 @@ export class GameGridComponent implements OnInit, OnChanges {
     if (!isDebug || !isMyTurn) return false;
     if (!this.gameGridUtilService.isTileValidForTeleport(tile, player)) return false;
 
+    // Prevent teleporting to flag position (flag acts like a starting point)
+    if (this.flagPosition && position.x === this.flagPosition.x && position.y === this.flagPosition.y) {
+      return false;
+    }
+
     this.gamePlaySocketService.requestAssignPosition(position);
     return true;
   }
