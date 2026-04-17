@@ -9,7 +9,7 @@ import { DoorState, ObjectType, TileType } from '@common/map';
 import { Player } from '@common/player';
 import { Position } from '@common/position';
 import { forwardRef, Inject, Injectable, Optional } from '@nestjs/common';
-import { MovementService } from '../movement.service';
+import { MovementService } from '@app/services/game-session/movement.service';
 import { VirtualPlayerPathfindingService } from './virtual-player-pathfinding.service';
 import { VirtualPlayerTargetingService } from './virtual-player-targeting.service';
 

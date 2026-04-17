@@ -1,7 +1,7 @@
 import { computed, inject, Injectable, signal, WritableSignal } from '@angular/core';
 import { Character } from '@common/character';
 import { ActiveCombat, CombatRoundResolvedPayload } from '@common/combat';
-import { GamePlaySocketService } from '../game-play-socket/game-play-socket.service';
+import { GamePlaySocketService } from '@app/services/communication/game-session-socket/game-play-socket/game-play-socket.service';
 
 @Injectable({ providedIn: 'root' })
 export class CombatSocketService {

@@ -3,7 +3,8 @@ import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { GameSession } from '@app/interfaces/game-session';
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket/game-session-socket.service';
-import { mockGameSession, mockGameSession2 } from '@app/services/communication/game-session-socket/game-session-socket/game-session-socket.service.spec.mocks';
+import { mockGameSession, mockGameSession2 } from 
+    '@app/services/communication/game-session-socket/game-session-socket/game-session-socket.service.spec.mocks';
 import { SocketService } from '@app/services/communication/socket/socket.service';
 import { GameSessionEvents } from '@common/game.events';
 import { of } from 'rxjs';

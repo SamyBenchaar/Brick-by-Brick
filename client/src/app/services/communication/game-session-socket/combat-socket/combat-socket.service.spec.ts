@@ -1,5 +1,5 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { GamePlaySocketService } from '../game-play-socket/game-play-socket.service';
+import { GamePlaySocketService } from '@app/services/communication/game-session-socket/game-play-socket/game-play-socket.service';
 import { CombatSocketService } from './combat-socket.service';
 
 /**

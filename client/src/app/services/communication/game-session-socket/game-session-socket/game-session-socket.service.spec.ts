@@ -6,7 +6,7 @@ import { GameSessionSocketService } from '@app/services/communication/game-sessi
 import {
     mockGameSession,
     mockGameSession2,
-    mockPlayer
+    mockPlayer,
 } from '@app/services/communication/game-session-socket/game-session-socket/game-session-socket.service.spec.mocks';
 import { SocketService } from '@app/services/communication/socket/socket.service';
 import { Character } from '@common/character';
