@@ -1,5 +1,5 @@
 import { GameSession } from '@app/domain/game-session';
-import { GamePlayAbandonHandler } from '@app/gateways/game-session/game-play/game-play-abandon.handler';
+import { GamePlayAbandonHandler } from '@app/gateways/game-session/game-play/game-play-abandon/game-play-abandon.handler';
 import { GameSessionGateway } from '@app/gateways/game-session/game-session/game-session.gateway';
 import { GamePlayHandlerContext } from '@app/interfaces/game-play-handler';
 import { GameSessionService } from '@app/services/game-session/game-session/game-session.service';

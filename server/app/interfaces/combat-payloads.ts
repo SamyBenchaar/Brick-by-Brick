@@ -1,5 +1,5 @@
+import { CombatRoundDetails } from '@app/constants/combat-types';
 import { GameSession } from '@app/domain/game-session';
-import { CombatRoundDetails } from '@app/services/game-session/combat/combat-types';
 import { Character } from '@common/character';
 import { ActiveCombat, CombatOutcome } from '@common/combat';
 

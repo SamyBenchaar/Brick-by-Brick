@@ -7,17 +7,8 @@
             class="tile"
             [class]="'tile-' + tile.type"
             [class.reachable]="isViewMode && isReachableTile(position)"
-            [class.interactable]="
-                isViewMode &&
-                isActionSelectionMode &&
-                isInteractableTile(position) &&
-                !isSanctuaryOriginTile(tile, position) &&
-                !tile.sanctuaryOrigin"
-            [class.interactable-origin]="
-                isViewMode &&
-                isActionSelectionMode &&
-                isInteractableTile(position) &&
-                isSanctuaryOriginTile(tile, position)"
+            [class.interactable]="canTileBeInteracted(tile, position)"
+            [class.interactable-origin]="canTileBeInteractedAsOrigin(position)"
             [style.backgroundImage]="'url(' + getTilePath(tile.type, tile.doorState ?? undefined) + ')'"
             (mousedown)="onTileMouseDown(position, $event)"
             (mouseenter)="onTileMouseEnter(position)"

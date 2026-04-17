@@ -1,11 +1,10 @@
 import { Injectable, inject } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { Tile } from '@app/classes/tile/tile';
 import { AppDialogComponent } from '@app/components/game-edition-components/app-dialog/app-dialog.component';
 import { DialogType } from '@app/constants/dialog-type.enum';
 import { GameSession } from '@app/interfaces/game-session';
 import { FlagTransferSocketService } from '@app/services/communication/game-session-socket/flag-transfer-socket.service';
-import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
+import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket/game-session-socket.service';
 import { GameGridHelperService } from '@app/services/game-grid/game-grid-helper.service';
 import { Character } from '@common/character';
 import { GameModeValue } from '@common/constants/game-config-constants';
@@ -90,13 +89,4 @@ export class GameGridDialogService {
         });
     }
 
-    openTileDialog(tile: Tile): void {
-        this.dialog.open(AppDialogComponent, {
-            data: {
-                title: 'Informations de la tuile',
-                message: `Type: ${tile.type}\nCoût: ${this.gameGridHelperService.getTileCost(tile.type)}`,
-                type: DialogType.INFO,
-            },
-        });
-    }
 }

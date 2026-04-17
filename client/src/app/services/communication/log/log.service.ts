@@ -39,15 +39,4 @@ export class LogService {
         this.socketService.emit(LogEvents.LoadLogHistory, { gameId });
     }
 
-    clearLogHistoryOnServer(gameId?: string): void {
-        this.socketService.emit(LogEvents.ClearLogHistory, { gameId });
-    }
-
-    getCurrentLogs(): LogMessage[] {
-        return this.logs();
-    }
-
-    clearLogs(): void {
-        this.logs.set([]);
-    }
 }

@@ -5,7 +5,7 @@ import { Tile } from '@app/classes/tile/tile';
 import { ClickEvent } from '@app/constants/click-event-constants';
 import { GameSize } from '@app/constants/game-size.enum';
 import { Game } from '@app/interfaces/game';
-import { GamePlaySocketService } from '@app/services/communication/game-session-socket/game-play-socket.service';
+import { GamePlaySocketService } from '@app/services/communication/game-session-socket/game-play-socket/game-play-socket.service';
 import { GameGridUtilService } from '@app/services/game-grid-util/game-grid-util.service';
 import { TileOperationsService } from '@app/services/game-grid/tile-operations.service';
 import { GameObjectService } from '@app/services/game-object/game-object.service';
@@ -122,10 +122,6 @@ export class GameGridComponent implements OnInit, OnChanges {
 
   getGrid(): Tile[][] {
     return this.gameMap.grid;
-  }
-
-  getTileSize(): number {
-    return this.gridSize / this.gameMap.size;
   }
 
   getTile(position: Position): Tile | null {
@@ -383,5 +379,26 @@ export class GameGridComponent implements OnInit, OnChanges {
     }
 
     this.attackTargetSelected.emit(target);
+  }
+
+  private isInteractionModeActive(): boolean {
+    return this.isViewMode && this.isActionSelectionMode;
+  }
+
+  private canTileBeNormallyInteracted(tile: Tile, position: Position): boolean {
+    return !this.isSanctuaryOriginTile(tile, position) && !tile.sanctuaryOrigin;
+  }
+
+  canTileBeInteracted(tile: Tile, position: Position): boolean {
+    if (!this.isInteractionModeActive()) return false;
+    if (!this.isInteractableTile(position)) return false;
+    return this.canTileBeNormallyInteracted(tile, position);
+  }
+
+  canTileBeInteractedAsOrigin(position: Position): boolean {
+    if (!this.isInteractionModeActive()) return false;
+    if (!this.isInteractableTile(position)) return false;
+    const tile = this.getTile(position);
+    return tile ? this.isSanctuaryOriginTile(tile, position) : false;
   }
 }

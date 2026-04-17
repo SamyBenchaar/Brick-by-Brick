@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { AVATARS } from '@app/constants/character-constants';
-import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
+import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket/game-session-socket.service';
 import { Character } from '@common/character';
 import { Player } from '@common/player';
 import { VirtualPlayerProfile } from '@common/virtual.player.profile';
@@ -72,9 +72,6 @@ export class WaitingRoomListComponent {
         return session.players.length >= session.maxPlayers;
     }
 
-    isVirtualPlayer(player: Player): boolean {
-        return !!player.virtualProfile;
-    }
 
     isAggressiveVirtualPlayer(player: Player): boolean {
         return player.virtualProfile === VirtualPlayerProfile.Aggressive;

@@ -1,10 +1,10 @@
 import { signal, WritableSignal } from '@angular/core';
-import { SessionStatus } from '@common/session.status';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { GameSession } from '@app/interfaces/game-session';
-import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
+import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket/game-session-socket.service';
 import { makeTestSession } from '@app/testing/game-session-test-helpers';
 import { Character } from '@common/character';
+import { SessionStatus } from '@common/session.status';
 import { WaitingRoomListComponent } from './waiting-room-list.component';
 
 /**

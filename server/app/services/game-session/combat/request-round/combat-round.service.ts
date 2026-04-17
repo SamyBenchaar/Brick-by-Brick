@@ -1,6 +1,6 @@
+import { CombatRoundDetails } from '@app/constants/combat-types';
 import { GameSession } from '@app/domain/game-session';
 import { ApplyRoundDamagePayload, BuildRoundDetailsPayload, CombatScorePayload } from '@app/interfaces/combat-payloads';
-import { CombatRoundDetails } from '@app/services/game-session/combat/combat-types';
 import { Character } from '@common/character';
 import { ActiveCombat, CombatOutcome, CombatPosture, CombatRoundResolvedPayload, CombatValueDetail } from '@common/combat';
 import { Dice, DICE_FACES_MAP } from '@common/dice';

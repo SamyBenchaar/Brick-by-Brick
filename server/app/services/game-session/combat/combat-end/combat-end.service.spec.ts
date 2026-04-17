@@ -6,6 +6,7 @@ import { Dice } from '@common/dice';
 import { DoorState, TileType } from '@common/map';
 import { Player } from '@common/player';
 import { CombatEndService } from './combat-end.service';
+import { StartingPointService } from '@app/services/game-session/starting-point.service';
 
 const DEFAULT_LIFE = 6;
 const DEFAULT_ATTACK = 4;
@@ -82,12 +83,20 @@ function createCombat(overrides: Partial<ActiveCombat> = {}): ActiveCombat {
 describe('CombatEndService', () => {
     let service: CombatEndService;
     let findNearestFreeTileSpy: jest.Mock;
+    let startingPointServiceMock: Partial<StartingPointService>;
 
     beforeEach(() => {
         findNearestFreeTileSpy = jest.fn();
-        service = new CombatEndService({
-            findNearestFreeTile: findNearestFreeTileSpy,
-        } as unknown as GameSessionService);
+        startingPointServiceMock = {
+            getClosestAvailableTileForFlag: jest.fn(),
+        } as Partial<StartingPointService>;
+
+        service = new CombatEndService(
+            {
+                findNearestFreeTile: findNearestFreeTileSpy,
+            } as unknown as GameSessionService,
+            startingPointServiceMock as StartingPointService,
+        );
     });
 
     it('devrait faire respawn le perdant, remettre sa vie au max et donner une victoire au gagnant', () => {
@@ -293,7 +302,7 @@ describe('CombatEndService', () => {
             hasFlag: true,
         });
 
-        findNearestFreeTileSpy.mockReturnValue({ x: 3, y: 1 });
+        (startingPointServiceMock.getClosestAvailableTileForFlag as jest.Mock).mockReturnValue({ x: 3, y: 1 });
 
         const gameSession = {
             players: [createPlayer(attacker), createPlayer(defender)],
@@ -316,6 +325,7 @@ describe('CombatEndService', () => {
             outcome: CombatOutcome.ATTACKER,
         });
 
+        expect(startingPointServiceMock.getClosestAvailableTileForFlag).toHaveBeenCalled();
         expect(gameSession.dropFlag).toHaveBeenCalledWith({ x: 3, y: 1 });
     });
 

@@ -9,14 +9,13 @@ import { GameGridComponent } from '@app/components/game-edition-components/game-
 import { CombatViewComponent } from '@app/components/game-view-components/combat-view/combat-view.component';
 import { PlayerBoardComponent } from '@app/components/game-view-components/player-board/player-board/player-board.component';
 import { PlayerSignComponent } from '@app/components/game-view-components/player-sign/player-sign/player-sign.component';
-import { AVATARS } from '@app/constants/character-constants';
 import { DialogType } from '@app/constants/dialog-type.enum';
 import { InteractionMode } from '@app/constants/game-play.constants';
 import { AppDialogData } from '@app/interfaces/dialog-model';
 import { Game } from '@app/interfaces/game';
-import { CombatSocketService } from '@app/services/communication/game-session-socket/combat-socket.service';
-import { GamePlaySocketService } from '@app/services/communication/game-session-socket/game-play-socket.service';
-import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
+import { CombatSocketService } from '@app/services/communication/game-session-socket/combat-socket/combat-socket.service';
+import { GamePlaySocketService } from '@app/services/communication/game-session-socket/game-play-socket/game-play-socket.service';
+import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket/game-session-socket.service';
 import { getGameSizeConfig } from '@app/utils/game-config.utils';
 import { Character } from '@common/character';
 import { KEY_DEBUG, KEY_DIRECTION_MAP, KEY_ENTER } from '@common/constants/key-event.constants';
@@ -287,17 +286,10 @@ export class GameViewComponent implements OnInit, OnDestroy {
     this.isActionSelectionMode.set(false);
   }
 
-  getAvatarImage(avatarId: number): string {
-    return AVATARS.find(avatarOption => avatarOption.id === avatarId)?.image ?? 'assets/images/lily.jpg';
-  }
-
   ngOnDestroy(): void {
     this.routeSubscription?.unsubscribe();
     window.removeEventListener('beforeunload', this.handleBeforeUnload);
     window.removeEventListener('popstate', this.handleBackButton);
   }
-  leaveGameSession(): void {
-    this.gameSessionSocketService.leaveGameSession();
-    this.router.navigate(['/home']);
-  }
+
 }
