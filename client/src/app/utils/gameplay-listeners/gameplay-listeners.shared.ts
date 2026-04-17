@@ -15,6 +15,29 @@ import { TeamId } from '@common/team';
 
 const WALKABLE_TILE_TYPES = new Set<string>([TileType.Base, TileType.Water, TileType.Ice]);
 
+
+export function buildVictoryWinnerModalContent(data: GameEndedPayload): { title: string; message: string } {
+    if (data.gameMode === GameModeValue.Ctf && data.winningTeam) {
+        const teamName = data.winningTeam === TeamId.Team1 ? 'bleue' : 'rouge';
+        return {
+            title: 'Gagnant de la partie',
+            message: `Équipe ${teamName}`,
+        };
+    }
+
+    if (data.winner) {
+        return {
+            title: 'Gagnant de la partie',
+            message: data.winner.name,
+        };
+    }
+
+    return {
+        title: 'Gagnant de la partie',
+        message: '',
+    };
+}
+
 export function findSanctuaryOrigin(position: Position, tiles: Tile[][]): Position | undefined {
     return ORIGIN_CANDIDATES
         .map(({ dx, dy }) => ({ x: position.x + dx, y: position.y + dy }))
