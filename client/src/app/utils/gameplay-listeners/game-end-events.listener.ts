@@ -8,7 +8,11 @@ import { GamePlaySocketService } from '@app/services/communication/game-session-
 import type { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket/game-session-socket.service';
 import { CTF_VICTORY_ANNOUNCE_DELAY, GameModeValue } from '@common/constants/game-config-constants';
 import { GameSessionEvents } from '@common/game.events';
-import { buildGameEndedMessage, buildStatisticsNavigationState } from './gameplay-listeners.shared';
+import {
+    buildGameEndedMessage,
+    buildStatisticsNavigationState,
+    buildVictoryWinnerModalContent,
+} from './gameplay-listeners.shared';
 
 export function registerGameEndEventListeners(dependencies: GameEndListenersDependencies): void {
     const { socketService, gamePlaySocketService, gameSessionSocketService, router, dialog } = dependencies;
@@ -21,19 +25,31 @@ export function registerGameEndEventListeners(dependencies: GameEndListenersDepe
 
         gamePlaySocketService.gameEnded.set(true);
 
-        const { title, message } = buildGameEndedMessage(data, gamePlaySocketService.getSocketId());
-        const delay = getEndGameDelay(data, gameSessionSocketService);
-
-        setTimeout(() => {
-            if (data.reason === 'victory') {
+        if (data.reason === 'victory') {
+            const winnerModal = buildVictoryWinnerModalContent(data);
+            const victoryDialogRef = dialog.open(AppDialogComponent, {
+                data: {
+                    title: winnerModal.title,
+                    message: winnerModal.message,
+                    type: DialogType.SUCCESS,
+                },
+                disableClose: true,
+            });
+            window.setTimeout(() => {
+                victoryDialogRef.close();
                 navigateToStatisticsPage(data, {
                     gamePlaySocketService,
                     gameSessionSocketService,
                     router,
                 });
-                return;
-            }
+            }, gameSessionSocketService.endGameDelay);
+            return;
+        }
 
+        const { title, message } = buildGameEndedMessage(data, gamePlaySocketService.getSocketId());
+        const delay = getEndGameDelay(data, gameSessionSocketService);
+
+        setTimeout(() => {
             navigateToHomeWithDialog(title, message, {
                 gamePlaySocketService,
                 gameSessionSocketService,
