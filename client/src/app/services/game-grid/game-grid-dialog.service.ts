@@ -90,13 +90,4 @@ export class GameGridDialogService {
         });
     }
 
-    openTileDialog(tile: Tile): void {
-        this.dialog.open(AppDialogComponent, {
-            data: {
-                title: 'Informations de la tuile',
-                message: `Type: ${tile.type}\nCoût: ${this.gameGridHelperService.getTileCost(tile.type)}`,
-                type: DialogType.INFO,
-            },
-        });
-    }
 }

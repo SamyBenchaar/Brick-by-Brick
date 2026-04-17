@@ -124,10 +124,6 @@ export class GameGridComponent implements OnInit, OnChanges {
     return this.gameMap.grid;
   }
 
-  getTileSize(): number {
-    return this.gridSize / this.gameMap.size;
-  }
-
   getTile(position: Position): Tile | null {
     return this.gameMap.getTile(position);
   }

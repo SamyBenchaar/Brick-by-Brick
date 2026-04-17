@@ -85,12 +85,6 @@ export class ChatComponent implements OnInit, OnChanges, OnDestroy {
         this.isWritingChange.emit(false);
     }
 
-    clearChat(): void {
-        this.messages = [];
-        this.chatService.clearMessages();
-        const roomId = this.gameId || 'waiting-room';
-        this.chatService.clearChatHistoryOnServer(roomId);
-    }
 
     onFocus(): void {
         this.isWritingChange.emit(true);
