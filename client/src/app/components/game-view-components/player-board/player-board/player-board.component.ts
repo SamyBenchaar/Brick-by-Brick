@@ -26,12 +26,6 @@ export class PlayerBoardComponent {
     return this.gameMode === GameModeValue.Ctf;
   }
 
-  getCurrentPlayerCharacter() {
-    const session = this.gameSessionService.currentSession();
-    const socketId = this.gameSessionService.getSocketId();
-    return session?.players.find(player => player.socketId === socketId)?.character;
-  }
-
   isVirtualPlayer(player: Player): boolean {
     return !!player.virtualProfile;
   }

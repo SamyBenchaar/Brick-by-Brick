@@ -12,18 +12,6 @@ export class TileOperationsService {
     private mapEditorService = inject(MapEditorService);
     private objectCounterService = inject(ObjectCounterService);
 
-    applyDeletion(tile: Tile | null, isShiftPressed: boolean, position: Position): void {
-        if (!tile) return;
-
-        if (isShiftPressed) {
-            this.removeObject(tile, position);
-        } else {
-            tile.doorState = undefined;
-            tile.type = TileType.Base;
-            this.mapEditorService.setTileType(position, TileType.Base);
-        }
-    }
-
     changeTileType(tile: Tile | null, position: Position): void {
         const selectedType = this.mapEditorService.getSelectedTileType();
         if (!tile || !selectedType) return;
@@ -47,20 +35,6 @@ export class TileOperationsService {
         this.mapEditorService.setDoorState(position, tile.doorState);
     }
 
-    addObject(tile: Tile | null, position: Position): boolean {
-        const selectedObject = this.mapEditorService.getSelectedObject();
-
-        if (!tile || !selectedObject) return false;
-        if (!this.objectCounterService.canPlace(selectedObject)) return false;
-        if (tile.object) return false;
-        if (tile.type === TileType.Wall || tile.type === TileType.Door) return false;
-
-        tile.object = selectedObject;
-        this.objectCounterService.place(selectedObject);
-        this.mapEditorService.setObject(position, selectedObject);
-        return true;
-    }
-
     removeObject(tile: Tile | null, position: Position): void {
         if (tile && tile.object) {
             this.objectCounterService.remove(tile.object);
@@ -69,7 +43,4 @@ export class TileOperationsService {
         }
     }
 
-    isTileObjectFree(tile: Tile | null): boolean {
-        return !tile?.object;
-    }
 }

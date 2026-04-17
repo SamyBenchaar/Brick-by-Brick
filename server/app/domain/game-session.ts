@@ -7,6 +7,7 @@ import { SHUFFLE_FACTOR } from '@common/map';
 import { Player } from '@common/player';
 import { Position } from '@common/position';
 import { SessionStatus } from '@common/session.status';
+export { Position };
 
 interface FlagTransferRequest {
     from: string;
@@ -159,10 +160,6 @@ export class GameSession {
         this.playerOrder = order;
     }
 
-    getPlayerOrder(): string[] {
-        return this.playerOrder;
-    }
-
     setCurrentPlayerIndex(index: number): void {
         this.currentPlayerIndex = index;
     }
@@ -298,23 +295,8 @@ export class GameSession {
         return this.playerTeams.get(playerId);
     }
 
-    getTeammates(playerId: string): Character[] {
-        const playerTeam = this.playerTeams.get(playerId);
-        if (!playerTeam) return [];
-
-        return this.players
-            .filter(player => this.playerTeams.get(player.character.id) === playerTeam && player.character.id !== playerId)
-            .map(player => player.character);
-    }
-
     getTotalPlayersInTeam(team: TeamId): number {
         return this.players.filter(player => this.playerTeams.get(player.character.id) === team).length;
-    }
-
-    getTeamPlayers(team: TeamId): Character[] {
-        return this.players
-            .filter(player => this.playerTeams.get(player.character.id) === team)
-            .map(player => player.character);
     }
 
     setFlagPosition(position: Position): void {
@@ -427,5 +409,3 @@ export class GameSession {
         };
     }
 }
-
-export { Position };
