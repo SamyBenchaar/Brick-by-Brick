@@ -86,17 +86,17 @@ describe('CombatEndService', () => {
     let startingPointServiceMock: Partial<StartingPointService>;
 
     beforeEach(() => {
-    findNearestFreeTileSpy = jest.fn();
-    startingPointServiceMock = {
-        getClosestAvailableTileForFlag: jest.fn(),
-    } as Partial<StartingPointService>;
+        findNearestFreeTileSpy = jest.fn();
+        startingPointServiceMock = {
+            getClosestAvailableTileForFlag: jest.fn(),
+        } as Partial<StartingPointService>;
 
-    service = new CombatEndService(
-        {
-        findNearestFreeTile: findNearestFreeTileSpy,
-        } as unknown as GameSessionService,
-        startingPointServiceMock as StartingPointService,
-    );
+        service = new CombatEndService(
+            {
+                findNearestFreeTile: findNearestFreeTileSpy,
+            } as unknown as GameSessionService,
+            startingPointServiceMock as StartingPointService,
+        );
     });
 
     it('devrait faire respawn le perdant, remettre sa vie au max et donner une victoire au gagnant', () => {
@@ -302,7 +302,7 @@ describe('CombatEndService', () => {
             hasFlag: true,
         });
 
-        findNearestFreeTileSpy.mockReturnValue({ x: 3, y: 1 });
+        (startingPointServiceMock.getClosestAvailableTileForFlag as jest.Mock).mockReturnValue({ x: 3, y: 1 });
 
         const gameSession = {
             players: [createPlayer(attacker), createPlayer(defender)],
@@ -325,6 +325,7 @@ describe('CombatEndService', () => {
             outcome: CombatOutcome.ATTACKER,
         });
 
+        expect(startingPointServiceMock.getClosestAvailableTileForFlag).toHaveBeenCalled();
         expect(gameSession.dropFlag).toHaveBeenCalledWith({ x: 3, y: 1 });
     });
 
