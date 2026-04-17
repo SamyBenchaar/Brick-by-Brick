@@ -8,8 +8,6 @@ export enum GameEvents {
     RequestMove = 'requestMove',
     JoinGameSession = "joinGameSession",
     PlayerAbandoned = "playerAbandoned",
-    RequestCombat = "requestCombat",
-    EndTurnRequest = "endTurnRequest",
 }
 
 export enum GameSessionEvents {
@@ -29,6 +27,7 @@ export enum GameSessionEvents {
 
     AvatarTakenUpdated = 'avatarTakenUpdated',
     ObserveGameSession = 'observeGameSession',
+    AddVirtualPlayer = 'addVirtualPlayer',
 
     KickPlayer = 'kickPlayer',
     PlayerKicked = 'playerKicked',
@@ -55,14 +54,20 @@ export enum GameSessionEvents {
     MoveExecuted = 'moveExecuted',
     ReachableTiles = 'reachableTiles',
 
-    RequestCombat = 'requestCombat',
-    CombatResult = 'combatResult',
+    RequestInteract = 'requestInteract',
+    InteractResult = 'interactResult',
+
+    RequestFlagTransfer = 'requestFlagTransfer',
+    FlagTransferResponse = 'flagTransferResponse',
 
     PlayerAbandoned = 'playerAbandoned',
     GameEnded = 'gameEnded',
 
     RequestPlayerInfo = 'requestPlayerInfo',
     RequestTileInfo = 'requestTileInfo',
+
+    JoinStatsPage = 'joinStatsPage',
+    LeaveStatsPage = 'leaveStatsPage',
 }
 
 export enum ChatEvents {
@@ -71,5 +76,24 @@ export enum ChatEvents {
     LoadChatHistory = 'loadChatHistory',
     ChatHistory = 'chatHistory',
     ClearChatHistory = 'clearChatHistory',
+}
 
+export enum LogEvents {
+    ReceiveLogMessage = 'receiveLogMessage',
+    LoadLogHistory = 'loadLogHistory',
+    LogHistory = 'logHistory',
+    ClearLogHistory = 'clearLogHistory',
+}
+
+export enum CombatEvents {
+    RequestCombat = 'requestCombat',
+    CombatResult = 'combatResult',
+    CombatStarted = 'combatStarted',
+    CombatTurnStarted = 'combatTurnStarted',
+    CombatTurnTimeUpdate = 'combatTurnTimeUpdate',
+    SubmitCombatPosture = 'submitCombatChoice',
+    CombatPostureSubmitted = 'combatChoiceSubmitted',
+    CombatRoundResolved = 'combatRoundResolved',
+    CombatEnded = 'combatEnded',
+    TurnResumed = 'turnResumed',
 }

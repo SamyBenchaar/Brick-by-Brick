@@ -8,12 +8,13 @@ import { ObjectSidebarComponent } from '@app/components/game-edition-components/
 import { TextInputComponent } from '@app/components/game-edition-components/text-input/text-input.component';
 import { TileTypeSidebarComponent } from '@app/components/game-edition-components/tile-type-sidebar/tile-type-sidebar.component';
 import { DialogType } from '@app/constants/dialog-type.enum';
-import { DialogData, GameCreationData, GridDimensions, TileData } from '@app/interfaces/edition-page';
+import { DialogData, GameCreationData, TileData } from '@app/interfaces/edition-page';
 import { Game } from '@app/interfaces/game';
 import { CommunicationService } from '@app/services/communication/communication/communication.service';
 import { MapEditorService } from '@app/services/map-editor/map-editor.service';
 import { ObjectCounterService } from '@app/services/object-counter/object-counter.service';
-import { GameModeValue, GameSizeId, getGameSizeConfig } from '@common/constants/game-config-constants';
+import { getGameSizeConfig } from '@app/utils/game-config.utils';
+import { GameModeValue, GameSizeId } from '@common/constants/game-config-constants';
 import { MapSize } from '@common/map';
 
 @Component({
@@ -26,10 +27,9 @@ export class EditionPageComponent implements OnInit {
   private static readonly httpNotFound = 404;
   @ViewChild(GameGridComponent) gameGridComponent!: GameGridComponent;
 
-  selectedSize: GameSizeId = 'Small';
-  gameMode: GameModeValue = 'classic';
+  selectedSize: GameSizeId = GameSizeId.Small;
+  gameMode: GameModeValue = GameModeValue.Classic;
 
-  gridDimensions: GridDimensions = { width: MapSize.Small, height: MapSize.Small };
   gameName: string = '';
   gameDescription: string = '';
   gameId: string = '';
@@ -71,6 +71,8 @@ export class EditionPageComponent implements OnInit {
         if (game) {
           this.selectedSize = game.mapConfig.size as GameSizeId;
           this.objectCounterService.startPoint = this.getMaxPlayers();
+          this.objectCounterService.healingSanctuary = 2 ** ((this.getMaxPlayers() - 2) / 2);
+          this.objectCounterService.combatSanctuary = 2 ** ((this.getMaxPlayers() - 2) / 2);
           this.mapEditorService.setCurrentGame(game);
           this.gameName = game.name;
           this.gameDescription = game.description;
@@ -129,7 +131,7 @@ export class EditionPageComponent implements OnInit {
 
     this.communicationService.updateGame(this.gameId, currentGame).subscribe({
       next: (updatedGame) => this.onUpdateSuccess(updatedGame),
-      error: (err) => this.onUpdateError(err, currentGame),
+      error: (err) => this.onUpdateError(err),
     });
   }
 
@@ -143,11 +145,14 @@ export class EditionPageComponent implements OnInit {
 
   private async buildGameCreationData(): Promise<GameCreationData> {
     const grid = this.gameGridComponent.gameMap.grid;
-    const tiles = grid.map(row =>
-      row.map(tile => {
+    const tiles = grid.map((row, y) =>
+      row.map((tile, x) => {
         const tileData: TileData = { type: tile.type };
         if (tile.object) {
           tileData.object = { type: tile.object };
+        }
+        if (tile.sanctuaryOrigin?.x === x && tile.sanctuaryOrigin?.y === y) {
+          tileData.isOrigin = true;
         }
         return tileData;
       }),
@@ -179,33 +184,52 @@ export class EditionPageComponent implements OnInit {
     dialogRef.afterClosed().subscribe(() => this.router.navigate(['/admin']));
   }
 
-  private onUpdateError(err: HttpErrorResponse, currentGame: Game): void {
+  private onUpdateError(err: HttpErrorResponse): void {
     this.isSaving = false;
 
     if (err.status === EditionPageComponent.httpNotFound) {
-      this.handleGameDeleted(currentGame);
+      this.handleGameDeleted();
     } else {
       this.showUpdateErrorDialog(err);
     }
   }
 
-  private handleGameDeleted(currentGame: Game): void {
+  private handleGameDeleted(): void {
     const gameDeletedDialogData: DialogData = {
       title: 'Jeu supprimé',
       message: 'Ce jeu a été supprimé. Voulez-vous le recréer avec vos modifications ?',
-      type: DialogType.ERROR,
+      type: DialogType.WARNING,
+      cancelText: 'Annuler',
+      confirmText: 'Recréer',
     };
     this.dialog.open(AppDialogComponent, { data: gameDeletedDialogData }).afterClosed()
       .subscribe((result) => {
         if (result) {
-          this.communicationService.createGame(currentGame).subscribe({
-            next: () => this.showRecreateSuccessDialog(),
-            error: (err) => this.showRecreateErrorDialog(err),
-          });
+          void this.recreateDeletedGame();
         } else {
           this.router.navigate(['/admin']);
         }
       });
+  }
+
+  private async recreateDeletedGame(): Promise<void> {
+    this.isSaving = true;
+    try {
+      const gameData = await this.buildGameCreationData();
+      this.communicationService.createGame(gameData).subscribe({
+        next: () => {
+          this.isSaving = false;
+          this.gameId = '';
+          this.showRecreateSuccessDialog();
+        },
+        error: (err) => {
+          this.isSaving = false;
+          this.showRecreateErrorDialog(err);
+        },
+      });
+    } catch {
+      this.isSaving = false;
+    }
   }
 
   private showUpdateErrorDialog(err: HttpErrorResponse): void {

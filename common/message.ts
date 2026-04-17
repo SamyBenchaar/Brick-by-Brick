@@ -6,3 +6,16 @@ export interface ChatMessage {
     gameId?: string;
     hostPlayerId?: string;
 }
+
+export enum MessageType {
+    CHAT = 'chat',
+    LOG = 'log',
+}
+
+export interface LogMessage {
+    _id: string;
+    timestamp: Date;
+    type: 'global' | 'combat';
+    content: string;
+    playersInvolved?: string[];
+}

@@ -1,6 +1,6 @@
 @font-face {
   font-family: 'MyFont';
-  src: url('../../../assets/fonts/ByteBounce.ttf') format('truetype');
+  src: url('../../../assets/fonts/Jersey10-Regular.ttf') format('truetype');
   font-style: normal;
 }
 
@@ -25,14 +25,14 @@
 
     &:hover {
       box-shadow: 0 12px 24px rgba(0,0,0,0.3);
+      background-color: rgba(145, 217, 147, 0.8);
     }
 
-    &.selected {
-      border-color: #060606;
-      border-width: 1px;
-      border-style: solid;
-      background: rgba(145, 217, 147, 0.8);
+    &.not-visible {
+      opacity: 0.8;
+      filter: grayscale(50%);
     }
+
   }
 
   .game-content {
@@ -103,16 +103,21 @@
   }
 
   .game-name {
-    font-size: 40px;
+    font-size: 18px;
     margin: 0 0 0.3rem 0;
-    padding: 5px 10px;
-    background-size: contain;
+    padding: 6px 10px;
+    background-size: 100% 100%;
     background-image: url('../../../assets/images/3x1_orange.png');
     font-weight: bold;
     color: #333;
     word-break: break-word;
     overflow-wrap: anywhere;
     white-space: normal;
+    min-height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    letter-spacing: 0.9px;
   }
 
   .game-size,

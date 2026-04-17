@@ -18,6 +18,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
     private readonly logger = new Logger('ChatGateway');
     private chatHistoryByGame = new Map<string, ChatMessage[]>();
     private userSessions = new Map<string, { username: string; gameId: string; hostPlayerId?: string }>();
+    private socketRoomJoinTimes = new Map<string, Date>();
 
     afterInit() {
         this.logger.log('ChatGateway initialisé');
@@ -30,6 +31,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
     handleDisconnect(socket: Socket) {
         this.logger.log(`Client déconnecté du ChatGateway: ${socket.id}`);
         this.userSessions.delete(socket.id);
+        for (const key of this.socketRoomJoinTimes.keys()) {
+            if (key.startsWith(`${socket.id}:`)) {
+                this.socketRoomJoinTimes.delete(key);
+            }
+        }
     }
 
     @SubscribeMessage(ChatEvents.LoadChatHistory)
@@ -39,11 +45,16 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
 
         this.userSessions.set(socket.id, { username, gameId: roomId, hostPlayerId });
 
-        const gameHistory = this.chatHistoryByGame.get(roomId) || [];
-
         socket.join(`game-${roomId}`);
 
-        socket.emit(ChatEvents.ChatHistory, gameHistory);
+        const joinKey = `${socket.id}:${roomId}`;
+        if (!this.socketRoomJoinTimes.has(joinKey)) {
+            this.socketRoomJoinTimes.set(joinKey, new Date());
+        }
+        const joinedAt = this.socketRoomJoinTimes.get(joinKey) ?? new Date();
+        const allMessages = this.chatHistoryByGame.get(roomId) ?? [];
+        const history = allMessages.filter(msg => new Date(msg.timestamp) >= joinedAt);
+        socket.emit(ChatEvents.ChatHistory, history);
     }
 
     @SubscribeMessage(ChatEvents.SendMessage)

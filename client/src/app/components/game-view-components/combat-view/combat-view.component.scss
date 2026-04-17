@@ -1,0 +1,80 @@
+$overlay-color: rgba(222, 236, 255);
+.red {
+    color: red;
+}
+
+.green {
+    color: green;
+}
+
+:host {
+    position: fixed;
+    width: 100vw;
+    height: 100vh;
+    inset: 0;
+    z-index: 10000;
+    pointer-events: none;
+}
+
+.combat-container {
+    position: absolute;
+    top: 50%;
+    left: 40%;
+    transform: translate(-50%, -50%);
+    
+    max-height: 95vh;
+    width: 110vmin;
+    aspect-ratio: 20 / 13;
+    padding: 10px;
+
+    pointer-events: all;
+
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+
+    background: $overlay-color;
+    border: 3px solid black;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+
+    font-size: 2rem;
+}
+
+.vs-text{
+    font-size:3rem;
+}
+
+.combat-players {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    padding: 0 3rem;
+}
+
+.combat-result {
+    padding-top: 5px;
+    text-align: center;
+}
+
+.combat-result.hidden {
+    opacity: 0;
+}
+
+.combat-actions {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    transition: opacity 0.2s ease;
+}
+
+.combat-actions.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.button {
+    font-size: 2rem;
+}

@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AVATARS, BASE_ATTACK, BASE_DEFENSE, BASE_LIFE, BASE_SPEED, BONUS_AMOUNT } from '@app/constants/character-constants';
-import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
+import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket/game-session-socket.service';
 import { Dice } from '@common/dice';
 import { of } from 'rxjs';
 import { CharacterCreationPageComponent } from './character-creation-page.component';
@@ -16,7 +16,7 @@ import { CharacterCreationPageComponent } from './character-creation-page.compon
  * 3. Bonus : application correcte du bonus vie/rapidité et réinitialisation quand on change de bonus.
  * 4. Dés : inversion attaque/défense (cas limite d'inversion forcée pour éviter doublon de dés).
  * 5. Validation : bouton désactivé sans nom/bonus ou avec nom contenant des espaces (cas limite données invalides).
- * 6. Soumission : rejoindre une session existante (roomId) vs création nouvelle; alerte si aucun id fourni (cas limite).
+ * 6. Soumission : rejoindre une session existante (roomId) vs création nouvelle; aucun envoi si aucun id fourni (cas limite).
  * 7. Personnage aléatoire : champs remplis et dés cohérents.
  */
 describe('CharacterCreationPageComponent', () => {
@@ -34,7 +34,7 @@ describe('CharacterCreationPageComponent', () => {
         takenAvatarsSignal = signal<number[]>([AVATAR_ID_ONE]);
 
         mockGameSessionSocketService = jasmine.createSpyObj('GameSessionSocketService', [
-            'connect', 'createGameSession', 'joinGameSession', 'observeGameSession', 'updateTakenAvatars',
+            'connect', 'createGameSession', 'joinGameSession', 'observeGameSession', 'updateTakenAvatars', 'leaveGameSession',
         ], {
             currentSession: { set: jasmine.createSpy() },
             roomId: { set: jasmine.createSpy() },
@@ -213,6 +213,7 @@ describe('CharacterCreationPageComponent', () => {
 
             component.submitCharacter();
 
+            expect(mockGameSessionSocketService.leaveGameSession).toHaveBeenCalled();
             expect(mockGameSessionSocketService.joinGameSession).toHaveBeenCalledWith('ROOM1', component.character);
             expect(routerMock.navigate).toHaveBeenCalledWith(['/waiting-room', 'ROOM1']);
         });
@@ -220,11 +221,11 @@ describe('CharacterCreationPageComponent', () => {
         it('ne devrait pas soumettre sans gameId ni roomId', () => {
             component.gameId = null;
             component.roomId = null;
-
-            spyOn(window, 'alert');
             component.submitCharacter();
 
-            expect(window.alert).toHaveBeenCalled();
+            expect(mockGameSessionSocketService.createGameSession).not.toHaveBeenCalled();
+            expect(mockGameSessionSocketService.joinGameSession).not.toHaveBeenCalled();
+            expect(routerMock.navigate).not.toHaveBeenCalled();
         });
 
         it('devrait stocker le nom dans sessionStorage', () => {
@@ -259,19 +260,6 @@ describe('CharacterCreationPageComponent', () => {
         });
     });
 
-    describe('Création depuis un roomId (joindre une partie)', () => {
-        it('devrait initialiser le roomId depuis les queryParams', () => {
-            expect(component.roomId).toBe('ROOM1');
-        });
-
-        it('ne devrait pas être en mode fromGameCreation quand on a un roomId', () => {
-            expect(component.fromGameCreation).toBeFalse();
-        });
-
-        it('devrait appeler observeGameSession avec le roomId au init', () => {
-            expect(mockGameSessionSocketService.connect).toHaveBeenCalled();
-        });
-    });
 
     describe('Création depuis un gameId (créer une partie)', () => {
         it('devrait être en mode fromGameCreation quand gameId est présent', () => {

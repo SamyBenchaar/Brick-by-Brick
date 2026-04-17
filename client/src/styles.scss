@@ -1,13 +1,17 @@
 @font-face {
   font-family: 'MyFont';
-  src: url('./assets/fonts/ByteBounce.ttf') format('truetype');
+  src: url('./assets/fonts/Jersey10-Regular.ttf') format('truetype');
   font-style: normal;
 }
 
 body {
+    cursor: url('./assets/images/lego_hand.png');
     margin: 0;
     font-family: 'MyFont';
+    letter-spacing: 0.9px;
 }
+
+$overlay-color: rgba(222, 236, 255, 0.6);
 
 .container {
     font-family: 'MyFont';
@@ -16,7 +20,8 @@ body {
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    background-image: url('./assets/plate_background.jpg');
+    background-image: linear-gradient($overlay-color, $overlay-color),
+        url('./assets/plate_background.jpg');
     background-repeat: repeat;
     background-size: cover; 
     background-attachment: fixed;
@@ -24,12 +29,18 @@ body {
 
 .header {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
+    position: sticky;
+    top: 0;
+    z-index: 100;
 }
 
 .header-title {
+    display: flex;
+    justify-content: center;
+    align-items: center;
     font-size: 35px;
-    padding: 20px;
+    padding: 16px;
     margin: 0;
     background-image: url('./assets/images/4x1_yellow.png');
     background-size: contain;
@@ -52,6 +63,11 @@ body {
     border: none;
 }
 
+.header .button {
+    position: absolute;
+    left: 0;
+}
+
 .button:hover {
     filter: brightness(1.2);
 }
@@ -60,6 +76,17 @@ button:disabled {
     filter: grayscale(100%);
     opacity: 0.6;
     cursor: not-allowed;
+}
+
+button.button.return-button {
+    height: 50px;
+    width: 150px;
+    background-size: cover;
+    font-size: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-top: 25px;
 }
 
 .return-button {
@@ -74,6 +101,18 @@ button:disabled {
 
 .brick-green {
     background-image: url('./assets/images/green_large_brick.png');
+}
+
+.brick-blue {
+    background-image: url('./assets/images/blue_large_brick.png');
+}
+
+.brick-yellow {
+    background-image: url('./assets/images/4x1_yellow.png');
+}
+
+.brick-red {
+    background-image: url('./assets/images/red_large_brick.png');
 }
 
 .description-tooltip {

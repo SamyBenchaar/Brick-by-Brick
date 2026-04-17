@@ -4,19 +4,15 @@
             >{{ gameSessionSocketService.currentSession()?.players?.length ?? 0 }} /
             {{ gameSessionSocketService.currentSession()?.maxPlayers ?? 0 }} joueurs</span
         >
-        @if (canStartGame()) {
-        <button class="btn-start" (click)="startGame()">
-            <span class="material-icons">play_arrow</span>
-            Démarrer la partie
-        </button>
-        } @if (isCurrentUserHost() && ((gameSessionSocketService.currentSession()?.players?.length ?? 0) < 2)) {
-        <span class="hint-start">En attente d'au moins un autre joueur...</span>
-        }
     </div>
 
     <div class="players">
         @for (player of gameSessionSocketService.currentSession()?.players ?? []; track player.socketId) {
-        <div class="player-item" [class.is-host]="isPlayerHost(player.socketId)" [class.is-self]="isSelf(player.socketId)">
+        <div class="player-item"
+            [class.is-host]="isPlayerHost(player.socketId)"
+            [class.is-self]="isSelf(player.socketId)"
+            [class.is-virtual-aggressive]="isAggressiveVirtualPlayer(player)"
+            [class.is-virtual-defensive]="isDefensiveVirtualPlayer(player)">
             <div class="player-avatar-wrap">
                 <img class="player-avatar" [src]="getAvatarImage(player.character)" [alt]="getCharacterName(player.character)" />
                 @if (isPlayerHost(player.socketId)) {
@@ -28,11 +24,8 @@
 
             <div class="player-info">
                 <span class="player-name">{{ getCharacterName(player.character) }}</span>
-                @if (isPlayerHost(player.socketId)) {
-                <span class="player-role">Organisateur</span>
-                } @else {
-                <span class="player-role">Joueur</span>
-                } @if (isSelf(player.socketId)) {
+                <span class="player-role">{{ getPlayerRole(player) }}</span>
+                @if (isSelf(player.socketId)) {
                 <span class="you-tag">(vous)</span>
                 }
             </div>
@@ -45,4 +38,45 @@
         </div>
         }
     </div>
+
+    <div class="list-footer">
+        <div class="footer-left">
+            @if (isCurrentUserHost()) {
+            <button class="button add-virtual brick-yellow" [disabled]="isSessionFull()" [title]="isSessionFull() ? 'Capacité maximale atteinte' : ''" (click)="openVirtualPlayerDialog()">
+                <span class="material-icons">smart_toy</span>
+                Ajouter JV
+            </button>
+            @if (isSessionFull()) {
+            <span class="hint-start">Capacité maximale atteinte pour les joueurs virtuels.</span>
+            }
+            }
+        </div>
+
+        <div class="footer-right">
+            @if (canStartGame()) {
+            <button class="button start brick-green" (click)="startGame()">
+                <span class="material-icons">play_arrow</span>
+                Démarrer
+            </button>
+            } @if (isCurrentUserHost() && ((gameSessionSocketService.currentSession()?.players?.length ?? 0) < 2)) {
+            <span class="hint-start">En attente d'au moins un autre joueur...</span>
+            }
+        </div>
+    </div>
+
+    @if (isProfileDialogOpen) {
+    <div class="dialog-backdrop" (click)="closeVirtualPlayerDialog()"></div>
+    <div class="profile-dialog">
+        <h4>Ajouter un joueur virtuel</h4>
+        <p>Choisissez un profil :</p>
+        @if (isSessionFull()) {
+        <p class="capacity-hint">La salle est pleine.</p>
+        }
+        <div class="profile-actions">
+            <button class="button profile-aggressive" [disabled]="isSessionFull()" (click)="onAddVirtualPlayer(virtualPlayerProfile.Aggressive)">Agressif</button>
+            <button class="button profile-defensive" [disabled]="isSessionFull()" (click)="onAddVirtualPlayer(virtualPlayerProfile.Defensive)">Défensif</button>
+            <button class="button profile-cancel" (click)="closeVirtualPlayerDialog()">Annuler</button>
+        </div>
+    </div>
+    }
 </div>

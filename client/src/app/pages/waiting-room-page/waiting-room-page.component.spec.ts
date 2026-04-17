@@ -3,8 +3,9 @@ import { Component, Input, signal, WritableSignal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { GameSession } from '@app/interfaces/game-session';
-import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
+import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket/game-session-socket.service';
 import { makeTestSession } from '@app/testing/game-session-test-helpers';
+import { SessionStatus } from '@common/session.status';
 import { WaitingRoomPage } from './waiting-room-page.component';
 
 /**
@@ -26,6 +27,7 @@ class MockChatComponent {
 class MockWaitingRoomListComponent {}
 
 describe('WaitingRoomPage', () => {
+    const WAITING_ROOM_ACCESS_KEY = 'waitingRoomAccess';
     let component: WaitingRoomPage;
     let fixture: ComponentFixture<WaitingRoomPage>;
     let mockGameSessionSocketService: Record<string, unknown>;
@@ -34,7 +36,7 @@ describe('WaitingRoomPage', () => {
 
     const mockSession: GameSession = makeTestSession({
         roomId: 'ROOM1',
-        status: 'waiting',
+        status: SessionStatus.Waiting,
         playerCount: 2,
         maxPlayers: 4,
         hostId: 'host-1',
@@ -43,6 +45,7 @@ describe('WaitingRoomPage', () => {
     });
 
     beforeEach(async () => {
+        sessionStorage.setItem(WAITING_ROOM_ACCESS_KEY, 'true');
         currentSessionSignal = signal<GameSession | null>(mockSession);
         mockGameSessionSocketService = {
             connect: jasmine.createSpy('connect'),
@@ -70,6 +73,11 @@ describe('WaitingRoomPage', () => {
 
         fixture = TestBed.createComponent(WaitingRoomPage);
         component = fixture.componentInstance;
+    });
+
+    afterEach(() => {
+        sessionStorage.removeItem(WAITING_ROOM_ACCESS_KEY);
+        sessionStorage.removeItem('waitingRoomRefresh');
     });
 
     it('devrait créer le composant', () => {

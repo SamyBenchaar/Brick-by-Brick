@@ -11,13 +11,15 @@ import {
     effect, inject, signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { GameLogComponent } from '@app/components/game-log/game-log.component';
 import { ChatService } from '@app/services/communication/chat/chat.service';
-import { ChatMessage } from '@common/message';
+import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket/game-session-socket.service';
+import { ChatMessage, MessageType } from '@common/message';
+import { SessionStatus } from '@common/session.status';
 
 @Component({
     selector: 'app-chat',
-    standalone: true,
-    imports: [CommonModule, FormsModule],
+    imports: [CommonModule, FormsModule, GameLogComponent],
     templateUrl: './chat.component.html',
     styleUrls: ['./chat.component.scss'],
 })
@@ -26,13 +28,19 @@ export class ChatComponent implements OnInit, OnChanges, OnDestroy {
     @Input() gameId?: string;
     @Input() hostPlayerId?: string;
     @Input() isWriting: boolean = true;
+    @Input() alwaysShowLog: boolean = false;
     @Output() isWritingChange = new EventEmitter<boolean>();
     @ViewChild('messagesContainer') messagesContainer!: ElementRef;
     private chatService = inject(ChatService);
+    gameSessionSocketService = inject(GameSessionSocketService);
 
     messages: ChatMessage[] = [];
     messageInput = signal('');
     isLoading = signal(false);
+
+    messageType = MessageType;
+    activeTab = MessageType.CHAT;
+    sessionStatus = SessionStatus;
 
     constructor() {
         effect(() => {
@@ -67,17 +75,16 @@ export class ChatComponent implements OnInit, OnChanges, OnDestroy {
         }
 
         const roomId = this.gameId || 'waiting-room';
-        this.chatService.sendMessage(this.username, content, roomId, this.hostPlayerId);
+        this.chatService.sendMessage({
+            username: this.username,
+            content,
+            gameId: roomId,
+            hostPlayerId: this.hostPlayerId,
+        });
         this.messageInput.set('');
         this.isWritingChange.emit(false);
     }
 
-    clearChat(): void {
-        this.messages = [];
-        this.chatService.clearMessages();
-        const roomId = this.gameId || 'waiting-room';
-        this.chatService.clearChatHistoryOnServer(roomId);
-    }
 
     onFocus(): void {
         this.isWritingChange.emit(true);

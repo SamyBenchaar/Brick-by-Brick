@@ -31,7 +31,8 @@ export class TileTypeSidebarComponent {
   }
 
   getTilePath(tile: TileType): string {
-    return `./assets/images/${tile}.jpg`;
+    if(tile === TileType.Door) return `./assets/images/tiles/closed-${tile}.png`;
+    return `./assets/images/tiles/${tile}.jpg`;
   }
 
 }

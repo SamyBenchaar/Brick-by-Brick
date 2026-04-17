@@ -9,7 +9,8 @@
     overflow-y: auto;
     overflow-x: visible;
     position: sticky;
-    z-index: 1000
+    z-index: 1000;
+    padding-top: 80px;
   }
   
   .sidebar-title {
@@ -94,4 +95,8 @@
   
   .tile-wall {
     background-color: #666;
+  }
+
+  .tile-door {
+    background-color: #f9ffab;
   }

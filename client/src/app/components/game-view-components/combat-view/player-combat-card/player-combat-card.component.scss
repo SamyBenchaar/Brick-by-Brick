@@ -1,0 +1,38 @@
+.avatar {
+    width: 140px;
+    object-fit: cover;
+}
+
+.player-info {
+    text-align: center;
+    font-weight: bold;
+    font-size: 1.7rem;
+}
+
+.player-name {
+    display: block;
+    font-size: 2rem;
+}
+
+.player-life {
+    display: block;
+    color: #68af41;
+}
+
+.stats-container {
+    text-align: left;
+}
+
+.stats-hidden {
+    visibility: hidden;
+}
+
+.stat-box {
+    text-align: left;
+}
+
+.section-title{
+    font-size: 1.3rem;
+    text-decoration: underline;
+    margin-bottom: 7px;
+}

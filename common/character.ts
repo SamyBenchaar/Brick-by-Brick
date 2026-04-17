@@ -1,5 +1,6 @@
-import { Dice } from '@common/dice';
-import { Position } from '@common/position';
+import { Dice } from './dice';
+import { Position } from './position';
+import { TeamId } from './team';
 
 export interface Character {
   id: string;
@@ -21,5 +22,13 @@ export interface Character {
   remainingActions?: number;
   victories?: number;
   startPosition?: Position;
+  hasCombatSanctuaryBonus?: boolean;
+  combatSanctuaryBonus?: number;
+  team?: TeamId;
+  hasFlag?: boolean;
+  defeats: number;
+  totalDamageDealt: number
+  totalDamageReceived: number
+  tilesVisited: number
 }
 

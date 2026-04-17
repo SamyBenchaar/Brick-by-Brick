@@ -12,6 +12,6 @@ export class BaseSignComponent {
   isExpanded = signal(true);
 
   toggleSign(): void {
-    this.isExpanded.update(v => !v);
+    this.isExpanded.update(isExpanded => !isExpanded);
   }
 }

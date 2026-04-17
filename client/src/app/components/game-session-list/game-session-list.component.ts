@@ -1,7 +1,8 @@
-import { Component, computed, effect, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { Component, computed, effect, EventEmitter, inject, OnDestroy, OnInit, Output, signal } from '@angular/core';
 import { GameSession } from '@app/interfaces/game-session';
-import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
-import { getGameModeLabel, getGameSizeLabel } from '@common/constants/game-config-constants';
+import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket/game-session-socket.service';
+import { getGameModeLabel, getGameSizeLabel } from '@app/utils/game-config.utils';
+import { SessionStatus } from '@common/session.status';
 
 @Component({
   selector: 'app-game-session-list',
@@ -12,13 +13,14 @@ import { getGameModeLabel, getGameSizeLabel } from '@common/constants/game-confi
 export class GameSessionListComponent implements OnInit, OnDestroy {
   gameSessionSocketService = inject(GameSessionSocketService);
   selectedGameSessionId = signal<string | null>(null);
+  @Output() gameSessionSelected = new EventEmitter<string>();
 
   availableGameSessions = computed(() => this.gameSessionSocketService.gameSessions().filter(
-    session => session.status === 'waiting' && session.players.length < session.maxPlayers));
+    session => session.status === SessionStatus.Waiting && session.players.length < session.maxPlayers));
 
   private clearUnavailableSelection = effect(() => {
     const selected = this.selectedGameSessionId();
-    if (selected && !this.availableGameSessions().some(s => s.roomId === selected)) {
+    if (selected && !this.availableGameSessions().some(gameSession => gameSession.roomId === selected)) {
       this.selectedGameSessionId.set(null);
     }
   });
@@ -33,6 +35,7 @@ export class GameSessionListComponent implements OnInit, OnDestroy {
 
   selectGameSession(gameSessionId: string): void {
     this.selectedGameSessionId.set(gameSessionId);
+    this.gameSessionSelected.emit(gameSessionId);
   }
 
   isSelected(gameSessionId: string): boolean {
@@ -41,7 +44,7 @@ export class GameSessionListComponent implements OnInit, OnDestroy {
 
   isSelectedAvailable(): boolean {
     const selected = this.selectedGameSessionId();
-    return selected !== null && this.availableGameSessions().some(s => s.roomId === selected);
+    return !!selected && this.availableGameSessions().some(gameSession => gameSession.roomId === selected);
   }
 
   getPreviewImage(gameSession: GameSession): string {

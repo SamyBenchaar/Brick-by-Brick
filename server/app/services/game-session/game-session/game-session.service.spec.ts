@@ -1,13 +1,21 @@
+import { GameGateway } from '@app/gateways/game/game.gateway';
+import { CombatService } from '@app/services/game-session/combat/combat.service';
+import { GameSessionService } from '@app/services/game-session/game-session/game-session.service';
+import { MovementService } from '@app/services/game-session/movement.service';
+import { SanctuaryService } from '@app/services/game-session/sanctuary.service';
+import { StartingPointService } from '@app/services/game-session/starting-point.service';
+import { TurnManagementService } from '@app/services/game-session/turn-management.service';
+import { VirtualPlayerCtfService } from '@app/services/game-session/virtual-player-mechanics/virtual-player-ctf.service';
+import { VirtualPlayerMechanicsService } from '@app/services/game-session/virtual-player-mechanics/virtual-player-mechanics.service';
+import { VirtualPlayerPathfindingService } from '@app/services/game-session/virtual-player-mechanics/virtual-player-pathfinding.service';
+import { VirtualPlayerTargetingService } from '@app/services/game-session/virtual-player-mechanics/virtual-player-targeting.service';
+import { VirtualPlayerService } from '@app/services/game-session/virtual-player-mechanics/virtual-player.service';
 import { GameService } from '@app/services/game/game.service';
+import { LogService } from '@app/services/log/log.service';
 import { Character } from '@common/character';
 import { Dice } from '@common/dice';
 import { Player } from '@common/player';
 import { Test, TestingModule } from '@nestjs/testing';
-import { CombatService } from '@app/services/game-session/combat.service';
-import { MovementService } from '@app/services/game-session/movement.service';
-import { StartingPointService } from '@app/services/game-session/starting-point.service';
-import { TurnManagementService } from '@app/services/game-session/turn-management.service';
-import { GameSessionService } from '@app/services/game-session/game-session/game-session.service';
 
 /**
  * Stratégie de test pour GameSessionService:
@@ -44,6 +52,10 @@ describe('GameSessionService', () => {
         defenseDice: Dice.D6,
         isActif: false,
         battlesWon: 0,
+        defeats: 0,
+        totalDamageDealt: 0,
+        totalDamageReceived: 0,
+        tilesVisited: 0,
     });
 
     const createPlayer = (socketId: string, name = 'TestPlayer'): Player => ({
@@ -59,11 +71,19 @@ describe('GameSessionService', () => {
         const module: TestingModule = await Test.createTestingModule({
             providers: [
                 GameSessionService,
+                SanctuaryService,
                 StartingPointService,
                 TurnManagementService,
                 MovementService,
                 CombatService,
+                VirtualPlayerPathfindingService,
+                VirtualPlayerTargetingService,
+                VirtualPlayerMechanicsService,
+                VirtualPlayerCtfService,
+                VirtualPlayerService,
+                { provide: GameGateway, useValue: { notifyRoomEvent: jest.fn() } },
                 { provide: GameService, useValue: mockGameService },
+                { provide: LogService, useValue: { log: jest.fn() } },
             ],
         }).compile();
 
@@ -222,7 +242,7 @@ describe('GameSessionService', () => {
             service.kickPlayer(session.roomId, 'h1');
 
             // Le nom de p2 reste "Hero-2", il ne revient pas à "Hero"
-            const player = session.players.find(p => p.socketId === 'p2');
+            const player = session.players.find(sessionPlayer => sessionPlayer.socketId === 'p2');
             expect(player?.character.name).toBe('Hero-2');
         });
 
