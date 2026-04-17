@@ -242,6 +242,7 @@ export class VirtualPlayerMechanicsService {
                 const originTile = map.tiles[origin.y]?.[origin.x];
                 if (originTile) {
                     originTile.sanctuaryCooldown = SANCTUARY_COOLDOWN_TURNS;
+                    session.usedSanctuaries.add(`${origin.x},${origin.y}`);
                 }
             }
         }
