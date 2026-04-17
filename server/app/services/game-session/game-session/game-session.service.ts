@@ -1,12 +1,12 @@
 import { GameSession } from '@app/domain/game-session';
 import { GameDataForInit } from '@app/interfaces/game-map-interfaces';
-import { CombatService } from '@app/services/game-session/combat.service';
+import { CombatService } from '@app/services/game-session/combat/combat.service';
 import { findNearestFreeTilePosition } from '@app/services/game-session/game-session/game-session-pathfinding.util';
 import { MovementService } from '@app/services/game-session/movement.service';
 import { SanctuaryService } from '@app/services/game-session/sanctuary.service';
 import { StartingPointService } from '@app/services/game-session/starting-point.service';
 import { TurnManagementService } from '@app/services/game-session/turn-management.service';
-import { VirtualPlayerService } from '@app/services/game-session/virtual-player.service';
+import { VirtualPlayerService } from '@app/services/game-session/virtual-player-mechanics/virtual-player.service';
 import { GameService } from '@app/services/game/game.service';
 import { getGameSizeConfig } from '@app/utils/game-config.utils';
 import { Character } from '@common/character';

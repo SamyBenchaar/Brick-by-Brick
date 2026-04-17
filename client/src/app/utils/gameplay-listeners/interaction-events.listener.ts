@@ -1,8 +1,8 @@
 import {
     InteractResultPayload,
 } from '@app/interfaces/game-play';
-import { GamePlaySocketService } from '@app/services/communication/game-session-socket/game-play-socket.service';
-import type { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
+import { GamePlaySocketService } from '@app/services/communication/game-session-socket/game-play-socket/game-play-socket.service';
+import type { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket/game-session-socket.service';
 import { SocketService } from '@app/services/communication/socket/socket.service';
 import { SANCTUARY_COOLDOWN_TURNS } from '@common/constants/santuary-constants';
 import { GameSessionEvents } from '@common/game.events';

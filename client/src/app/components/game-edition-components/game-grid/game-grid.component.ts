@@ -5,7 +5,7 @@ import { Tile } from '@app/classes/tile/tile';
 import { ClickEvent } from '@app/constants/click-event-constants';
 import { GameSize } from '@app/constants/game-size.enum';
 import { Game } from '@app/interfaces/game';
-import { GamePlaySocketService } from '@app/services/communication/game-session-socket/game-play-socket.service';
+import { GamePlaySocketService } from '@app/services/communication/game-session-socket/game-play-socket/game-play-socket.service';
 import { GameGridUtilService } from '@app/services/game-grid-util/game-grid-util.service';
 import { TileOperationsService } from '@app/services/game-grid/tile-operations.service';
 import { GameObjectService } from '@app/services/game-object/game-object.service';

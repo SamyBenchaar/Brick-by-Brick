@@ -4,7 +4,7 @@ import { ChatComponent } from '@app/components/chat/chat.component';
 import { GlobalGameStatisticsComponent } from '@app/components/game-statistics-components/global-game-statistics/global-game-statistics.component';
 import { PlayerStatisticsComponent } from '@app/components/game-statistics-components/player-statistics/player-statistics.component';
 import { WinnerSummary, WinningTeam } from '@app/interfaces/game-play';
-import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
+import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket/game-session-socket.service';
 import { GameModeValue } from '@common/constants/game-config-constants';
 import { Player } from '@common/player';
 import { TeamId } from '@common/team';

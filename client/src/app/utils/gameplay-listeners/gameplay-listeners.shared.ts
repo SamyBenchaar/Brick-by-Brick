@@ -2,7 +2,7 @@ import { Tile } from '@app/interfaces/game';
 import { GameEndedPayload } from '@app/interfaces/game-play';
 import { GameSession } from '@app/interfaces/game-session';
 import { GameStatisticsNavigationState } from '@app/interfaces/gameplay-listeners';
-import { GamePlaySocketService } from '@app/services/communication/game-session-socket/game-play-socket.service';
+import { GamePlaySocketService } from '@app/services/communication/game-session-socket/game-play-socket/game-play-socket.service';
 import { GameModeValue } from '@common/constants/game-config-constants';
 import {
     ORIGIN_CANDIDATES,

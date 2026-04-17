@@ -4,7 +4,7 @@
 
 import { GameSession } from '@app/domain/game-session';
 import { GamePlayHandlerContext } from '@app/interfaces/game-play-handler';
-import { CombatEndState, CombatParticipants, CombatRoundDetails } from '@app/services/game-session/combat/combat-types';
+import { CombatEndState, CombatParticipants, CombatRoundDetails } from '@app/constants/combat-types';
 import { CombatOutcome, CombatPosture, CombatRoundResolvedPayload } from '@common/combat';
 import { CombatEvents } from '@common/game.events';
 import { Position } from '@common/position';

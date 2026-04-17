@@ -1,22 +1,22 @@
+import { CombatEndState } from '@app/constants/combat-types';
 import { GameSession } from '@app/domain/game-session';
 import { GamePlayHandlerContext } from '@app/interfaces/game-play-handler';
 import { CombatEndService } from '@app/services/game-session/combat/combat-end/combat-end.service';
-import { CombatEndState } from '@app/services/game-session/combat/combat-types';
 import { CombatRoundService } from '@app/services/game-session/combat/request-round/combat-round.service';
 import { CombatRequestValidatorService } from '@app/services/game-session/combat/request-validator/combat-request-validator.service';
 import { GameSessionService } from '@app/services/game-session/game-session/game-session.service';
 import { TurnManagementService } from '@app/services/game-session/turn-management.service';
-import { VirtualPlayerMechanicsService } from '@app/services/game-session/virtual-player-mechanics.service';
-import { VirtualPlayerService } from '@app/services/game-session/virtual-player.service';
+import { VirtualPlayerMechanicsService } from '@app/services/game-session/virtual-player-mechanics/virtual-player-mechanics.service';
+import { VirtualPlayerService } from '@app/services/game-session/virtual-player-mechanics/virtual-player.service';
 import { formatCombatRoundLog } from '@app/services/log/combat-log.util';
 import { Character } from '@common/character';
 import { ActiveCombat, CombatOutcome, CombatPosture, CombatRoundResolvedPayload } from '@common/combat';
 import { COMBAT_TURN_TIME } from '@common/constants/combat-constants';
 import { GameModeValue } from '@common/constants/game-config-constants';
+import { VIRTUAL_PLAYER_COMBAT_DELAY_MS } from '@common/constants/virtual-player-constants';
 import { CombatEvents, GameSessionEvents } from '@common/game.events';
 import { forwardRef, Inject, Injectable, Logger, Optional } from '@nestjs/common';
 import { Socket } from 'socket.io';
-import { VIRTUAL_PLAYER_COMBAT_DELAY_MS } from '@common/constants/virtual-player-constants';
 
 @Injectable()
 export class GamePlayCombatHandler {

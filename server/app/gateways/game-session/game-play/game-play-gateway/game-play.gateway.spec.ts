@@ -1,15 +1,15 @@
 import { ChatGateway } from '@app/gateways/chat/chat.gateway';
+import { GamePlayGateway } from '@app/gateways/game-session/game-play/game-play-gateway/game-play.gateway';
 import { GamePlayHandlersProvider } from '@app/gateways/game-session/game-play/game-play-handlers.provider';
-import { GamePlayGateway } from '@app/gateways/game-session/game-play/game-play.gateway';
 import { GameSessionGateway } from '@app/gateways/game-session/game-session/game-session.gateway';
 import { createMockSession, createTestSocket } from '@app/gateways/game-session/test-utils';
 import { GameSessionService } from '@app/services/game-session/game-session/game-session.service';
 import { MovementService } from '@app/services/game-session/movement.service';
 import { TurnManagementService } from '@app/services/game-session/turn-management.service';
+import { LogService } from '@app/services/log/log.service';
 import { GameSessionEvents } from '@common/game.events';
 import { Logger } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { LogService } from '@app/services/log/log.service';
 
 /**
  * Stratégie de test (portée: démarrer une partie) pour GamePlayGateway:
@@ -63,7 +63,7 @@ describe('GamePlayGateway - handleStartGame', () => {
         };
 
         const mockLogService = {
-            addLog: {}, 
+            addLog: {},
             getLogs: {},
             log: jest.fn(),
         };
