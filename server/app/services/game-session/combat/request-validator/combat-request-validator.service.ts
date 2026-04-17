@@ -1,5 +1,5 @@
+import { CombatParticipants } from '@app/constants/combat-types';
 import { GameSession } from '@app/domain/game-session';
-import { CombatParticipants } from '@app/services/game-session/combat/combat-types';
 import { Character } from '@common/character';
 import { GameModeValue } from '@common/constants/game-config-constants';
 import { Injectable } from '@nestjs/common';
