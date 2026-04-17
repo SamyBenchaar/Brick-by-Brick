@@ -2,13 +2,22 @@ import { TestBed } from '@angular/core/testing';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { GameSession } from '@app/interfaces/game-session';
-import { GameSessionEvents } from '@common/game.events';
-import { of } from 'rxjs';
-import { SocketService } from '@app/services/communication/socket/socket.service';
 import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
 import { mockGameSession, mockGameSession2 } from '@app/services/communication/game-session-socket/game-session-socket.service.spec.mocks';
+import { SocketService } from '@app/services/communication/socket/socket.service';
+import { GameSessionEvents } from '@common/game.events';
+import { of } from 'rxjs';
 
 const AVATAR_ID_THREE = 3;
+
+/**
+ * Strategie de test pour GameSessionSocketService (events):
+ * - Verifier les reactions aux evenements serveur critiques (exclusion, annulation, suppression de session, MAJ liste).
+ * - Verifier les effets de bord d'etat local (currentSession, takenAvatars) et navigation.
+ * Cas limites couverts:
+ * - suppression de la session courante uniquement.
+ * - remplacement integral de la liste via GameSessionListUpdated.
+ */
 
 describe('GameSessionSocketService (events)', () => {
     let service: GameSessionSocketService;
@@ -98,6 +107,20 @@ describe('GameSessionSocketService (events)', () => {
 
             expect(service.currentSession()).toBeNull();
             expect(service.takenAvatars()).toEqual([]);
+        });
+
+        it('ne devrait pas réinitialiser currentSession ni takenAvatars si une autre session est supprimée', () => {
+            service.currentSession.set(mockGameSession);
+            service.takenAvatars.set([1, 2, AVATAR_ID_THREE]);
+
+            service.connect();
+
+            const callbackDeleted = getSocketCallback<string>(GameSessionEvents.GameSessionDeleted);
+
+            callbackDeleted('room-inconnue');
+
+            expect(service.currentSession()?.roomId).toBe('room1');
+            expect(service.takenAvatars()).toEqual([1, 2, AVATAR_ID_THREE]);
         });
     });
 
