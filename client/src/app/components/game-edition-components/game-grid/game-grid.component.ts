@@ -380,4 +380,25 @@ export class GameGridComponent implements OnInit, OnChanges {
 
     this.attackTargetSelected.emit(target);
   }
+
+  private isInteractionModeActive(): boolean {
+    return this.isViewMode && this.isActionSelectionMode;
+  }
+
+  private canTileBeNormallyInteracted(tile: Tile, position: Position): boolean {
+    return !this.isSanctuaryOriginTile(tile, position) && !tile.sanctuaryOrigin;
+  }
+
+  canTileBeInteracted(tile: Tile, position: Position): boolean {
+    if (!this.isInteractionModeActive()) return false;
+    if (!this.isInteractableTile(position)) return false;
+    return this.canTileBeNormallyInteracted(tile, position);
+  }
+
+  canTileBeInteractedAsOrigin(position: Position): boolean {
+    if (!this.isInteractionModeActive()) return false;
+    if (!this.isInteractableTile(position)) return false;
+    const tile = this.getTile(position);
+    return tile ? this.isSanctuaryOriginTile(tile, position) : false;
+  }
 }
