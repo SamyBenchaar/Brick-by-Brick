@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, Input, inject } from '@angular/core';
 import { BaseSignComponent } from '@app/components/game-view-components/base-sign/base-sign.component';
 import { AVATARS } from '@app/constants/character-constants';
-import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
+import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket/game-session-socket.service';
 import { GameModeValue } from '@common/constants/game-config-constants';
 import { Player } from '@common/player';
 

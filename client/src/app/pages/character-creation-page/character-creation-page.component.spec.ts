@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AVATARS, BASE_ATTACK, BASE_DEFENSE, BASE_LIFE, BASE_SPEED, BONUS_AMOUNT } from '@app/constants/character-constants';
-import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
+import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket/game-session-socket.service';
 import { Dice } from '@common/dice';
 import { of } from 'rxjs';
 import { CharacterCreationPageComponent } from './character-creation-page.component';
@@ -260,7 +260,7 @@ describe('CharacterCreationPageComponent', () => {
         });
     });
 
-  
+
     describe('Création depuis un gameId (créer une partie)', () => {
         it('devrait être en mode fromGameCreation quand gameId est présent', () => {
             // Simuler les conditions du mode création
