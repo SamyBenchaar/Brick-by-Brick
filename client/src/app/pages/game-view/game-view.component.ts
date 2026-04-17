@@ -210,7 +210,7 @@ export class GameViewComponent implements OnInit, OnDestroy {
     this.dialog.open(AppDialogComponent, {
       data: dialogData,
       disableClose: true,
-    }).afterClosed().subscribe((confirmed: boolean) => {
+    }).afterClosed().subscribe((confirmed: boolean | null | undefined) => {
       if (confirmed) {
         this.gameSessionSocketService.abandonGame();
       }
@@ -255,9 +255,15 @@ export class GameViewComponent implements OnInit, OnDestroy {
           cancelText: 'Annuler',
         },
       });
-      ref.afterClosed().subscribe((result) => {
-        if (result ) this.gamePlaySocketService.requestInteract(event.position, InteractionMode.Normal);
-        else  this.gamePlaySocketService.requestInteract(event.position, InteractionMode.Double);
+      ref.afterClosed().subscribe((result: boolean | null | undefined) => {
+        if (result === undefined || result === null) {
+          return;
+        }
+        if (result) {
+          this.gamePlaySocketService.requestInteract(event.position, InteractionMode.Normal);
+        } else {
+          this.gamePlaySocketService.requestInteract(event.position, InteractionMode.Double);
+        }
       });
       this.isActionSelectionMode.set(false);
       return;

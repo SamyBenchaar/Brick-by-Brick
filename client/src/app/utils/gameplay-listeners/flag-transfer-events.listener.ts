@@ -46,9 +46,13 @@ export function registerFlagTransferEventListeners(
             data.fromPlayerId,
         );
 
-        dialogRef.afterClosed().subscribe((accepted: boolean) => {
+        dialogRef.afterClosed().subscribe((accepted: boolean | null | undefined) => {
             flagTransferService.removePendingFlagTransferDialog(currentPlayer.character.id);
-            gamePlaySocketService.respondToFlagTransfer(data.fromPlayerId, Boolean(accepted));
+            if (accepted) {
+                gamePlaySocketService.respondToFlagTransfer(data.fromPlayerId, true);
+            } else {
+                gamePlaySocketService.respondToFlagTransfer(data.fromPlayerId, false);
+            }
         });
     });
 }

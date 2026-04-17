@@ -41,11 +41,11 @@ export function registerAbandonEventListeners(
             }
         }
 
-        if (data.flagPosition) {
+        if (data.flagPosition !== undefined) {
             session.flagPosition = data.flagPosition;
         }
 
-        if (data.flagHolderId) {
+        if (data.flagHolderId !== undefined) {
             session.flagHolderId = data.flagHolderId;
         }
 

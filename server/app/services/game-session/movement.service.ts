@@ -215,9 +215,12 @@ export class MovementService {
         );
 
         const isWallOrClosedDoor = tile.type === TileType.Wall || (tile.type === TileType.Door && tile.doorState !== DoorState.Opened);
-        const hasObstacle = occupied || !!tile.object;
+        const hasObject = tile.object !== undefined && tile.object !== null;
+        const flagAtPosition = gameSession.flagPosition &&
+            gameSession.flagPosition.x === newPosition.x &&
+            gameSession.flagPosition.y === newPosition.y;
 
-        if (isWallOrClosedDoor || hasObstacle) {
+        if (isWallOrClosedDoor || occupied || hasObject || flagAtPosition) {
             return;
         }
 

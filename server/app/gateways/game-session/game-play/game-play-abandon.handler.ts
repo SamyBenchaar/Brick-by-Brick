@@ -73,7 +73,10 @@ export class GamePlayAbandonHandler {
         }
 
         if (gameSession.flagHolderId === abandoningPlayer.character.id) {
-            const occupiedPositions = gameSession.getActivePlayers().map(c => c.position);
+            const occupiedPositions = gameSession
+                .getActivePlayers()
+                .filter(p => p.id !== abandoningPlayer.character.id)
+                .map(c => c.position);
             const flagPosition = this.startingPointService.getClosestAvailableTileForFlag(
                 abandoningPlayer.character.position,
                 gameSession.mapCopy,
