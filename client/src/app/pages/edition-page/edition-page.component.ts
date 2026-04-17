@@ -131,7 +131,7 @@ export class EditionPageComponent implements OnInit {
 
     this.communicationService.updateGame(this.gameId, currentGame).subscribe({
       next: (updatedGame) => this.onUpdateSuccess(updatedGame),
-      error: (err) => this.onUpdateError(err, currentGame),
+      error: (err) => this.onUpdateError(err),
     });
   }
 
@@ -184,33 +184,52 @@ export class EditionPageComponent implements OnInit {
     dialogRef.afterClosed().subscribe(() => this.router.navigate(['/admin']));
   }
 
-  private onUpdateError(err: HttpErrorResponse, currentGame: Game): void {
+  private onUpdateError(err: HttpErrorResponse): void {
     this.isSaving = false;
 
     if (err.status === EditionPageComponent.httpNotFound) {
-      this.handleGameDeleted(currentGame);
+      this.handleGameDeleted();
     } else {
       this.showUpdateErrorDialog(err);
     }
   }
 
-  private handleGameDeleted(currentGame: Game): void {
+  private handleGameDeleted(): void {
     const gameDeletedDialogData: DialogData = {
       title: 'Jeu supprimé',
       message: 'Ce jeu a été supprimé. Voulez-vous le recréer avec vos modifications ?',
-      type: DialogType.ERROR,
+      type: DialogType.WARNING,
+      cancelText: 'Annuler',
+      confirmText: 'Recréer',
     };
     this.dialog.open(AppDialogComponent, { data: gameDeletedDialogData }).afterClosed()
       .subscribe((result) => {
         if (result) {
-          this.communicationService.createGame(currentGame).subscribe({
-            next: () => this.showRecreateSuccessDialog(),
-            error: (err) => this.showRecreateErrorDialog(err),
-          });
+          void this.recreateDeletedGame();
         } else {
           this.router.navigate(['/admin']);
         }
       });
+  }
+
+  private async recreateDeletedGame(): Promise<void> {
+    this.isSaving = true;
+    try {
+      const gameData = await this.buildGameCreationData();
+      this.communicationService.createGame(gameData).subscribe({
+        next: () => {
+          this.isSaving = false;
+          this.gameId = '';
+          this.showRecreateSuccessDialog();
+        },
+        error: (err) => {
+          this.isSaving = false;
+          this.showRecreateErrorDialog(err);
+        },
+      });
+    } catch {
+      this.isSaving = false;
+    }
   }
 
   private showUpdateErrorDialog(err: HttpErrorResponse): void {

@@ -104,6 +104,8 @@ export class GameListComponent implements OnInit {
                 title: 'Confirmation de suppression',
                 message: `Êtes-vous sûr de vouloir supprimer le jeu "${game.name}" ?`,
                 type: DialogType.WARNING,
+                cancelText: 'Annuler',
+                confirmText: 'Supprimer',
             },
         });
 
