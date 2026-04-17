@@ -11,8 +11,8 @@ import { setupGameplayEventListeners } from '@app/utils/gameplay-listeners/gamep
 import { Character } from '@common/character';
 import { GameSessionEvents } from '@common/game.events';
 import { VirtualPlayerProfile } from '@common/virtual.player.profile';
-import { CombatSocketService } from './combat-socket.service';
-import { GamePlaySocketService } from './game-play-socket.service';
+import { CombatSocketService } from '../combat-socket/combat-socket.service';
+import { GamePlaySocketService } from '../game-play-socket/game-play-socket.service';
 
 @Injectable({
     providedIn: 'root',

@@ -2,7 +2,7 @@ import { signal, WritableSignal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { GameSessionListComponent } from '@app/components/game-session-list/game-session-list.component';
-import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
+import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket/game-session-socket.service';
 import { JoinGamePageComponent } from './join-game-page.component';
 
 /**

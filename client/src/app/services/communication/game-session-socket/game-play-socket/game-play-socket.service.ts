@@ -8,13 +8,13 @@ import { Character } from '@common/character';
 import { CombatEvents, GameSessionEvents } from '@common/game.events';
 import { Player } from '@common/player';
 import { Position } from '@common/position';
-import { CombatActionRulesService } from './combat-action-rules.service';
-import { CombatSocketService } from './combat-socket.service';
-import { FlagActionRulesService } from './flag-action-rules.service';
-import { FlagTransferStateService } from './flag-transfer-state.service';
-import { GameSessionSocketService } from './game-session-socket.service';
-import { InteractionActionRulesService } from './interaction-action-rules.service';
-import { PlayerSessionQueryService } from './player-session-query.service';
+import { CombatActionRulesService } from '../combat-action-rules/combat-action-rules.service';
+import { CombatSocketService } from '../combat-socket/combat-socket.service';
+import { FlagActionRulesService } from '../flag-action-rules.service';
+import { FlagTransferStateService } from '../flag-transfer-state.service';
+import { GameSessionSocketService } from '../game-session-socket/game-session-socket.service';
+import { InteractionActionRulesService } from '../interaction-action-rules.service';
+import { PlayerSessionQueryService } from '../player-session-query.service';
 
 @Injectable({
     providedIn: 'root',

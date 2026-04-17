@@ -13,7 +13,7 @@ import {
 import { FormsModule } from '@angular/forms';
 import { GameLogComponent } from '@app/components/game-log/game-log.component';
 import { ChatService } from '@app/services/communication/chat/chat.service';
-import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
+import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket/game-session-socket.service';
 import { ChatMessage, MessageType } from '@common/message';
 import { SessionStatus } from '@common/session.status';
 

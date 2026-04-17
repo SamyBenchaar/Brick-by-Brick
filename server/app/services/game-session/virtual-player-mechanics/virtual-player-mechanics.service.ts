@@ -1,5 +1,5 @@
 import { GameSession } from '@app/domain/game-session';
-import { GamePlayGateway } from '@app/gateways/game-session/game-play/game-play.gateway';
+import { GamePlayGateway } from '@app/gateways/game-session/game-play/game-play-gateway/game-play.gateway';
 import { GameGateway } from '@app/gateways/game/game.gateway';
 import { LogService } from '@app/services/log/log.service';
 import { GameModeValue } from '@common/constants/game-config-constants';
@@ -9,9 +9,9 @@ import { DoorState, ObjectType, TileType } from '@common/map';
 import { Player } from '@common/player';
 import { Position } from '@common/position';
 import { forwardRef, Inject, Injectable, Optional } from '@nestjs/common';
-import { MovementService } from './movement.service';
-import { VirtualPlayerPathfindingService } from './virtual-player-mechanics/virtual-player-pathfinding.service';
-import { VirtualPlayerTargetingService } from './virtual-player-mechanics/virtual-player-targeting.service';
+import { MovementService } from '../movement.service';
+import { VirtualPlayerPathfindingService } from './virtual-player-pathfinding.service';
+import { VirtualPlayerTargetingService } from './virtual-player-targeting.service';
 
 @Injectable()
 export class VirtualPlayerMechanicsService {
