@@ -2,13 +2,15 @@ import { TestBed } from '@angular/core/testing';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { GameSession } from '@app/interfaces/game-session';
+import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
+import { mockGameSession, 
+    mockGameSession2, 
+    mockPlayer } 
+    from '@app/services/communication/game-session-socket/game-session-socket.service.spec.mocks';
+import { SocketService } from '@app/services/communication/socket/socket.service';
 import { Character } from '@common/character';
 import { GameSessionEvents } from '@common/game.events';
 import { of } from 'rxjs';
-import { SocketService } from '@app/services/communication/socket/socket.service';
-import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
-import { mockGameSession, mockGameSession2, mockPlayer }
-    from '@app/services/communication/game-session-socket/game-session-socket.service.spec.mocks';
 
 const AVATAR_ID_THREE = 3;
 const AVATAR_ID_FIVE = 5;
@@ -29,6 +31,11 @@ type JoinErrorDialogData = {
  * 4. Gestion d'erreur de jointure : introuvable, pleine ou commencée, choix Réessayer ou Retour
  * 5. Avatars en temps réel : réception et émission des mises à jour d'avatars pris
  * 6. Salle d'attente : quitter la session et réinitialiser l'état local
+ * Cas limites couverts:
+ * - suppression avec roomId inexistant (aucun effet).
+ * - leaveGameSession sans session courante (aucune émission).
+ * - démarrage de partie reçu pour un joueur absent (retour accueil).
+ * - liste d'avatars vide (réinitialisation complète du signal).
  */
 
 describe('GameSessionSocketService', () => {

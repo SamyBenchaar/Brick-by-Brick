@@ -8,11 +8,12 @@ import { CombatOutcome } from '@common/combat';
 import { GameModeValue } from '@common/constants/game-config-constants';
 import { TileType } from '@common/map';
 import { Position } from '@common/position';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable, forwardRef } from '@nestjs/common';
 
 @Injectable()
 export class CombatEndService {
     constructor(
+        @Inject(forwardRef(() => GameSessionService))
         private readonly gameSessionService: GameSessionService,
         private readonly startingPointService: StartingPointService,
     ) {}
