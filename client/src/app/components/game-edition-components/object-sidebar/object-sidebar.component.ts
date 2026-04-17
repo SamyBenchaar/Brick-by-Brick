@@ -1,11 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, Input, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Tile } from '@app/classes/tile/tile';
 import { OBJECT_DESCRIPTIONS } from '@app/constants/object-descriptions';
 import { MapEditorService } from '@app/services/map-editor/map-editor.service';
 import { ObjectCounterService } from '@app/services/object-counter/object-counter.service';
-import { getGameSizeConfig } from '@common/constants/game-config-constants';
+import { getGameSizeConfig } from '@app/utils/game-config.utils';
+import { GameModeValue } from '@common/constants/game-config-constants';
 import { ObjectType } from '@common/map';
 
 @Component({
@@ -15,6 +16,7 @@ import { ObjectType } from '@common/map';
   styleUrl: './object-sidebar.component.scss',
 })
 export class ObjectSidebarComponent implements OnInit {
+  @Input() gameMode: GameModeValue = GameModeValue.Classic;
   editableObjects = Tile.editableObjects;
   private route = inject(ActivatedRoute);
   private objectCounterService = inject(ObjectCounterService);
@@ -22,9 +24,12 @@ export class ObjectSidebarComponent implements OnInit {
   readonly tile = Tile;
 
   ngOnInit(): void {
-    const size = this.route.snapshot.queryParams.size;
+    const queryParams = this.route.snapshot.queryParams;
+    const size = queryParams.size;
     const config = getGameSizeConfig(size);
     this.objectCounterService.startPoint = config.maxPlayers;
+    this.objectCounterService.healingSanctuary = 2 ** ((config.maxPlayers - 2) / 2);
+    this.objectCounterService.combatSanctuary = 2 ** ((config.maxPlayers - 2) / 2);
   }
 
 
@@ -50,5 +55,14 @@ export class ObjectSidebarComponent implements OnInit {
 
   getObjectPath(object: ObjectType): string {
     return `./assets/images/${object}.png`;
+  }
+
+  shouldShowObject(type: ObjectType): boolean {
+    if (type === ObjectType.Flag) {
+      const game = this.mapEditorService.getCurrentGame();
+      const currentMode = game?.gameMode || this.gameMode;
+      return currentMode === GameModeValue.Ctf;
+    }
+    return true;
   }
 }

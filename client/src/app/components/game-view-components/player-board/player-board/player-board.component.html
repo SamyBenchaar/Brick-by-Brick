@@ -1,20 +1,33 @@
 <app-base-sign [name]="name">
     <div class="board-container">
-        @for (player of players; track player.character.id) {
-        <div class="player-row">
-            @if (player.socketId === host?.socketId) {
-            <span class="player-badge">👑</span>
-            } @else {
-            <span class="player-badge">🧍🏽‍♂️</span>
-            } @if (player.character.isActif) {
-            <span class="player-badge">⚔️</span>
-            }
+        @for (player of getSortedPlayers(); track player.character.id) {
+        <div class="player-row" [class]="isCtfMode() && player.character.team ? 'team-' + player.character.team : ''" [class.active-player]="isActivePlayer(player)">
+            <img class="player-avatar-small" [src]="getAvatarImage(player)" [alt]="player.character.name" />
             <span class="player-name">{{ player.character.name }}</span>
-            <span class="player-wins">{{ player.character.victories }} victoires</span>
+                <div class="player-badges">
+                @if (isActivePlayer(player)) {
+                <span class="player-badge active-badge" title="Joueur actif">⭐</span>
+                }
+                @if (player.socketId === host?.socketId) {
+                <span class="player-badge host-badge" title="Organisateur">👑</span>
+                } @else if (isVirtualPlayer(player)) {
+                <span class="player-badge virtual-badge" title="Joueur virtuel">🤖</span>
+                } @else {
+                <span class="player-badge human-badge" title="Joueur humain">🧍🏽‍♂️</span>
+                }
+                
+                @if (isCtfMode() && player.character.hasFlag) {
+                <span class="player-badge flag-badge" title="Détenteur du drapeau">🚩</span>
+                }
+            </div>     
+            <span class="player-wins">{{ player.character.victories }} 🏆</span>
         </div>
-        } @for (player of leftPlayers; track player.character.id) {
+        } 
+        @for (player of leftPlayers; track player.character.id) {
         <div class="player-row left-row">
-            <span class="player-badge">🚪</span>
+            <div class="player-badges">
+                <span class="player-badge left-badge" title="Joueur déconnecté">🚪</span>
+            </div>
             <span class="player-name player-hasleft">{{ player.character.name }}</span>
             <span class="player-wins">{{ player.character.victories }} victoires</span>
         </div>

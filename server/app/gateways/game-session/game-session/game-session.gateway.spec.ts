@@ -108,7 +108,7 @@ describe('GameSessionGateway', () => {
             const socket = createTestSocket('host-1');
             const character = createTestCharacter('HostPlayer');
             const session = createMockSession('ROOM1', 'host-1');
-            mockGameSessionService.createGameSession.mockResolvedValue(session);//mock return value pour async
+            mockGameSessionService.createGameSession.mockResolvedValue(session);
 
             await gateway.handleCreateGameSession(socket, { gameId: 'game-1', hostPlayer: character });
 

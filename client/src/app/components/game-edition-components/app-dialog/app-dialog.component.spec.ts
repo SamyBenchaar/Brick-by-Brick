@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { DialogType } from '@app/constants/dialog-type.enum';
 import { AppDialogComponent } from './app-dialog.component';
 
 describe('AppDialogComponent', () => {
@@ -14,7 +15,7 @@ describe('AppDialogComponent', () => {
   const mockDialogData = {
     title: 'Test Title',
     message: 'Test Message',
-    type: 'success' as const,
+    type: DialogType.SUCCESS,
   };
 
   beforeEach(async () => {
@@ -37,17 +38,17 @@ describe('AppDialogComponent', () => {
   });
 
   it('doit retourner l\'icône correcte pour le type success', () => {
-    component.data.type = 'success';
+    component.data.type = DialogType.SUCCESS;
     expect(component.getIcon()).toBe('✓');
   });
 
   it('doit retourner l\'icône correcte pour le type error', () => {
-    component.data.type = 'error';
+    component.data.type = DialogType.ERROR;
     expect(component.getIcon()).toBe('✕');
   });
 
   it('doit retourner l\'icône correcte pour le type info', () => {
-    component.data.type = 'info';
+    component.data.type = DialogType.INFO;
     expect(component.getIcon()).toBe('ℹ');
   });
   it('doit retourner une chaîne vide pour un type inconnu', () => {

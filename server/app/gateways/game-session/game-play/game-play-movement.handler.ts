@@ -1,0 +1,213 @@
+import { GameSession } from '@app/domain/game-session';
+import { TileDto } from '@app/dto/tile.dto';
+import { GamePlayHandlerContext } from '@app/interfaces/game-play-handler';
+import { GameSessionService } from '@app/services/game-session/game-session/game-session.service';
+import { MovementService } from '@app/services/game-session/movement.service';
+import { Character } from '@common/character';
+import { GameModeValue } from '@common/constants/game-config-constants';
+import { Direction } from '@common/constants/key-event.constants';
+import { GameSessionEvents } from '@common/game.events';
+import { Position } from '@common/position';
+import { Inject, Injectable, forwardRef } from '@nestjs/common';
+import { Socket } from 'socket.io';
+
+@Injectable()
+export class GamePlayMovementHandler {
+    constructor(
+        @Inject(forwardRef(() => GameSessionService))
+        private readonly gameSessionService: GameSessionService,
+        private readonly movementService: MovementService,
+    ) {}
+
+    handleRequestMove(
+        socket: Socket,
+        payload: { roomId: string; direction: string },
+        context: GamePlayHandlerContext,
+    ): void {
+        const gameSession = this.gameSessionService.getGameSession(payload.roomId);
+        if (!gameSession) {
+            return;
+        }
+
+        if (gameSession.isTurnStarting || gameSession.getActiveCombat()) {
+            return;
+        }
+
+        const currentPlayer = gameSession.getCurrentPlayer();
+        const requestingPlayer = gameSession.players.find(player => player.socketId === socket.id);
+
+        if (!currentPlayer || !requestingPlayer || currentPlayer.id !== requestingPlayer.character.id) {
+            return;
+        }
+
+        if (!Object.values(Direction).includes(payload.direction as Direction)) {
+            return;
+        }
+
+        const direction = payload.direction as Direction;
+        const success = this.gameSessionService.executeMove(gameSession, direction);
+
+        if (success) {
+            context.server.to(payload.roomId).emit(GameSessionEvents.MoveExecuted, {
+                playerId: currentPlayer.id,
+                position: currentPlayer.position,
+                remainingMovement: currentPlayer.remainingMovement,
+                remainingActions: currentPlayer.remainingActions,
+            });
+
+            if (gameSession.gameMode === GameModeValue.Ctf) {
+                const ctfGameEnded = this.handleCtfMovement(gameSession, context, payload.roomId);
+                if (ctfGameEnded) {
+                    return;
+                }
+            }
+
+            context.emitReachableTiles(gameSession);
+
+            if (!this.gameSessionService.canPlayerTakeAction(gameSession)) {
+                this.gameSessionService.endCurrentTurn(gameSession);
+                context.onTurnEnd(gameSession);
+            }
+        }
+    }
+
+    private handleCtfMovement(
+        gameSession: GameSession,
+        context: GamePlayHandlerContext,
+        roomId: string,
+    ): boolean {
+        this.tryPickupFlagFromGround(gameSession, context, roomId);
+        return this.tryEndCtfWhenFlagAtStartingPoint(gameSession, context);
+    }
+
+    private tryPickupFlagFromGround(
+        gameSession: GameSession,
+        context: GamePlayHandlerContext,
+        roomId: string,
+    ): void {
+        const flagPos = gameSession.getFlagPosition();
+        const currentPlayer = gameSession.getCurrentPlayer();
+        const flagOnGround = !gameSession.getFlagHolder() && !!flagPos;
+        const playerOnFlag = currentPlayer.position?.x === flagPos?.x
+            && currentPlayer.position?.y === flagPos?.y;
+
+        if (!flagOnGround || !playerOnFlag) {
+            return;
+        }
+
+        gameSession.setFlagHolder(currentPlayer.id);
+        context.logService.log(roomId, `Drapeau pris du sol par ${currentPlayer.name}`);
+        context.server.to(roomId).emit(GameSessionEvents.GameSessionUpdated, gameSession);
+    }
+
+    private tryEndCtfWhenFlagAtStartingPoint(
+        gameSession: GameSession,
+        context: GamePlayHandlerContext,
+    ): boolean {
+        const holder = gameSession.getFlagHolderCharacter();
+        if (!holder) {
+            return false;
+        }
+
+        const start = gameSession.getStartingPoint(holder.id);
+        if (!start || !holder.position) {
+            return false;
+        }
+
+        const atStart = holder.position.x === start.x && holder.position.y === start.y;
+        if (!atStart) {
+            return false;
+        }
+
+        if (gameSession.playerOrder.length > 0) {
+            this.gameSessionService.endCurrentTurn(gameSession);
+        }
+        context.onGameEnd(gameSession, holder);
+        return true;
+    }
+
+    handleRequestAssignPosition(
+        socket: Socket,
+        payload: { roomId: string; position: Position },
+        context: GamePlayHandlerContext,
+    ): void {
+        const gameSession = this.gameSessionService.getGameSession(payload.roomId);
+        if (!gameSession || gameSession.isTurnStarting || gameSession.getActiveCombat()) {
+            return;
+        }
+
+        const currentPlayer = gameSession.getCurrentPlayer();
+        if (!currentPlayer) {
+            return;
+        }
+
+        this.movementService.assignPosition(currentPlayer, gameSession, payload.position);
+        context.server.to(payload.roomId).emit(GameSessionEvents.MoveExecuted, {
+            playerId: currentPlayer.id,
+            position: currentPlayer.position,
+            remainingMovement: currentPlayer.remainingMovement,
+            remainingActions: currentPlayer.remainingActions,
+        });
+        context.emitReachableTiles(gameSession);
+    }
+
+    handleRequestInteract(
+        socket: Socket,
+        payload: { roomId: string; position: Position },
+        context: GamePlayHandlerContext,
+    ): void {
+        const gameSession = this.gameSessionService.getGameSession(payload.roomId);
+        if (!gameSession || gameSession.isTurnStarting || gameSession.getActiveCombat()) return;
+
+        const currentPlayer = gameSession.getCurrentPlayer();
+        const requestingPlayer = gameSession.players.find(player => player.socketId === socket.id);
+
+        if (!currentPlayer || !requestingPlayer || currentPlayer.id !== requestingPlayer.character.id) return;
+        if ((currentPlayer.remainingActions ?? 0) <= 0) return;
+
+        const tile = gameSession.mapCopy?.tiles[payload.position.y]?.[payload.position.x];
+        if (!tile) return;
+
+        if (tile.type === 'door') {
+            this.handleDoorInteraction({
+                gameSession,
+                tile,
+                position: payload.position,
+                currentPlayer,
+                context,
+            });
+        } else {
+            return;
+        }
+
+        context.emitReachableTiles(gameSession);
+
+        if (!this.gameSessionService.canPlayerTakeAction(gameSession)) {
+            this.gameSessionService.endCurrentTurn(gameSession);
+            context.onTurnEnd(gameSession);
+        }
+    }
+
+    private handleDoorInteraction(payload: {
+        gameSession: GameSession;
+        tile: TileDto;
+        position: Position;
+        currentPlayer: Character;
+        context: GamePlayHandlerContext;
+    }): void {
+        const { gameSession, tile, position, currentPlayer, context } = payload;
+        tile.doorState = tile.doorState === 'opened' ? 'closed' : 'opened';
+        gameSession.usedDoors.add(`${position.x},${position.y}`);
+        currentPlayer.remainingActions -= 1;
+
+        context.server.to(gameSession.roomId).emit(GameSessionEvents.InteractResult, {
+            position,
+            interactionType: 'door',
+            newDoorState: tile.doorState,
+            remainingActions: currentPlayer.remainingActions,
+        });
+
+        const action = tile.doorState === 'opened' ? 'Ouverture' : 'Fermeture';
+        context.logService.log(gameSession.roomId, `${action} d'une porte par ${currentPlayer.name}`);
+    }
+}

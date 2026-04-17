@@ -1,26 +1,25 @@
 import { CommonModule } from '@angular/common';
 import { Component, ElementRef, EventEmitter, HostListener, inject, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
-import { MatDialog } from '@angular/material/dialog';
-import { MatTooltipModule } from '@angular/material/tooltip';
 import { GameMap } from '@app/classes/game-map/game-map';
 import { Tile } from '@app/classes/tile/tile';
-import { AppDialogComponent } from '@app/components/game-edition-components/app-dialog/app-dialog.component';
-import { AVATARS } from '@app/constants/character-constants';
 import { ClickEvent } from '@app/constants/click-event-constants';
 import { GameSize } from '@app/constants/game-size.enum';
-import { OBJECT_DESCRIPTIONS } from '@app/constants/object-descriptions';
 import { Game } from '@app/interfaces/game';
-import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
+import { GamePlaySocketService } from '@app/services/communication/game-session-socket/game-play-socket/game-play-socket.service';
+import { GameGridUtilService } from '@app/services/game-grid-util/game-grid-util.service';
+import { TileOperationsService } from '@app/services/game-grid/tile-operations.service';
+import { GameObjectService } from '@app/services/game-object/game-object.service';
 import { MapEditorService } from '@app/services/map-editor/map-editor.service';
 import { ObjectCounterService } from '@app/services/object-counter/object-counter.service';
 import { Character } from '@common/character';
-import { GRID_SIZE, MapSize, ObjectType, PLAYABLE_TYPES, TILE_COST, TileType } from '@common/map';
+import { GameModeValue } from '@common/constants/game-config-constants';
+import { DoorState, GRID_SIZE, MapSize, ObjectType, TileType } from '@common/map';
 import { Position } from '@common/position';
 import html2canvas from 'html2canvas';
 
 @Component({
   selector: 'app-game-grid',
-  imports: [CommonModule, MatTooltipModule],
+  imports: [CommonModule],
   templateUrl: './game-grid.component.html',
   styleUrl: './game-grid.component.scss',
 })
@@ -28,25 +27,34 @@ export class GameGridComponent implements OnInit, OnChanges {
   private static readonly defaultPreviewMaxWidth = 400;
   private static readonly jpegQuality = 0.3;
 
+  gameModeValue = GameModeValue;
+
   @Input() mapSize: MapSize = MapSize.Small;
 
   @Input() gameData: Game | null = null;
   @Input() isViewMode: boolean = false;
   @Input() players: Character[] = [];
+  @Input() gameMode: string = 'classic';
   @Input() reachableTiles: Position[] = [];
-  @Input() isAttackSelectionMode: boolean = false;
+  @Input() isActionSelectionMode: boolean = false;
+  @Input() flagHolderId: string | null = null;
+  @Input() flagPosition: Position | null = null;
+  @Input() startingPoints: Map<string, Position> | Record<string, Position> | null = null;
+  @Input() currentPlayerId: string = '';
   @ViewChild('gridContainer') gridContainer!: ElementRef<HTMLElement>;
 
   @Output() attackTargetSelected = new EventEmitter<Character>();
+  @Output() actionTargetSelected = new EventEmitter<{ tile: Tile, position: Position }>();
 
   readonly gridSize = GRID_SIZE;
-  readonly objectDescriptions = OBJECT_DESCRIPTIONS;
 
   gameMap!: GameMap;
   private mapEditorService = inject(MapEditorService);
   private objectCounterService = inject(ObjectCounterService);
-  private gameSessionSocketService = inject(GameSessionSocketService);
-  private dialog = inject(MatDialog);
+  private gamePlaySocketService = inject(GamePlaySocketService);
+  private gameGridUtilService = inject(GameGridUtilService);
+  private gameObjectService = inject(GameObjectService);
+  private tileOperationsService = inject(TileOperationsService);
   private isDrawing = false;
   private isDeleting = false;
   private isShiftPressed = false;
@@ -63,9 +71,8 @@ export class GameGridComponent implements OnInit, OnChanges {
     this.objectCounterService.reset();
   }
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes.gameData && this.gameData) {
-      this.loadGameData();
-    }
+    if (changes.gameData && this.gameData) this.loadGameData();
+
   }
 
   private loadGameData(): void {
@@ -91,10 +98,22 @@ export class GameGridComponent implements OnInit, OnChanges {
           if (!tile) continue;
 
           tile.type = tileData.type as TileType;
-
+          tile.doorState = undefined;
+          if (tileData.type === TileType.Door) {
+            tile.doorState = (tileData.doorState as DoorState) ?? DoorState.Closed;
+          }
           if (tileData.object) {
             tile.object = tileData.object.type as ObjectType;
-            this.objectCounterService.place(tile.object);
+            if (tileData.isOrigin) {
+              this.objectCounterService.place(tile.object);
+              [[0, 0], [1, 0], [0, 1], [1, 1]].forEach(([dx, dy]) => {
+                const t = this.gameMap.getTile({ x: x + dx, y: y + dy });
+                if (t) t.sanctuaryOrigin = { x, y };
+              });
+              tile.sanctuaryCooldown = tileData.sanctuaryCooldown;
+            } else if (!this.isMultiTileObject(tile.object)) {
+              this.objectCounterService.place(tile.object);
+            }
           }
         }
       }
@@ -105,24 +124,24 @@ export class GameGridComponent implements OnInit, OnChanges {
     return this.gameMap.grid;
   }
 
-  getTileSize(): number {
-    return this.gridSize / this.gameMap.size;
-  }
-
   getTile(position: Position): Tile | null {
     return this.gameMap.getTile(position);
   }
 
   onTileMouseDown(position: Position, event: MouseEvent): void {
     if (this.isViewMode) {
-      if (event.button === ClickEvent.Left && this.isAttackSelectionMode) {
-        this.handleAttackTargetSelection(position);
+      if (event.button === ClickEvent.Left && this.isActionSelectionMode) {
+        const playerAtPos = this.getPlayerAtPosition(position);
+        if (playerAtPos) this.handleAttackTargetSelection(position);
+
+        else this.handleActionTargetSelection(position);
+
       }
       return;
     }
 
     if (event.button === ClickEvent.Left) {
-      if (this.mapEditorService.getSelectedTileType() == null) {
+      if (!this.mapEditorService.getSelectedTileType()) {
         this.addObject(position);
       } else {
         this.isDrawing = true;
@@ -149,47 +168,24 @@ export class GameGridComponent implements OnInit, OnChanges {
       return;
     }
     if (playerAtPosition) {
-      this.openPlayerDialog(playerAtPosition);
+      this.gameGridUtilService.openPlayerDialog(playerAtPosition);
     } else if (tile) {
-      this.openTileDialog(tile);
+      this.gameGridUtilService.openTileDialog(tile);
     }
   }
 
-  private openPlayerDialog(player: Character): void {
-    this.dialog.open(AppDialogComponent, {
-      data: {
-        title: 'Informations du joueur',
-        message: `Joueur: ${player.name}\nAvatar ID: ${player.avatarId}\nVictoires: ${player.victories}`,
-        type: 'info',
-      },
-    });
-  }
-
-  private openTileDialog(tile: Tile): void {
-    this.dialog.open(AppDialogComponent, {
-      data: {
-        title: 'Informations de la tuile',
-        message: `Type: ${tile.type}\nCoût: ${this.getTileCost(tile.type)}`,
-        type: 'info',
-      },
-    });
-  }
-
-  private isTileValidForTeleport(tile: Tile | null, player: Character | null): boolean {
-    const isEmpty = !!tile && !tile.object;
-    const hasNoPlayer = !player;
-    const isWalkable = tile ? PLAYABLE_TYPES.includes(tile.type) : false;
-    return isEmpty && hasNoPlayer && isWalkable;
-  }
-
   private tryDebugTeleport(position: Position, tile: Tile | null, player: Character | null): boolean {
-    const isDebug = this.gameSessionSocketService.isDebugModeActivated();
-    const isMyTurn = this.gameSessionSocketService.isMyTurn();
+    const isDebug = this.gamePlaySocketService.isDebugModeActivated();
+    const isMyTurn = this.gamePlaySocketService.isMyTurn();
 
     if (!isDebug || !isMyTurn) return false;
-    if (!this.isTileValidForTeleport(tile, player)) return false;
+    if (!this.gameGridUtilService.isTileValidForTeleport(tile, player)) return false;
 
-    this.gameSessionSocketService.requestAssignPosition(position);
+    if (this.flagPosition && position.x === this.flagPosition.x && position.y === this.flagPosition.y) {
+      return false;
+    }
+
+    this.gamePlaySocketService.requestAssignPosition(position);
     return true;
   }
 
@@ -240,6 +236,7 @@ export class GameGridComponent implements OnInit, OnChanges {
       if (this.isShiftPressed) {
         this.removeObject(position);
       } else {
+        tile.doorState = undefined;
         tile.type = TileType.Base;
         this.mapEditorService.setTileType(position, TileType.Base);
       }
@@ -247,53 +244,58 @@ export class GameGridComponent implements OnInit, OnChanges {
   }
 
   private changeTileType(position: Position): void {
-    const selectedType = this.mapEditorService.getSelectedTileType();
     const tile = this.getTile(position);
-    if (tile && selectedType) {
-      if (selectedType === TileType.Wall && tile.object) {
-        this.removeObject(position);
-      }
-      tile.type = selectedType;
-      this.mapEditorService.setTileType(position, selectedType);
-    }
+    this.tileOperationsService.changeTileType(tile, position);
   }
 
   isTileObjectFree(tile: Tile): boolean {
-    if (tile) {
-      return !tile.object;
-    }
-    return true;
+    return this.gameGridUtilService.isTileObjectFree(tile);
   }
 
   private addObject(position: Position): void {
     const selectedObject = this.mapEditorService.getSelectedObject();
-    const tile = this.getTile(position);
-
-    if (!tile || !selectedObject) return;
-    if (!this.objectCounterService.canPlace(selectedObject)) return;
-    if (!this.isTileObjectFree(tile)) return;
-    if (tile.type === TileType.Wall) return;
-
-    tile.object = selectedObject;
-    this.objectCounterService.place(selectedObject);
-    this.mapEditorService.setObject(position, selectedObject);
+    this.gameObjectService.addObject(position, selectedObject, {
+      getTile: tilePosition => this.getTile(tilePosition),
+      isTileObjectFree: tile => this.isTileObjectFree(tile),
+    });
   }
 
   private removeObject(position: Position): void {
-    const tile = this.getTile(position);
-    if (tile && tile.object) {
-      this.objectCounterService.remove(tile.object);
-      tile.object = undefined;
-      this.mapEditorService.setObject(position, null);
+    this.gameObjectService.removeObject(position, tilePosition => this.getTile(tilePosition));
+  }
+
+  isMultiTileObject(object: ObjectType): boolean {
+    return this.gameGridUtilService.isMultiTileObject(object);
+  }
+
+  isCurrentPlayerStartingPoint(position: Position): boolean {
+    if (!this.startingPoints || !this.currentPlayerId) return false;
+
+    let startPos: Position | undefined;
+
+    if (this.startingPoints instanceof Map) {
+      startPos = this.startingPoints.get(this.currentPlayerId);
+    } else {
+      startPos = (this.startingPoints as Record<string, Position>)[this.currentPlayerId];
     }
+
+    if (!startPos) return false;
+    return startPos.x === position.x && startPos.y === position.y;
   }
 
-  getObjectPath(object: ObjectType): string {
-    return `./assets/images/${object}.png`;
+  getObjectPath(object: ObjectType, sanctuaryCooldown?: number, position?: Position): string {
+    if (object === ObjectType.StartingPoint && position && this.isCurrentPlayerStartingPoint(position)) {
+      return './assets/images/your_startingpoint.png';
+    }
+    return this.gameGridUtilService.getObjectPath(object, sanctuaryCooldown);
   }
 
-  getTilePath(tile: TileType): string {
-    return `./assets/images/${tile}.jpg`;
+  isSanctuaryOriginTile(tile: Tile, position: Position): boolean {
+    return this.gameGridUtilService.isSanctuaryOriginTile(tile, position);
+  }
+
+  getTilePath(tile: TileType, doorState?: DoorState): string {
+    return this.gameGridUtilService.getTilePath(tile, doorState);
   }
 
   async captureMapPreview(maxWidth: number = GameGridComponent.defaultPreviewMaxWidth): Promise<string> {
@@ -312,25 +314,55 @@ export class GameGridComponent implements OnInit, OnChanges {
     }
   }
 
+  getPlayerTeamClass(player: Character): string {
+    return this.gameGridUtilService.getPlayerTeamClass(player, this.gameMode);
+  }
+
   getPlayerAtPosition(position: Position): Character | null {
-    return this.players.find(p => p.position?.x === position.x && p.position?.y === position.y) ?? null;
+    return this.players.find(player => player.position?.x === position.x && player.position?.y === position.y) ?? null;
   }
 
   isReachableTile(position: Position): boolean {
-    return this.reachableTiles.some(t => t.x === position.x && t.y === position.y);
+    return this.reachableTiles.some(tilePosition => tilePosition.x === position.x && tilePosition.y === position.y);
+  }
+
+  isInteractableTile(position: Position): boolean {
+    const player = this.getPlayerAtPosition(position);
+    if (player) {
+      return (this.gamePlaySocketService.canAttackTarget(player) ||
+        this.gamePlaySocketService.canTransferFlagTo(player) ||
+        this.gamePlaySocketService.canRequestFlagFrom(player));
+    } else {
+      const tile = this.getTile(position);
+      if (!tile) return false;
+      return this.gamePlaySocketService.canInteractWithTarget(tile, position);
+    }
   }
 
   getAvatarImage(avatarId: number): string {
-    return AVATARS.find(a => a.id === avatarId)?.image ?? 'assets/images/lily.jpg';
+    return this.gameGridUtilService.getAvatarImage(avatarId);
   }
 
-  getCurrentPlayer(): Character | null {
-    const socketId = this.gameSessionSocketService.getSocketId();
-    const session = this.gameSessionSocketService.currentSession();
-    if (!session) return null;
+  isFlagVisible(tile: Tile): boolean {
+    return this.gameGridUtilService.isFlagVisible(tile, {
+      gameMode: this.gameMode,
+      flagPosition: this.flagPosition,
+      flagHolderId: this.flagHolderId,
+    });
+  }
 
-    const playerData = session.players.find(p => p.socketId === socketId);
-    return playerData?.character ?? null;
+  isFlagAtPosition(position: Position): boolean {
+    return this.gameGridUtilService.isFlagAtPosition(position, {
+      gameMode: this.gameMode,
+      flagHolderId: this.flagHolderId,
+      flagPosition: this.flagPosition,
+    });
+  }
+
+  private handleActionTargetSelection(position: Position): void {
+    const target = this.getTile(position);
+    if (!target) return;
+    this.actionTargetSelected.emit({ tile: target, position });
   }
 
   private handleAttackTargetSelection(position: Position): void {
@@ -339,14 +371,34 @@ export class GameGridComponent implements OnInit, OnChanges {
       return;
     }
 
-    if (!this.gameSessionSocketService.canAttackTarget(target)) {
+    const canInteract = this.gamePlaySocketService.canAttackTarget(target) ||
+      this.gamePlaySocketService.canTransferFlagTo(target);
+
+    if (!canInteract) {
       return;
     }
 
     this.attackTargetSelected.emit(target);
   }
 
-  private getTileCost(tileType: TileType): number {
-    return TILE_COST[tileType] ?? 0;
+  private isInteractionModeActive(): boolean {
+    return this.isViewMode && this.isActionSelectionMode;
+  }
+
+  private canTileBeNormallyInteracted(tile: Tile, position: Position): boolean {
+    return !this.isSanctuaryOriginTile(tile, position) && !tile.sanctuaryOrigin;
+  }
+
+  canTileBeInteracted(tile: Tile, position: Position): boolean {
+    if (!this.isInteractionModeActive()) return false;
+    if (!this.isInteractableTile(position)) return false;
+    return this.canTileBeNormallyInteracted(tile, position);
+  }
+
+  canTileBeInteractedAsOrigin(position: Position): boolean {
+    if (!this.isInteractionModeActive()) return false;
+    if (!this.isInteractableTile(position)) return false;
+    const tile = this.getTile(position);
+    return tile ? this.isSanctuaryOriginTile(tile, position) : false;
   }
 }

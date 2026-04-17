@@ -14,9 +14,12 @@ import {
     RANDOM_NAME_MAX,
 } from '@app/constants/character-constants';
 import { AvatarOption } from '@app/interfaces/avatar';
-import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
+import { GamePlaySocketService } from '@app/services/communication/game-session-socket/game-play-socket/game-play-socket.service';
+import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket/game-session-socket.service';
 import { Character } from '@common/character';
 import { Dice } from '@common/dice';
+
+const WAITING_ROOM_ACCESS_KEY = 'waitingRoomAccess';
 
 
 @Component({
@@ -28,6 +31,7 @@ import { Dice } from '@common/dice';
 
 export class CharacterCreationPageComponent implements OnInit {
     private router = inject(Router);
+    private gamePlaySocketService = inject(GamePlaySocketService);
     private gameSessionSocketService = inject(GameSessionSocketService);
     private injector = inject(Injector);
     character!: Character;
@@ -61,16 +65,19 @@ export class CharacterCreationPageComponent implements OnInit {
                 this.fromGameCreation = true;
             }
 
-            if (this.roomId) {
+            if (this.roomId && this.fromGameCreation) {
+                this.gameSessionSocketService.leaveGameSession();
+                this.gameSessionSocketService.observeGameSession(this.roomId);
+                this.character = this.createBaseCharacter(AVATARS[0].id);
+            } else if (this.roomId) {
                 this.gameSessionSocketService.observeGameSession(this.roomId);
 
                 effect(() => {
                     const taken = this.gameSessionSocketService.takenAvatars();
 
                     if (!this.character && taken.length > 0) {
-                        const freeAvatar = AVATARS.find(a => !taken.includes(a.id));
+                        const freeAvatar = AVATARS.find(avatarOption => !taken.includes(avatarOption.id));
                         if (!freeAvatar) {
-                            alert('Toutes les places sont déjà prises ! Trop de joueurs en même temps.');
                             return;
                         }
                         this.character = this.createBaseCharacter(freeAvatar.id);
@@ -101,6 +108,10 @@ export class CharacterCreationPageComponent implements OnInit {
             defenseDice: Dice.D6,
             isActif: false,
             battlesWon: 0,
+            defeats: 0,
+            totalDamageDealt: 0,
+            totalDamageReceived: 0,
+            tilesVisited: 0,
         };
     }
 
@@ -115,21 +126,25 @@ export class CharacterCreationPageComponent implements OnInit {
     }
 
     getSelectedAvatarImage(): string {
-        if (!this.avatars?.length) {
+        if (!this.avatars?.length || !this.character) {
             return '';
         }
-        const avatar = this.avatars.find(a => a.id === this.character.avatarId);
+        const avatar = this.avatars.find(avatarOption => avatarOption.id === this.character.avatarId);
         return avatar?.image ?? this.avatars[0]?.image ?? '';
     }
 
     applyBonus(target: 'life' | 'speed') {
+        this.character.maxLife = BASE_LIFE;
         this.character.life = BASE_LIFE;
         this.character.speed = BASE_SPEED;
+        this.character.movements = BASE_SPEED;
 
         if (target === 'life') {
-            this.character.life += BONUS_AMOUNT;
+            this.character.maxLife += BONUS_AMOUNT;
+            this.character.life = this.character.maxLife;
         } else {
             this.character.speed += BONUS_AMOUNT;
+            this.character.movements = this.character.speed;
         }
         this.bonusTarget = target;
     }
@@ -165,7 +180,6 @@ export class CharacterCreationPageComponent implements OnInit {
     }
     submitCharacter() {
         if (!this.gameId && !this.roomId) {
-            alert('Erreur: Identifiant de session manquant. Veuillez revenir à la page précédente.');
             return;
         }
 
@@ -174,8 +188,7 @@ export class CharacterCreationPageComponent implements OnInit {
         if (this.fromGameCreation && this.gameId) {
 
             this.gameSessionSocketService.currentSession.set(null);
-            this.gameSessionSocketService.roomId.set('');
-            this.gameSessionSocketService.mapCopy.set(null);
+            this.gamePlaySocketService.mapCopy.set(null);
 
             // Le créateur: créer la session et attendre que le roomId soit reçu du serveur
             this.gameSessionSocketService.createGameSession(this.gameId, this.character);
@@ -183,11 +196,14 @@ export class CharacterCreationPageComponent implements OnInit {
             effect(() => {
                 const roomId = this.gameSessionSocketService.currentSession()?.roomId;
                 if (roomId && roomId !== '') {
+                    sessionStorage.setItem(WAITING_ROOM_ACCESS_KEY, 'true');
                     this.router.navigate(['/waiting-room', roomId]);
                 }
             }, { injector: this.injector });
         } else if (this.roomId) {
+            this.gameSessionSocketService.leaveGameSession();
             this.gameSessionSocketService.joinGameSession(this.roomId, this.character);
+            sessionStorage.setItem(WAITING_ROOM_ACCESS_KEY, 'true');
             this.router.navigate(['/waiting-room', this.roomId]);
         }
     }

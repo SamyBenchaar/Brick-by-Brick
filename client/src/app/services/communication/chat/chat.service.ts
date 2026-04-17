@@ -1,7 +1,8 @@
 import { inject, Injectable, signal, WritableSignal } from '@angular/core';
+import { SendChatMessagePayload } from '@app/interfaces/chat-payloads';
+import { SocketService } from '@app/services/communication/socket/socket.service';
 import { ChatEvents } from '@common/game.events';
 import { ChatMessage } from '@common/message';
-import { SocketService } from '@app/services/communication/socket/socket.service';
 
 @Injectable({
     providedIn: 'root',
@@ -37,7 +38,8 @@ export class ChatService {
         });
     }
 
-    sendMessage(username: string, content: string, gameId?: string, hostPlayerId?: string): void {
+    sendMessage(payload: SendChatMessagePayload): void {
+        const { username, content, gameId, hostPlayerId } = payload;
         if (!content.trim()) {
             return;
         }
@@ -56,10 +58,6 @@ export class ChatService {
     loadChatHistory(username: string, gameId?: string, hostPlayerId?: string): void {
         this.isLoading.set(true);
         this.socketService.emit(ChatEvents.LoadChatHistory, { username, gameId, hostPlayerId });
-    }
-
-    clearChatHistoryOnServer(gameId?: string): void {
-        this.socketService.emit(ChatEvents.ClearChatHistory, { gameId });
     }
 
     getCurrentMessages(): ChatMessage[] {

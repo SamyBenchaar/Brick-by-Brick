@@ -1,0 +1,116 @@
+import { Router } from '@angular/router';
+import { AppDialogComponent } from '@app/components/game-edition-components/app-dialog/app-dialog.component';
+import { DialogType } from '@app/constants/dialog-type.enum';
+import { GameEndedPayload } from '@app/interfaces/game-play';
+import { GameEndListenersDependencies } from '@app/interfaces/gameplay-listener-dependencies';
+import { HomeNavigationDependencies } from '@app/interfaces/gameplay-listeners';
+import { GamePlaySocketService } from '@app/services/communication/game-session-socket/game-play-socket/game-play-socket.service';
+import type { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket/game-session-socket.service';
+import { CTF_VICTORY_ANNOUNCE_DELAY, GameModeValue } from '@common/constants/game-config-constants';
+import { GameSessionEvents } from '@common/game.events';
+import {
+    buildGameEndedMessage,
+    buildStatisticsNavigationState,
+    buildVictoryWinnerModalContent,
+} from './gameplay-listeners.shared';
+
+export function registerGameEndEventListeners(dependencies: GameEndListenersDependencies): void {
+    const { socketService, gamePlaySocketService, gameSessionSocketService, router, dialog } = dependencies;
+    socketService.on<GameEndedPayload>(GameSessionEvents.GameEnded, (data) => {
+        if (gameSessionSocketService.hasAbandoned()) {
+            gameSessionSocketService.hasAbandoned.set(false);
+            gameSessionSocketService.currentSession.set(null);
+            return;
+        }
+
+        gamePlaySocketService.gameEnded.set(true);
+
+        if (data.reason === 'victory') {
+            const winnerModal = buildVictoryWinnerModalContent(data);
+            const victoryDialogRef = dialog.open(AppDialogComponent, {
+                data: {
+                    title: winnerModal.title,
+                    message: winnerModal.message,
+                    type: DialogType.SUCCESS,
+                },
+                disableClose: true,
+            });
+            window.setTimeout(() => {
+                victoryDialogRef.close();
+                navigateToStatisticsPage(data, {
+                    gamePlaySocketService,
+                    gameSessionSocketService,
+                    router,
+                });
+            }, gameSessionSocketService.endGameDelay);
+            return;
+        }
+
+        const { title, message } = buildGameEndedMessage(data, gamePlaySocketService.getSocketId());
+        const delay = getEndGameDelay(data, gameSessionSocketService);
+
+        setTimeout(() => {
+            navigateToHomeWithDialog(title, message, {
+                gamePlaySocketService,
+                gameSessionSocketService,
+                router,
+                dialog,
+            });
+        }, delay);
+    });
+}
+
+function getEndGameDelay(
+    data: GameEndedPayload,
+    gameSessionSocketService: GameSessionSocketService,
+): number {
+    const isCtfVictory = data.gameMode === GameModeValue.Ctf && data.reason === 'victory';
+    return isCtfVictory ? CTF_VICTORY_ANNOUNCE_DELAY : gameSessionSocketService.endGameDelay;
+}
+
+function navigateToStatisticsPage(
+    data: GameEndedPayload,
+    dependencies: {
+        gamePlaySocketService: GamePlaySocketService;
+        gameSessionSocketService: GameSessionSocketService;
+        router: Router;
+    },
+): void {
+    const { gamePlaySocketService, gameSessionSocketService, router } = dependencies;
+    const session = gamePlaySocketService.currentSession();
+    const navigationState = buildStatisticsNavigationState(data, session, gamePlaySocketService);
+
+    gamePlaySocketService.gameEnded.set(false);
+    gameSessionSocketService.currentSession.set(null);
+
+    router.navigate(['/game-statistics'], {
+        state: navigationState,
+    });
+}
+
+function navigateToHomeWithDialog(
+    title: string,
+    message: string,
+    dependencies: HomeNavigationDependencies,
+): void {
+    const {
+        gamePlaySocketService,
+        gameSessionSocketService,
+        router,
+        dialog,
+    } = dependencies;
+
+    router.navigate(['/']).then(() => {
+        dialog.open(AppDialogComponent, {
+            data: {
+                title,
+                message,
+                type: DialogType.INFO,
+            },
+            disableClose: true,
+        });
+
+        gamePlaySocketService.gameEnded.set(false);
+        gameSessionSocketService.currentSession.set(null);
+    });
+}

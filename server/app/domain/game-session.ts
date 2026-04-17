@@ -1,12 +1,24 @@
+import { GameMap } from '@app/interfaces/game-map-interfaces';
 import { Character } from '@common/character';
+import { ActiveCombat } from '@common/combat';
+import { COMBAT_TURN_TIME } from '@common/constants/combat-constants';
+import { GameModeValue, MAX_PLAYER, ROOM_ID_LENGTH } from '@common/constants/game-config-constants';
+import { SHUFFLE_FACTOR } from '@common/map';
 import { Player } from '@common/player';
 import { Position } from '@common/position';
 import { SessionStatus } from '@common/session.status';
-import { GameMap } from '@app/interfaces/game-map-interfaces';
-import { ROOM_ID_LENGTH, MAX_PLAYER } from '@common/constants/game-config-constants';
+export { Position };
 
+interface FlagTransferRequest {
+    from: string;
+    to: string;
+    timestamp: number;
+}
+
+import { TeamId } from '@common/team';
 
 export class GameSession {
+
     players: Player[] = [];
     leftPlayers: Player[] = [];
     status: SessionStatus = SessionStatus.Waiting;
@@ -16,24 +28,44 @@ export class GameSession {
     host: Player;
     mapId: string;
     socketToAvatar: Map<string, number> = new Map();
-
+    visitedTiles: Map<string, Set<string>> = new Map();
+    startTime: Date | null = null;
+    totalTurns: number = 0;
+    usedSanctuaries: Set<string> = new Set();
+    usedDoors: Set<string> = new Set();
+    flagHolders: Set<string> = new Set();
     playerOrder: string[] = [];
     currentPlayerIndex: number = 0;
     currentTurnTime: number = 30;
     currentInterTurnTime: number = 3;
+    activeCombat: ActiveCombat | null = null;
+    currentCombatTurnTime: number = COMBAT_TURN_TIME;
     startingPoints: Map<string, Position> = new Map();
     isTurnStarting: boolean = false;
     isDebugModeActivated = false;
 
-    constructor(hostplayer: Player, mapId: string) {
+    gameMode: string = 'classic';
+    playerTeams: Map<string, TeamId> = new Map();
+    flagPosition: Position | null = null;
+    flagHolderId: string | null = null;
+    flagTransferRequests: Map<string, FlagTransferRequest> = new Map();
+
+    constructor(hostplayer: Player, mapId: string, gameMode: string = 'classic') {
         this.host = hostplayer;
         this.roomId = crypto.randomUUID().substring(0, ROOM_ID_LENGTH).toUpperCase();
         this.maxPlayers = MAX_PLAYER;
         this.mapId = mapId;
+        this.gameMode = gameMode;
         this.addPlayer(hostplayer);
     }
 
     addPlayer(player: Player): void {
+        this.players = this.players.filter(existingPlayer => existingPlayer.socketId !== player.socketId);
+        if (this.status === SessionStatus.Waiting) {
+            this.players.push(player);
+            this.socketToAvatar.set(player.socketId, player.character.avatarId);
+            return;
+        }
         const newPlayerList = [...this.players, player];
         this.players = newPlayerList.sort((a, b) => b.character.speed - a.character.speed);
         this.socketToAvatar.set(player.socketId, player.character.avatarId);
@@ -65,6 +97,16 @@ export class GameSession {
 
         this.playerOrder = this.playerOrder.filter((id) => id !== removedPlayer.character.id);
         this.startingPoints.delete(removedPlayer.character.id);
+
+        this.playerTeams.delete(removedPlayer.character.id);
+
+        if (this.flagHolderId === removedPlayer.character.id && this.gameMode === GameModeValue.Ctf) {
+            this.dropFlag(removedPlayer.character.position);
+        } else if (this.flagHolderId === removedPlayer.character.id) {
+            this.flagHolderId = null;
+        }
+
+        this.flagTransferRequests.delete(removedPlayer.character.id);
 
         if (removedOrderIndex !== -1 && removedOrderIndex < this.currentPlayerIndex) {
             this.currentPlayerIndex -= 1;
@@ -111,15 +153,11 @@ export class GameSession {
     }
 
     getCharacters(): Character[] {
-        return this.players.map(p => p.character);
+        return this.players.map(player => player.character);
     }
 
     setPlayerOrder(order: string[]): void {
         this.playerOrder = order;
-    }
-
-    getPlayerOrder(): string[] {
-        return this.playerOrder;
     }
 
     setCurrentPlayerIndex(index: number): void {
@@ -133,7 +171,7 @@ export class GameSession {
     getCurrentPlayer(): Character | undefined {
         if (this.playerOrder.length === 0) return undefined;
         const currentPlayerId = this.playerOrder[this.currentPlayerIndex];
-        return this.players.find(p => p.character.id === currentPlayerId)?.character;
+        return this.players.find(player => player.character.id === currentPlayerId)?.character;
     }
 
     setCurrentTurnTime(time: number): void {
@@ -158,6 +196,41 @@ export class GameSession {
         }
     }
 
+    getActiveCombat(): ActiveCombat | null {
+        return this.activeCombat;
+    }
+
+    setActiveCombat(activeCombat: ActiveCombat | null): void {
+        this.activeCombat = activeCombat;
+    }
+
+    getCurrentCombatTurnTime(): number {
+        return this.currentCombatTurnTime;
+    }
+
+    setCurrentCombatTurnTime(time: number): void {
+        this.currentCombatTurnTime = time;
+    }
+
+    decrementCombatTurnTime(): void {
+        if (this.currentCombatTurnTime > 0) {
+            this.currentCombatTurnTime--;
+        }
+    }
+
+    clearActiveCombat(): void {
+        this.activeCombat = null;
+        this.currentCombatTurnTime = COMBAT_TURN_TIME;
+    }
+
+    isPlayerInActiveCombat(playerId: string): boolean {
+        if (!this.activeCombat) {
+            return false;
+        }
+
+        return this.activeCombat.attackerId === playerId || this.activeCombat.defenderId === playerId;
+    }
+
     setMapCopy(mapData: GameMap): void {
         this.mapCopy = mapData;
     }
@@ -179,11 +252,15 @@ export class GameSession {
     }
 
     getActivePlayers(): Character[] {
-        return this.players.filter(p => this.playerOrder.includes(p.character.id)).map(p => p.character);
+        return this.players.filter(player => this.playerOrder.includes(player.character.id)).map(player => player.character);
     }
 
     getNextPlayerIndex(): number {
         return (this.currentPlayerIndex + 1) % this.playerOrder.length;
+    }
+
+    getCharacterById(id: string): Character | undefined {
+        return this.players.find(player => player.character.id === id)?.character;
     }
 
     advanceToNextPlayer(): void {
@@ -194,6 +271,141 @@ export class GameSession {
     setStatus(status: SessionStatus): void {
         this.status = status;
     }
-}
 
-export { Position };
+    assignTeams(): void {
+        if (this.gameMode !== GameModeValue.Ctf || this.players.length % 2 !== 0) {
+            return;
+        }
+
+        const shuffledPlayers = [...this.players].sort(() => Math.random() - SHUFFLE_FACTOR);
+        const midpoint = shuffledPlayers.length / 2;
+
+        shuffledPlayers.slice(0, midpoint).forEach(player => {
+            this.playerTeams.set(player.character.id, TeamId.Team1);
+            player.character.team = TeamId.Team1;
+        });
+
+        shuffledPlayers.slice(midpoint).forEach(player => {
+            this.playerTeams.set(player.character.id, TeamId.Team2);
+            player.character.team = TeamId.Team2;
+        });
+    }
+
+    getPlayerTeam(playerId: string): TeamId | undefined {
+        return this.playerTeams.get(playerId);
+    }
+
+    getTotalPlayersInTeam(team: TeamId): number {
+        return this.players.filter(player => this.playerTeams.get(player.character.id) === team).length;
+    }
+
+    setFlagPosition(position: Position): void {
+        this.flagPosition = position;
+    }
+
+    getFlagPosition(): Position | null {
+        return this.flagPosition;
+    }
+
+    setFlagHolder(playerId: string | null): void {
+        if (playerId) {
+            this.flagPosition = null;
+            this.flagHolders.add(playerId);
+        }
+        this.flagHolderId = playerId;
+        this.players.forEach(player => {
+            player.character.hasFlag = player.character.id === playerId;
+        });
+    }
+
+    getFlagHolder(): string | null {
+        return this.flagHolderId;
+    }
+
+    getFlagHolderCharacter(): Character | undefined {
+        if (!this.flagHolderId) return undefined;
+        return this.players.find(player => player.character.id === this.flagHolderId)?.character;
+    }
+
+    dropFlag(position: Position): void {
+        if (this.flagHolderId) {
+            this.flagPosition = position;
+            this.setFlagHolder(null);
+        }
+    }
+
+    createFlagTransferRequest(fromId: string, toId: string): void {
+        this.flagTransferRequests.set(toId, { from: fromId, to: toId, timestamp: Date.now() });
+    }
+
+    getFlagTransferRequest(playerId: string): FlagTransferRequest | undefined {
+        return this.flagTransferRequests.get(playerId);
+    }
+
+    acceptFlagTransfer(playerId: string): boolean {
+        const request = this.flagTransferRequests.get(playerId);
+        if (!request) return false;
+
+        this.flagTransferRequests.delete(playerId);
+
+        const currentFlagHolder = this.getFlagHolder();
+        const newFlagHolder = currentFlagHolder === request.from ? request.to : request.from;
+
+        this.setFlagHolder(newFlagHolder);
+        return true;
+    }
+
+    rejectFlagTransfer(playerId: string): void {
+        this.flagTransferRequests.delete(playerId);
+    }
+
+    rejectPendingFlagTransfersFromPlayer(playerId: string): void {
+        const requestsToReject: string[] = [];
+
+        this.flagTransferRequests.forEach((request, toPlayerId) => {
+            if (request.from === playerId) {
+                requestsToReject.push(toPlayerId);
+            }
+        });
+
+        requestsToReject.forEach(toPlayerId => this.flagTransferRequests.delete(toPlayerId));
+    }
+
+    isTileVisited(playerId: string, position: Position): boolean {
+        if (!this.visitedTiles.has(playerId)) {
+            this.visitedTiles.set(playerId, new Set());
+        }
+        const key = `${position.x},${position.y}`;
+        const playerTiles = this.visitedTiles.get(playerId);
+        if (playerTiles.has(key)) return false;
+        playerTiles.add(key);
+        return true;
+    }
+
+    toJSON(): unknown {
+        return {
+            players: this.players,
+            leftPlayers: this.leftPlayers,
+            status: this.status,
+            roomId: this.roomId,
+            maxPlayers: this.maxPlayers,
+            mapCopy: this.mapCopy,
+            host: this.host,
+            mapId: this.mapId,
+            socketToAvatar: Object.fromEntries(this.socketToAvatar),
+            playerOrder: this.playerOrder,
+            currentPlayerIndex: this.currentPlayerIndex,
+            currentTurnTime: this.currentTurnTime,
+            currentInterTurnTime: this.currentInterTurnTime,
+            activeCombat: this.activeCombat,
+            currentCombatTurnTime: this.currentCombatTurnTime,
+            startingPoints: Object.fromEntries(this.startingPoints),
+            isTurnStarting: this.isTurnStarting,
+            isDebugModeActivated: this.isDebugModeActivated,
+            gameMode: this.gameMode,
+            playerTeams: Object.fromEntries(this.playerTeams),
+            flagPosition: this.flagPosition,
+            flagHolderId: this.flagHolderId,
+        };
+    }
+}

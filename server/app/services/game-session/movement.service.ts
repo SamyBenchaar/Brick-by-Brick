@@ -1,24 +1,32 @@
 import { GameSession, Position } from '@app/domain/game-session';
+import { MapTile } from '@app/interfaces/game-map-interfaces';
+import { Direction as GridDirection } from '@app/interfaces/map-validation-interfaces';
 import { Character } from '@common/character';
-import { TileType, TILE_COST } from '@common/map';
-import { Injectable, Logger } from '@nestjs/common';
-import { MovementCost, MapTile } from '@app/interfaces/game-map-interfaces';
+import { Direction } from '@common/constants/key-event.constants';
+import { DoorState, ObjectType, TILE_COST, TileType } from '@common/map';
+import { Injectable } from '@nestjs/common';
+
+type NeighborsProcessingContext = {
+    queue: { pos: Position; cost: number }[];
+    bestCosts: Map<string, number>;
+    reachable: Set<string>;
+    movementPoints: number;
+    mapData: MapTile[][];
+    occupiedPositions: Set<string>;
+};
 
 @Injectable()
 export class MovementService {
-    private logger = new Logger(MovementService.name);
-    private readonly cost: MovementCost = {
-        base: 1,
-        water: 2,
-        ice: 0,
+    private readonly directions: Record<Direction, GridDirection> = {
+        [Direction.ArrowUp]: { dx: 0, dy: -1 },
+        [Direction.ArrowDown]: { dx: 0, dy: 1 },
+        [Direction.ArrowLeft]: { dx: -1, dy: 0 },
+        [Direction.ArrowRight]: { dx: 1, dy: 0 },
     };
 
-    private readonly directions = {
-        arrowUp: { x: 0, y: -1 },
-        arrowDown: { x: 0, y: 1 },
-        arrowLeft: { x: -1, y: 0 },
-        arrowRight: { x: 1, y: 0 },
-    };
+    private toPositionKey(position: Position): string {
+        return `${position.x},${position.y}`;
+    }
 
     private getTileCost(tileType: string): number {
         return TILE_COST[tileType] ?? 0;
@@ -32,16 +40,20 @@ export class MovementService {
 
         const tile = mapData[position.y][position.x];
 
-        if (tile.type === TileType.Wall || tile.type === TileType.Door) {
+        if (tile.type === TileType.Wall) {
             return false;
         }
+        if (tile.type === TileType.Door && tile.doorState !== DoorState.Opened) return false;
+        if (tile.object?.type === ObjectType.HealingSanctuary || tile.object?.type === ObjectType.CombatSanctuary) return false;
+
 
         const posKey = `${position.x},${position.y}`;
         if (occupiedPositions.has(posKey)) {
             return false;
         }
 
-        return [TileType.Base, TileType.Water, TileType.Ice].includes(tile.type as TileType);
+        return [TileType.Base, TileType.Water, TileType.Ice].includes(tile.type as TileType) ||
+            (tile.type === TileType.Door && tile.doorState === DoorState.Opened);
     }
 
     getReachableTiles(
@@ -53,54 +65,79 @@ export class MovementService {
         const reachable = new Set<string>();
         const bestCosts = new Map<string, number>();
         const occupiedPositions = this.getOccupiedPositions(gameSession);
-        occupiedPositions.delete(`${currentPosition.x},${currentPosition.y}`);
+        occupiedPositions.delete(this.toPositionKey(currentPosition));
 
-        const startKey = `${currentPosition.x},${currentPosition.y}`;
+        const startKey = this.toPositionKey(currentPosition);
         reachable.add(startKey);
         bestCosts.set(startKey, 0);
 
         const queue: { pos: Position; cost: number }[] = [{ pos: currentPosition, cost: 0 }];
 
         while (queue.length > 0) {
-            let currentIndex = 0;
-            for (let i = 1; i < queue.length; i++) {
-                if (queue[i].cost < queue[currentIndex].cost) {
-                    currentIndex = i;
-                }
-            }
+            const current = this.extractLowestCostNode(queue);
+            this.processNeighbors(current, {
+                queue,
+                bestCosts,
+                reachable,
+                movementPoints,
+                mapData,
+                occupiedPositions,
+            });
+        }
 
-            const [current] = queue.splice(currentIndex, 1);
-            const { pos, cost } = current;
+        return this.toPositions(reachable);
+    }
 
-            for (const direction of Object.values(this.directions)) {
-                const newPos: Position = {
-                    x: pos.x + direction.x,
-                    y: pos.y + direction.y,
-                };
-
-                const newPosKey = `${newPos.x},${newPos.y}`;
-
-                if (!this.isValidTile(mapData, newPos, occupiedPositions)) {
-                    continue;
-                }
-
-                const tileType = mapData[newPos.y][newPos.x].type;
-                const moveCost = this.getTileCost(tileType);
-                const totalCost = cost + moveCost;
-
-                if (totalCost <= movementPoints) {
-                    const previousBest = bestCosts.get(newPosKey);
-                    if (previousBest !== undefined && totalCost >= previousBest) {
-                        continue;
-                    }
-
-                    bestCosts.set(newPosKey, totalCost);
-                    reachable.add(newPosKey);
-                    queue.push({ pos: newPos, cost: totalCost });
-                }
+    private extractLowestCostNode(queue: { pos: Position; cost: number }[]): { pos: Position; cost: number } {
+        let currentIndex = 0;
+        for (let i = 1; i < queue.length; i++) {
+            if (queue[i].cost < queue[currentIndex].cost) {
+                currentIndex = i;
             }
         }
 
+        const [current] = queue.splice(currentIndex, 1);
+        return current;
+    }
+
+    private processNeighbors(
+        current: { pos: Position; cost: number },
+        context: NeighborsProcessingContext,
+    ): void {
+        const { queue, bestCosts, reachable, movementPoints, mapData, occupiedPositions } = context;
+        const { pos, cost } = current;
+
+        for (const direction of Object.values(this.directions)) {
+            const newPos: Position = {
+                x: pos.x + direction.dx,
+                y: pos.y + direction.dy,
+            };
+
+            if (!this.isValidTile(mapData, newPos, occupiedPositions)) {
+                continue;
+            }
+
+            const newPosKey = this.toPositionKey(newPos);
+            const tileType = mapData[newPos.y][newPos.x].type;
+            const moveCost = this.getTileCost(tileType);
+            const totalCost = cost + moveCost;
+
+            if (totalCost > movementPoints) {
+                continue;
+            }
+
+            const existingCost = bestCosts.get(newPosKey);
+            if (bestCosts.has(newPosKey) && totalCost >= existingCost) {
+                continue;
+            }
+
+            bestCosts.set(newPosKey, totalCost);
+            reachable.add(newPosKey);
+            queue.push({ pos: newPos, cost: totalCost });
+        }
+    }
+
+    private toPositions(reachable: Set<string>): Position[] {
         return Array.from(reachable).map((key) => {
             const [x, y] = key.split(',');
             return { x: parseInt(x, 10), y: parseInt(y, 10) };
@@ -111,7 +148,7 @@ export class MovementService {
         const occupied = new Set<string>();
 
         for (const player of gameSession.players) {
-            const posKey = `${player.character.position.x},${player.character.position.y}`;
+            const posKey = this.toPositionKey(player.character.position);
             occupied.add(posKey);
         }
 
@@ -121,7 +158,7 @@ export class MovementService {
     executeMove(
         gameSession: GameSession,
         player: Character,
-        direction: 'arrowUp' | 'arrowDown' | 'arrowLeft' | 'arrowRight',
+        direction: Direction,
         mapData: MapTile[][],
     ): boolean {
         const directionDelta = this.directions[direction];
@@ -129,13 +166,13 @@ export class MovementService {
             return false;
         }
 
-        if (player.remainingMovement === undefined) {
+        if (!player.remainingMovement) {
             return false;
         }
 
         const newPos: Position = {
-            x: player.position.x + directionDelta.x,
-            y: player.position.y + directionDelta.y,
+            x: player.position.x + directionDelta.dx,
+            y: player.position.y + directionDelta.dy,
         };
 
         const occupiedPositions = this.getOccupiedPositions(gameSession);
@@ -152,6 +189,9 @@ export class MovementService {
         }
 
         player.position = newPos;
+        if (gameSession.isTileVisited(player.id, newPos)) {
+            player.tilesVisited++;
+        }
         player.remainingMovement -= moveCost;
 
         return true;
@@ -174,7 +214,13 @@ export class MovementService {
                 p.character.position?.y === newPosition.y,
         );
 
-        if (occupied || tile.type === TileType.Wall || tile.type === TileType.Door || !!tile.object) {
+        const isWallOrClosedDoor = tile.type === TileType.Wall || (tile.type === TileType.Door && tile.doorState !== DoorState.Opened);
+        const hasObject = tile.object !== undefined && tile.object !== null;
+        const flagAtPosition = gameSession.flagPosition &&
+            gameSession.flagPosition.x === newPosition.x &&
+            gameSession.flagPosition.y === newPosition.y;
+
+        if (isWallOrClosedDoor || occupied || hasObject || flagAtPosition) {
             return;
         }
 
@@ -205,6 +251,27 @@ export class MovementService {
             this.isAdjacentToPlayer(position, player),
         );
     }
+
+    isDoorAdjacent(position: Position, gameSession: GameSession): boolean {
+        const adjacentPositions = [
+            { x: position.x - 1, y: position.y },
+            { x: position.x + 1, y: position.y },
+            { x: position.x, y: position.y - 1 },
+            { x: position.x, y: position.y + 1 },
+        ];
+        return adjacentPositions.some(pos => gameSession.getMapCopy()?.tiles?.[pos.y]?.[pos.x]?.type === TileType.Door);
+    }
+
+    isSanctuaryAdjacent(position: Position, gameSession: GameSession): Position | null {
+        const adjacentPositions = [
+            { x: position.x - 1, y: position.y },
+            { x: position.x + 1, y: position.y },
+            { x: position.x, y: position.y - 1 },
+            { x: position.x, y: position.y + 1 },
+        ];
+        return adjacentPositions.find(pos => {
+            const tile = gameSession.getMapCopy()?.tiles?.[pos.y]?.[pos.x];
+            return tile?.object?.type === ObjectType.CombatSanctuary || tile?.object?.type === ObjectType.HealingSanctuary;
+        }) || null;
+    }
 }
-
-

@@ -1,8 +1,8 @@
-<div class="page-container">
-    <header class="top-bar">
+<div class="page-container" [class.in-combat]="isInCombat()">
+        <header class="top-bar">
         <button class="return-button button" style="background-image: url('assets/images/red_large_brick.png')" (click)="abandonGame()">Abandonner</button>
         @if (isDebugModeActivated()){
-                <div class="debug-mode">Mode débogage activé</div>
+                <div class="debug-mode brick-red">Débogage activé</div>
             }
         @if (gameData) {
         <div class="info-panel brick-orange">
@@ -27,23 +27,23 @@
             <div class="turn-info brick-orange">
                 @if (isMyTurn()) {
                     <h3>C'est votre tour!</h3>
-                    <p>Temps restant: {{ getTurnTimeRemaining() }}s</p>
+                    <p class="time-left">{{ displayedTurnTimer()}}</p>
                     <p>Utilisez WASD pour vous déplacer</p>
                     <button class="btn-end-turn" (click)="endTurn()">Terminer le tour</button>
                 } @else {
                     <h3>Tour de {{ getCurrentTurnPlayerName() }}</h3>
-                    <p>Temps restant: {{ getTurnTimeRemaining() }}s</p>
+                    <p class="time-left">Temps restant: {{ displayedTurnTimer() }}</p>
                     @if (isDebugModeActivated() && isHost()){
                         <button class="btn-end-turn" (click)="endTurn()">Terminer le tour</button>
                     }
                 }
             </div>
-            <app-player-board [players]="playerList()" [leftPlayers]="leftPlayerList()" [host]="hostPlayer()"></app-player-board>
+            <app-player-board [players]="playerList()" [leftPlayers]="leftPlayerList()" [host]="hostPlayer()" [gameMode]="gameSessionSocketService.currentSession()?.gameMode ?? 'classic'" [currentPlayerTurn]="currentPlayerTurn()"></app-player-board>
                 <app-player-sign
                     [player]="currentPlayer()"
-                    [canAttack]="canAttackSelectedTarget()"
-                    [selectedTargetName]="getSelectedAttackTargetName()"
-                    (attack)="attackSelectedTarget()">
+                    [canAct]="canAttackSelectedTarget() || canInteract()"
+                    [selectedTargetName]="getSelectedTarget()"
+                    (attack)="onActionClick()">
                 </app-player-sign>
         </aside>
 
@@ -54,6 +54,13 @@
                 </div>
             }
 
+            @if (combatNotification()) {
+                <div class="combat-result-notification">
+                    <button class="combat-result-notification-close" (click)="closeCombatNotification()">×</button>
+                    <p>{{ combatNotification() }}</p>
+                </div>
+            }
+
             <div class="grid-container">
                 @if (gameData) {
                 <app-game-grid 
@@ -61,9 +68,15 @@
                     [gameData]="gameData" 
                     [isViewMode]="true"
                     [players]="getPlayers()"
-                    [reachableTiles]="gameSessionSocketService.reachableTiles()"
-                    [isAttackSelectionMode]="isAttackSelectionMode()"
-                    (attackTargetSelected)="onAttackTargetSelected($event)">
+                    [gameMode]="gameSessionSocketService.currentSession()?.gameMode ?? 'classic'"
+                    [flagHolderId]="gameSessionSocketService.currentSession()?.flagHolderId ?? null"
+                    [flagPosition]="gameSessionSocketService.currentSession()?.flagPosition ?? null"
+                    [reachableTiles]="gamePlaySocketService.reachableTiles()"
+                    [isActionSelectionMode]="isActionSelectionMode()"
+                    [startingPoints]="gameSessionSocketService.currentSession()?.startingPoints ?? null"
+                    [currentPlayerId]="currentPlayer()?.character?.id ?? ''"
+                    (attackTargetSelected)="onAttackTargetSelected($event)"
+                    (actionTargetSelected)="onActionTargetSelected($event)">
                 </app-game-grid>
                 }
             </div>
@@ -71,8 +84,8 @@
         <div #chatSidebar class="chat-sidebar" [class.chat-collapsed]="isChatCollapsed">
             <div class="chat-toggle" (click)="isChatCollapsed = !isChatCollapsed">
                 <span class="chat-toggle-icon">💬</span>
-                <span class="chat-toggle-label">{{ isChatCollapsed ? 'Chat' : 'Réduire' }}</span>
-                <span class="chat-toggle-arrow">{{ isChatCollapsed ? '◀' : '▶' }}</span>
+                <span class="chat-toggle-label">{{ isChatCollapsed ? 'Chat' : '' }} {{currentPlayer()?.character?.name ?? ''}}</span>
+                <span class="chat-toggle-arrow">{{ isChatCollapsed ? '◀' : 'Réduire ▶' }}</span>
             </div>
             @if (!isChatCollapsed && gameData) {
             <div class="chat-body" >
@@ -80,6 +93,9 @@
                  [isWriting]="isWriting()" (isWritingChange)="handleWritingChange($event)"></app-chat>
             </div>
             }
-        </div>      
+        </div>
     </div>
 </div>
+@if(isInCombat()) {
+    <app-combat-view></app-combat-view>
+}

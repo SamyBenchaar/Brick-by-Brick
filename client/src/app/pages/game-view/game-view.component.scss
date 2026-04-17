@@ -15,6 +15,36 @@ $turn-info-color: #f88400ec;
     background-size: cover;
 }
 
+.page-container.in-combat::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+
+    backdrop-filter: blur(6px);
+    background: rgba(0, 0, 0, 0.15);
+
+    z-index: 5;
+    pointer-events: none;
+}
+
+.chat-sidebar,
+.return-button {
+    position: relative;
+    z-index: 20;
+}
+
+.chat-sidebar,
+.return-button,
+app-combat-view {
+    pointer-events: auto;
+}
+
+app-combat-view {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+}
+
 .top-bar {
     display: flex;
     align-items: center;
@@ -24,15 +54,16 @@ $turn-info-color: #f88400ec;
 }
 
 .debug-mode {
-    left: 45%;
+    top: 1%;
+    left: 40%;
     position: absolute;
     font-size: 20px;
+    z-index: 15;
+    padding: 20px;
+    background-size: contain;
+    background-repeat: no-repeat;
 }
 
-.return-button    {
-    height: 50px;
-    padding: 14px 20px;
- }
 
 .info-panel {
     font-size: 20px;
@@ -49,12 +80,12 @@ $turn-info-color: #f88400ec;
 .info-label {
     color: $primary-color;
     font-weight: bold;
-    font-size: 20px;
+    font-size: 30px;
 }
 
 .info-value {
     color: white;
-    font-size: 20px;
+    font-size: 30px;
 }
 
 .content-area {
@@ -109,6 +140,39 @@ $turn-info-color: #f88400ec;
     animation: pulse 1s ease-in-out infinite;
 }
 
+.combat-result-notification {
+    position: absolute;
+    font-size: 3rem;
+    top: 1.5rem;
+    right: 5rem;
+    z-index: 35;
+    min-width: 400px;
+    max-width: 600px;
+    padding: 1rem 2.5rem 1rem 1rem;
+    border-radius: 12px;
+    border: 3px solid #000000;
+    background: $turn-info-color;
+    color: $primary-color;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
+    pointer-events: auto;
+}
+
+.combat-result-notification p {
+    margin: 0;
+}
+
+.combat-result-notification-close {
+    position: absolute;
+    top: 0.35rem;
+    right: 0.45rem;
+    border: none;
+    background: transparent;
+    color: $primary-color;
+    font-size: 1.2rem;
+    font-weight: bold;
+    cursor: pointer;
+}
+
 @keyframes pulse {
     0%, 100% { transform: translate(-50%, -50%) scale(1); }
     50% { transform: translate(-50%, -50%) scale(1.05); }
@@ -117,19 +181,18 @@ $turn-info-color: #f88400ec;
 .turn-info {
     border: none;
     background-size: 100% 100%;
-    padding: 1rem 2rem;
-    z-index: 10;
+    z-index: 5;
     text-align: center;
     color: white;
 
     h3 {
-        margin: 2 0 0.5rem 0;
         color: $primary-color;
-        font-size: 1.3rem;
+        font-size: 26px;
+        margin-bottom: 0;
     }
 
     p {
-        margin: 0.3rem 0;
+        margin: 0.1rem 0;
         font-size: 1rem;
     }
 
@@ -152,7 +215,12 @@ $turn-info-color: #f88400ec;
         &:active {
             transform: scale(0.95);
         }
+
     }
+    .time-left {
+        font-size: 40px;
+    }
+    
 }
 .brick-orange{
     padding: 7px;
@@ -201,9 +269,9 @@ $turn-info-color: #f88400ec;
 }
 
 .left-sidebar {
-    width: 250px;
-    min-width: 200px;
-    max-width: 300px;
+    width: 300px;
+    min-width: 250px;
+    max-width: 350px;
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
@@ -226,14 +294,15 @@ $turn-info-color: #f88400ec;
     app-player-sign {
         display: block;
         width: 100%;
+        flex-shrink: 0;
     }
 }
 
 .chat-sidebar {
     display: flex;
     flex-direction: column;
-    width: 280px;
-    min-width: 280px;
+    width: 390px;
+    min-width: 390px;
     flex-shrink: 0;
     border-right: 2px solid $primary-color;
     transition: width 0.3s ease, min-width 0.3s ease;
@@ -254,9 +323,6 @@ $turn-info-color: #f88400ec;
             font-size: 15px;
         }
 
-        .chat-toggle-arrow {
-            font-size: 10px;
-        }
     }
 }
 
@@ -284,7 +350,7 @@ $turn-info-color: #f88400ec;
 .chat-toggle-label {
     color: $primary-color;
     font-weight: bold;
-    font-size: 12px;
+    font-size: 20px;
     text-transform: uppercase;
     letter-spacing: 1px;
     flex: 1;
@@ -292,7 +358,7 @@ $turn-info-color: #f88400ec;
 
 .chat-toggle-arrow {
     color: $primary-color;
-    font-size: 11px;
+    font-size: 20px;
     opacity: 0.7;
 }
 
@@ -306,4 +372,15 @@ $turn-info-color: #f88400ec;
         width: 100%;
         height: 100%;
     }
+}
+
+button.return-button {
+    height: 50px;
+    width: 150px;
+    background-size: cover;
+    font-size: 25px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-top: 25px;
 }

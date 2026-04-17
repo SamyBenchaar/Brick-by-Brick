@@ -9,7 +9,8 @@
     overflow-y: auto;
     overflow-x: visible;
     position: sticky;          
-    z-index: 1000
+    z-index: 1000;
+    padding-top: 80px;
   }
   
   .sidebar-title {
@@ -111,6 +112,10 @@
 
   .tile-startingpoint {
     background-color: #cbadd7;
+  }
+
+  .tile-flag {
+    background-color: #ffcccb;
   }
   
 

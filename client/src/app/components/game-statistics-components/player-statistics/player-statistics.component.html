@@ -1,0 +1,65 @@
+<section class="player-stats">
+    <h2 class="stats-title">Statistiques des joueurs</h2>
+    <table [class]="'stats-table ' + tableSizeClass">
+      <thead>
+        <tr>
+          <th>Joueur</th>
+          <th>
+            Combats
+            <span class="sort-arrows">
+              <button (click)="sort('combats', 'desc')">▲</button>
+              <button (click)="sort('combats', 'asc')">▼</button>
+            </span>
+          </th>
+          <th>
+            Victoires
+            <span class="sort-arrows">
+              <button (click)="sort('victories', 'desc')">▲</button>
+              <button (click)="sort('victories', 'asc')">▼</button>
+            </span>
+          </th>
+          <th>
+            Défaites
+            <span class="sort-arrows">
+              <button (click)="sort('defeats', 'desc')">▲</button>
+              <button (click)="sort('defeats', 'asc')">▼</button>
+            </span>
+          </th>
+          <th>
+            Vie perdue
+            <span class="sort-arrows">
+              <button (click)="sort('lifeLost', 'desc')">▲</button>
+              <button (click)="sort('lifeLost', 'asc')">▼</button>
+            </span>
+          </th>
+          <th>
+            Dégâts infligés
+            <span class="sort-arrows">
+              <button (click)="sort('damageDealt', 'desc')">▲</button>
+              <button (click)="sort('damageDealt', 'asc')">▼</button>
+            </span>
+          </th>
+          <th>
+            Tuiles visitées
+            <span class="sort-arrows">
+              <button (click)="sort('tilesVisited', 'desc')">▲</button>
+              <button (click)="sort('tilesVisited', 'asc')">▼</button>
+            </span>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (player of sortedPlayers; track player.character.id) {
+          <tr>
+            <td>{{ player.character.name }}</td>
+            <td>{{ (player.character.victories ?? 0) + (player.character.defeats) }}</td>
+            <td>{{ player.character.victories }}</td>
+            <td>{{ player.character.defeats }}</td>
+            <td>{{ player.character.totalDamageReceived }}</td>
+            <td>{{ player.character.totalDamageDealt }}</td>
+            <td>{{ getTilesPercentage(player.character.tilesVisited) }}%</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </section>

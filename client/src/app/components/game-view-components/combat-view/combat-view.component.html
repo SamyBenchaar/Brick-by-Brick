@@ -1,0 +1,46 @@
+<div class="backdrop"></div>
+
+<div class="combat-container">
+    Combat en cours entre vous ({{self()?.name}}) et {{other()?.name}}
+
+    <div class="combat-players">
+        <app-player-combat-card [character]='self()!' [currentHp]='selfHp()' [attackDetail]='selfAttackDetail()' [defenseDetail]='selfDefenseDetail()'></app-player-combat-card>
+        
+        <div class="combat-waiting"></div>
+        <div class="vs-text"><p>{{ combatTurnTimeRemaining() ?? '--' }}s </p> VS</div>
+        <app-player-combat-card [character]='other()!' [currentHp]='otherHp()' [attackDetail]='otherAttackDetail()' [defenseDetail]='otherDefenseDetail()'></app-player-combat-card>
+    </div>
+    <div class="combat-result"
+        [class.hidden]="!this.latestRound()">
+        <div class="result-line">
+            Votre attaque - défense de {{other()?.name}}: {{selfAttackDetail()?.total}} - {{otherDefenseDetail()?.total}} = {{selfAttackMinusOtherDefense()}}
+        </div>
+
+        <div class="result-line">
+            Attaque de {{other()?.name}} - votre défense: {{otherAttackDetail()?.total}} - {{selfDefenseDetail()?.total}} = {{otherAttackMinusSelfDefense()}}
+        </div>
+
+        @if (selfDamage() > 0) {
+            <div class="result-line red">{{ selfDamage() }} dégâts subis</div>
+        } @else {
+            <div class="result-line">Aucun dégât subi</div>
+        }
+
+        @if (otherDamage() > 0) {
+            <div class="result-line green">Vous infligez {{ otherDamage() }} dégâts à {{ other()?.name }}</div>
+        } @else {
+            <div class="result-line">Vous n'infligez aucun dégât</div>
+        }
+    </div>
+
+    <div class="combat-actions" [class.hidden]="hasChosen()">
+        <button (click)="setPosture(combatPosture.DEFENSIVE)" class="button defensive brick-green">Défense</button>
+        <button (click)="setPosture(combatPosture.OFFENSIVE)" class="button offensive brick-red">Attaque</button>
+    </div>
+
+    @if (hasChosen()) {
+        <div class="combat-waiting">Posture {{combatPosture.OFFENSIVE === posture() ? 'offensive' : combatPosture.DEFENSIVE === posture() ? 'défensive' : 'aucune'}} 
+            choisie, en attente du choix adverse      </div>
+    }
+    
+</div>

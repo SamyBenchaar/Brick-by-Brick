@@ -1,13 +1,13 @@
 <div class="edition-container">
+    <button class="button return-button" [routerLink]="['/admin']">←</button>
     <div class="sidebar-container">
         <app-tile-type-sidebar></app-tile-type-sidebar>
-        <app-object-sidebar></app-object-sidebar>
+        <app-object-sidebar [gameMode]="gameMode"></app-object-sidebar>
     </div>
     <div class="edition-layout">
         <app-game-grid class="game-grid" [mapSize]="getMapSize()" [gameData]="this.mapEditorService.getCurrentGame()"></app-game-grid>
 
         <div class="game-info-container">
-            <button class="button return-button" [routerLink]="['/admin']">Retour</button>
             <app-text-input
                 class="name-input"
                 label="Nom de la partie"

@@ -4,6 +4,8 @@ import { GameSessionService } from '@app/services/game-session/game-session/game
 import { Character } from '@common/character';
 import { GameSessionEvents } from '@common/game.events';
 import { Player } from '@common/player';
+import { SessionStatus } from '@common/session.status';
+import { VirtualPlayerProfile } from '@common/virtual.player.profile';
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import {
     OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, SubscribeMessage,
@@ -18,6 +20,7 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
     @WebSocketServer() private server: Server;
 
     private socketToRoom: Map<string, string> = new Map();
+    private statsPageSockets: Map<string, Set<string>> = new Map();
 
     constructor(
         private readonly logger: Logger,
@@ -40,11 +43,15 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
         const roomId = this.socketToRoom.get(socket.id);
         if (roomId) {
             const gameSession = this.gameSessionService.getGameSession(roomId);
-            if (gameSession?.status === 'playing') {
+            if (gameSession?.status === SessionStatus.Playing) {
                 this.handlePlayingDisconnect(socket, roomId);
             } else {
                 this.handleLeaveLogic(socket, roomId);
             }
+        }
+
+        for (const [statsRoomId] of this.statsPageSockets) {
+            this.removeFromStatsPage(socket.id, statsRoomId);
         }
     }
 
@@ -73,6 +80,12 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
         const player = this.createPlayer(socket.id, character);
         const gameSession = this.getSessionOrFail(socket, payload.roomId);
         if (!gameSession) return;
+
+        const existingPlayerIndex = gameSession.players.findIndex(sessionPlayer => sessionPlayer.socketId === socket.id);
+        if (existingPlayerIndex !== -1) {
+            gameSession.removePlayer(socket.id);
+            this.logger.log(`Joueur existant ${socket.id} supprimé avant mise à jour du personnage`);
+        }
 
         const error = this.gameSessionService.joinSession(gameSession.roomId, player);
         if (error) {
@@ -118,7 +131,8 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
             message: "Vous avez été exclu de la salle d'attente.",
         });
 
-        const targetSocket = this.server.sockets.sockets.get(payload.targetId);
+        const activeSockets = this.server.sockets.sockets;
+        const targetSocket = activeSockets.get(payload.targetId);
         if (targetSocket) targetSocket.leave(payload.roomId);
 
         const updatedSession = this.getSessionOrFail(socket, payload.roomId);
@@ -126,6 +140,48 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
         this.notifyGameSessionUpdated(updatedSession);
 
         this.logger.log(`Joueur ${payload.targetId} exclu de la salle ${payload.roomId}`);
+    }
+
+    @SubscribeMessage(GameSessionEvents.AddVirtualPlayer)
+    handleAddVirtualPlayer(socket: Socket, payload: { roomId: string; profile: VirtualPlayerProfile }) {
+        const gameSession = this.getSessionOrFail(socket, payload.roomId);
+        if (!gameSession) return;
+
+        if (!gameSession.isHost(socket.id)) {
+            socket.emit(GameSessionEvents.GameSessionJoinError, "Seul l'organisateur peut ajouter un joueur virtuel");
+            return;
+        }
+
+        if (payload.profile !== VirtualPlayerProfile.Aggressive && payload.profile !== VirtualPlayerProfile.Defensive) {
+            socket.emit(GameSessionEvents.GameSessionJoinError, 'Profil de joueur virtuel invalide');
+            return;
+        }
+
+        const error = this.gameSessionService.addVirtualPlayer(payload.roomId, payload.profile);
+        if (error) {
+            socket.emit(GameSessionEvents.GameSessionJoinError, error);
+            return;
+        }
+
+        const updatedSession = this.getSessionOrFail(socket, payload.roomId);
+        if (!updatedSession) return;
+
+        this.notifyGameSessionUpdated(updatedSession);
+        this.notifyGameSessionListUpdated();
+        this.logger.log(`Joueur virtuel ${payload.profile} ajouté dans la salle ${payload.roomId}`);
+    }
+
+    @SubscribeMessage(GameSessionEvents.JoinStatsPage)
+    handleJoinStatsPage(socket: Socket, payload: { roomId: string }): void {
+        if (!this.statsPageSockets.has(payload.roomId)) {
+            this.statsPageSockets.set(payload.roomId, new Set());
+        }
+        this.statsPageSockets.get(payload.roomId)?.add(socket.id);
+    }
+
+    @SubscribeMessage(GameSessionEvents.LeaveStatsPage)
+    handleLeaveStatsPage(socket: Socket, payload: { roomId: string }): void {
+        this.removeFromStatsPage(socket.id, payload.roomId);
     }
 
     private handlePlayingDisconnect(socket: Socket, roomId: string) {
@@ -237,7 +293,7 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
 
     notifyGameSessionUpdated(gameSession: GameSession): void {
         this.notifyAvatarTakenUpdated(gameSession.roomId, gameSession.getTakenAvatars());
-        this.server.emit(GameSessionEvents.GameSessionUpdated, gameSession);
+        this.server.to(gameSession.roomId).emit(GameSessionEvents.GameSessionUpdated, gameSession);
     }
 
     notifyGameSessionListUpdated() {
@@ -251,5 +307,19 @@ export class GameSessionGateway implements OnGatewayConnection, OnGatewayDisconn
 
     notifyAvatarTakenUpdated(roomId: string, takenAvatars: number[]): void {
         this.server.to(roomId).emit(GameSessionEvents.AvatarTakenUpdated, takenAvatars);
+    }
+
+    clearSocketRoomTracking(socketId: string): void {
+        this.socketToRoom.delete(socketId);
+    }
+
+    private removeFromStatsPage(socketId: string, roomId: string): void {
+        const sockets = this.statsPageSockets.get(roomId);
+        if (!sockets) return;
+        sockets.delete(socketId);
+        if (sockets.size === 0) {
+            this.statsPageSockets.delete(roomId);
+            this.cleanUpRoom(roomId);
+        }
     }
 }

@@ -1,3 +1,5 @@
+import { Position } from '@common/position';
+
 export interface MapConfig {
     size: string;
     tiles: Tile[][];
@@ -5,8 +7,11 @@ export interface MapConfig {
 
 export interface Tile {
     type: string;
-    state?: string;
+    doorState?: string;
     object?: MapObject;
+    isOrigin?: boolean;
+    sanctuaryCooldown?: number;
+    sanctuaryOrigin?: Position;
 }
 
 export interface MapObject {

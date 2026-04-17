@@ -3,7 +3,9 @@ import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ChatComponent } from '@app/components/chat/chat.component';
 import { WaitingRoomListComponent } from '@app/components/waiting-room-list/waiting-room-list.component';
-import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket.service';
+import { GameSessionSocketService } from '@app/services/communication/game-session-socket/game-session-socket/game-session-socket.service';
+
+const WAITING_ROOM_ACCESS_KEY = 'waitingRoomAccess';
 
 @Component({
     selector: 'app-waiting-room-page',
@@ -14,7 +16,7 @@ import { GameSessionSocketService } from '@app/services/communication/game-sessi
 export class WaitingRoomPage implements OnInit, OnDestroy {
     private router = inject(Router);
     private activatedRoute = inject(ActivatedRoute);
-    protected gameSessionSocketService = inject(GameSessionSocketService);
+    private gameSessionSocketService = inject(GameSessionSocketService);
 
     username: string = 'Player';
     roomIdFromRoute: string = '';
@@ -32,6 +34,13 @@ export class WaitingRoomPage implements OnInit, OnDestroy {
     }
 
     ngOnInit(): void {
+        const hasWaitingRoomAccess = sessionStorage.getItem(WAITING_ROOM_ACCESS_KEY) === 'true';
+        if (!hasWaitingRoomAccess) {
+            this.router.navigate(['/home']);
+            return;
+        }
+        sessionStorage.removeItem(WAITING_ROOM_ACCESS_KEY);
+
         const isRefresh = sessionStorage.getItem('waitingRoomRefresh');
         if (isRefresh === 'true') {
             sessionStorage.removeItem('waitingRoomRefresh');
@@ -51,18 +60,26 @@ export class WaitingRoomPage implements OnInit, OnDestroy {
 
         sessionStorage.setItem('waitingRoomRefresh', 'true');
         window.addEventListener('beforeunload', this.handleBeforeUnload);
+        window.addEventListener('popstate', this.handleBackButton);
     }
     ngOnDestroy(): void {
         window.removeEventListener('beforeunload', this.handleBeforeUnload);
+        window.removeEventListener('popstate', this.handleBackButton);
         sessionStorage.removeItem('waitingRoomRefresh');
     }
 
     handleBeforeUnload = (): void => {
+        sessionStorage.removeItem(WAITING_ROOM_ACCESS_KEY);
         this.gameSessionSocketService.leaveGameSession();
         location.replace('/home');
     };
 
+    handleBackButton = (): void => {
+        this.leave();
+    };
+
     leave(): void {
+        sessionStorage.removeItem(WAITING_ROOM_ACCESS_KEY);
         this.gameSessionSocketService.leaveGameSession();
         this.router.navigate(['/home']);
     }

@@ -1,8 +1,8 @@
 import { GameSession } from '@app/domain/game-session';
+import { GameMap, MapTile } from '@app/interfaces/game-map-interfaces';
+import { ObjectType, TileType } from '@common/map';
 import { Position } from '@common/position';
 import { Injectable } from '@nestjs/common';
-import { MapTile, GameMap } from '@app/interfaces/game-map-interfaces';
-import { ObjectType, TileType } from '@common/map';
 
 @Injectable()
 export class StartingPointService {
@@ -12,7 +12,7 @@ export class StartingPointService {
         const validStartingPoints = this.getValidStartingPoints(mapData);
 
         if (validStartingPoints.length === 0) {
-            throw new Error('No valid starting points found on the map');
+            throw new Error('Aucun point de départ valide trouvé sur la carte.');
         }
 
         const players = gameSession.getActivePlayers();
@@ -24,7 +24,7 @@ export class StartingPointService {
 
             while (!isValid) {
                 position = validStartingPoints[Math.floor(Math.random() * validStartingPoints.length)];
-                isValid = !selectedStartingPoints.some(p => p.x === position.x && p.y === position.y);
+                isValid = !selectedStartingPoints.some(selectedPosition => selectedPosition.x === position.x && selectedPosition.y === position.y);
             }
 
             gameSession.setStartingPoint(player.id, position);
@@ -59,37 +59,93 @@ export class StartingPointService {
         occupiedPositions: Position[],
     ): Position {
         const occupied = new Set(occupiedPositions.map((p) => `${p.x},${p.y}`));
-        let closestPoint: Position | null = null;
-        let minDistance = Infinity;
+        const startKey = `${startingPoint.x},${startingPoint.y}`;
 
-        for (let y = 0; y < mapConfig.tiles.length; y++) {
-            for (let x = 0; x < mapConfig.tiles[y].length; x++) {
-                const tile = mapConfig.tiles[y][x];
-                const posKey = `${x},${y}`;
+        for (let distance = 1; distance <= mapConfig.tiles.length + mapConfig.tiles[0].length; distance++) {
+            const candidates: Position[] = [];
 
-                if (occupied.has(posKey)) {
-                    continue;
+            for (let y = 0; y < mapConfig.tiles.length; y++) {
+                for (let x = 0; x < mapConfig.tiles[y].length; x++) {
+                    const posKey = `${x},${y}`;
+
+                    if (posKey === startKey || occupied.has(posKey)) {
+                        continue;
+                    }
+
+                    const tile = mapConfig.tiles[y][x];
+
+                    if (tile.type === TileType.Wall || tile.type === TileType.Door) {
+                        continue;
+                    }
+
+                    if (tile.object && tile.object.type !== ObjectType.StartingPoint) {
+                        continue;
+                    }
+
+                    const candidate = { x, y };
+                    const orthogonalDistance = this.calculateDistance(startingPoint, candidate);
+
+                    if (orthogonalDistance === distance) {
+                        candidates.push(candidate);
+                    }
                 }
+            }
 
-                if (tile.type === TileType.Wall || tile.type === TileType.Door) {
-                    continue;
-                }
-
-                if (tile.object && tile.object.type !== ObjectType.StartingPoint) {
-                    continue;
-                }
-
-                const candidate = { x, y };
-                const distance = this.calculateDistance(startingPoint, candidate);
-
-                if (distance < minDistance) {
-                    minDistance = distance;
-                    closestPoint = candidate;
-                }
+            if (candidates.length > 0) {
+                return candidates[0];
             }
         }
 
-        return closestPoint ?? startingPoint;
+        return startingPoint;
+    }
+
+    getClosestAvailableTileForFlag(
+        centerPoint: Position,
+        mapConfig: GameMap,
+        occupiedPositions: Position[],
+    ): Position {
+        const occupied = new Set(occupiedPositions.map((p) => `${p.x},${p.y}`));
+        const centerKey = `${centerPoint.x},${centerPoint.y}`;
+
+        for (let distance = 1; distance <= Math.max(mapConfig.tiles.length, mapConfig.tiles[0].length); distance++) {
+            const candidates: Position[] = [];
+
+            for (let y = 0; y < mapConfig.tiles.length; y++) {
+                for (let x = 0; x < mapConfig.tiles[y].length; x++) {
+                    const posKey = `${x},${y}`;
+
+                    if (posKey === centerKey || occupied.has(posKey)) {
+                        continue;
+                    }
+
+                    const tile = mapConfig.tiles[y][x];
+
+                    if (tile.type === TileType.Wall || tile.type === TileType.Door) {
+                        continue;
+                    }
+
+                    if (tile.object) {
+                        continue;
+                    }
+
+                    const candidate = { x, y };
+                    const chebyshevDistance = Math.max(
+                        Math.abs(centerPoint.x - candidate.x),
+                        Math.abs(centerPoint.y - candidate.y),
+                    );
+
+                    if (chebyshevDistance === distance) {
+                        candidates.push(candidate);
+                    }
+                }
+            }
+
+            if (candidates.length > 0) {
+                return candidates[0];
+            }
+        }
+
+        return centerPoint;
     }
 
     private calculateDistance(pos1: Position, pos2: Position): number {

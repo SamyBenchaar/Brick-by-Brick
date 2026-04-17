@@ -1,3 +1,4 @@
+import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { BaseSignComponent } from '@app/components/game-view-components/base-sign/base-sign.component';
 import { AVATARS } from '@app/constants/character-constants';
@@ -6,13 +7,13 @@ import { Player } from '@common/player';
 
 @Component({
   selector: 'app-player-sign',
-  imports: [BaseSignComponent],
+  imports: [CommonModule, BaseSignComponent],
   templateUrl: './player-sign.component.html',
   styleUrl: './player-sign.component.scss',
 })
 export class PlayerSignComponent {
   @Input() player: Player | null = null;
-  @Input() canAttack = false;
+  @Input() canAct = false;
   @Input() selectedTargetName: string | null = null;
   @Output() attack = new EventEmitter<void>();
   readonly name = 'statistiques';
@@ -20,11 +21,11 @@ export class PlayerSignComponent {
 
   get avatar(): AvatarOption | undefined {
     if (!this.player) return undefined;
-    return AVATARS.find(a => a.id === this.player?.character.avatarId);
+    return AVATARS.find(avatarOption => avatarOption.id === this.player?.character.avatarId);
   }
 
-  onAttackClick(): void {
-    if (!this.canAttack) {
+  onActionClick(): void {
+    if (!this.canAct) {
       return;
     }
     this.attack.emit();

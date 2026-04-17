@@ -1,13 +1,14 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, Input, OnInit, signal } from '@angular/core';
+import { Component, computed, EventEmitter, inject, Input, OnInit, Output, signal } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { RouterLink } from '@angular/router';
 import { AppDialogComponent } from '@app/components/game-edition-components/app-dialog/app-dialog.component';
+import { DialogType } from '@app/constants/dialog-type.enum';
 import { GameListMode } from '@app/constants/game-list-mode.enum';
 import { Game } from '@app/interfaces/game';
 import { CommunicationService } from '@app/services/communication/communication/communication.service';
 import { GameSocketService } from '@app/services/communication/game-socket/game-socket.service';
-import { getGameModeLabel, getGameSizeLabel } from '@common/constants/game-config-constants';
+import { getGameModeLabel, getGameSizeLabel } from '@app/utils/game-config.utils';
 
 @Component({
     selector: 'app-game-list',
@@ -18,6 +19,7 @@ import { getGameModeLabel, getGameSizeLabel } from '@common/constants/game-confi
 export class GameListComponent implements OnInit {
     @Input() mode: GameListMode = GameListMode.CREATION;
     @Input() showOnlyVisible = true;
+    @Output() gameSelected = new EventEmitter<string>();
 
     private communicationService = inject(CommunicationService);
     private gameSocketService = inject(GameSocketService);
@@ -48,10 +50,11 @@ export class GameListComponent implements OnInit {
     }
 
     selectGame(gameId: string): void {
-        if (this.mode !== 'creation') {
+        if (this.mode !== GameListMode.CREATION) {
             return;
         }
         this.selectedGameId.set(gameId);
+        this.gameSelected.emit(gameId);
     }
 
     getSelectedGameId(): string | null {
@@ -79,7 +82,7 @@ export class GameListComponent implements OnInit {
         this.communicationService.updateGameVisibility(game._id, !game.isVisible).subscribe({
             next: (updated) => {
                 this.gameSocketService.games.update(current =>
-                    current.map(g => (g._id === updated._id ? updated : g)),
+                    current.map(gameItem => (gameItem._id === updated._id ? updated : gameItem)),
                 );
             },
             error: (err) => {
@@ -87,7 +90,7 @@ export class GameListComponent implements OnInit {
                     data: {
                         title: 'Erreur',
                         message: err.error?.message || 'Impossible de modifier la visibilité',
-                        type: 'error',
+                        type: DialogType.ERROR,
                     },
                 });
             },
@@ -100,7 +103,9 @@ export class GameListComponent implements OnInit {
             data: {
                 title: 'Confirmation de suppression',
                 message: `Êtes-vous sûr de vouloir supprimer le jeu "${game.name}" ?`,
-                type: 'warning',
+                type: DialogType.WARNING,
+                cancelText: 'Annuler',
+                confirmText: 'Supprimer',
             },
         });
 
@@ -112,7 +117,7 @@ export class GameListComponent implements OnInit {
                             data: {
                                 title: 'Succès',
                                 message: 'Jeu supprimé avec succès !',
-                                type: 'success',
+                                type: DialogType.SUCCESS,
                             },
                         });
                     },
@@ -121,7 +126,7 @@ export class GameListComponent implements OnInit {
                             data: {
                                 title: 'Erreur',
                                 message: err.error?.message || 'Impossible de supprimer ce jeu',
-                                type: 'error',
+                                type: DialogType.ERROR,
                             },
                         });
                     },

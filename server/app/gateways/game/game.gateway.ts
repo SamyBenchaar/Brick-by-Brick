@@ -58,4 +58,8 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
     notifyGameDeleted(gameId: string): void {
         this.server.emit(GameEvents.GameDeleted, gameId);
     }
+
+    notifyRoomEvent<T>(roomId: string, event: string, payload: T): void {
+        this.server.to(roomId).emit(event, payload);
+    }
 }
