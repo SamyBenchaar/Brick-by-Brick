@@ -1,6 +1,5 @@
 import { Injectable, inject } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { Tile } from '@app/classes/tile/tile';
 import { AppDialogComponent } from '@app/components/game-edition-components/app-dialog/app-dialog.component';
 import { DialogType } from '@app/constants/dialog-type.enum';
 import { GameSession } from '@app/interfaces/game-session';
@@ -90,13 +89,4 @@ export class GameGridDialogService {
         });
     }
 
-    openTileDialog(tile: Tile): void {
-        this.dialog.open(AppDialogComponent, {
-            data: {
-                title: 'Informations de la tuile',
-                message: `Type: ${tile.type}\nCoût: ${this.gameGridHelperService.getTileCost(tile.type)}`,
-                type: DialogType.INFO,
-            },
-        });
-    }
 }

@@ -72,9 +72,6 @@ export class WaitingRoomListComponent {
         return session.players.length >= session.maxPlayers;
     }
 
-    isVirtualPlayer(player: Player): boolean {
-        return !!player.virtualProfile;
-    }
 
     isAggressiveVirtualPlayer(player: Player): boolean {
         return player.virtualProfile === VirtualPlayerProfile.Aggressive;
