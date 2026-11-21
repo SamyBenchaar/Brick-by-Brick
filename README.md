@@ -60,6 +60,43 @@ npm start
 
 By default, the client runs on port **4200** and the server on port **3000**.
 
+## Architecture
+
+```mermaid
+flowchart LR
+  subgraph Client["Angular client"]
+    P["Pages<br/>map editor, lobby, game view, stats"]
+    C["Communication services<br/>HTTP + Socket.IO"]
+  end
+  subgraph Server["NestJS server"]
+    R["REST controller<br/>/games"]
+    GW["WebSocket gateways<br/>game, game-session, game-play, chat, log"]
+    H["Game-play handlers<br/>movement, combat, turn, CTF, sanctuary, abandon"]
+    S["Game-session services<br/>turns, movement, combat, validation"]
+    V["Virtual players<br/>pathfinding and targeting"]
+    M[("In-memory game sessions")]
+  end
+  DB[("MongoDB<br/>saved maps and games")]
+  CM[["common/<br/>shared types and socket events"]]
+
+  P --> C
+  C -->|HTTP| R
+  C <-->|Socket.IO| GW
+  R -->|validate and persist| DB
+  GW --> H --> S
+  S --> M
+  S --> V
+  CM -.- C
+  CM -.- GW
+```
+
+- **Authoritative server.** Every action (move, attack, end turn, flag transfer) is a Socket.IO event validated server-side before the new state is broadcast to all players in the session.
+- **Session state lives in memory** (one `GameSession` per match), while saved maps are persisted in MongoDB and checked with `class-validator` and custom map-validation rules.
+- **Handlers per mechanic.** The game-play gateway delegates to small handlers (movement, combat, turn, capture-the-flag, sanctuary, abandon), which keeps each rule testable on its own.
+- **Virtual players** use the same movement and combat services as humans. Pathfinding and targeting are separate services, so bot behaviour can change without touching the game rules.
+- **Shared contracts.** `common/` holds the types and event names used by both the client and the server, so the two sides cannot drift apart.
+- **CI.** The GitLab pipeline installs, lints and tests the project, then deploys the client and server on demand.
+
 ## Quality Assurance
 
 Run these commands regularly during development:
